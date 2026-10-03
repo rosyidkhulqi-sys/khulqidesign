@@ -1,0 +1,565 @@
+/* =========================================================
+   KHULQI DESIGN — MODERN ICON LIBRARY
+   ========================================================= */
+
+/* MAIN PAGE */
+.icons-page {
+  width: 100%;
+  padding: 28px 40px 70px;
+  box-sizing: border-box;
+}
+
+/* HEADER */
+.icons-header {
+  margin-bottom: 24px;
+}
+
+.icons-header h1 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.icons-header p {
+  margin: 8px 0 0;
+  color: #888;
+  font-size: 14px;
+}
+
+/* BACK BUTTON */
+.icons-page .back-btn {
+  margin-bottom: 18px;
+}
+
+
+/* =========================================================
+   SEARCH
+   ========================================================= */
+
+.icon-search {
+  width: 100%;
+  height: 58px;
+
+  display: flex;
+  align-items: center;
+
+  background: #111;
+  border: 1px solid #292929;
+  border-radius: 10px;
+
+  overflow: hidden;
+  margin-bottom: 22px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.icon-search:focus-within {
+  border-color: #444;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.03);
+}
+
+.search-icon {
+  padding-left: 18px;
+
+  color: #777;
+  font-size: 21px;
+}
+
+.icon-search input {
+  flex: 1;
+
+  height: 100%;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+
+  color: #fff;
+
+  font-size: 15px;
+
+  padding: 0 16px;
+}
+
+.icon-search input::placeholder {
+  color: #666;
+}
+
+.search-btn {
+  height: 100%;
+  min-width: 105px;
+
+  border: none;
+
+  background: #ed1c24;
+  color: white;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: background 0.2s ease;
+}
+
+.search-btn:hover {
+  background: #ff2931;
+}
+
+
+/* =========================================================
+   MARKETPLACE
+   ========================================================= */
+
+.icons-marketplace {
+  display: grid;
+
+  grid-template-columns: 235px minmax(0, 1fr);
+
+  gap: 24px;
+
+  align-items: start;
+
+  transition: grid-template-columns 0.25s ease;
+}
+
+.icons-marketplace.sidebar-collapsed {
+  grid-template-columns: 52px minmax(0, 1fr);
+}
+
+
+/* =========================================================
+   LEFT SIDEBAR
+   ========================================================= */
+
+.icon-sidebar {
+  position: sticky;
+  top: 20px;
+
+  background: #101010;
+
+  border: 1px solid #252525;
+
+  border-radius: 10px;
+
+  overflow: hidden;
+
+  min-height: 520px;
+}
+
+.sidebar-header {
+  height: 54px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 12px;
+
+  border-bottom: 1px solid #222;
+}
+
+.sidebar-header h2 {
+  margin: 0;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  color: #eee;
+}
+
+
+/* SIDEBAR TOGGLE */
+
+.sidebar-toggle {
+  width: 30px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 6px;
+
+  background: transparent;
+  color: #999;
+
+  font-size: 20px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.sidebar-toggle:hover {
+  background: #1d1d1d;
+  color: #fff;
+}
+
+
+/* SIDEBAR CONTENT */
+
+.sidebar-content {
+  padding: 4px 0;
+}
+
+
+/* =========================================================
+   FILTER SECTIONS
+   ========================================================= */
+
+.filter-section {
+  border-bottom: 1px solid #202020;
+}
+
+.filter-title {
+  width: 100%;
+  min-height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 15px;
+
+  border: none;
+
+  background: transparent;
+  color: #ddd;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  text-align: left;
+
+  transition: background 0.2s ease;
+}
+
+.filter-title:hover {
+  background: #171717;
+}
+
+
+/* FILTER OPTIONS */
+
+.filter-options {
+  padding: 0 9px 9px;
+}
+
+.filter-option {
+  width: 100%;
+
+  padding: 9px 11px;
+
+  border: none;
+  border-radius: 6px;
+
+  background: transparent;
+
+  color: #888;
+
+  font-size: 13px;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.filter-option:hover {
+  background: #1a1a1a;
+  color: #eee;
+}
+
+.filter-option.active {
+  background: #1d1d1d;
+  color: #fff;
+}
+
+
+/* =========================================================
+   RESULTS AREA
+   ========================================================= */
+
+.icon-results {
+  min-width: 0;
+}
+
+
+/* RESULTS HEADER */
+
+.results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 15px;
+}
+
+.results-header h2 {
+  margin: 0;
+
+  font-size: 18px;
+  font-weight: 600;
+
+  color: #eee;
+}
+
+.results-header p {
+  margin: 5px 0 0;
+
+  color: #777;
+
+  font-size: 12px;
+}
+
+.result-count {
+  color: #777;
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   ICON GRID
+   ========================================================= */
+
+.icon-grid {
+  display: grid;
+
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+
+  gap: 12px;
+}
+
+
+/* =========================================================
+   ICON CARD
+   ========================================================= */
+
+.icon-card {
+  min-width: 0;
+
+  position: relative;
+
+  background: #111;
+
+  border: 1px solid #222;
+
+  border-radius: 9px;
+
+  overflow: hidden;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.icon-card:hover {
+  transform: translateY(-2px);
+
+  background: #171717;
+
+  border-color: #3a3a3a;
+}
+
+
+/* =========================================================
+   ICON PREVIEW
+   ========================================================= */
+
+.icon-preview {
+  width: 100%;
+
+  aspect-ratio: 1 / 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #0d0d0d;
+
+  transition: background 0.2s ease;
+}
+
+.icon-card:hover .icon-preview {
+  background: #121212;
+}
+
+
+/* ICON IMAGE */
+
+.small-icon {
+  width: 58px;
+  height: 58px;
+
+  object-fit: contain;
+
+  transition: transform 0.2s ease;
+}
+
+.icon-card:hover .small-icon {
+  transform: scale(1.06);
+}
+
+
+/* =========================================================
+   ICON INFORMATION
+   ========================================================= */
+
+.icon-info {
+  min-height: 40px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 8px 10px;
+
+  border-top: 1px solid #1f1f1f;
+}
+
+.icon-info span {
+  color: #aaa;
+
+  font-size: 12px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   SHOWING TEXT
+   ========================================================= */
+
+.showing-text {
+  margin-top: 20px;
+  margin-bottom: 14px;
+
+  color: #777;
+
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   SIDEBAR COLLAPSED
+   ========================================================= */
+
+.icons-marketplace.sidebar-collapsed .sidebar-header {
+  justify-content: center;
+}
+
+.icons-marketplace.sidebar-collapsed .sidebar-header h2 {
+  display: none;
+}
+
+.icons-marketplace.sidebar-collapsed .sidebar-content {
+  display: none;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1400px) {
+
+  .icon-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+}
+
+
+@media (max-width: 1100px) {
+
+  .icons-page {
+    padding-left: 25px;
+    padding-right: 25px;
+  }
+
+  .icons-marketplace {
+    grid-template-columns: 210px minmax(0, 1fr);
+  }
+
+  .icon-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+}
+
+
+@media (max-width: 800px) {
+
+  .icons-page {
+    padding: 20px;
+  }
+
+  .icons-marketplace,
+  .icons-marketplace.sidebar-collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  .icon-sidebar {
+    position: relative;
+    top: 0;
+
+    min-height: auto;
+  }
+
+  .icons-marketplace.sidebar-collapsed .sidebar-content {
+    display: none;
+  }
+
+  .icon-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+}
+
+
+@media (max-width: 550px) {
+
+  .icons-page {
+    padding: 16px;
+  }
+
+  .icons-header h1 {
+    font-size: 26px;
+  }
+
+  .icon-search {
+    height: 52px;
+  }
+
+  .search-btn {
+    min-width: 75px;
+  }
+
+  .icon-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .small-icon {
+    width: 50px;
+    height: 50px;
+  }
+
+}
