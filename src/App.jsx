@@ -1,4 +1,5 @@
 import LanguageSwitcher from "./LanguageSwitcher";
+import Footer from "./Footer";
 import { useState } from "react";
 import "./App.css";
 
@@ -10,9 +11,17 @@ function App() {
   const [page, setPage] = useState("home");
   const [language, setLanguage] = useState("EN");
   
-  if (page === "icons") {
-    return <Icons setPage={setPage} />;
-  }
+if (page === "icons") {
+  return (
+    <>
+      <Icons setPage={setPage} />
+      <Footer
+        language={language}
+        setLanguage={setLanguage}
+      />
+    </>
+  );
+}
   return (
     <div className="container">
 
@@ -210,61 +219,10 @@ function App() {
   </div>
 </section>
 
-{/* FOOTER */}
-<footer className="footer">
-
-  <div className="footer-top">
-    
-
-    
-   <LanguageSwitcher 
-     language={language}
-     setLanguage={setLanguage}
-   />
-
-  </div>
-
-  <div className="footer-links">
-
-    <div>
-      <h4>Products</h4>
-      <a href="#">Illustrations</a>
-      <a href="#">Icons</a>
-      <a href="#">Templates</a>
-      <a href="#">Graphic Elements</a>
-    </div>
-
-    <div>
-      <h4>Services</h4>
-      <a href="#">Brand Identity</a>
-      <a href="#">UI Design</a>
-      <a href="#">Motion Design</a>
-      <a href="#">Client Projects</a>
-    </div>
-
-    <div>
-      <h4>Social</h4>
-      <a href="#">Instagram</a>
-      <a href="#">Facebook</a>
-      <a href="#">X / Twitter</a>
-      <a href="#">WhatsApp</a>
-    </div>
-
-    <div>
-      <h4>Resources</h4>
-      <a href="#">Trends</a>
-      <a href="#">Blog</a>
-      <a href="#">Contact</a>
-      <a href="#">License</a>
-    </div>
-
-  </div>
-
-  <div className="footer-bottom">
-    © 2026 KHULQIDESIGN. All rights reserved.
-  </div>
-
-</footer>
+<Footer
+  language={language}
+  setLanguage={setLanguage}
+  ></Footer>
 </div>
 );
 }

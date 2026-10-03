@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "./Icons.css";
+import "./Footer.css";
 
 function Icons({ setPage }) {
   const [search, setSearch] = useState("");

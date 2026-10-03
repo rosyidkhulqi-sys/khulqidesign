@@ -319,82 +319,6 @@ _______________________MENU
 
 /* FOOTER */
 
-.footer {
-  padding: 40px 0 60px;
-  border-top: 1px solid #111;
-
-  color: #666;
-  font-size: 14px;
-}
-
-.footer-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 60px;
-}
-
-.footer-top h2 {
-  font-size: 32px;
-  font-weight: 800;
-  letter-spacing: -1px;
-}
-
-.language-btn {
-  border: 1px solid #333;
-  padding: 12px 22px;
-  border-radius: 14px;
-  color: #d1d1d1;
-  transition: 0.3s;
-  cursor: pointer;
-}
-
-.language-btn:hover {
-  border-color: white;
-  color: white;
-}
-
-.footer-links {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 50px;
-  margin-bottom: 60px;
-}
-
-.footer-links h4 {
-  margin-bottom: 18px;
-  font-size: 18px;
-  color: white;
-}
-
-.footer-links a {
-  display: block;
-  color: #8d8d8d;
-  text-decoration: none;
-  margin-bottom: 14px;
-  transition: 0.3s;
-}
-
-.footer-links a:hover {
-  color: #e7212e;
-  transform: translateX(3px);
-}
-
-.footer-bottom {
-  border-top: 1px solid #1f1f1f;
-  padding-top: 24px;
-  color:  #6d6d6d;
-  font-size: 14px;
-}
-
-.white-text {
-  color: white;
-}
-
-.red-text {
-  color: #e7212e;
-}
-
 .preview-img {
   width: 100%;
   height: 100%;
@@ -737,7 +661,139 @@ ______________________________HOME
 
 
 /* ICON PAGE */
+.icons-page {
+  padding: 30px 40px;
+  color: white;
+}
 
+/* BACK BUTTON */
+.icons-page button:first-of-type {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  background: #1a1a1a;
+  color: white;
+  cursor: pointer;
+  margin-bottom: 18px;
+  margin-top: 12px;
+}
+
+/* MAIN FILTER */
+.main-filter {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+  position: relative;
+}
+
+/* FILTER BOX */
+.filter-box {
+  position: relative;
+}
+
+/* TOP BUTTON */
+.filter-box button {
+  padding: 12px 22px;
+  background: #111;
+  color: white;
+  border: 1px solid #2a2a2a;
+  border-radius: 30px;
+  cursor: pointer;
+  font-size: 15px;
+  min-width: 100px;
+}
+
+/* HOVER */
+.filter-box button:hover {
+  background: #1c1c1c;
+}
+
+/* DROPDOWN */
+.dropdown {
+  position: absolute;
+  top: 52px;
+  left: 0;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 180px;
+  z-index: 10;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+/* SUB BUTTON */
+.dropdown button {
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: white;
+  font-size: 14px;
+}
+
+.dropdown button:hover {
+  background: #1e1e1e;
+}
+
+/* ICON GRID */
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 200px);
+  gap: 25px;
+  margin-top: 30px;
+  margin-bottom: 25px;
+  margin-left: auto;
+  margin-right: 40px;
+  width: 100%;
+}
+
+/* ICON CARD */
+.icon-card {
+  width: 195px;
+  height: 195px;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.icon-card:hover {
+  transform: translateY(-3px);
+  background: #1a1a1a;
+}
+
+/* SMALL ICON */
+.small-icon {
+  width: 55px;
+  height: 55px;
+  object-fit: contain;
+}
+
+.showing-text {
+  margin-top: 25px;
+  margin-bottom: 14px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1400px) {
+  .icon-grid {
+    grid-template-columns: repeat(7, 1fr);
+  }
+}
+
+@media (max-width: 1100px) {
+  .icon-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
  
 /* LANGUAGE SWITCHER */
 .language-switcher {
