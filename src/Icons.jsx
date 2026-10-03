@@ -1,5 +1,5 @@
-import { useState } from "react";
 import "./Icons.css";
+import { useState } from "react";
 import "./Footer.css";
 
 function Icons({ setPage }) {
