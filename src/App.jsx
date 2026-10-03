@@ -7,6 +7,8 @@ import Icons from "./Icons";
 import Vectors from "./Vectors";
 import Templates from "./Templates";
 import Video from "./Video";
+import Login from "./Login";
+import Register from "./Register";
 function App() {
   const [page, setPage] = useState("home");
   const [language, setLanguage] = useState("EN");
@@ -21,6 +23,13 @@ if (page === "icons") {
       />
     </>
   );
+if (page === "login") {
+  return <Login setPage={setPage} />;
+}
+
+if (page === "register") {
+  return <Register setPage={setPage} />;
+}
 }
   return (
     <div className="container">
@@ -52,8 +61,8 @@ if (page === "icons") {
           </a>
         </div>
         <div className="auth-buttons">
-           <a href="#">Login</a>
-           <a href="#" className="signup-btn">Sign Up</a>
+           <a href="#" onClick={() => setPage("login")}>Login</a>
+           <a href="#" className="signup-btn" onClick={() => setPage("register")}>Sign Up</a>
          </div> 
       </nav>
 
