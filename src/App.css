@@ -98,7 +98,7 @@ _______________________MENU
   font-weight: 600;
 }
 
-.signup-btn {
+.register-btn {
   background: #e7212e;
   padding: 10px 20px;
   border-radius: 999px;
@@ -852,3 +852,57 @@ ______________________________HOME
   width:auto;
 }
 
+/* LOGIN AND REGISTER BUTTONS */
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0a0a;
+}
+
+.login-box {
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  padding: 40px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-box h2 {
+  color: white;
+  margin-bottom: 24px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.login-box input {
+  width: 100%;
+  background: #0a0a0a;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: white;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.login-box button {
+  width: 100%;
+  background: #e8362a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.login-box p { color: #a0a0a0; margin-top: 16px; font-size: 14px; }
+.link { color: #e8362a; cursor: pointer; }
+.error-msg { color: #e8362a; font-size: 13px; margin-bottom: 12px; }
+.success-msg { color: #22c55e; font-size: 13px; margin-bottom: 12px; }

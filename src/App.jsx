@@ -9,10 +9,12 @@ import Templates from "./Templates";
 import Video from "./Video";
 import Login from "./Login";
 import Register from "./Register";
+
+
 function App() {
   const [page, setPage] = useState("home");
   const [language, setLanguage] = useState("EN");
-  
+
 if (page === "icons") {
   return (
     <>
@@ -23,6 +25,8 @@ if (page === "icons") {
       />
     </>
   );
+}
+
 if (page === "login") {
   return <Login setPage={setPage} />;
 }
@@ -30,14 +34,14 @@ if (page === "login") {
 if (page === "register") {
   return <Register setPage={setPage} />;
 }
-}
+
   return (
     <div className="container">
 
       <nav className="navbar">
         
   <div className="logo">
-  <img src="/logo.png" alt="logo" className="logo-img" />
+  <img src="/logo.png" alt="Logo" className="logo-img" />
 
   <img
     src="/KD Logogram.png"
@@ -62,7 +66,7 @@ if (page === "register") {
         </div>
         <div className="auth-buttons">
            <a href="#" onClick={() => setPage("login")}>Login</a>
-           <a href="#" className="signup-btn" onClick={() => setPage("register")}>Sign Up</a>
+           <a href="#" className="register-btn" onClick={() => setPage("register")}>Register</a>
          </div> 
       </nav>
 
