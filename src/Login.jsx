@@ -22,6 +22,7 @@ function Login({ setPage }) {
     } else {
       setPage("home");
     }
+
     setLoading(false);
   };
 
@@ -29,7 +30,9 @@ function Login({ setPage }) {
     <div className="login-page">
       <div className="login-box">
         <h2>Login</h2>
+
         {error && <p className="error-msg">{error}</p>}
+
         <form onSubmit={handleLogin}>
           <input
             type="email"
@@ -38,6 +41,7 @@ function Login({ setPage }) {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
+
           <input
             type="password"
             placeholder="Password"
@@ -45,14 +49,28 @@ function Login({ setPage }) {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+
           <button type="submit" disabled={loading}>
             {loading ? "Loading..." : "Login"}
           </button>
         </form>
+
         <p>
-          Belum punya akun?{" "}
-          <span onClick={() => setPage("register")} className="link">
-            Daftar
+          Don't have an account?{" "}
+          <span
+            onClick={() => setPage("register")}
+            className="link"
+          >
+            Sign Up
+          </span>
+        </p>
+
+        <p>
+          <span
+            onClick={() => setPage("home")}
+            className="link"
+          >
+            ← Back to Home
           </span>
         </p>
       </div>

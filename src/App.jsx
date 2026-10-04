@@ -41,7 +41,7 @@ if (page === "register") {
       <nav className="navbar">
         
   <div className="logo">
-  <img src="/logo.png" alt="Logo" className="logo-img" />
+  <img src="/Logo.png" alt="Logo" className="logo-img" />
 
   <img
     src="/KD Logogram.png"

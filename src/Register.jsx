@@ -29,7 +29,7 @@ function Register({ setPage }) {
   return (
     <div className="login-page">
       <div className="login-box">
-        <h2>Daftar Akun</h2>
+        <h2>Create Account</h2>
         {error && <p className="error-msg">{error}</p>}
         {message && <p className="success-msg">{message}</p>}
         <form onSubmit={handleRegister}>
@@ -52,7 +52,7 @@ function Register({ setPage }) {
           </button>
         </form>
         <p>
-          Sudah punya akun?{" "}
+          Already have an account?{" "}
           <span onClick={() => setPage("login")} className="link">
             Login
           </span>
