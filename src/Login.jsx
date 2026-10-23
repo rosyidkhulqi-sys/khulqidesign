@@ -25,6 +25,15 @@ function Login({ setPage }) {
 
     setLoading(false);
   };
+  
+    const handleGoogle = async () => {
+    setError(null);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin },
+    });
+    if (error) setError(error.message);
+  };
 
   return (
     <div className="login-page">
@@ -54,7 +63,9 @@ function Login({ setPage }) {
             {loading ? "Loading..." : "Login"}
           </button>
         </form>
-
+        <button type="button" onClick={handleGoogle} className="google-btn">
+          Sign in with Google
+        </button>
         <p>
           Don't have an account?{" "}
           <span
