@@ -2,6 +2,7 @@ import LanguageSwitcher from "./LanguageSwitcher";
 import Footer from "./Footer";
 import { useState } from "react";
 import "./App.css";
+import { categories } from "./categories";
 
 import Icons from "./Icons";
 import Vectors from "./Vectors";
@@ -51,18 +52,10 @@ if (page === "register") {
 
 </div>
         <div className="menu">
-          <a href="#icons">Icons
-  
-          </a>
-          <a href="#vectors">Vectors
-
-          </a>
-          <a href="#templates">Templates
-
-          </a>
-          <a href="#video">Video
-
-          </a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setPage("icons"); }}>Icons</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setPage("vectors"); }}>Vectors</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setPage("templates"); }}>Templates</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setPage("video"); }}>Footage</a>
         </div>
         <div className="auth-buttons">
            <a href="#" onClick={() => setPage("login")}>Login</a>
@@ -102,7 +95,7 @@ if (page === "register") {
         <span>Icons</span>
         <span>Vectors</span>
         <span>Templates</span>
-        <span>Video</span>
+        <span>Footage</span>
       </div>
 
           <p>
@@ -138,86 +131,30 @@ if (page === "register") {
 </div>
 </section>
 
-{/* PORTFOLIO */}
+{/* CATEGORIES */}
 <section id="portfolio" className="portfolio">
   <div className="portfolio-head">
-    <p>PORTFOLIO</p>
-    <h2>Digital Assets</h2>
-  </div>
-
-  <div className="portfolio-filter">
-    <button>All</button>
-    <button onClick={() => setPage("icons")}>
-      Icons
-    </button>
-    <button>Vectors</button>
-    <button>Templates</button>
-    <button>Video</button>
+    <p>CATEGORIES</p>
+    <h2>Browse Assets</h2>
   </div>
 
   {/* GRID */}
-
- <div className="portfolio-grid">
-  <div
-    className="portfolio-card"
-    onClick={() => setPage("icons")}
-  >
-    <img src="/preview1.jpg" alt="Icons" />
-    <h3>Icons</h3>
-  </div>
-
-  <div className="portfolio-card">
-    <img src="/preview2.jpg" alt="Vectors" />
-    <h3>Vectors</h3>
-  </div>
-
-  <div className="portfolio-card">
-    <img src="/preview3.jpg" alt="Templates" />
-    <h3>Templates</h3>
-  </div>
-
-  <div className="portfolio-card">
-    <img src="/preview4.jpg" alt="Video" />
-    <h3>Video</h3>
-  </div>
-
- </div>
-</section>
-
-{/* PRODUCTS */}
-<section className="product-section">
-  <div className="product-head">
-    <p>PRODUCTS</p>
-    <h2>Digital Assets</h2>
-  </div>
-
-  <div className="product-grid">
-    <div className="product-card">
-      <span>01</span>
-      <h3>Illustrations</h3>
-      <p>Premium vector packs & creative artwork</p>
-    </div>
-
-    <div className="product-card">
-      <span>02</span>
-      <h3>Icons</h3>
-      <p>Minimal icon systems & UI assets</p>
-    </div>
-
-    <div className="product-card">
-      <span>03</span>
-      <h3>Templates</h3>
-      <p>Social media, business & web templates</p>
-    </div>
-
-    <div className="product-card">
-      <span>04</span>
-      <h3>Graphic Elements</h3>
-      <p>Patterns, badges, shapes & creative assets</p>
-    </div>
+  <div className="portfolio-grid">
+    {categories.map((cat) => (
+      <div
+        key={cat.key}
+        className={`portfolio-card ${cat.ready ? "" : "is-soon"}`}
+        onClick={() => cat.ready && setPage(cat.page)}
+      >
+        <img src={cat.image} alt={cat.title} loading="lazy" />
+        <h3>{cat.title}</h3>
+        <span className="portfolio-count">{cat.count}</span>
+      </div>
+    ))}
   </div>
 </section>
 
+ 
 {/* CONTACT */}
 <section id="contact" className="contact">
   <div className="contact-content">
