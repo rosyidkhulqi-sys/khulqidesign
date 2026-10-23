@@ -1,7 +1,7 @@
 import "./Footer.css";
 import LanguageSwitcher from "./LanguageSwitcher";
 
-function Footer({ language, setLanguage }) {
+function Footer({ language, setLanguage, setPage }) {
   return (
     <footer className="footer">
 
@@ -16,10 +16,10 @@ function Footer({ language, setLanguage }) {
 
         <div>
           <h4>Products</h4>
-          <a href="#">Illustrations</a>
-          <a href="#">Icons</a>
-          <a href="#">Templates</a>
-          <a href="#">Graphic Elements</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setPage("icons"); window.scrollTo(0, 0); }}>Icons</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setPage("vectors"); window.scrollTo(0, 0); }}>Vectors</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setPage("templates"); window.scrollTo(0, 0); }}>Templates</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setPage("footage"); window.scrollTo(0, 0); }}>Footage</a>
         </div>
 
         <div>
@@ -37,7 +37,10 @@ function Footer({ language, setLanguage }) {
           <a href="#">X / Twitter</a>
           <a href="#">WhatsApp</a>
         </div>
+      </div>   
 
+      <div className="footer-bottom">
+        <p>© {new Date().getFullYear()} Khulqi Design. All rights reserved.</p>
       </div>
 
     </footer>

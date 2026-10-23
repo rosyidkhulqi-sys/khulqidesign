@@ -23,6 +23,7 @@ if (page === "icons") {
       <Footer
         language={language}
         setLanguage={setLanguage}
+        setPage={setPage}
       />
     </>
   );
@@ -172,7 +173,8 @@ if (page === "register") {
 <Footer
   language={language}
   setLanguage={setLanguage}
-  ></Footer>
+  setPage={setPage}
+/>
 </div>
 );
 }
