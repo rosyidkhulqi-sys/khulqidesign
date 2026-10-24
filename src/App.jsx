@@ -10,6 +10,7 @@ import Templates from "./Templates";
 import Video from "./Video";
 import Login from "./Login";
 import Register from "./Register";
+import Downloads from "./Downloads";
 
 
 function App() {
@@ -20,6 +21,19 @@ if (page === "icons") {
   return (
     <>
       <Icons setPage={setPage} />
+      <Footer
+        language={language}
+        setLanguage={setLanguage}
+        setPage={setPage}
+      />
+    </>
+  );
+}
+
+if (page === "downloads") {
+  return (
+    <>
+      <Downloads setPage={setPage} />
       <Footer
         language={language}
         setLanguage={setLanguage}

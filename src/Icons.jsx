@@ -1,3 +1,4 @@
+import PageHeader from "./PageHeader";
 import "./Icons.css";
 import { useState } from "react";
 import "./Footer.css";
@@ -91,24 +92,16 @@ function Icons({ setPage }) {
     <section className="icons-page">
 
       {/* HEADER */}
-      <div className="icons-header">
-        <div>
-          <h1>Icons Library</h1>
-          <p>
-            {search
-              ? `Search results for "${search}"`
-              : "Explore our icon collection"}
-          </p>
-        </div>
-
-        <button
-          className="back-btn"
-          onClick={() => setPage("home")}
-        >
-          Back Home
-        </button>
-      </div>
-
+      <PageHeader
+        page="icons"
+        setPage={setPage}
+        title="Icons Library"
+        subtitle={
+          search
+            ? `Search results for "${search}"`
+            : "Explore our icon collection"
+        }
+      />
 
       {/* SEARCH */}
       <div className="icon-search">

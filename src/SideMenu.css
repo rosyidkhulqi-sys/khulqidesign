@@ -1,0 +1,110 @@
+.sidemenu-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.3s ease;
+  z-index: 998;
+}
+.sidemenu-overlay.show { opacity: 1; pointer-events: auto; }
+
+.sidemenu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 300px;
+  max-width: 85vw;
+  background: #0b0b0b;
+  border-right: 1px solid #1a1a1a;
+  padding: 24px;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: 999;
+  overflow-y: auto;
+}
+.sidemenu.open { transform: translateX(0); }
+
+.sidemenu-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+.sidemenu-logo { height: 40px; cursor: pointer; }
+.sidemenu-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.sidemenu-auth { display: flex; gap: 12px; margin-bottom: 32px; }
+.sidemenu-auth a {
+  color: white;
+  text-decoration: none;
+  padding: 10px 18px;
+  border: 1px solid #2a2a2a;
+  border-radius: 999px;
+  font-size: 14px;
+}
+.sidemenu-auth a.sidemenu-register { background: #e7212e; border-color: #e7212e; }
+
+.sidemenu-label {
+  color: #666;
+  font-size: 12px;
+  letter-spacing: 3px;
+  margin-bottom: 12px;
+}
+.sidemenu-link {
+  display: block;
+  color: #d1d1d1;
+  text-decoration: none;
+  padding: 14px 0;
+  font-size: 18px;
+  border-bottom: 1px solid #141414;
+}
+.sidemenu-link:hover { color: white; }
+.sidemenu-link.active { color: #e7212e; }
+
+.menu-btn {
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 15px;
+}
+.menu-btn:hover { border-color: #444; }
+.header-left { display: flex; align-items: center; gap: 16px; }
+.header-logo { height: 40px; cursor: pointer; }
+
+/* PAGE HEADER STYLES */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #1a1a1a;
+}
+.header-logo { height: 36px; width: auto; cursor: pointer; }
+.header-downloads {
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.header-downloads:hover { border-color: #e7212e; }
+.page-title h1 { font-size: 32px; margin: 0 0 4px; }
+.page-title p { color: #9a9a9a; margin: 0 0 24px; }
+
+@media (max-width: 640px) {
+  .page-title h1 { font-size: 24px; }
+}
