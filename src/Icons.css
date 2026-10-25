@@ -134,8 +134,11 @@
   border: none;
   border-radius: 10px;
   margin: 6px;
+  padding: 0;
   color: white;
-  width: 64px;
+  /* square: 56px bar minus 6px margin top and bottom */
+  width: 44px;
+  flex-shrink: 0;
   cursor: pointer;
   transition: 0.2s ease;
 }
@@ -143,7 +146,6 @@
 
 @media (max-width: 640px) {
   .search-type { padding: 0 10px; font-size: 14px; }
-  .search-submit { padding: 0 16px; }
 }
 
 
