@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "./AssetModal.css";
 
-const kindLabel = { icon: "Icon", vector: "Vector", video: "Footage" };
+const kindLabel = { icon: "Icon", vector: "Vector", footage: "Footage" };
 
 function saveDownload(entry) {
   try {
@@ -61,7 +61,7 @@ function AssetModal({ asset, kind, options, specs, related = [], onSelect, onTag
           {/* PREVIEW */}
           <div className="asset-left">
             <div className={`asset-preview is-${kind}`}>
-              {kind === "video" ? (
+              {kind === "footage" ? (
                 <video src={asset.file} poster={asset.image} autoPlay muted loop playsInline controls />
               ) : (
                 <img src={asset.image} alt={asset.title} />

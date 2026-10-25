@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import PageHeader from "./PageHeader";
 import AssetModal from "./AssetModal";
 import "./Vectors.css";
-import "./Video.css";
+import "./Footage.css";
 
 const previews = ["/preview4.jpg", "/preview2.jpg", "/preview3.jpg", "/preview1.jpg"];
 const clipFile = "/video%20background.mp4";
@@ -91,7 +91,7 @@ function clipSpecs(clip) {
   ];
 }
 
-function VideoCard({ clip, onOpen }) {
+function FootageCard({ clip, onOpen }) {
   const ref = useRef(null);
 
   const play = () => ref.current?.play().catch(() => {});
@@ -103,9 +103,9 @@ function VideoCard({ clip, onOpen }) {
   };
 
   return (
-    <div className="video-card" onMouseEnter={play} onMouseLeave={stop} onClick={onOpen}>
+    <div className="footage-card" onMouseEnter={play} onMouseLeave={stop} onClick={onOpen}>
       <div
-        className="video-thumb"
+        className="footage-thumb"
         style={{ aspectRatio: aspect[clip.orientation][0] }}
       >
         <img src={clip.image} alt={clip.title} loading="lazy" />
@@ -113,15 +113,15 @@ function VideoCard({ clip, onOpen }) {
         <span className={`vector-badge ${clip.license}`}>
           {clip.license === "free" ? "Free" : "Premium"}
         </span>
-        <span className="video-res">{clip.resolution}</span>
-        <span className="video-duration">▶ {formatTime(clip.duration)}</span>
+        <span className="footage-res">{clip.resolution}</span>
+        <span className="footage-duration">▶ {formatTime(clip.duration)}</span>
       </div>
       <p className="vector-name">{clip.title}</p>
     </div>
   );
 }
 
-function Video({ setPage }) {
+function Footage({ setPage }) {
   const [search, setSearch] = useState("");
   const [resolution, setResolution] = useState("all");
   const [fps, setFps] = useState("all");
@@ -177,12 +177,12 @@ function Video({ setPage }) {
 
   return (
     <section className="vectors-page">
-      <PageHeader page="video" setPage={setPage} />
+      <PageHeader page="footage" setPage={setPage} />
 
       {/* SEARCH */}
       <div className="icon-search">
-        <select className="search-type" value="video" onChange={() => {}}>
-          <option value="video">Footage</option>
+        <select className="search-type" value="footage" onChange={() => {}}>
+          <option value="footage">Footage</option>
         </select>
         <input
           type="text"
@@ -256,10 +256,10 @@ function Video({ setPage }) {
       <p className="vector-count">{filtered.length} clips</p>
 
       {/* GRID */}
-      <div className="video-grid">
+      <div className="footage-grid">
         {items.length > 0 ? (
           items.map((c) => (
-            <VideoCard key={c.id} clip={c} onOpen={() => setSelected(c)} />
+            <FootageCard key={c.id} clip={c} onOpen={() => setSelected(c)} />
           ))
         ) : (
           <div className="no-results">
@@ -302,7 +302,7 @@ function Video({ setPage }) {
         <AssetModal
           key={selected.id}
           asset={selected}
-          kind="video"
+          kind="footage"
           options={clipOptions(selected)}
           specs={clipSpecs(selected)}
           related={allClips
@@ -317,4 +317,4 @@ function Video({ setPage }) {
   );
 }
 
-export default Video;
+export default Footage;

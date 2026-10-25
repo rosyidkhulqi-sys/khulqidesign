@@ -7,7 +7,7 @@ import { categories } from "./categories";
 import Icons from "./Icons";
 import Vectors from "./Vectors";
 import Templates from "./Templates";
-import Video from "./Video";
+import Footage from "./Footage";
 import Login from "./Login";
 import Register from "./Register";
 import Downloads from "./Downloads";
@@ -81,10 +81,10 @@ if (page === "vectors") {
   );
 }
 
-if (page === "video") {
+if (page === "footage") {
   return (
     <>
-      <Video setPage={setPage} />
+      <Footage setPage={setPage} />
       <Footer language={language} setLanguage={setLanguage} setPage={setPage} />
     </>
   );
@@ -117,7 +117,7 @@ if (page === "register") {
           <a href="#" onClick={(e) => { e.preventDefault(); setPage("icons"); }}>Icons</a>
           <a href="#" onClick={(e) => { e.preventDefault(); setPage("vectors"); }}>Vectors</a>
           <a href="#" onClick={(e) => { e.preventDefault(); setPage("templates"); }}>Templates</a>
-          <a href="#" onClick={(e) => { e.preventDefault(); setPage("video"); }}>Footage</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setPage("footage"); }}>Footage</a>
           <a href="#" onClick={(e) => { e.preventDefault(); setPage("create"); }}>Create</a>
         </div>
         <div className="auth-buttons">

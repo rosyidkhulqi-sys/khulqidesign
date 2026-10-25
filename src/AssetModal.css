@@ -70,7 +70,7 @@
   display: block;
 }
 
-.asset-preview.is-video { aspect-ratio: 16 / 9; background: #000; }
+.asset-preview.is-footage { aspect-ratio: 16 / 9; background: #000; }
 
 /* transparent-background checkerboard, as on stock sites */
 .asset-preview.is-icon {
@@ -106,7 +106,7 @@
   letter-spacing: 3px;
   text-shadow: 0 0 2px rgba(0, 0, 0, 0.35);
 }
-.asset-preview.is-video .asset-watermark { bottom: 30%; }
+.asset-preview.is-footage .asset-watermark { bottom: 30%; }
 
 .asset-keywords { margin-top: 20px; }
 .asset-keywords p,
@@ -291,7 +291,7 @@
   cursor: pointer;
 }
 .asset-related-grid button.is-icon { aspect-ratio: 1 / 1; padding: 22%; }
-.asset-related-grid button.is-video { aspect-ratio: 16 / 9; }
+.asset-related-grid button.is-footage { aspect-ratio: 16 / 9; }
 .asset-related-grid button:hover { border-color: #e7212e; }
 .asset-related-grid img {
   width: 100%;

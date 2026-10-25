@@ -4,7 +4,7 @@ const menuItems = [
   { key: "icons", label: "Icons" },
   { key: "vectors", label: "Vectors" },
   { key: "templates", label: "Templates" },
-  { key: "video", label: "Footage" },
+  { key: "footage", label: "Footage" },
   { key: "create", label: "Create" },
 ];
 
