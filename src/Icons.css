@@ -130,15 +130,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.06);
   border: none;
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  margin: 6px;
   color: white;
   width: 64px;
   cursor: pointer;
   transition: 0.2s ease;
 }
-.search-submit:hover { background: #e7212e; }
+.search-submit:hover { background: rgba(255, 255, 255, 0.14); }
 
 @media (max-width: 640px) {
   .search-type { padding: 0 10px; font-size: 14px; }
