@@ -49,6 +49,8 @@
 .ct-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .ct-btn.primary { background: #e7212e; border-color: #e7212e; color: white; font-weight: 700; }
 .ct-btn.primary:hover:not(:disabled) { background: #c81d28; }
+.ct-btn.danger { color: #ff6b74; }
+.ct-btn.danger:hover { background: #e7212e; border-color: #e7212e; color: white; }
 
 .ct-size { color: #8d939b; font-size: 13px; margin-left: 8px; }
 

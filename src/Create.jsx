@@ -231,6 +231,24 @@ function Create({ setPage, draft, clearDraft }) {
     resetHistory();
   };
 
+  const deleteDesign = () => {
+    if (!window.confirm("Delete this design? This cannot be undone.")) return;
+    clearTimeout(commitTimer.current);
+    const c = fc.current;
+    c.clear();
+    c.backgroundColor = "#ffffff";
+    setBg("#ffffff");
+    setActive(null);
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      /* storage unavailable */
+    }
+    history.current = { undo: [snapshot()], redo: [], busy: false };
+    syncHistory();
+    setShowNew(true);
+  };
+
   const openTemplate = async (t, ask = true) => {
     const c = fc.current;
     if (ask && c.getObjects().length && !window.confirm("Replace the current design with this template?")) {
@@ -584,6 +602,7 @@ function Create({ setPage, draft, clearDraft }) {
           <button className="ct-btn primary" onClick={() => setShowNew(true)}>+ New</button>
           <button className="ct-btn" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)">↶</button>
           <button className="ct-btn" onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)">↷</button>
+          <button className="ct-btn danger" onClick={deleteDesign} title="Delete design">🗑 Delete</button>
 
           <span className="ct-size">{board.w} × {board.h} px</span>
 
