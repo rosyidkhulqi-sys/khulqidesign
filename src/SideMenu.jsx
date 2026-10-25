@@ -5,6 +5,7 @@ const menuItems = [
   { key: "vectors", label: "Vectors" },
   { key: "templates", label: "Templates" },
   { key: "video", label: "Footage" },
+  { key: "create", label: "Create" },
 ];
 
 function SideMenu({ open, onClose, page, setPage }) {

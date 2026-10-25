@@ -19,7 +19,8 @@ function Footer({ language, setLanguage, setPage }) {
           <a href="#" onClick={(e) => { e.preventDefault(); setPage("icons"); window.scrollTo(0, 0); }}>Icons</a>
           <a href="#" onClick={(e) => { e.preventDefault(); setPage("vectors"); window.scrollTo(0, 0); }}>Vectors</a>
           <a href="#" onClick={(e) => { e.preventDefault(); setPage("templates"); window.scrollTo(0, 0); }}>Templates</a>
-          <a href="#" onClick={(e) => { e.preventDefault(); setPage("footage"); window.scrollTo(0, 0); }}>Footage</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setPage("video"); window.scrollTo(0, 0); }}>Footage</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setPage("create"); window.scrollTo(0, 0); }}>Create</a>
         </div>
 
         <div>

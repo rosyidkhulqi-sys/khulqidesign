@@ -1,6 +1,6 @@
 import LanguageSwitcher from "./LanguageSwitcher";
 import Footer from "./Footer";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import "./App.css";
 import { categories } from "./categories";
 
@@ -11,11 +11,41 @@ import Video from "./Video";
 import Login from "./Login";
 import Register from "./Register";
 import Downloads from "./Downloads";
+// the editor pulls in the canvas library, so load it only when opened
+const Create = lazy(() => import("./Create"));
 
 
 function App() {
   const [page, setPage] = useState("home");
   const [language, setLanguage] = useState("EN");
+  const [createDraft, setCreateDraft] = useState(null);
+
+const customize = (template) => {
+  setCreateDraft(template);
+  setPage("create");
+  window.scrollTo(0, 0);
+};
+
+if (page === "templates") {
+  return (
+    <>
+      <Templates setPage={setPage} onCustomize={customize} />
+      <Footer language={language} setLanguage={setLanguage} setPage={setPage} />
+    </>
+  );
+}
+
+if (page === "create") {
+  return (
+    <Suspense fallback={null}>
+      <Create
+        setPage={setPage}
+        draft={createDraft}
+        clearDraft={() => setCreateDraft(null)}
+      />
+    </Suspense>
+  );
+}
 
 if (page === "icons") {
   return (
@@ -51,6 +81,15 @@ if (page === "vectors") {
   );
 }
 
+if (page === "video") {
+  return (
+    <>
+      <Video setPage={setPage} />
+      <Footer language={language} setLanguage={setLanguage} setPage={setPage} />
+    </>
+  );
+}
+
 if (page === "login") {
   return <Login setPage={setPage} />;
 }
@@ -79,6 +118,7 @@ if (page === "register") {
           <a href="#" onClick={(e) => { e.preventDefault(); setPage("vectors"); }}>Vectors</a>
           <a href="#" onClick={(e) => { e.preventDefault(); setPage("templates"); }}>Templates</a>
           <a href="#" onClick={(e) => { e.preventDefault(); setPage("video"); }}>Footage</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setPage("create"); }}>Create</a>
         </div>
         <div className="auth-buttons">
            <a href="#" onClick={() => setPage("login")}>Login</a>
