@@ -103,30 +103,55 @@ function Icons({ setPage }) {
         }
       />
 
-      {/* SEARCH */}
-      <div className="icon-search">
-        <input
-          type="text"
-          placeholder="Search icons, sets, business, social, UI..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setCurrentPage(1);
-          }}
-        />
+     {/* SEARCH */}
+<div className="icon-search">
+  <select
+    className="search-type"
+    value={type}
+    onChange={(e) => changeFilter(setType, e.target.value)}
+  >
+    <option value="all">All</option>
+    <option value="icon">Icon</option>
+    <option value="set">Icon Set</option>
+  </select>
 
-        {search && (
-          <button
-            className="clear-search"
-            onClick={() => {
-              setSearch("");
-              setCurrentPage(1);
-            }}
-          >
-            ×
-          </button>
-        )}
-      </div>
+  <input
+    type="text"
+    placeholder="Search icons, sets, business, social, UI..."
+    value={search}
+    onChange={(e) => {
+      setSearch(e.target.value);
+      setCurrentPage(1);
+    }}
+  />
+
+  {search && (
+    <button
+      className="clear-search"
+      onClick={() => {
+        setSearch("");
+        setCurrentPage(1);
+      }}
+    >
+      ×
+    </button>
+  )}
+
+  <button className="search-submit" aria-label="Search">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <line x1="16.5" y1="16.5" x2="21" y2="21" />
+    </svg>
+  </button>
+</div>
 
 
       {/* MAIN CONTENT */}
@@ -299,53 +324,7 @@ function Icons({ setPage }) {
                 )}
               </div>
 
-
-              {/* TYPE */}
-              <div className="filter-section">
-
-                <button
-                  className="filter-title"
-                  onClick={() => toggleSection("type")}
-                >
-                  <span>Type</span>
-                  <span>{openType ? "−" : "+"}</span>
-                </button>
-
-                {openType && (
-                  <div className="filter-options">
-
-                    <button
-                      className={type === "all" ? "selected" : ""}
-                      onClick={() =>
-                        changeFilter(setType, "all")
-                      }
-                    >
-                      All
-                    </button>
-
-                    <button
-                      className={type === "icon" ? "selected" : ""}
-                      onClick={() =>
-                        changeFilter(setType, "icon")
-                      }
-                    >
-                      Icon
-                    </button>
-
-                    <button
-                      className={type === "set" ? "selected" : ""}
-                      onClick={() =>
-                        changeFilter(setType, "set")
-                      }
-                    >
-                      Icon Set
-                    </button>
-
-                  </div>
-                )}
-              </div>
-
-
+  
               {/* PRICE */}
               <div className="filter-section">
 

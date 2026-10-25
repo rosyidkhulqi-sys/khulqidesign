@@ -1,7 +1,7 @@
 import { useState } from "react";
 import SideMenu from "./SideMenu";
 
-function PageHeader({ page, setPage, title, subtitle }) {
+function PageHeader({ page, setPage, brand = "Khulqidesign" }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -17,16 +17,17 @@ function PageHeader({ page, setPage, title, subtitle }) {
             className="header-logo"
             onClick={() => setPage("home")}
           />
+          <img
+            src="/KD%20Logogram.png"
+            alt="Khulqidesign"
+            className="header-wordmark"
+            onClick={() => setPage("home")}
+          />
         </div>
 
         <button className="header-downloads" onClick={() => setPage("downloads")}>
           ⬇ Downloads
         </button>
-      </div>
-
-      <div className="page-title">
-        <h1>{title}</h1>
-        <p>{subtitle}</p>
       </div>
 
       <SideMenu

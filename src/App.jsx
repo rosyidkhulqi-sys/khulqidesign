@@ -42,6 +42,14 @@ if (page === "downloads") {
     </>
   );
 }
+if (page === "vectors") {
+  return (
+    <>
+      <Vectors setPage={setPage} />
+      <Footer language={language} setLanguage={setLanguage} setPage={setPage} />
+    </>
+  );
+}
 
 if (page === "login") {
   return <Login setPage={setPage} />;
