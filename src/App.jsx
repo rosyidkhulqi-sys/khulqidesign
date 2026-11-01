@@ -1,6 +1,7 @@
 import Footer from "./components/Footer";
 import PageHeader from "./components/PageHeader";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { supabase } from "./lib/supabaseClient";
 import "./styles/App.css";
 
 import Home from "./pages/home/Home";
@@ -21,10 +22,26 @@ function App() {
   const [createDraft, setCreateDraft] = useState(null);
   // search typed on the home page, handed to the library page it opens
   const [searchQuery, setSearchQuery] = useState("");
+  // the signed-in Supabase user, or null when logged out
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
 
   const go = (nextPage, query = "") => {
     setSearchQuery(query);
     setPage(nextPage);
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+    go("home");
+    window.scrollTo(0, 0);
   };
 
   const customize = (template) => {
@@ -58,7 +75,7 @@ function App() {
   // every page shares the header; the editor fills the screen, so it has no footer
   return (
     <>
-      <PageHeader page={page} setPage={go} />
+      <PageHeader page={page} setPage={go} user={user} onLogout={logout} />
       {pages[page] ?? pages.home}
       {page !== "create" && (
         <Footer language={language} setLanguage={setLanguage} setPage={go} />

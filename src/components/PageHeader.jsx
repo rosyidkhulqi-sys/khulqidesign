@@ -1,6 +1,15 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import SideMenu from "./SideMenu";
+import { accountInfo } from "../lib/account";
 import "./PageHeader.css";
+
+function Avatar({ info }) {
+  return info.avatar ? (
+    <img className="site-avatar" src={info.avatar} alt="" referrerPolicy="no-referrer" />
+  ) : (
+    <span className="site-avatar">{info.initial}</span>
+  );
+}
 
 const navItems = [
   { page: "icons", label: "Icons" },
@@ -11,14 +20,32 @@ const navItems = [
 ];
 
 // The site header shared by every page; App renders it above each page.
-function PageHeader({ page, setPage }) {
+function PageHeader({ page, setPage, user, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const accountRef = useRef(null);
 
   const go = (target) => (e) => {
     e.preventDefault();
+    setAccountOpen(false);
     setPage(target);
     window.scrollTo(0, 0);
   };
+
+  // close the account menu on a click outside or on Escape
+  useEffect(() => {
+    if (!accountOpen) return;
+    const onClick = (e) => !accountRef.current?.contains(e.target) && setAccountOpen(false);
+    const onKey = (e) => e.key === "Escape" && setAccountOpen(false);
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [accountOpen]);
+
+  const info = accountInfo(user);
 
   return (
     <>
@@ -53,8 +80,52 @@ function PageHeader({ page, setPage }) {
             </svg>
             <span>Downloads</span>
           </a>
-          <a href="#" className="site-login" onClick={go("login")}>Log in</a>
-          <a href="#" className="site-register" onClick={go("register")}>Register</a>
+          {user ? (
+            <div className="site-account-menu" ref={accountRef}>
+              <button
+                className={`site-account-button ${accountOpen ? "open" : ""}`}
+                onClick={() => setAccountOpen(!accountOpen)}
+                aria-haspopup="menu"
+                aria-expanded={accountOpen}
+              >
+                <Avatar info={info} />
+                <span className="site-account-name">{info.name}</span>
+                <svg className="site-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+
+              {accountOpen && (
+                <div className="site-account-dropdown" role="menu">
+                  <div className="site-account-head">
+                    <Avatar info={info} />
+                    <div>
+                      <strong>{info.name}</strong>
+                      <small>{info.email}</small>
+                    </div>
+                  </div>
+                  <a href="#" role="menuitem" onClick={go("downloads")}>Your downloads</a>
+                  <a href="#" role="menuitem" onClick={go("create")}>Your designs</a>
+                  <hr />
+                  <button
+                    role="menuitem"
+                    className="danger"
+                    onClick={() => {
+                      setAccountOpen(false);
+                      onLogout();
+                    }}
+                  >
+                    Log out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <a href="#" className="site-login" onClick={go("login")}>Log in</a>
+              <a href="#" className="site-register" onClick={go("register")}>Register</a>
+            </>
+          )}
         </div>
 
         <button className="site-menu-button" onClick={() => setMenuOpen(true)} aria-label="Open menu">
@@ -64,7 +135,14 @@ function PageHeader({ page, setPage }) {
         </button>
       </header>
 
-      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} page={page} setPage={setPage} />
+      <SideMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        page={page}
+        setPage={setPage}
+        user={user}
+        onLogout={onLogout}
+      />
     </>
   );
 }

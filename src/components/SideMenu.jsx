@@ -1,4 +1,5 @@
 import "./SideMenu.css";
+import { accountInfo } from "../lib/account";
 
 const menuItems = [
   { key: "icons", label: "Icons" },
@@ -8,13 +9,15 @@ const menuItems = [
   { key: "create", label: "Create" },
 ];
 
-function SideMenu({ open, onClose, page, setPage }) {
+function SideMenu({ open, onClose, page, setPage, user, onLogout }) {
   const go = (p) => (e) => {
     e.preventDefault();
     setPage(p);
     onClose();
     window.scrollTo(0, 0);
   };
+
+  const info = accountInfo(user);
 
   return (
     <>
@@ -34,12 +37,19 @@ function SideMenu({ open, onClose, page, setPage }) {
           <button className="sidemenu-close" onClick={onClose}>✕</button>
         </div>
 
-        <div className="sidemenu-auth">
-          <a href="#" onClick={go("login")}>Login</a>
-          <a href="#" className="sidemenu-register" onClick={go("register")}>
-            Register
-          </a>
-        </div>
+        {user ? (
+          <div className="sidemenu-user">
+            <strong>{info.name}</strong>
+            <small>{info.email}</small>
+          </div>
+        ) : (
+          <div className="sidemenu-auth">
+            <a href="#" onClick={go("login")}>Login</a>
+            <a href="#" className="sidemenu-register" onClick={go("register")}>
+              Register
+            </a>
+          </div>
+        )}
 
         <p className="sidemenu-label">BROWSE</p>
         {menuItems.map((item) => (
@@ -52,7 +62,7 @@ function SideMenu({ open, onClose, page, setPage }) {
             {item.label}
           </a>
         ))}
-        
+
         <p className="sidemenu-label" style={{ marginTop: 24 }}>ACCOUNT</p>
         <a href="#" className={`sidemenu-link ${page === "downloads" ? "active" : ""}`} onClick={go("downloads")}>
           Your Downloads
@@ -61,6 +71,20 @@ function SideMenu({ open, onClose, page, setPage }) {
         <a href="#" className="sidemenu-link" onClick={go("home")}>
           Home
         </a>
+
+        {user && (
+          <a
+            href="#"
+            className="sidemenu-link sidemenu-logout"
+            onClick={(e) => {
+              e.preventDefault();
+              onClose();
+              onLogout();
+            }}
+          >
+            Log out
+          </a>
+        )}
       </aside>
     </>
   );

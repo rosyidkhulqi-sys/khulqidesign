@@ -52,6 +52,19 @@
 }
 .sidemenu-auth a.sidemenu-register { background: #e7212e; border-color: #e7212e; }
 
+.sidemenu-user {
+  margin-bottom: 32px;
+  padding: 14px 16px;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+}
+.sidemenu-user strong,
+.sidemenu-user small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidemenu-user strong { color: white; font-size: 16px; }
+.sidemenu-user small { margin-top: 4px; color: #8d939b; font-size: 13px; }
+
+.sidemenu-link.sidemenu-logout { color: #ff6b74; }
+
 .sidemenu-label {
   color: #666;
   font-size: 12px;
