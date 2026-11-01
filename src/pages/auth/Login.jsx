@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
+import AuthLayout, { GoogleIcon } from "./AuthLayout";
 
 function Login({ setPage }) {
   const [email, setEmail] = useState("");
@@ -36,56 +37,53 @@ function Login({ setPage }) {
   };
 
   return (
-    <div className="login-page">
-      <div className="login-box">
-        <h2>Login</h2>
+    <AuthLayout setPage={setPage}>
+      <h1>Log in</h1>
+      <p className="auth-sub">Welcome back. Log in to continue to Khulqidesign.</p>
 
-        {error && <p className="error-msg">{error}</p>}
+      {error && <p className="auth-error">{error}</p>}
 
-        <form onSubmit={handleLogin}>
+      <button type="button" onClick={handleGoogle} className="auth-google">
+        <GoogleIcon /> Continue with Google
+      </button>
+
+      <div className="auth-divider"><span>or log in with email</span></div>
+
+      <form onSubmit={handleLogin}>
+        <label>
+          Email
           <input
             type="email"
-            placeholder="Email"
+            placeholder="you@example.com"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
+        </label>
 
+        <label>
+          Password
           <input
             type="password"
-            placeholder="Password"
+            placeholder="Your password"
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+        </label>
 
-          <button type="submit" disabled={loading}>
-            {loading ? "Loading..." : "Login"}
-          </button>
-        </form>
-        <button type="button" onClick={handleGoogle} className="google-btn">
-          Sign in with Google
+        <button type="submit" className="auth-submit" disabled={loading}>
+          {loading ? "Logging in..." : "Log in"}
         </button>
-        <p>
-          Don't have an account?{" "}
-          <span
-            onClick={() => setPage("register")}
-            className="link"
-          >
-            Sign Up
-          </span>
-        </p>
+      </form>
 
-        <p>
-          <span
-            onClick={() => setPage("home")}
-            className="link"
-          >
-            ← Back to Home
-          </span>
-        </p>
-      </div>
-    </div>
+      <p className="auth-switch">
+        Don't have an account?{" "}
+        <button type="button" onClick={() => setPage("register")}>Sign up</button>
+      </p>
+    </AuthLayout>
   );
 }
 
