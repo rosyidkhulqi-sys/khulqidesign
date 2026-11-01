@@ -1,6 +1,6 @@
 import "./Icons.css";
 import { useState } from "react";
-import "./Footer.css";
+import "../../components/Footer.css";
 
 function Icons({ initialSearch = "" }) {
   const [search, setSearch] = useState(initialSearch);

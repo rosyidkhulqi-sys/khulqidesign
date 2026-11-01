@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
-import AssetModal from "./AssetModal";
-import "./Vectors.css";
+import AssetModal from "../../components/AssetModal";
+import "../vectors/Vectors.css";
 import "./Footage.css";
 
 const previews = ["/preview4.jpg", "/preview2.jpg", "/preview3.jpg", "/preview1.jpg"];

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { categories } from "./categories";
+import { categories } from "../../data/categories";
 import "./Home.css";
 
 const libraryLinks = [

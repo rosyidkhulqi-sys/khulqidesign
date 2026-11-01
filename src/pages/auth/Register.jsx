@@ -1,18 +1,19 @@
 import { useState } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase } from "../../lib/supabaseClient";
 
-function Login({ setPage }) {
+function Register({ setPage }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
 
-  const handleLogin = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -20,29 +21,18 @@ function Login({ setPage }) {
     if (error) {
       setError(error.message);
     } else {
-      setPage("home");
+      setMessage("Cek email kamu untuk konfirmasi akun!");
     }
-
     setLoading(false);
-  };
-  
-    const handleGoogle = async () => {
-    setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin },
-    });
-    if (error) setError(error.message);
   };
 
   return (
     <div className="login-page">
       <div className="login-box">
-        <h2>Login</h2>
-
+        <h2>Create Account</h2>
         {error && <p className="error-msg">{error}</p>}
-
-        <form onSubmit={handleLogin}>
+        {message && <p className="success-msg">{message}</p>}
+        <form onSubmit={handleRegister}>
           <input
             type="email"
             placeholder="Email"
@@ -50,7 +40,6 @@ function Login({ setPage }) {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-
           <input
             type="password"
             placeholder="Password"
@@ -58,30 +47,14 @@ function Login({ setPage }) {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-
           <button type="submit" disabled={loading}>
-            {loading ? "Loading..." : "Login"}
+            {loading ? "Loading..." : "Daftar"}
           </button>
         </form>
-        <button type="button" onClick={handleGoogle} className="google-btn">
-          Sign in with Google
-        </button>
         <p>
-          Don't have an account?{" "}
-          <span
-            onClick={() => setPage("register")}
-            className="link"
-          >
-            Sign Up
-          </span>
-        </p>
-
-        <p>
-          <span
-            onClick={() => setPage("home")}
-            className="link"
-          >
-            ← Back to Home
+          Already have an account?{" "}
+          <span onClick={() => setPage("login")} className="link">
+            Login
           </span>
         </p>
       </div>
@@ -89,4 +62,4 @@ function Login({ setPage }) {
   );
 }
 
-export default Login;
+export default Register;

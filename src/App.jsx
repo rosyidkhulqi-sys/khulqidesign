@@ -1,18 +1,18 @@
-import Footer from "./Footer";
-import PageHeader from "./PageHeader";
+import Footer from "./components/Footer";
+import PageHeader from "./components/PageHeader";
 import { lazy, Suspense, useState } from "react";
-import "./App.css";
+import "./styles/App.css";
 
-import Home from "./Home";
-import Icons from "./Icons";
-import Vectors from "./Vectors";
-import Templates from "./Templates";
-import Footage from "./Footage";
-import Login from "./Login";
-import Register from "./Register";
-import Downloads from "./Downloads";
+import Home from "./pages/home/Home";
+import Icons from "./pages/icons/Icons";
+import Vectors from "./pages/vectors/Vectors";
+import Templates from "./pages/templates/Templates";
+import Footage from "./pages/footage/Footage";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+import Downloads from "./pages/downloads/Downloads";
 // the editor pulls in the canvas library, so load it only when opened
-const Create = lazy(() => import("./Create"));
+const Create = lazy(() => import("./pages/create/Create"));
 
 
 function App() {

@@ -1,4 +1,4 @@
-import "./Icons.css";
+import "../icons/Icons.css";
 
 function Downloads() {
   return (

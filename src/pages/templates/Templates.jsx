@@ -1,7 +1,7 @@
 import { useState } from "react";
-import TemplateThumb from "./TemplateThumb";
-import { allTemplates, templateCategories } from "./templatesData";
-import "./Vectors.css";
+import TemplateThumb from "../../components/TemplateThumb";
+import { allTemplates, templateCategories } from "../../data/templatesData";
+import "../vectors/Vectors.css";
 import "./Templates.css";
 
 function Templates({ onCustomize, initialSearch = "" }) {

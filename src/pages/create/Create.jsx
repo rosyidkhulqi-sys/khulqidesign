@@ -14,8 +14,8 @@ import {
   util,
 } from "fabric";
 import Icon from "./CreateIcons";
-import TemplateThumb from "./TemplateThumb";
-import { allTemplates } from "./templatesData";
+import TemplateThumb from "../../components/TemplateThumb";
+import { allTemplates } from "../../data/templatesData";
 import {
   artboardPresets,
   fonts,
