@@ -14,6 +14,7 @@ import {
   util,
 } from "fabric";
 import PageHeader from "./PageHeader";
+import Icon from "./CreateIcons";
 import TemplateThumb from "./TemplateThumb";
 import { allTemplates } from "./templatesData";
 import {
@@ -29,16 +30,16 @@ import {
 import "./Create.css";
 
 const DRAFT_KEY = "kd-create-draft";
+const NAME_KEY = "kd-create-name";
 const DRAG_TYPE = "application/x-kd-item";
+const UNTITLED = "Untitled design";
 
-const tabs = [
-  { id: "templates", label: "Templates", icon: "▦" },
-  { id: "elements", label: "Elements", icon: "◆" },
-  { id: "text", label: "Text", icon: "T" },
-  { id: "icons", label: "Icons", icon: "★" },
-  { id: "vectors", label: "Vectors", icon: "✎" },
-  { id: "footage", label: "Footage", icon: "▶" },
-  { id: "uploads", label: "Uploads", icon: "⇪" },
+const tabs = ["templates", "elements", "text", "icons", "vectors", "footage", "uploads"];
+
+const exportFormats = [
+  ["png", "PNG", "High quality image"],
+  ["jpg", "JPG", "Smaller file size"],
+  ["svg", "SVG", "Scalable vector"],
 ];
 
 function loadDraft() {
@@ -48,6 +49,23 @@ function loadDraft() {
     return null;
   }
 }
+
+function loadName() {
+  try {
+    return localStorage.getItem(NAME_KEY) || UNTITLED;
+  } catch {
+    return UNTITLED;
+  }
+}
+
+const isLocked = (obj) => Boolean(obj?.lockMovementX);
+
+// web fonts only download once something uses them, and the canvas would
+// otherwise draw text with a fallback font before they arrive
+const loadFonts = () =>
+  Promise.all(
+    fonts.flatMap((f) => [400, 700].map((w) => document.fonts.load(`${w} 40px "${f}"`)))
+  ).catch(() => {});
 
 const toHex = (c) => `#${new Color(c).toHex().toLowerCase()}`;
 
@@ -134,6 +152,10 @@ function Create({ setPage, draft, clearDraft }) {
   const [custom, setCustom] = useState({ w: 1080, h: 1080 });
   const [lockRatio, setLockRatio] = useState(true);
   const [uploads, setUploads] = useState([]);
+  const [name, setName] = useState(loadName);
+  const [menu, setMenu] = useState(null);
+  const [isEmpty, setIsEmpty] = useState(true);
+  const [dragging, setDragging] = useState(false);
 
   const zoom =
     zoomMode === "fit"
@@ -220,7 +242,17 @@ function Create({ setPage, draft, clearDraft }) {
 
   /* ---------- documents ---------- */
 
+  const renameDesign = (value) => {
+    setName(value);
+    try {
+      localStorage.setItem(NAME_KEY, value);
+    } catch {
+      /* storage unavailable */
+    }
+  };
+
   const newArtboard = (w, h) => {
+    renameDesign(UNTITLED);
     const c = fc.current;
     c.clear();
     c.backgroundColor = "#ffffff";
@@ -239,8 +271,10 @@ function Create({ setPage, draft, clearDraft }) {
     c.backgroundColor = "#ffffff";
     setBg("#ffffff");
     setActive(null);
+    setName(UNTITLED);
     try {
       localStorage.removeItem(DRAFT_KEY);
+      localStorage.removeItem(NAME_KEY);
     } catch {
       /* storage unavailable */
     }
@@ -255,11 +289,9 @@ function Create({ setPage, draft, clearDraft }) {
       return;
     }
     // text metrics are wrong if the web font is not loaded yet
-    await Promise.all([
-      document.fonts.load('400 40px "Space Grotesk"'),
-      document.fonts.load('700 40px "Space Grotesk"'),
-    ]).catch(() => {});
+    await loadFonts();
     const objects = await sceneObjects(t.scene);
+    renameDesign(t.title[0].toUpperCase() + t.title.slice(1));
     c.clear();
     c.backgroundColor = t.scene.bg;
     setBg(t.scene.bg);
@@ -305,7 +337,7 @@ function Create({ setPage, draft, clearDraft }) {
   const addText = (preset, point) => {
     const k = unit() / 1080;
     const text = new Textbox(preset.label, {
-      width: boardRef.current.w * 0.6,
+      width: boardRef.current.w * 0.8,
       fontSize: Math.round(preset.size * k),
       fontWeight: preset.weight,
       fontFamily: "Space Grotesk",
@@ -471,6 +503,19 @@ function Create({ setPage, draft, clearDraft }) {
     render();
   };
 
+  const toggleLock = () => {
+    const lock = !isLocked(active);
+    active.set({
+      lockMovementX: lock,
+      lockMovementY: lock,
+      lockScalingX: lock,
+      lockScalingY: lock,
+      lockRotation: lock,
+      hasControls: !lock,
+    });
+    render();
+  };
+
   const setBackground = (color) => {
     fc.current.backgroundColor = color;
     setBg(color);
@@ -495,7 +540,8 @@ function Create({ setPage, draft, clearDraft }) {
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = `khulqidesign-${b.w}x${b.h}.${format}`;
+    const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    a.download = `${slug || "khulqidesign"}-${b.w}x${b.h}.${format}`;
     a.click();
   };
 
@@ -511,12 +557,24 @@ function Create({ setPage, draft, clearDraft }) {
     commit();
   });
 
+  const syncEmpty = useEffectEvent(() => {
+    setIsEmpty(fc.current.getObjects().length === 0);
+  });
+
+  // hide the floating toolbar while an element is being dragged or resized
+  const onTransform = useEffectEvent(() => setDragging(true));
+  const onMouseUp = useEffectEvent(() => {
+    setDragging(false);
+    refresh();
+  });
+
   const start = useEffectEvent(async () => {
     if (draft) {
       await openTemplate(draft, false);
       clearDraft();
       return;
     }
+    await loadFonts();
     const saved = loadDraft();
     if (saved) await restore(saved);
     resetHistory();
@@ -555,6 +613,14 @@ function Create({ setPage, draft, clearDraft }) {
     c.on("selection:updated", syncSelection);
     c.on("selection:cleared", syncSelection);
     c.on("object:modified", onModified);
+    c.on("object:added", syncEmpty);
+    c.on("object:removed", syncEmpty);
+    c.on("object:moving", onTransform);
+    c.on("object:scaling", onTransform);
+    c.on("object:rotating", onTransform);
+    c.on("mouse:up", onMouseUp);
+    c.on("text:editing:entered", syncSelection);
+    c.on("text:editing:exited", syncSelection);
     Promise.resolve().then(start);
 
     return () => {
@@ -591,6 +657,20 @@ function Create({ setPage, draft, clearDraft }) {
   const isSelection = active instanceof ActiveSelection;
   const isGroup = active instanceof Group && !isSelection;
   const hasStroke = active instanceof Rect || active instanceof Circle || active instanceof Triangle;
+  const locked = isLocked(active);
+
+  // place the quick-action toolbar above the selection (below it near the top edge)
+  let floatPos = null;
+  if (active && !dragging && !active.isEditing) {
+    const pts = active.getCoords();
+    const xs = pts.map((p) => p.x);
+    const ys = pts.map((p) => p.y);
+    const top = Math.min(...ys) * zoom;
+    floatPos = {
+      left: ((Math.min(...xs) + Math.max(...xs)) / 2) * zoom,
+      top: top > 56 ? top - 52 : Math.max(...ys) * zoom + 12,
+    };
+  }
 
   return (
     <section className="create-page">
@@ -599,10 +679,42 @@ function Create({ setPage, draft, clearDraft }) {
       <div className="create-editor">
         {/* TOP BAR */}
         <div className="create-topbar">
-          <button className="ct-btn primary" onClick={() => setShowNew(true)}>+ New</button>
-          <button className="ct-btn" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)">↶</button>
-          <button className="ct-btn" onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)">↷</button>
-          <button className="ct-btn danger" onClick={deleteDesign} title="Delete design">🗑 Delete</button>
+          <div className="ct-menu">
+            <button className="ct-btn" onClick={() => setMenu(menu === "file" ? null : "file")}>
+              <Icon name="menu" /> File
+            </button>
+            {menu === "file" && (
+              <div className="ct-dropdown">
+                <button onClick={() => { setMenu(null); setShowNew(true); }}>
+                  <Icon name="plus" /> New design
+                </button>
+                <button onClick={() => { setMenu(null); setTab("templates"); }}>
+                  <Icon name="templates" /> Start from a template
+                </button>
+                <hr />
+                <button className="danger" onClick={() => { setMenu(null); deleteDesign(); }}>
+                  <Icon name="trash" /> Delete design
+                </button>
+              </div>
+            )}
+          </div>
+
+          <input
+            className="ct-name"
+            value={name}
+            onChange={(e) => renameDesign(e.target.value)}
+            onBlur={() => !name.trim() && renameDesign(UNTITLED)}
+            aria-label="Design name"
+          />
+
+          <div className="ct-history">
+            <button className="ct-icon-btn" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)">
+              <Icon name="undo" />
+            </button>
+            <button className="ct-icon-btn" onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)">
+              <Icon name="redo" />
+            </button>
+          </div>
 
           <span className="ct-size">{board.w} × {board.h} px</span>
 
@@ -617,21 +729,31 @@ function Create({ setPage, draft, clearDraft }) {
             ))}
           </select>
 
-          <div className="ct-export">
-            <span>Download</span>
-            <button className="ct-btn" onClick={() => exportFile("png")}>PNG</button>
-            <button className="ct-btn" onClick={() => exportFile("jpg")}>JPG</button>
-            <button className="ct-btn" onClick={() => exportFile("svg")}>SVG</button>
+          <div className="ct-menu ct-export">
+            <button className="ct-btn primary" onClick={() => setMenu(menu === "download" ? null : "download")}>
+              <Icon name="download" /> Download <Icon name="chevron" size={14} />
+            </button>
+            {menu === "download" && (
+              <div className="ct-dropdown is-right">
+                {exportFormats.map(([format, label, hint]) => (
+                  <button key={format} onClick={() => { setMenu(null); exportFile(format); }}>
+                    <strong>{label}</strong>
+                    <small>{hint}</small>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
+        {menu && <div className="ct-backdrop" onClick={() => setMenu(null)} />}
 
         <div className="create-body">
           {/* TAB RAIL */}
           <nav className="create-rail">
             {tabs.map((t) => (
-              <button key={t.id} className={tab === t.id ? "active" : ""} onClick={() => setTab(t.id)}>
-                <span>{t.icon}</span>
-                {t.label}
+              <button key={t} className={tab === t ? "active" : ""} onClick={() => setTab(t)}>
+                <Icon name={t} size={22} />
+                {t[0].toUpperCase() + t.slice(1)}
               </button>
             ))}
           </nav>
@@ -751,6 +873,35 @@ function Create({ setPage, draft, clearDraft }) {
           >
             <div className="create-artboard">
               <canvas ref={canvasEl} />
+
+              {floatPos && (
+                <div className="ct-float" style={floatPos}>
+                  <button onClick={duplicate} title="Duplicate (Ctrl+D)"><Icon name="copy" /></button>
+                  <button onClick={() => arrange("forward")} title="Bring forward"><Icon name="forward" /></button>
+                  <button onClick={() => arrange("backward")} title="Send backward"><Icon name="backward" /></button>
+                  {!isSelection && (
+                    <button onClick={toggleLock} title={locked ? "Unlock" : "Lock position"} className={locked ? "on" : ""}>
+                      <Icon name={locked ? "lock" : "unlock"} />
+                    </button>
+                  )}
+                  <span />
+                  <button onClick={remove} className="danger" title="Delete element (Del)"><Icon name="trash" /></button>
+                </div>
+              )}
+
+              {isEmpty && !showNew && (
+                <div className="ct-empty">
+                  <p>Start with a template, or add text, shapes and icons from the left panel.</p>
+                  <div>
+                    <button onClick={() => setTab("templates")}>
+                      <Icon name="templates" /> Browse templates
+                    </button>
+                    <button onClick={() => addText(textPresets[0])}>
+                      <Icon name="text" /> Add a heading
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -823,7 +974,7 @@ function Create({ setPage, draft, clearDraft }) {
                           onClick={() => setProp({ textAlign: a })}
                           title={`Align ${a}`}
                         >
-                          {a === "left" ? "⇤" : a === "center" ? "↔" : "⇥"}
+                          <Icon name={`align${a[0].toUpperCase()}${a.slice(1)}`} size={16} />
                         </button>
                       ))}
                     </div>
@@ -895,7 +1046,7 @@ function Create({ setPage, draft, clearDraft }) {
                       onClick={() => setLockRatio(!lockRatio)}
                       title="Keep proportions"
                     >
-                      {lockRatio ? "🔒" : "🔓"}
+                      <Icon name={lockRatio ? "lock" : "unlock"} size={15} />
                     </button>
                   )}
                 </div>
@@ -924,20 +1075,26 @@ function Create({ setPage, draft, clearDraft }) {
                 </label>
 
                 <p className="cp-label">Arrange</p>
-                <div className="pp-buttons">
-                  <button onClick={() => arrange("front")} title="Bring to front">⤒</button>
-                  <button onClick={() => arrange("forward")} title="Bring forward">↑</button>
-                  <button onClick={() => arrange("backward")} title="Send backward">↓</button>
-                  <button onClick={() => arrange("back")} title="Send to back">⤓</button>
-                  <button onClick={() => setProp({ flipX: !active.flipX })} title="Flip horizontal">⇋</button>
-                  <button onClick={() => setProp({ flipY: !active.flipY })} title="Flip vertical">⇵</button>
+                <div className="pp-grid">
+                  <button onClick={() => arrange("front")}><Icon name="front" size={16} /> To front</button>
+                  <button onClick={() => arrange("back")}><Icon name="back" size={16} /> To back</button>
+                  <button onClick={() => arrange("forward")}><Icon name="forward" size={16} /> Forward</button>
+                  <button onClick={() => arrange("backward")}><Icon name="backward" size={16} /> Backward</button>
+                  <button onClick={() => setProp({ flipX: !active.flipX })}><Icon name="flipH" size={16} /> Flip H</button>
+                  <button onClick={() => setProp({ flipY: !active.flipY })}><Icon name="flipV" size={16} /> Flip V</button>
                 </div>
 
-                <div className="pp-actions">
-                  {isSelection && <button onClick={group}>Group</button>}
-                  {isGroup && <button onClick={ungroup}>Ungroup</button>}
-                  <button onClick={duplicate}>Duplicate</button>
-                  <button className="danger" onClick={remove}>Delete</button>
+                <p className="cp-label">Actions</p>
+                <div className="pp-grid">
+                  {isSelection && <button onClick={group}><Icon name="group" size={16} /> Group</button>}
+                  {isGroup && <button onClick={ungroup}><Icon name="ungroup" size={16} /> Ungroup</button>}
+                  {!isSelection && (
+                    <button onClick={toggleLock} className={locked ? "on" : ""}>
+                      <Icon name={locked ? "lock" : "unlock"} size={16} /> {locked ? "Unlock" : "Lock"}
+                    </button>
+                  )}
+                  <button onClick={duplicate}><Icon name="copy" size={16} /> Duplicate</button>
+                  <button className="danger wide" onClick={remove}><Icon name="trash" size={16} /> Delete element</button>
                 </div>
               </>
             )}

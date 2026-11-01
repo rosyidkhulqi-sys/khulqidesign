@@ -13,6 +13,8 @@ export const artboardPresets = [
 
 export const fonts = [
   "Space Grotesk",
+  "DM Sans",
+  "Instrument Serif",
   "Arial",
   "Helvetica",
   "Georgia",
