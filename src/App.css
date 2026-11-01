@@ -673,46 +673,6 @@ ______________________________HOME
 }
 
 
-/* LANGUAGE SWITCHER */
-.language-switcher {
-  position: relative;
-  display: inline-block;
-  z-index: 9999;
-}
-
-.language-btn {
-  background: transparent;
-  color: white;
-  border: 1px solid white;
-  border-radius: 999px;
-  padding: 12px 24px;
-  cursor: pointer;
-  font-size: 15px;
-  position: relative;
-}
-
-.language-dropdown {
-  position: absolute;
-  top: 60px;
-  left: 0;
-  width: 220px;
-  background: #000;
-  border: 1px solid #222;
-  border-radius: 16px;
-  overflow: hidden;
-  z-index: 99999;
-}
-
-.language-item {
-  padding: 14px 18px;
-  color: #aaa;
-  cursor: pointer;
-}
-
-.language-item:hover {
-  background: #111;
-  color: #101010;
-}
 /* LOGO */
 .logo{
   display:flex;
