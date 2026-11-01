@@ -22,57 +22,26 @@
 }
 
 
-/* HEADER */
-
-.home-header {
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  height: 88px;
-  padding: 0 var(--page-x);
-  background: rgba(5, 5, 5, 0.92);
-  border-bottom: 1px solid var(--line);
-  backdrop-filter: blur(18px);
-}
-
-.home-brand { display: inline-flex; align-items: center; gap: 12px; justify-self: start; }
-.home-brand-mark { width: 50px; height: 50px; object-fit: contain; }
-/* the wordmark image has empty space around the letters, so it needs extra height */
-.home-brand-word { height: 56px; width: auto; object-fit: contain; }
-
-.home-nav { display: flex; gap: 40px; font-size: 17px; font-weight: 500; }
-.home-nav a { transition: color 0.2s; }
-.home-nav a:hover { color: var(--red); }
-
-.home-account { display: flex; align-items: center; gap: 12px; justify-self: end; }
-.home-login,
-.home-register { padding: 13px 24px; font-size: 16px; font-weight: 600; }
-.home-register { background: var(--red); border-radius: 999px; color: white; transition: background 0.2s; }
-.home-register:hover { background: var(--red-dark); }
-
-.home-menu-button { display: none; background: none; border: 0; justify-self: end; }
-
-
 /* HERO */
 
+/* a column so the counter row sits under the content and can never overlap it */
 .home-hero {
   position: relative;
-  min-height: calc(100svh - 88px);
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100svh - var(--header-h));
   overflow: hidden;
 }
 
-.home-grid-room { position: absolute; inset: 0; opacity: 0.48; perspective: 650px; }
+.home-grid-room { position: absolute; inset: 0; opacity: 0.85; perspective: 650px; }
 .home-grid-room::before,
 .home-grid-room::after,
 .home-grid-room div {
   content: "";
   position: absolute;
   background-image:
-    linear-gradient(var(--line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    linear-gradient(#2c2f32 1px, transparent 1px),
+    linear-gradient(90deg, #2c2f32 1px, transparent 1px);
   background-size: 64px 64px;
 }
 .home-grid-room div { inset: 7% 10% 0; transform: rotateX(61deg) translateY(-16%); transform-origin: center top; }
@@ -82,15 +51,17 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, transparent 0, rgba(5, 5, 5, 0.38) 45%, var(--black) 82%);
+  background: radial-gradient(ellipse at center, rgba(5, 5, 5, 0.55) 0, rgba(5, 5, 5, 0.15) 50%, var(--black) 95%);
 }
 
 .home-hero-content {
   position: relative;
   z-index: 2;
+  flex: 1;
+  width: 100%;
   max-width: 1000px;
   margin: 0 auto;
-  padding: 14vh 28px 16vh;
+  padding: 9vh 28px 6vh;
   text-align: center;
 }
 
@@ -107,7 +78,7 @@
 .home-kicker span { width: 8px; height: 8px; background: var(--red); }
 
 .home-hero h1 {
-  margin: 8vh 0 5vh;
+  margin: 5vh 0 4vh;
   font-size: clamp(68px, 9.2vw, 142px);
   font-weight: 600;
   letter-spacing: -0.085em;
@@ -126,9 +97,9 @@
 
 .home-hero-copy {
   max-width: 660px;
-  margin: 0 auto 42px;
+  margin: 0 auto 36px;
   color: #b2b3b4;
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1.6;
 }
 
@@ -170,32 +141,44 @@
 
 .home-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 22px; }
 .home-chips button {
-  padding: 8px 15px;
+  padding: 10px 20px;
   background: rgba(20, 20, 21, 0.8);
-  border: 1px solid var(--line);
+  border: 1px solid #333;
   border-radius: 999px;
-  color: #bbb;
-  font-size: 11px;
+  color: #ccc;
+  font-size: 14px;
   transition: all 0.2s;
 }
 .home-chips button:hover { border-color: var(--red); color: white; }
 
-.home-counter {
-  position: absolute;
-  left: var(--page-x);
-  bottom: 4vw;
+.home-studio-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 28px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.home-studio-link strong { color: var(--white); font-weight: 600; }
+.home-studio-link .home-icon { width: 16px; height: 16px; color: var(--red); transition: transform 0.2s; }
+.home-studio-link:hover strong { color: var(--red); }
+.home-studio-link:hover .home-icon { transform: translateX(4px); }
+
+.home-hero-bottom {
+  position: relative;
   z-index: 3;
   display: flex;
-  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 0 var(--page-x) 3vw;
 }
+
+.home-counter { display: flex; flex-direction: column; }
 .home-counter strong { font-size: 26px; }
 .home-counter span { color: var(--muted); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
 
 .home-scroll-cue {
-  position: absolute;
-  right: var(--page-x);
-  bottom: 4vw;
-  z-index: 3;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -405,31 +388,20 @@
 
 /* RESPONSIVE */
 
-@media (max-width: 1200px) {
-  .home-nav { gap: 24px; font-size: 15px; }
-  .home-brand-word { height: 46px; }
-}
-
 @media (max-width: 950px) {
-  .home-header { grid-template-columns: 1fr auto; height: 74px; padding: 0 22px; }
-  .home-nav,
-  .home-account { display: none; }
-  .home-menu-button { display: block; }
   .home-asset-grid { grid-template-columns: repeat(2, 1fr); }
   .home-creator { grid-template-columns: 1fr; }
   .home-creator-art { min-height: 55vh; }
 }
 
 @media (max-width: 650px) {
-  .home-hero { min-height: calc(100svh - 74px); }
-  .home-hero-content { padding: 12vh 20px 16vh; }
-  .home-hero h1 { margin: 8vh 0 5vh; font-size: clamp(55px, 17vw, 90px); }
-  .home-hero-copy { font-size: 13px; }
+  .home-hero-content { padding: 8vh 20px 6vh; }
+  .home-hero h1 { margin: 5vh 0 4vh; font-size: clamp(55px, 17vw, 90px); }
   .home-search { grid-template-columns: auto 1fr; padding-left: 15px; }
   .home-search input { padding: 18px 12px; }
   .home-search button { grid-column: 1 / -1; min-height: 50px; }
-  .home-counter { left: 22px; bottom: 22px; }
-  .home-scroll-cue { right: 22px; bottom: 22px; }
+  .home-hero-copy { font-size: 15px; }
+  .home-hero-bottom { padding: 0 22px 22px; }
   .home-section-title { flex-direction: column; align-items: flex-start; }
   .home-assets,
   .home-services { padding: 90px 20px; }

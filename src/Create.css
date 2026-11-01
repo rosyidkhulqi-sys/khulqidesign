@@ -3,7 +3,7 @@
    ========================================================= */
 
 .create-page {
-  height: 100vh;
+  height: calc(100vh - var(--header-h));
   display: flex;
   flex-direction: column;
   padding: 20px 24px;

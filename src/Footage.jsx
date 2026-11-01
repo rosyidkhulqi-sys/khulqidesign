@@ -1,5 +1,4 @@
 import { useRef, useState } from "react";
-import PageHeader from "./PageHeader";
 import AssetModal from "./AssetModal";
 import "./Vectors.css";
 import "./Footage.css";
@@ -121,7 +120,7 @@ function FootageCard({ clip, onOpen }) {
   );
 }
 
-function Footage({ setPage, initialSearch = "" }) {
+function Footage({ initialSearch = "" }) {
   const [search, setSearch] = useState(initialSearch);
   const [resolution, setResolution] = useState("all");
   const [fps, setFps] = useState("all");
@@ -177,7 +176,6 @@ function Footage({ setPage, initialSearch = "" }) {
 
   return (
     <section className="vectors-page">
-      <PageHeader page="footage" setPage={setPage} />
 
       {/* SEARCH */}
       <div className="icon-search">

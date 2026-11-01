@@ -1,11 +1,10 @@
 import { useState } from "react";
-import PageHeader from "./PageHeader";
 import TemplateThumb from "./TemplateThumb";
 import { allTemplates, templateCategories } from "./templatesData";
 import "./Vectors.css";
 import "./Templates.css";
 
-function Templates({ setPage, onCustomize, initialSearch = "" }) {
+function Templates({ onCustomize, initialSearch = "" }) {
   const [search, setSearch] = useState(initialSearch);
   const [category, setCategory] = useState("all");
   const [orientation, setOrientation] = useState("all");
@@ -47,7 +46,6 @@ function Templates({ setPage, onCustomize, initialSearch = "" }) {
 
   return (
     <section className="vectors-page">
-      <PageHeader page="templates" setPage={setPage} />
 
       {/* SEARCH */}
       <div className="icon-search">

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import PageHeader from "./PageHeader";
 import "./Vectors.css";
 
 const previews = ["/preview2.jpg", "/preview3.jpg", "/preview4.jpg", "/preview1.jpg"];
@@ -18,7 +17,7 @@ const allVectors = Array.from({ length: 120 }, (_, i) => ({
 
 const ratio = { landscape: "4 / 3", portrait: "3 / 4", square: "1 / 1" };
 
-function Vectors({ setPage, initialSearch = "" }) {
+function Vectors({ initialSearch = "" }) {
   const [search, setSearch] = useState(initialSearch);
   const [format, setFormat] = useState("all");
   const [license, setLicense] = useState("all");
@@ -59,7 +58,6 @@ function Vectors({ setPage, initialSearch = "" }) {
 
   return (
     <section className="vectors-page">
-      <PageHeader page="vectors" setPage={setPage} />
 
       {/* SEARCH */}
       <div className="icon-search">

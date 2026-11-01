@@ -1,0 +1,100 @@
+/* SITE HEADER — shared by every page */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: var(--header-h);
+  padding: 0 var(--page-x);
+  background: rgba(5, 5, 5, 0.92);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(18px);
+  font-family: var(--font-sans);
+}
+
+.site-header a { color: var(--white); text-decoration: none; }
+
+.site-icon { width: 20px; height: 20px; flex-shrink: 0; }
+.site-icon * {
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.site-brand { display: inline-flex; align-items: center; gap: 12px; justify-self: start; }
+.site-brand-mark { width: 50px; height: 50px; object-fit: contain; }
+/* the wordmark image has empty space around the letters, so it needs extra height */
+.site-brand-word { height: 56px; width: auto; object-fit: contain; }
+
+.site-nav { display: flex; gap: 40px; font-size: 17px; font-weight: 500; }
+.site-nav a { position: relative; transition: color 0.2s; }
+.site-nav a:hover { color: var(--red); }
+.site-nav a.active { color: var(--red); }
+.site-nav a.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -8px;
+  height: 2px;
+  background: var(--red);
+}
+
+.site-account { display: flex; align-items: center; gap: 8px; justify-self: end; }
+
+.site-downloads {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s;
+}
+.site-downloads:hover { background: rgba(255, 255, 255, 0.07); }
+.site-header .site-downloads.active { color: var(--red); }
+
+.site-login,
+.site-register { padding: 13px 22px; font-size: 16px; font-weight: 600; }
+.site-login:hover { color: var(--red); }
+.site-header .site-register { background: var(--red); border-radius: 999px; color: white; transition: background 0.2s; }
+.site-register:hover { background: var(--red-dark); }
+
+.site-menu-button {
+  display: none;
+  justify-self: end;
+  padding: 6px;
+  background: none;
+  border: 0;
+  color: var(--white);
+  cursor: pointer;
+}
+
+/* when space runs out, drop the Downloads label and tighten gaps before shrinking text */
+@media (max-width: 1360px) {
+  .site-nav { gap: 28px; }
+  .site-downloads span { display: none; }
+  .site-login,
+  .site-register { padding: 13px 18px; }
+}
+
+@media (max-width: 1120px) {
+  .site-nav { gap: 22px; font-size: 15px; }
+  .site-brand-word { height: 46px; }
+}
+
+@media (max-width: 950px) {
+  .site-header { grid-template-columns: 1fr auto; padding: 0 22px; }
+  .site-nav,
+  .site-account { display: none; }
+  .site-menu-button { display: block; }
+}
+
+@media (max-width: 420px) {
+  .site-brand-word { height: 40px; }
+}

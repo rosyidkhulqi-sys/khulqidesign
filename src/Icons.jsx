@@ -1,9 +1,8 @@
-import PageHeader from "./PageHeader";
 import "./Icons.css";
 import { useState } from "react";
 import "./Footer.css";
 
-function Icons({ setPage, initialSearch = "" }) {
+function Icons({ initialSearch = "" }) {
   const [search, setSearch] = useState(initialSearch);
 
   const [category, setCategory] = useState("all");
@@ -91,17 +90,6 @@ function Icons({ setPage, initialSearch = "" }) {
   return (
     <section className="icons-page">
 
-      {/* HEADER */}
-      <PageHeader
-        page="icons"
-        setPage={setPage}
-        title="Icons Library"
-        subtitle={
-          search
-            ? `Search results for "${search}"`
-            : "Explore our icon collection"
-        }
-      />
 
      {/* SEARCH */}
 <div className="icon-search">

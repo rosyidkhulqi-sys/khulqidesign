@@ -1,4 +1,5 @@
 import Footer from "./Footer";
+import PageHeader from "./PageHeader";
 import { lazy, Suspense, useState } from "react";
 import "./App.css";
 
@@ -32,65 +33,6 @@ function App() {
     window.scrollTo(0, 0);
   };
 
-  const footer = <Footer language={language} setLanguage={setLanguage} setPage={go} />;
-
-  if (page === "templates") {
-    return (
-      <>
-        <Templates setPage={go} onCustomize={customize} initialSearch={searchQuery} />
-        {footer}
-      </>
-    );
-  }
-
-  if (page === "create") {
-    return (
-      <Suspense fallback={null}>
-        <Create
-          setPage={go}
-          draft={createDraft}
-          clearDraft={() => setCreateDraft(null)}
-        />
-      </Suspense>
-    );
-  }
-
-  if (page === "icons") {
-    return (
-      <>
-        <Icons setPage={go} initialSearch={searchQuery} />
-        {footer}
-      </>
-    );
-  }
-
-  if (page === "downloads") {
-    return (
-      <>
-        <Downloads setPage={go} />
-        {footer}
-      </>
-    );
-  }
-
-  if (page === "vectors") {
-    return (
-      <>
-        <Vectors setPage={go} initialSearch={searchQuery} />
-        {footer}
-      </>
-    );
-  }
-
-  if (page === "footage") {
-    return (
-      <>
-        <Footage setPage={go} initialSearch={searchQuery} />
-        {footer}
-      </>
-    );
-  }
-
   if (page === "login") {
     return <Login setPage={go} />;
   }
@@ -99,10 +41,28 @@ function App() {
     return <Register setPage={go} />;
   }
 
+  const pages = {
+    home: <Home setPage={go} />,
+    icons: <Icons initialSearch={searchQuery} />,
+    vectors: <Vectors initialSearch={searchQuery} />,
+    templates: <Templates onCustomize={customize} initialSearch={searchQuery} />,
+    footage: <Footage initialSearch={searchQuery} />,
+    downloads: <Downloads />,
+    create: (
+      <Suspense fallback={null}>
+        <Create draft={createDraft} clearDraft={() => setCreateDraft(null)} />
+      </Suspense>
+    ),
+  };
+
+  // every page shares the header; the editor fills the screen, so it has no footer
   return (
     <>
-      <Home setPage={go} />
-      {footer}
+      <PageHeader page={page} setPage={go} />
+      {pages[page] ?? pages.home}
+      {page !== "create" && (
+        <Footer language={language} setLanguage={setLanguage} setPage={go} />
+      )}
     </>
   );
 }

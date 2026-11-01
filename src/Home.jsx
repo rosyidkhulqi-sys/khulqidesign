@@ -1,9 +1,8 @@
 import { useState } from "react";
-import SideMenu from "./SideMenu";
 import { categories } from "./categories";
 import "./Home.css";
 
-const navItems = [
+const libraryLinks = [
   { page: "icons", label: "Icons" },
   { page: "vectors", label: "Vectors" },
   { page: "templates", label: "Templates" },
@@ -37,7 +36,6 @@ function Arrow() {
 
 function Home({ setPage }) {
   const [query, setQuery] = useState("");
-  const [menuOpen, setMenuOpen] = useState(false);
 
   const go = (page) => (e) => {
     e?.preventDefault();
@@ -54,33 +52,6 @@ function Home({ setPage }) {
 
   return (
     <main className="home" id="top">
-      {/* HEADER */}
-      <header className="home-header">
-        <a className="home-brand" href="#top" aria-label="Khulqi Design home">
-          <img src="/logo.png" alt="" className="home-brand-mark" />
-          <img src="/KD Logogram.png" alt="Khulqi Design" className="home-brand-word" />
-        </a>
-
-        <nav className="home-nav" aria-label="Primary navigation">
-          {navItems.map((item) => (
-            <a key={item.page} href="#" onClick={go(item.page)}>{item.label}</a>
-          ))}
-        </nav>
-
-        <div className="home-account">
-          <a href="#" className="home-login" onClick={go("login")}>Log in</a>
-          <a href="#" className="home-register" onClick={go("register")}>Register</a>
-        </div>
-
-        <button className="home-menu-button" onClick={() => setMenuOpen(true)} aria-label="Open menu">
-          <svg className="home-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M4 7h16M4 12h16M4 17h16" />
-          </svg>
-        </button>
-      </header>
-
-      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} page="home" setPage={setPage} />
-
       {/* HERO */}
       <section className="home-hero">
         <div className="home-grid-room" aria-hidden="true"><div /></div>
@@ -89,8 +60,8 @@ function Home({ setPage }) {
           <p className="home-kicker"><span /> Digital asset studio</p>
           <h1>Design<br />made <em>eazy.</em></h1>
           <p className="home-hero-copy">
-            Premium icons, vectors, templates, footage, and creative solutions
-            made for ambitious brands and creators.
+            Premium icons, vectors, templates and footage. Customize them in Create,
+            or let our studio design it for you.
           </p>
 
           <form className="home-search" onSubmit={submitSearch}>
@@ -109,14 +80,20 @@ function Home({ setPage }) {
           </form>
 
           <div className="home-chips">
-            {navItems.slice(0, 4).map((item) => (
+            {libraryLinks.slice(0, 4).map((item) => (
               <button key={item.page} onClick={go(item.page)}>{item.label}</button>
             ))}
           </div>
+
+          <a className="home-studio-link" href="#services">
+            Need a custom design? <strong>Work with our studio</strong> <Arrow />
+          </a>
         </div>
 
-        <div className="home-counter"><strong>34K+</strong><span>Original assets</span></div>
-        <a className="home-scroll-cue" href="#assets"><span>Explore assets</span><Arrow /></a>
+        <div className="home-hero-bottom">
+          <div className="home-counter"><strong>34K+</strong><span>Original assets</span></div>
+          <a className="home-scroll-cue" href="#assets"><span>Explore assets</span><Arrow /></a>
+        </div>
       </section>
 
       {/* BROWSE ASSETS */}

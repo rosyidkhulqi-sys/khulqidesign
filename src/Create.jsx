@@ -13,7 +13,6 @@ import {
   loadSVGFromString,
   util,
 } from "fabric";
-import PageHeader from "./PageHeader";
 import Icon from "./CreateIcons";
 import TemplateThumb from "./TemplateThumb";
 import { allTemplates } from "./templatesData";
@@ -130,7 +129,7 @@ function sceneObjects(scene) {
   );
 }
 
-function Create({ setPage, draft, clearDraft }) {
+function Create({ draft, clearDraft }) {
   const canvasEl = useRef(null);
   const stageRef = useRef(null);
   const fc = useRef(null);
@@ -674,7 +673,6 @@ function Create({ setPage, draft, clearDraft }) {
 
   return (
     <section className="create-page">
-      <PageHeader page="create" setPage={setPage} />
 
       <div className="create-editor">
         {/* TOP BAR */}
