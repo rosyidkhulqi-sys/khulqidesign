@@ -1,9 +1,41 @@
+/* Design tokens — shared by every page. Change brand colors and fonts here. */
+:root {
+  --black: #050505;
+  --surface: #0e0f10;
+  --surface-2: #17191b;
+  --white: #f5f5f3;
+  --paper: #f2f1ed;
+  --muted: #929497;
+  --line: #26282a;
+  --red: #f0202d;
+  --red-dark: #c81d28;
+
+  --font-sans: "DM Sans", sans-serif;
+  --font-serif: "Instrument Serif", serif;
+
+  --radius-sm: 6px;
+  --radius: 8px;
+  --page-x: 4vw;
+}
+
 body {
   margin: 0;
-  background: #030303;
-  color: white;
-  font-family: 'Space Grotesk', sans-serif;
+  background: var(--black);
+  color: var(--white);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
-html{
-  scroll-behavior:smooth;
+
+html {
+  scroll-behavior: smooth;
+}
+
+::selection {
+  background: var(--red);
+  color: white;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition-duration: 0.01ms !important; }
 }

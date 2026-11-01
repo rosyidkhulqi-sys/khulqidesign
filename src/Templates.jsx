@@ -5,8 +5,8 @@ import { allTemplates, templateCategories } from "./templatesData";
 import "./Vectors.css";
 import "./Templates.css";
 
-function Templates({ setPage, onCustomize }) {
-  const [search, setSearch] = useState("");
+function Templates({ setPage, onCustomize, initialSearch = "" }) {
+  const [search, setSearch] = useState(initialSearch);
   const [category, setCategory] = useState("all");
   const [orientation, setOrientation] = useState("all");
   const [license, setLicense] = useState("all");

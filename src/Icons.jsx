@@ -3,8 +3,8 @@ import "./Icons.css";
 import { useState } from "react";
 import "./Footer.css";
 
-function Icons({ setPage }) {
-  const [search, setSearch] = useState("");
+function Icons({ setPage, initialSearch = "" }) {
+  const [search, setSearch] = useState(initialSearch);
 
   const [category, setCategory] = useState("all");
   const [style, setStyle] = useState("all");

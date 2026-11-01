@@ -18,8 +18,8 @@ const allVectors = Array.from({ length: 120 }, (_, i) => ({
 
 const ratio = { landscape: "4 / 3", portrait: "3 / 4", square: "1 / 1" };
 
-function Vectors({ setPage }) {
-  const [search, setSearch] = useState("");
+function Vectors({ setPage, initialSearch = "" }) {
+  const [search, setSearch] = useState(initialSearch);
   const [format, setFormat] = useState("all");
   const [license, setLicense] = useState("all");
   const [orientation, setOrientation] = useState("all");

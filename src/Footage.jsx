@@ -121,8 +121,8 @@ function FootageCard({ clip, onOpen }) {
   );
 }
 
-function Footage({ setPage }) {
-  const [search, setSearch] = useState("");
+function Footage({ setPage, initialSearch = "" }) {
+  const [search, setSearch] = useState(initialSearch);
   const [resolution, setResolution] = useState("all");
   const [fps, setFps] = useState("all");
   const [duration, setDuration] = useState("all");

@@ -1,49 +1,71 @@
 import "./Footer.css";
 import LanguageSwitcher from "./LanguageSwitcher";
 
+const products = [
+  ["icons", "Icons"],
+  ["vectors", "Vectors"],
+  ["templates", "Templates"],
+  ["footage", "Footage"],
+  ["create", "Create"],
+];
+
+const services = ["Brand identity", "UI design", "Motion design", "Client projects"];
+
 function Footer({ language, setLanguage, setPage }) {
+  const go = (page) => (e) => {
+    e.preventDefault();
+    setPage(page);
+    window.scrollTo(0, 0);
+  };
+
+  // services live on the home page, so go there first and then scroll
+  const toServices = (e) => {
+    e.preventDefault();
+    setPage("home");
+    setTimeout(() => document.getElementById("services")?.scrollIntoView(), 50);
+  };
+
+  const backToTop = (e) => {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <footer className="footer">
-
-      <div className="footer-top">
-        <LanguageSwitcher
-          language={language}
-          setLanguage={setLanguage}
-        />
-      </div>
-
-      <div className="footer-links">
-
+      <div className="footer-columns">
         <div>
-          <h4>Products</h4>
-          <a href="#" onClick={(e) => { e.preventDefault(); setPage("icons"); window.scrollTo(0, 0); }}>Icons</a>
-          <a href="#" onClick={(e) => { e.preventDefault(); setPage("vectors"); window.scrollTo(0, 0); }}>Vectors</a>
-          <a href="#" onClick={(e) => { e.preventDefault(); setPage("templates"); window.scrollTo(0, 0); }}>Templates</a>
-          <a href="#" onClick={(e) => { e.preventDefault(); setPage("footage"); window.scrollTo(0, 0); }}>Footage</a>
-          <a href="#" onClick={(e) => { e.preventDefault(); setPage("create"); window.scrollTo(0, 0); }}>Create</a>
+          <h3>Products</h3>
+          {products.map(([page, label]) => (
+            <a key={page} href="#" onClick={go(page)}>{label}</a>
+          ))}
         </div>
 
         <div>
-          <h4>Services</h4>
-          <a href="#">Brand Identity</a>
-          <a href="#">UI Design</a>
-          <a href="#">Motion Design</a>
-          <a href="#">Client Projects</a>
+          <h3>Services</h3>
+          {services.map((s) => (
+            <a key={s} href="#services" onClick={toServices}>{s}</a>
+          ))}
         </div>
 
         <div>
-          <h4>Social</h4>
+          <h3>Social</h3>
           <a href="#">Instagram</a>
           <a href="#">Facebook</a>
           <a href="#">X / Twitter</a>
-          <a href="#">WhatsApp</a>
+          <a href="https://wa.me/6285236752860">WhatsApp</a>
         </div>
-      </div>   
 
-      <div className="footer-bottom">
-        <p>© {new Date().getFullYear()} Khulqi Design. All rights reserved.</p>
+        <div className="footer-back">
+          <h3>Navigation</h3>
+          <a href="#top" onClick={backToTop}>Back to top <span>↑</span></a>
+          <LanguageSwitcher language={language} setLanguage={setLanguage} />
+        </div>
       </div>
 
+      <div className="footer-bottom">
+        <span>© {new Date().getFullYear()} Khulqi Design</span>
+        <span>Digital asset studio</span>
+      </div>
     </footer>
   );
 }
