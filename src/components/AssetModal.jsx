@@ -39,6 +39,7 @@ function AssetModal({ asset, kind, options, specs, related = [], onSelect, onTag
       title: asset.title,
       kind,
       image: asset.image,
+      file: asset.file || asset.image,
       format: option.label,
       license: premium ? licenseType : "free",
       date: new Date().toISOString(),

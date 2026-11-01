@@ -1,0 +1,148 @@
+/* DOWNLOADS — a plain, scannable list */
+
+.downloads-page {
+  max-width: 1100px;
+  min-height: calc(100vh - var(--header-h));
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+  font-family: var(--font-sans);
+}
+
+.downloads-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.downloads-head h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.01em; }
+.downloads-head p { margin-top: 6px; color: var(--muted); font-size: 14px; }
+
+.downloads-clear {
+  padding: 9px 14px;
+  border: 1px solid #34373a;
+  border-radius: 8px;
+  background: transparent;
+  color: #c9ccd0;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.downloads-clear:hover { border-color: #4a4d51; color: white; }
+
+.downloads-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+}
+.downloads-tabs button {
+  padding: 10px 14px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.downloads-tabs button:hover { color: var(--white); }
+.downloads-tabs button.active { border-bottom-color: var(--white); color: var(--white); font-weight: 500; }
+
+.downloads-list { list-style: none; }
+.downloads-list li {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.downloads-list img {
+  width: 64px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: var(--surface-2);
+}
+
+.downloads-info { min-width: 0; }
+.downloads-info strong,
+.downloads-info span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.downloads-info strong { font-size: 15px; font-weight: 500; text-transform: capitalize; }
+.downloads-info span { margin-top: 4px; color: var(--muted); font-size: 13px; }
+
+.downloads-license {
+  padding: 4px 10px;
+  border: 1px solid #34373a;
+  border-radius: 999px;
+  color: #c9ccd0;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.downloads-license.is-premium { border-color: rgba(240, 32, 45, 0.4); color: #ff8088; }
+
+.downloads-list time { color: var(--muted); font-size: 13px; white-space: nowrap; }
+
+.downloads-again {
+  padding: 8px 12px;
+  border: 1px solid #34373a;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--white);
+  font: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.downloads-again:hover { background: rgba(255, 255, 255, 0.06); border-color: #4a4d51; }
+
+.downloads-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 80px 20px;
+  border: 1px dashed #2c2f32;
+  border-radius: 12px;
+  text-align: center;
+}
+.downloads-empty svg { width: 32px; height: 32px; margin-bottom: 6px; color: var(--muted); }
+.downloads-empty svg * { stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.downloads-empty h2 { font-size: 18px; font-weight: 600; }
+.downloads-empty p { color: var(--muted); font-size: 14px; }
+.downloads-empty button {
+  margin-top: 14px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--red);
+  color: white;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.downloads-empty button:hover { background: var(--red-dark); }
+
+@media (max-width: 700px) {
+  .downloads-page { padding: 28px 16px 60px; }
+  .downloads-head { flex-direction: column; align-items: flex-start; }
+  .downloads-list li {
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    grid-template-areas: "img info again" "img meta meta";
+    row-gap: 6px;
+  }
+  .downloads-list img { grid-area: img; width: 56px; height: 42px; align-self: start; }
+  .downloads-info { grid-area: info; }
+  .downloads-again { grid-area: again; }
+  .downloads-license { grid-area: meta; justify-self: start; }
+  .downloads-list time { display: none; }
+}

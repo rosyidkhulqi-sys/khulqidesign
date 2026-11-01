@@ -64,7 +64,7 @@ function App() {
     vectors: <Vectors initialSearch={searchQuery} />,
     templates: <Templates onCustomize={customize} initialSearch={searchQuery} />,
     footage: <Footage initialSearch={searchQuery} />,
-    downloads: <Downloads />,
+    downloads: <Downloads setPage={go} />,
     create: (
       <Suspense fallback={null}>
         <Create draft={createDraft} clearDraft={() => setCreateDraft(null)} />
