@@ -5,8 +5,9 @@
 .icons-page {
   width: 100%;
   min-height: 100vh;
-  padding: 32px 40px 60px;
+  padding: 32px var(--page-x) 60px;
   box-sizing: border-box;
+  font-family: var(--font-sans);
 }
 
 
@@ -60,22 +61,22 @@
    SEARCH
    ========================================================= */
 
+/* shared by every library page: a quiet field, no colored blocks */
 .icon-search {
   display: flex;
   align-items: stretch;
   width: 100%;
-  height: 56px;
-  margin-bottom: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.055);
+  height: 52px;
+  margin-bottom: 20px;
+  border: 1px solid #34373a;
+  border-radius: 10px;
+  background: var(--surface);
   overflow: hidden;
-  transition: 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
 .icon-search:focus-within {
-  border-color: rgba(255, 255, 255, 0.28);
-  background: rgba(255, 255, 255, 0.075);
+  border-color: #8a8d91;
 }
 
 .icon-search input {
@@ -86,8 +87,9 @@
   border: none;
   background: transparent;
   color: #ffffff;
-  padding: 0 20px;
+  padding: 0 16px;
   outline: none;
+  font: inherit;
   font-size: 15px;
 }
 
@@ -98,21 +100,23 @@
 .search-type {
   appearance: none;
   -webkit-appearance: none;
-  background-color: #e7212e;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-color: var(--surface-2);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23929497' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
   background-repeat: no-repeat;
-  background-position: right 16px center;
-  color: white;
-  font-weight: 700;
-  font-size: 15px;
+  background-position: right 14px center;
+  color: var(--white);
+  font: inherit;
+  font-weight: 500;
+  font-size: 14px;
   border: none;
-  padding: 0 40px 0 24px;
+  border-right: 1px solid #34373a;
+  padding: 0 36px 0 16px;
   min-width: 120px;
   cursor: pointer;
   outline: none;
-  transition: 0.2s ease;
+  transition: background-color 0.2s ease;
 }
-.search-type:hover { background-color: #c81d28; }
+.search-type:hover { background-color: #202326; }
 .search-type option { background: #141414; color: white; }
 
 
@@ -136,8 +140,8 @@
   margin: 6px;
   padding: 0;
   color: white;
-  /* square: 56px bar minus 6px margin top and bottom */
-  width: 44px;
+  /* square: 52px bar (minus border) less 6px margin top and bottom */
+  width: 38px;
   flex-shrink: 0;
   cursor: pointer;
   transition: 0.2s ease;
@@ -335,8 +339,9 @@
 .results-header h2 {
   margin: 0 0 5px;
 
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .results-header p {

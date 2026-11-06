@@ -1,20 +1,35 @@
+/* masonry columns, so horizontal, square and vertical clips sit without gaps */
 .footage-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
-  align-items: start;
+  columns: 4 260px;
+  column-gap: 16px;
 }
+.footage-grid .no-results { column-span: all; }
 
-.footage-card { min-width: 0; cursor: pointer; }
+.footage-card {
+  display: inline-block;
+  width: 100%;
+  margin-bottom: 20px;
+  break-inside: avoid;
+  cursor: pointer;
+}
 
 .footage-thumb {
   position: relative;
   width: 100%;
-  border-radius: 14px;
+  border-radius: 10px;
   overflow: hidden;
-  background: #111;
-  border: 1px solid #1b1b1b;
+  background: var(--surface-2);
 }
+.footage-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: inherit;
+  pointer-events: none;
+  transition: border-color 0.2s;
+}
+.footage-card:hover .footage-thumb::after { border-color: rgba(255, 255, 255, 0.35); }
 .footage-thumb img,
 .footage-thumb video {
   position: absolute;
@@ -29,22 +44,23 @@
   transition: opacity 0.25s ease;
 }
 .footage-card:hover .footage-thumb video { opacity: 1; }
-.footage-card:hover .footage-thumb { border-color: #e7212e; }
 
 .footage-res,
 .footage-duration {
   position: absolute;
   bottom: 10px;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 8px;
+  padding: 3px 7px;
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(10, 10, 10, 0.72);
   color: #ddd;
+  font-size: 11px;
+  font-weight: 600;
+  backdrop-filter: blur(6px);
 }
 .footage-res { left: 10px; }
 .footage-duration { right: 10px; }
 
 @media (max-width: 640px) {
-  .footage-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .footage-grid { columns: 2; column-gap: 10px; }
+  .footage-card { margin-bottom: 14px; }
 }

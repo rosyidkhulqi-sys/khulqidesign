@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "./Vectors.css";
+import Breadcrumb from "../../components/Breadcrumb";
 
 const previews = ["/preview2.jpg", "/preview3.jpg", "/preview4.jpg", "/preview1.jpg"];
 const formats = ["SVG", "EPS", "AI", "PNG", "JPG"];
@@ -17,7 +18,7 @@ const allVectors = Array.from({ length: 120 }, (_, i) => ({
 
 const ratio = { landscape: "4 / 3", portrait: "3 / 4", square: "1 / 1" };
 
-function Vectors({ initialSearch = "" }) {
+function Vectors({ setPage, initialSearch = "" }) {
   const [search, setSearch] = useState(initialSearch);
   const [format, setFormat] = useState("all");
   const [license, setLicense] = useState("all");
@@ -58,6 +59,11 @@ function Vectors({ initialSearch = "" }) {
 
   return (
     <section className="vectors-page">
+      <div className="library-head">
+        <Breadcrumb setPage={setPage} current="Vectors" />
+        <h1>Vectors</h1>
+        <p>Editable illustrations, backgrounds and patterns in EPS, AI and SVG.</p>
+      </div>
 
       {/* SEARCH */}
       <div className="icon-search">

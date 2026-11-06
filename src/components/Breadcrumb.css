@@ -1,0 +1,22 @@
+.breadcrumb { margin-bottom: 10px; font-family: var(--font-sans); }
+
+.breadcrumb ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.breadcrumb li + li::before {
+  content: "/";
+  margin-right: 8px;
+  color: #4a4d51;
+}
+
+.breadcrumb a { color: var(--muted); text-decoration: none; }
+.breadcrumb a:hover { color: var(--white); text-decoration: underline; }
+
+.breadcrumb [aria-current="page"] { color: #c9ccd0; }

@@ -1,27 +1,28 @@
 .template-card { cursor: pointer; }
-.template-card .vector-name { text-transform: capitalize; }
-.template-card:hover .vector-thumb { border-color: #e7212e; }
 
+/* a quiet action on hover; the template preview stays the focus */
 .template-edit {
   position: absolute;
   left: 50%;
-  top: 50%;
-  transform: translate(-50%, -40%);
-  padding: 10px 18px;
+  bottom: 12px;
+  transform: translate(-50%, 6px);
+  padding: 8px 14px;
   border: none;
-  border-radius: 999px;
-  background: #e7212e;
+  border-radius: 8px;
+  background: rgba(10, 10, 10, 0.85);
   color: white;
-  font-size: 14px;
-  font-weight: 700;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
   opacity: 0;
-  transition: 0.2s ease;
+  backdrop-filter: blur(6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 .template-card:hover .template-edit {
   opacity: 1;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, 0);
 }
 
 @media (max-width: 640px) {

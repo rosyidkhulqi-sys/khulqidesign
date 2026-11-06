@@ -3,8 +3,9 @@ import TemplateThumb from "../../components/TemplateThumb";
 import { allTemplates, templateCategories } from "../../data/templatesData";
 import "../vectors/Vectors.css";
 import "./Templates.css";
+import Breadcrumb from "../../components/Breadcrumb";
 
-function Templates({ onCustomize, initialSearch = "" }) {
+function Templates({ setPage, onCustomize, initialSearch = "" }) {
   const [search, setSearch] = useState(initialSearch);
   const [category, setCategory] = useState("all");
   const [orientation, setOrientation] = useState("all");
@@ -46,6 +47,11 @@ function Templates({ onCustomize, initialSearch = "" }) {
 
   return (
     <section className="vectors-page">
+      <div className="library-head">
+        <Breadcrumb setPage={setPage} current="Templates" />
+        <h1>Templates</h1>
+        <p>Social posts, posters and presentations you can customize in Create.</p>
+      </div>
 
       {/* SEARCH */}
       <div className="icon-search">

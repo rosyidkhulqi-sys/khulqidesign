@@ -60,10 +60,10 @@ function App() {
 
   const pages = {
     home: <Home setPage={go} />,
-    icons: <Icons initialSearch={searchQuery} />,
-    vectors: <Vectors initialSearch={searchQuery} />,
-    templates: <Templates onCustomize={customize} initialSearch={searchQuery} />,
-    footage: <Footage initialSearch={searchQuery} />,
+    icons: <Icons setPage={go} initialSearch={searchQuery} />,
+    vectors: <Vectors setPage={go} initialSearch={searchQuery} />,
+    templates: <Templates setPage={go} onCustomize={customize} initialSearch={searchQuery} />,
+    footage: <Footage setPage={go} initialSearch={searchQuery} />,
     downloads: <Downloads setPage={go} />,
     create: (
       <Suspense fallback={null}>

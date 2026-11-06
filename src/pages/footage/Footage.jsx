@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import AssetModal from "../../components/AssetModal";
 import "../vectors/Vectors.css";
 import "./Footage.css";
+import Breadcrumb from "../../components/Breadcrumb";
 
 const previews = ["/preview4.jpg", "/preview2.jpg", "/preview3.jpg", "/preview1.jpg"];
 const clipFile = "/video%20background.mp4";
@@ -120,7 +121,7 @@ function FootageCard({ clip, onOpen }) {
   );
 }
 
-function Footage({ initialSearch = "" }) {
+function Footage({ setPage, initialSearch = "" }) {
   const [search, setSearch] = useState(initialSearch);
   const [resolution, setResolution] = useState("all");
   const [fps, setFps] = useState("all");
@@ -176,6 +177,11 @@ function Footage({ initialSearch = "" }) {
 
   return (
     <section className="vectors-page">
+      <div className="library-head">
+        <Breadcrumb setPage={setPage} current="Footage" />
+        <h1>Footage</h1>
+        <p>4K and HD stock clips, loops and aerials.</p>
+      </div>
 
       {/* SEARCH */}
       <div className="icon-search">

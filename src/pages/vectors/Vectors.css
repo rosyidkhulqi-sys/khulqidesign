@@ -1,55 +1,87 @@
+/* LIBRARY PAGES — shared by Vectors, Templates and Footage.
+   Calm and functional: the artwork carries the color, red is kept for actions. */
+
 .vectors-page {
-  padding: 24px 60px 60px;
-  color: white;
+  padding: 32px var(--page-x) 60px;
+  color: var(--white);
+  font-family: var(--font-sans);
 }
+
+.library-head { margin-bottom: 20px; }
+.library-head h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.01em; }
+.library-head p { margin-top: 6px; color: var(--muted); font-size: 14px; }
 
 .vector-filters {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 .vector-filters select {
-  background: #141414;
-  color: #d9d9d9;
-  border: 1px solid #2a2a2a;
-  border-radius: 999px;
-  padding: 10px 18px;
+  appearance: none;
+  -webkit-appearance: none;
+  height: 38px;
+  padding: 0 34px 0 14px;
+  border: 1px solid #34373a;
+  border-radius: 8px;
+  background: transparent url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23929497' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") no-repeat right 12px center;
+  color: #d5d8dc;
+  font: inherit;
   font-size: 14px;
   cursor: pointer;
   outline: none;
+  transition: border-color 0.2s;
 }
-.vector-filters select:hover { border-color: #e7212e; }
-.vector-filters select option { background: #141414; }
+.vector-filters select:hover,
+.vector-filters select:focus-visible { border-color: #5a5d61; }
+.vector-filters select option { background: var(--surface-2); color: var(--white); }
 .vector-sort { margin-left: auto; }
 
 .clear-filters {
+  padding: 0 6px;
   background: none;
   border: none;
-  color: #e7212e;
+  color: var(--muted);
+  font: inherit;
   font-size: 14px;
+  text-decoration: underline;
   cursor: pointer;
 }
+.clear-filters:hover { color: var(--white); }
 
-.vector-count { color: #9a9a9a; margin: 0 0 20px; font-size: 14px; }
+.vector-count { margin: 0 0 16px; color: var(--muted); font-size: 13px; }
 
+/* masonry columns, so portrait and landscape artwork never leave gaps */
 .vector-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 20px;
-  align-items: start;
+  columns: 4 240px;
+  column-gap: 16px;
 }
+.vector-grid .no-results { column-span: all; }
 
-.vector-card { min-width: 0; }
+.vector-card {
+  display: inline-block;
+  width: 100%;
+  margin-bottom: 20px;
+  break-inside: avoid;
+}
 .vector-thumb {
   position: relative;
   width: 100%;
-  border-radius: 14px;
+  border-radius: 10px;
   overflow: hidden;
-  background: #111;
-  border: 1px solid #1b1b1b;
+  background: var(--surface-2);
 }
+.vector-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: inherit;
+  pointer-events: none;
+  transition: border-color 0.2s;
+}
+.vector-card:hover .vector-thumb::after { border-color: rgba(255, 255, 255, 0.35); }
 .vector-thumb img {
   width: 100%;
   height: 100%;
@@ -57,30 +89,42 @@
   display: block;
   transition: transform 0.4s ease;
 }
-.vector-card:hover .vector-thumb img { transform: scale(1.05); }
+.vector-card:hover .vector-thumb img { transform: scale(1.03); }
 
+/* small neutral labels; premium is marked with a red dot instead of a red block */
 .vector-badge {
   position: absolute;
   top: 10px;
   left: 10px;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.7);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(10, 10, 10, 0.72);
   color: white;
+  font-size: 11px;
+  font-weight: 600;
+  backdrop-filter: blur(6px);
 }
-.vector-badge.premium { background: #e7212e; }
+.vector-badge.premium::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+}
 
 .vector-format {
   position: absolute;
   bottom: 10px;
   left: 10px;
-  font-size: 11px;
-  padding: 3px 8px;
+  padding: 3px 7px;
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(10, 10, 10, 0.72);
   color: #ddd;
+  font-size: 11px;
+  backdrop-filter: blur(6px);
 }
 
 .vector-actions {
@@ -89,31 +133,30 @@
   right: 10px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   opacity: 0;
-  transition: 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 .vector-card:hover .vector-actions { opacity: 1; }
 .vector-actions button {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
   border: none;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(10, 10, 10, 0.72);
   color: white;
-  font-size: 16px;
+  font-size: 15px;
   cursor: pointer;
 }
-.vector-actions button:hover { background: #e7212e; }
+.vector-actions button:hover { background: rgba(10, 10, 10, 0.92); }
 
-.vector-name { margin: 10px 2px 0; font-size: 14px; color: #d1d1d1; }
+.vector-name { margin: 8px 2px 0; color: #c9ccd0; font-size: 14px; }
+.vector-name::first-letter { text-transform: uppercase; }
 
-@media (max-width: 1024px) {
-  .vectors-page { padding: 20px 40px 40px; }
-}
 @media (max-width: 640px) {
-  .vectors-page { padding: 16px 16px 32px; }
-  .vector-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .vectors-page { padding: 24px 16px 40px; }
+  .vector-grid { columns: 2; column-gap: 10px; }
+  .vector-card { margin-bottom: 14px; }
   .vector-sort { margin-left: 0; }
   .vector-actions { opacity: 1; }
 }

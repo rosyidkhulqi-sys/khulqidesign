@@ -1,8 +1,9 @@
 import "./Icons.css";
 import { useState } from "react";
 import "../../components/Footer.css";
+import Breadcrumb from "../../components/Breadcrumb";
 
-function Icons({ initialSearch = "" }) {
+function Icons({ setPage, initialSearch = "" }) {
   const [search, setSearch] = useState(initialSearch);
 
   const [category, setCategory] = useState("all");
@@ -89,6 +90,7 @@ function Icons({ initialSearch = "" }) {
 
   return (
     <section className="icons-page">
+      <Breadcrumb setPage={setPage} current="Icons" />
 
 
      {/* SEARCH */}
