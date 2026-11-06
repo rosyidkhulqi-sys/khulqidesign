@@ -243,13 +243,18 @@
   color: white;
 }
 
-/* shape previews */
-.cp-tile span { display: block; background: var(--red); }
-.shape-rect { width: 60%; height: 60%; }
-.shape-rounded { width: 60%; height: 60%; border-radius: 10px; }
-.shape-circle { width: 60%; height: 60%; border-radius: 50%; }
-.shape-triangle { width: 60%; height: 55%; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
-.cp-tile .shape-line { width: 70%; height: 4px; background: #1d1d1d; }
+/* shape previews: fixed pixel sizes, because Safari sizes percentages inside
+   <button> differently and stretched the shapes; each preview matches the
+   proportions of the shape that lands on the canvas */
+.cp-tile span { display: block; flex: none; background: var(--red); }
+.shape-rect,
+.shape-rounded,
+.shape-circle,
+.shape-triangle { width: 28px; height: 28px; }
+.shape-rounded { border-radius: 4px; }
+.shape-circle { border-radius: 50%; }
+.shape-triangle { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.cp-tile .shape-line { width: 34px; height: 4px; background: #1d1d1d; }
 
 .cp-template {
   padding: 0;
