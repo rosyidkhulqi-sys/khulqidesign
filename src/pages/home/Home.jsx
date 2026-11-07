@@ -5,13 +5,16 @@ import "./Home.css";
 const libraryLinks = [
   { page: "icons", label: "Icons" },
   { page: "vectors", label: "Vectors" },
+  { page: "logos", label: "Logos" },
   { page: "templates", label: "Templates" },
   { page: "footage", label: "Footage" },
   { page: "create", label: "Create" },
 ];
 
+// The studio opens later (about a year from Nov 2026); until then Services
+// only says what's coming, and every call to action points to a product.
 const services = [
-  ["01", "Brand identity", "Logos and visual systems built to be remembered."],
+  ["01", "Brand identity", "Custom logos and brand systems, designed from scratch."],
   ["02", "UI design", "Digital products that feel clear, useful, and distinctly yours."],
   ["03", "Motion design", "Stories brought to life through rhythm, type, and movement."],
   ["04", "Client projects", "A flexible creative partnership for ambitious briefs."],
@@ -19,6 +22,7 @@ const services = [
 
 // How it works: the three ways to get a design here, in the order most
 // visitors need them. flow is the short path; cta opens the place to start.
+// All three are products; the studio isn't open yet.
 const ways = [
   {
     n: "01",
@@ -36,10 +40,10 @@ const ways = [
   },
   {
     n: "03",
-    title: "Have it made",
-    text: "Need a logo, a brand identity or motion from scratch? Send a brief and our studio designs it with you, start to finish.",
-    flow: ["Brief", "Design & revise", "Final files"],
-    cta: ["See services", "#services"],
+    title: "Own it outright",
+    text: "Buy an exclusive logo once and it's yours alone: taken off sale, with the full files and rights. Free and Premium logos are there too.",
+    flow: ["Pick a logo", "Buy once", "Yours alone"],
+    cta: ["Browse logos", "logos"],
   },
 ];
 
@@ -84,12 +88,12 @@ function Home({ setPage }) {
         <div className="home-grid-room" aria-hidden="true"><div /></div>
 
         <div className="home-hero-content">
-          <p className="home-kicker"><span /> Design asset library & studio</p>
+          <p className="home-kicker"><span /> Design asset library</p>
           <h1>Design<br />made <em>eazy.</em></h1>
           {/* one plain sentence: what's here and what you can do with it */}
           <p className="home-hero-copy">
-            Download icons, vectors, templates and stock footage, edit them right in your
-            browser, or hire our studio for a custom design.
+            Download icons, vectors, logos, templates and stock footage, or edit them
+            right in your browser first.
           </p>
 
           <form className="home-search" onSubmit={submitSearch}>
@@ -102,20 +106,21 @@ function Home({ setPage }) {
               id="home-search-input"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search icons, vectors, templates..."
+              placeholder="Search icons, vectors, logos, templates..."
             />
             <button type="submit">Search</button>
           </form>
 
           <div className="home-chips">
-            {libraryLinks.slice(0, 4).map((item) => (
+            {libraryLinks.filter((item) => item.page !== "create").map((item) => (
               <button key={item.page} onClick={go(item.page)}>{item.label}</button>
             ))}
           </div>
 
-          <a className="home-studio-link" href="#services">
-            Need a custom design? <strong>Work with our studio</strong> <Arrow />
-          </a>
+          {/* the newest product, where the studio link used to be */}
+          <button className="home-studio-link" onClick={go("logos")}>
+            New: ready-made logos, free to exclusive <strong>Browse logos</strong> <Arrow />
+          </button>
         </div>
 
         <div className="home-hero-bottom">
@@ -131,7 +136,7 @@ function Home({ setPage }) {
             <p className="home-label">How it works</p>
             <h2>Three ways to<br /><em>get it done.</em></h2>
           </div>
-          <p>Use it as it is, make it yours,<br />or let our studio make it.</p>
+          <p>Use it as it is, make it yours,<br />or own it outright.</p>
         </div>
 
         <div className="home-how-grid">
@@ -185,12 +190,11 @@ function Home({ setPage }) {
           ))}
         </div>
 
-        {/* the rest of the ecosystem: build it yourself, or have it made */}
+        {/* the rest of the ecosystem: build it yourself */}
         <div className="home-asset-more">
           <p>Can't find the right one?</p>
           <button onClick={go("create")}>Build it in Create <Arrow /></button>
           <button onClick={go("ai")}>Make it with AI <Arrow /></button>
-          <a href="#services">Ask our studio <Arrow /></a>
         </div>
       </section>
 
@@ -198,19 +202,20 @@ function Home({ setPage }) {
       <section className="home-services" id="services">
         <div className="home-section-title is-dark">
           <div>
-            <p className="home-label">Services</p>
+            <p className="home-label">Services · Coming soon</p>
             <h2>Creative<br /><em>solutions.</em></h2>
           </div>
-          <p>Need something built from scratch?<br />Let our studio shape the idea.</p>
+          <p>Custom work from our studio<br />opens later.</p>
         </div>
 
-        <div className="home-service-list">
+        {/* not links yet: the studio isn't taking projects */}
+        <div className="home-service-list is-soon">
           {services.map(([number, title, copy]) => (
-            <a href="#contact" className="home-service" key={number}>
+            <div className="home-service" key={number}>
               <span>{number}</span>
               <div><h3>{title}</h3><p>{copy}</p></div>
-              <Arrow />
-            </a>
+              <em className="home-soon">Coming soon</em>
+            </div>
           ))}
         </div>
       </section>
@@ -230,8 +235,8 @@ function Home({ setPage }) {
 
       {/* CONTACT */}
       <section className="home-contact" id="contact">
-        <p className="home-label">Have a custom brief?</p>
-        <h2>Let’s work<br /><em>together.</em></h2>
+        <p className="home-label">Questions or licensing?</p>
+        <h2>Get in<br /><em>touch.</em></h2>
         <div>
           <a href="mailto:khulqidesign@mail.com">Email me <Arrow /></a>
           <a href="https://wa.me/6285236752860">WhatsApp <Arrow /></a>

@@ -13,6 +13,11 @@ export const categories = [
     meta: "EPS · JPG · Free & Premium",
   },
   {
+    key: "logos", title: "Logos", image: "/trial-logos/preview/M%200526%2011.jpg", page: "logos", ready: true, count: "New",
+    desc: "Ready-made logos for brands, from free to exclusive.",
+    meta: "Free · Premium · Exclusive",
+  },
+  {
     key: "footage", title: "Footage", image: "/preview4.jpg", page: "footage", ready: true, count: "96+ clips",
     desc: "Motion backgrounds and loops for video and social.",
     meta: "4K · Full HD · MP4",
