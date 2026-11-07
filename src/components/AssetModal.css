@@ -231,6 +231,10 @@
 }
 .asset-download {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   height: 48px;
   border: none;
   border-radius: 10px;
@@ -242,6 +246,9 @@
 }
 .asset-download:hover { background: #c81d28; }
 .asset-like {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 48px;
   height: 48px;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -252,6 +259,9 @@
   cursor: pointer;
 }
 .asset-like.liked { color: #e7212e; border-color: #e7212e; }
+
+/* the Premium prompt sits between the buttons and the details */
+.asset-right .ie-upsell { margin: -10px 0 24px; }
 
 .asset-specs {
   width: 100%;
@@ -304,6 +314,11 @@
 @media (max-width: 860px) {
   .asset-overlay { padding: 0; }
   .asset-modal { border-radius: 0; min-height: 100vh; padding: 56px 16px 24px; }
-  .asset-body { grid-template-columns: 1fr; gap: 22px; }
+  .asset-body { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+  /* phone order: preview, then title and download, then keywords */
+  .asset-left { display: contents; }
+  .asset-preview { order: 1; }
+  .asset-right { order: 2; }
+  .asset-keywords { order: 3; margin-top: 0; }
   .asset-related-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }

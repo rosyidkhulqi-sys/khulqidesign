@@ -64,7 +64,9 @@
   width: 100%;
   margin-bottom: 20px;
   break-inside: avoid;
+  cursor: pointer;
 }
+.vector-card:focus-visible { outline: 2px solid var(--white); outline-offset: 3px; border-radius: 10px; }
 .vector-thumb {
   position: relative;
   width: 100%;
@@ -139,6 +141,9 @@
 }
 .vector-card:hover .vector-actions { opacity: 1; }
 .vector-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 34px;
   height: 34px;
   border-radius: 8px;

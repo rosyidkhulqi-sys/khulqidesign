@@ -1,13 +1,31 @@
 import { useEffect, useState } from "react";
 import { saveDownload } from "../lib/downloads";
+import { PremiumPrompt, ToolGlyph } from "./IconControls";
 import "./AssetModal.css";
 
 const kindLabel = { icon: "Icon", vector: "Vector", footage: "Footage" };
 
-function AssetModal({ asset, kind, options, specs, related = [], onSelect, onTag, onClose }) {
+// stock files carry up to 50 keywords for search; only a few are shown,
+// so the view stays clean
+const TAG_LIMIT = 8;
+
+function AssetModal({
+  asset,
+  kind,
+  options,
+  specs,
+  related = [],
+  user = null,
+  onAuth,
+  onSelect,
+  onTag,
+  onClose,
+}) {
   const [choice, setChoice] = useState(0);
   const [licenseType, setLicenseType] = useState("standard");
   const [liked, setLiked] = useState(false);
+  // a signed-out visitor tried to download a Premium file
+  const [prompt, setPrompt] = useState(false);
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -23,20 +41,26 @@ function AssetModal({ asset, kind, options, specs, related = [], onSelect, onTag
   const option = options[choice];
 
   const download = () => {
+    // Premium preview: the real check moves to the server with the backend
+    if (premium && !user) {
+      setPrompt(true);
+      return;
+    }
     saveDownload({
       id: asset.code,
       title: asset.title,
       kind,
       image: asset.image,
-      file: asset.file || asset.image,
+      file: option.file || asset.file || asset.image,
       format: option.label,
       license: premium ? licenseType : "free",
       date: new Date().toISOString(),
     });
 
+    // an option can point at its own file (EPS, JPG...); otherwise the asset's
     const a = document.createElement("a");
-    a.href = asset.file || asset.image;
-    a.download = `${asset.code}-${option.label.replace(/\W+/g, "-")}`;
+    a.href = option.file || asset.file || asset.image;
+    a.download = `${asset.code}-${option.label.replace(/\W+/g, "-")}${option.ext ? `.${option.ext}` : ""}`;
     a.click();
   };
 
@@ -69,7 +93,7 @@ function AssetModal({ asset, kind, options, specs, related = [], onSelect, onTag
             <div className="asset-keywords">
               <p>Keywords</p>
               <div>
-                {asset.keywords.map((k) => (
+                {asset.keywords.slice(0, TAG_LIMIT).map((k) => (
                   <button key={k} onClick={() => onTag(k)}>
                     {k}
                   </button>
@@ -136,16 +160,27 @@ function AssetModal({ asset, kind, options, specs, related = [], onSelect, onTag
 
             <div className="asset-buttons">
               <button className="asset-download" onClick={download}>
-                ⬇ Download {option.label}
+                <ToolGlyph name="download" />
+                Download {option.label}
               </button>
               <button
                 className={`asset-like ${liked ? "liked" : ""}`}
                 onClick={() => setLiked(!liked)}
-                aria-label="Like"
+                aria-label={liked ? "Saved" : "Save"}
+                aria-pressed={liked}
               >
-                {liked ? "♥" : "♡"}
+                <ToolGlyph name="heart" size={20} filled={liked} />
               </button>
             </div>
+
+            {prompt && (
+              <PremiumPrompt
+                title={`This is a Premium ${kindLabel[kind].toLowerCase()}`}
+                text="Premium files come with a subscription: every format, commercial use, no attribution."
+                onAuth={onAuth}
+                onDismiss={() => setPrompt(false)}
+              />
+            )}
 
             <table className="asset-specs">
               <tbody>

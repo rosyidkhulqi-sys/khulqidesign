@@ -33,17 +33,17 @@ export const iconSets = [
   },
 ];
 
-// trial icons uploaded to public/; replaced by real assets later
+// trial icons in public/trial-icons/; replaced by real assets later
 const sampleIcons = [
-  { name: "Barcode", src: "/barcode.svg", setId: "shopping-promo", tags: ["barcode", "scan", "product", "price", "shopping"] },
-  { name: "Hot sale", src: "/hot%20sale.svg", setId: "shopping-promo", tags: ["sale", "discount", "fire", "promotion", "shopping"] },
-  { name: "Pin", src: "/pin.svg", setId: "shopping-promo", tags: ["pin", "location", "map", "marker", "navigation"] },
-  { name: "Promo", src: "/promo.svg", setId: "shopping-promo", tags: ["promo", "tag", "discount", "label", "offer"] },
-  { name: "Cashier", src: "/cashier.svg", setId: "store-people", tags: ["cashier", "store", "payment", "shop", "checkout"] },
-  { name: "E-commerce", src: "/ecommerce.svg", setId: "online-payment", tags: ["ecommerce", "online shop", "cart", "website", "shopping"] },
-  { name: "Wallet", src: "/wallet%20icon.svg", setId: "online-payment", tags: ["wallet", "money", "payment", "finance", "cash"] },
-  { name: "Coupon", src: "/coupon%202.svg", setId: "discount-gradient", tags: ["coupon", "voucher", "discount", "ticket", "sale"] },
-  { name: "Discount", src: "/discount.svg", setId: "discount-gradient", tags: ["discount", "percent", "badge", "sale", "offer"] },
+  { name: "Barcode", src: "/trial-icons/barcode.svg", setId: "shopping-promo", tags: ["barcode", "scan", "product", "price", "shopping"] },
+  { name: "Hot sale", src: "/trial-icons/hot%20sale.svg", setId: "shopping-promo", tags: ["sale", "discount", "fire", "promotion", "shopping"] },
+  { name: "Pin", src: "/trial-icons/pin.svg", setId: "shopping-promo", tags: ["pin", "location", "map", "marker", "navigation"] },
+  { name: "Promo", src: "/trial-icons/promo.svg", setId: "shopping-promo", tags: ["promo", "tag", "discount", "label", "offer"] },
+  { name: "Cashier", src: "/trial-icons/cashier.svg", setId: "store-people", tags: ["cashier", "store", "payment", "shop", "checkout"] },
+  { name: "E-commerce", src: "/trial-icons/ecommerce.svg", setId: "online-payment", tags: ["ecommerce", "online shop", "cart", "website", "shopping"] },
+  { name: "Wallet", src: "/trial-icons/wallet%20icon.svg", setId: "online-payment", tags: ["wallet", "money", "payment", "finance", "cash"] },
+  { name: "Coupon", src: "/trial-icons/coupon%202.svg", setId: "discount-gradient", tags: ["coupon", "voucher", "discount", "ticket", "sale"] },
+  { name: "Discount", src: "/trial-icons/discount.svg", setId: "discount-gradient", tags: ["discount", "percent", "badge", "sale", "offer"] },
 ];
 
 const setById = Object.fromEntries(iconSets.map((s) => [s.id, s]));

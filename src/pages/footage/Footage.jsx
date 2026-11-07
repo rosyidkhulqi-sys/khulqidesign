@@ -5,7 +5,7 @@ import "./Footage.css";
 import Breadcrumb from "../../components/Breadcrumb";
 
 const previews = ["/preview4.jpg", "/preview2.jpg", "/preview3.jpg", "/preview1.jpg"];
-const clipFile = "/video%20background.mp4";
+const clipFile = "/trial-footage/video%20background.mp4";
 
 const subjects = [
   ["aerial view of tropical beach", "travel", ["aerial", "beach", "ocean", "drone", "summer"]],
@@ -39,7 +39,8 @@ const allClips = Array.from({ length: 96 }, (_, i) => {
     license: i % 3 === 0 ? "premium" : "free",
     loop: category === "abstract",
     downloads: (i * 53) % 900,
-    keywords: [...tags, category, "footage", "stock video", resolution === "4K" ? "4k" : "hd"],
+    // a Set drops repeats, e.g. an "abstract" tag in the "abstract" category
+    keywords: [...new Set([...tags, category, "footage", "stock video", resolution === "4K" ? "4k" : "hd"])],
   };
 });
 
@@ -121,7 +122,7 @@ function FootageCard({ clip, onOpen }) {
   );
 }
 
-function Footage({ setPage, initialSearch = "" }) {
+function Footage({ setPage, initialSearch = "", user = null }) {
   const [search, setSearch] = useState(initialSearch);
   const [resolution, setResolution] = useState("all");
   const [fps, setFps] = useState("all");
@@ -312,6 +313,12 @@ function Footage({ setPage, initialSearch = "" }) {
           related={allClips
             .filter((c) => c.category === selected.category && c.id !== selected.id)
             .slice(0, 6)}
+          user={user}
+          onAuth={(target) => {
+            setSelected(null);
+            setPage(target);
+            window.scrollTo(0, 0);
+          }}
           onSelect={setSelected}
           onTag={searchTag}
           onClose={() => setSelected(null)}

@@ -44,6 +44,69 @@ export function SizePicker({ value, onChange }) {
   );
 }
 
+// Transform button glyphs, drawn as SVG so all four share one stroke and size
+// (text arrows like ⇆ ⇅ render in different fonts and weights).
+const glyphs = {
+  rotateLeft: (
+    <>
+      <path d="M3 12a9 9 0 1 0 3-6.7" />
+      <polyline points="3 3 3 8 8 8" />
+    </>
+  ),
+  rotateRight: (
+    <>
+      <path d="M21 12a9 9 0 1 1-3-6.7" />
+      <polyline points="21 3 21 8 16 8" />
+    </>
+  ),
+  flipX: (
+    <>
+      <polyline points="7 4 3 8 7 12" />
+      <line x1="3" y1="8" x2="21" y2="8" />
+      <polyline points="17 12 21 16 17 20" />
+      <line x1="21" y1="16" x2="3" y2="16" />
+    </>
+  ),
+  flipY: (
+    <>
+      <polyline points="4 7 8 3 12 7" />
+      <line x1="8" y1="3" x2="8" y2="21" />
+      <polyline points="12 17 16 21 20 17" />
+      <line x1="16" y1="21" x2="16" y2="3" />
+    </>
+  ),
+  download: (
+    <>
+      <path d="M12 4v11" />
+      <polyline points="7 10 12 15 17 10" />
+      <path d="M5 20h14" />
+    </>
+  ),
+  heart: (
+    <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+  ),
+};
+
+// filled: a solid shape, for a saved heart
+export function ToolGlyph({ name, size = 18, filled = false }) {
+  return (
+    <svg
+      className="tool-glyph"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {glyphs[name]}
+    </svg>
+  );
+}
+
 // a quiet pill marking what a subscription includes
 export function PremiumTag() {
   return <span className="ie-tag">Premium</span>;

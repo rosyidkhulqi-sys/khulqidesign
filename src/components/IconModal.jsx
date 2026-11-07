@@ -10,7 +10,7 @@ import {
   svgDataUrl,
   svgToPng,
 } from "../lib/iconEditor";
-import { PremiumPrompt, PremiumTag, SizePicker, Swatches } from "./IconControls";
+import { PremiumPrompt, PremiumTag, SizePicker, Swatches, ToolGlyph } from "./IconControls";
 import "./AssetModal.css";
 import "./IconModal.css";
 
@@ -238,12 +238,20 @@ function IconModal({
               <div className="ie-row">
                 <span className="ie-name">Transform</span>
                 <div className="ie-tools">
-                  <button onClick={() => set({ rotate: edits.rotate - 15 })} title="Rotate left 15°" aria-label="Rotate left 15 degrees">↺</button>
-                  <button onClick={() => set({ rotate: edits.rotate + 15 })} title="Rotate right 15°" aria-label="Rotate right 15 degrees">↻</button>
+                  <button onClick={() => set({ rotate: edits.rotate - 15 })} title="Rotate left 15°" aria-label="Rotate left 15 degrees">
+                    <ToolGlyph name="rotateLeft" />
+                  </button>
+                  <button onClick={() => set({ rotate: edits.rotate + 15 })} title="Rotate right 15°" aria-label="Rotate right 15 degrees">
+                    <ToolGlyph name="rotateRight" />
+                  </button>
                   <button className={edits.flipX ? "active" : ""} onClick={() => set({ flipX: !edits.flipX })}
-                          title="Flip horizontal" aria-label="Flip horizontal" aria-pressed={edits.flipX}>⇆</button>
+                          title="Flip horizontal" aria-label="Flip horizontal" aria-pressed={edits.flipX}>
+                    <ToolGlyph name="flipX" />
+                  </button>
                   <button className={edits.flipY ? "active" : ""} onClick={() => set({ flipY: !edits.flipY })}
-                          title="Flip vertical" aria-label="Flip vertical" aria-pressed={edits.flipY}>⇅</button>
+                          title="Flip vertical" aria-label="Flip vertical" aria-pressed={edits.flipY}>
+                    <ToolGlyph name="flipY" />
+                  </button>
                   <span className="ie-value">{((edits.rotate % 360) + 360) % 360}°</span>
                 </div>
               </div>

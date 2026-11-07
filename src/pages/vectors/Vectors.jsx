@@ -1,30 +1,56 @@
 import { useState } from "react";
 import "./Vectors.css";
+import AssetModal from "../../components/AssetModal";
 import Breadcrumb from "../../components/Breadcrumb";
+import { ToolGlyph } from "../../components/IconControls";
+import { vectors as allVectors } from "../../data/vectorsData";
 
-const previews = ["/preview2.jpg", "/preview3.jpg", "/preview4.jpg", "/preview1.jpg"];
-const formats = ["SVG", "EPS", "AI", "PNG", "JPG"];
-const orientations = ["landscape", "portrait", "square"];
+const formats = ["EPS", "AI", "SVG", "PNG", "JPG"];
 
-const allVectors = Array.from({ length: 120 }, (_, i) => ({
-  id: i + 1,
-  name: `Vector ${i + 1}`,
-  image: previews[i % previews.length],
-  format: formats[i % formats.length],
-  license: i % 3 === 0 ? "premium" : "free",
-  orientation: orientations[i % 3],
-  downloads: (i * 37) % 500,
-}));
+const px = ([w, h]) => `${w} × ${h}`;
+const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 
-const ratio = { landscape: "4 / 3", portrait: "3 / 4", square: "1 / 1" };
+// one option per real file; each downloads that file
+function vectorOptions(v) {
+  return [
+    {
+      label: "EPS",
+      detail: `Editable vector · ${px(v.artboard)} pt`,
+      size: v.sources.EPS.size,
+      file: v.sources.EPS.url,
+      ext: "eps",
+    },
+    {
+      label: "JPG",
+      detail: `${px(v.preview)} px`,
+      size: v.sources.JPG.size,
+      file: v.sources.JPG.url,
+      ext: "jpg",
+    },
+  ];
+}
 
-function Vectors({ setPage, initialSearch = "" }) {
+function vectorSpecs(v) {
+  return [
+    ["File ID", v.code],
+    ["Formats", v.files.join(", ")],
+    ["Artboard", `${px(v.artboard)} pt`],
+    ["JPG size", `${px(v.preview)} px`],
+    ["Editable", "Yes, layered vector"],
+    ["Orientation", capitalize(v.orientation)],
+    ["Category", capitalize(v.category)],
+    ["Release", "Not required"],
+  ];
+}
+
+function Vectors({ setPage, initialSearch = "", user = null }) {
   const [search, setSearch] = useState(initialSearch);
   const [format, setFormat] = useState("all");
   const [license, setLicense] = useState("all");
   const [orientation, setOrientation] = useState("all");
   const [sort, setSort] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selected, setSelected] = useState(null);
 
   const perPage = 24;
 
@@ -33,9 +59,17 @@ function Vectors({ setPage, initialSearch = "" }) {
     setCurrentPage(1);
   };
 
+  const q = search.toLowerCase();
   const filtered = allVectors
-    .filter((v) => v.name.toLowerCase().includes(search.toLowerCase()))
-    .filter((v) => format === "all" || v.format === format)
+    // the short title, the file's own title and description, a whole keyword
+    // phrase ("copy space"), or the start of any word in a keyword ("lantern"
+    // finds "jack o lantern")
+    .filter((v) =>
+      v.title.toLowerCase().includes(q) ||
+      v.searchText.includes(q) ||
+      v.keywords.some((k) => k.startsWith(q) || k.split(" ").some((word) => word.startsWith(q)))
+    )
+    .filter((v) => format === "all" || v.files.includes(format))
     .filter((v) => license === "all" || v.license === license)
     .filter((v) => orientation === "all" || v.orientation === orientation)
     .sort((a, b) =>
@@ -56,6 +90,12 @@ function Vectors({ setPage, initialSearch = "" }) {
 
   const hasFilter =
     format !== "all" || license !== "all" || orientation !== "all" || search;
+
+  const searchTag = (tag) => {
+    setSelected(null);
+    setSearch(tag);
+    setCurrentPage(1);
+  };
 
   return (
     <section className="vectors-page">
@@ -127,19 +167,30 @@ function Vectors({ setPage, initialSearch = "" }) {
       <div className="vector-grid">
         {items.length > 0 ? (
           items.map((v) => (
-            <div className="vector-card" key={v.id}>
-              <div className="vector-thumb" style={{ aspectRatio: ratio[v.orientation] }}>
-                <img src={v.image} alt={v.name} loading="lazy" />
+            <div
+              className="vector-card"
+              key={v.id}
+              role="button"
+              tabIndex={0}
+              aria-label={v.title}
+              onClick={() => setSelected(v)}
+              onKeyDown={(e) => e.key === "Enter" && setSelected(v)}
+            >
+              {/* the real shape of the artwork, so nothing is cropped */}
+              <div className="vector-thumb" style={{ aspectRatio: `${v.artboard[0]} / ${v.artboard[1]}` }}>
+                <img src={v.image} alt="" loading="lazy" />
                 <span className={`vector-badge ${v.license}`}>
                   {v.license === "free" ? "Free" : "Premium"}
                 </span>
                 <span className="vector-format">{v.format}</span>
-                <div className="vector-actions">
-                  <button aria-label="Like">♡</button>
-                  <button aria-label="Download">⬇</button>
+                {/* downloads go through the detail view, where the license is shown */}
+                <div className="vector-actions" onClick={(e) => e.stopPropagation()}>
+                  <button aria-label="Save">
+                    <ToolGlyph name="heart" size={16} />
+                  </button>
                 </div>
               </div>
-              <p className="vector-name">{v.name}</p>
+              <p className="vector-name">{v.title}</p>
             </div>
           ))
         ) : (
@@ -178,6 +229,28 @@ function Vectors({ setPage, initialSearch = "" }) {
           ›
         </button>
       </div>
+
+      {selected && (
+        <AssetModal
+          key={selected.id}
+          asset={selected}
+          kind="vector"
+          options={vectorOptions(selected)}
+          specs={vectorSpecs(selected)}
+          related={allVectors
+            .filter((v) => v.category === selected.category && v.id !== selected.id)
+            .slice(0, 6)}
+          user={user}
+          onAuth={(target) => {
+            setSelected(null);
+            setPage(target);
+            window.scrollTo(0, 0);
+          }}
+          onSelect={setSelected}
+          onTag={searchTag}
+          onClose={() => setSelected(null)}
+        />
+      )}
     </section>
   );
 }
