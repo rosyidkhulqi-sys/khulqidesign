@@ -60,7 +60,7 @@ function App() {
 
   const pages = {
     home: <Home setPage={go} />,
-    icons: <Icons setPage={go} initialSearch={searchQuery} />,
+    icons: <Icons setPage={go} initialSearch={searchQuery} user={user} />,
     vectors: <Vectors setPage={go} initialSearch={searchQuery} />,
     templates: <Templates setPage={go} onCustomize={customize} initialSearch={searchQuery} />,
     footage: <Footage setPage={go} initialSearch={searchQuery} />,

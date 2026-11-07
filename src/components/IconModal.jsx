@@ -73,7 +73,7 @@ function Palette({ colors, palette, onChange }) {
   );
 }
 
-function IconModal({ icon, related = [], onSelect, onTag, onClose }) {
+function IconModal({ icon, related = [], user = null, onAuth, onSelect, onTag, onClose }) {
   const [source, setSource] = useState(null);
   const [failed, setFailed] = useState(false);
   const [edits, setEdits] = useState(defaultEdits);
@@ -81,6 +81,8 @@ function IconModal({ icon, related = [], onSelect, onTag, onClose }) {
   const [liked, setLiked] = useState(false);
   const [shared, setShared] = useState(false);
   const [copied, setCopied] = useState(null);
+  // which Premium action a signed-out visitor tried: "svg" or "png"
+  const [prompt, setPrompt] = useState(null);
   const copyTimer = useRef(null);
 
   useEffect(() => () => clearTimeout(copyTimer.current), []);
@@ -134,6 +136,19 @@ function IconModal({ icon, related = [], onSelect, onTag, onClose }) {
       license: premium ? "standard" : "free",
       date: new Date().toISOString(),
     });
+
+  // Premium preview: signed-out visitors see an invitation instead of the file.
+  // Signed-in users can still download until subscriptions exist; the real
+  // check moves to the server with the backend.
+  const needsPremium = (format) => premium || format === "svg";
+  const gate = (format, action) => {
+    if (!user && needsPremium(format)) {
+      setPrompt(format);
+      return;
+    }
+    setPrompt(null);
+    action(format);
+  };
 
   // shows "Copied" for a moment; a new copy restarts the timer
   const flash = (state, ms) => {
@@ -309,26 +324,48 @@ function IconModal({ icon, related = [], onSelect, onTag, onClose }) {
             {/* PNG is free on free icons; SVG and vector copy are always Premium.
                 The lock itself comes with the backend; for now the crown marks it. */}
             <div className="ie-download">
-              <button className="ie-png" onClick={() => download("png")} disabled={!source}>
+              <button className="ie-png" onClick={() => gate("png", download)} disabled={!source}>
                 ⬇ PNG{premium && <PremiumTag />}
               </button>
-              <button className="ie-svg" onClick={() => download("svg")} disabled={!source}>
+              <button className="ie-svg" onClick={() => gate("svg", download)} disabled={!source}>
                 ⬇ SVG<PremiumTag />
               </button>
             </div>
             <div className="ie-copy">
-              <button onClick={() => copy("svg")} disabled={!source}>
+              <button onClick={() => gate("svg", copy)} disabled={!source}>
                 {copied === "svg" ? "✓ Copied" : <>Copy SVG<PremiumTag /></>}
               </button>
-              <button onClick={() => copy("png")} disabled={!source}>
+              <button onClick={() => gate("png", copy)} disabled={!source}>
                 {copied === "png" ? "✓ Copied" : <>Copy PNG{premium && <PremiumTag />}</>}
               </button>
             </div>
-            <p className="ie-premium">
-              {premium
-                ? "This icon is included with Premium, in every format."
-                : "PNG is free. SVG and vector copy are included with Premium."}
-            </p>
+
+            {prompt ? (
+              <div className="ie-upsell" role="status">
+                <button className="ie-upsell-close" onClick={() => setPrompt(null)} aria-label="Dismiss">
+                  ✕
+                </button>
+                <strong>
+                  {premium ? "This is a Premium icon" : "SVG is part of Premium"}
+                </strong>
+                <p>
+                  {premium
+                    ? "Premium icons come with a subscription: every format, no attribution."
+                    : "Get editable vectors for Figma and Illustrator. PNG stays free."}
+                  {" "}Plans are coming soon. Log in to keep downloading during the preview.
+                </p>
+                <div>
+                  <button className="ie-upsell-main" onClick={() => onAuth("login")}>Log in</button>
+                  <button onClick={() => onAuth("register")}>Create account</button>
+                </div>
+              </div>
+            ) : (
+              <p className="ie-premium">
+                {premium
+                  ? "This icon is included with Premium, in every format."
+                  : "PNG is free. SVG and vector copy are included with Premium."}
+              </p>
+            )}
             <p className="ie-hint" role="status">
               {copied === "error"
                 ? "Your browser blocked the clipboard. Use Download instead."

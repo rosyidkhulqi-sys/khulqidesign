@@ -35,7 +35,7 @@ const icons = Array.from({ length: totalAssets }, (_, index) => {
   };
 });
 
-function Icons({ setPage, initialSearch = "" }) {
+function Icons({ setPage, initialSearch = "", user = null }) {
   const [search, setSearch] = useState(initialSearch);
 
   const [category, setCategory] = useState("all");
@@ -533,6 +533,12 @@ function Icons({ setPage, initialSearch = "" }) {
           key={selected.id}
           icon={selected}
           related={related}
+          user={user}
+          onAuth={(target) => {
+            setSelected(null);
+            setPage(target);
+            window.scrollTo(0, 0);
+          }}
           onSelect={setSelected}
           onTag={searchTag}
           onClose={() => setSelected(null)}

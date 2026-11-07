@@ -275,6 +275,72 @@
   font-size: 12px;
 }
 
+/* invitation shown when a signed-out visitor clicks a Premium button */
+.ie-upsell {
+  position: relative;
+  margin-top: 12px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: var(--surface);
+  animation: ie-in 0.18s ease;
+}
+
+@keyframes ie-in {
+  from { opacity: 0; transform: translateY(-4px); }
+}
+
+.ie-upsell strong {
+  display: block;
+  padding-right: 28px;
+  font-size: 15px;
+}
+
+.ie-upsell p {
+  margin: 6px 0 14px;
+  color: #aeb3ba;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ie-upsell div { display: flex; gap: 8px; }
+
+.ie-upsell div button {
+  flex: 1;
+  height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--white);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ie-upsell div button:hover { background: rgba(255, 255, 255, 0.06); }
+
+.ie-upsell div .ie-upsell-main {
+  border-color: var(--white);
+  background: var(--white);
+  color: #111111;
+}
+.ie-upsell div .ie-upsell-main:hover { background: #e7e9ec; }
+
+.ie-upsell-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #8d939b;
+  font-size: 12px;
+  cursor: pointer;
+}
+.ie-upsell-close:hover { background: rgba(255, 255, 255, 0.08); color: var(--white); }
+
 .ie-download button:disabled { opacity: 0.5; cursor: wait; }
 
 .ie-copy {
