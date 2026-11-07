@@ -61,6 +61,16 @@
 .site-header .site-downloads:hover,
 .site-header .site-downloads.active { color: var(--white); }
 
+.site-header .site-pricing {
+  padding: 9px 12px;
+  color: #9a9ea5;
+  font-size: 15px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.site-header .site-pricing:hover,
+.site-header .site-pricing.active { color: var(--white); }
+
 .site-login,
 .site-register { padding: 10px 18px; font-size: 15px; font-weight: 600; }
 .site-header .site-login:hover { color: #c9ccd0; }

@@ -9,6 +9,7 @@ const products = [
   ["templates", "Templates"],
   ["footage", "Footage"],
   ["create", "Create"],
+  ["pricing", "Pricing"],
 ];
 
 const services = ["Brand identity", "UI design", "Motion design", "Client projects"];

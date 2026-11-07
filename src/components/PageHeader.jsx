@@ -76,6 +76,13 @@ function PageHeader({ page, setPage, user, onLogout }) {
         <div className="site-account">
           <a
             href="#"
+            className={`site-pricing ${page === "pricing" ? "active" : ""}`}
+            onClick={go("pricing")}
+          >
+            Pricing
+          </a>
+          <a
+            href="#"
             className={`site-downloads ${page === "downloads" ? "active" : ""}`}
             onClick={go("downloads")}
             title="Your downloads"

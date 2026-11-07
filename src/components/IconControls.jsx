@@ -128,6 +128,7 @@ export function PremiumPrompt({ title, text, onAuth, onDismiss }) {
       <div>
         <button className="ie-upsell-main" onClick={() => onAuth("login")}>Log in</button>
         <button onClick={() => onAuth("register")}>Create account</button>
+        <button onClick={() => onAuth("pricing")}>See plans</button>
       </div>
     </div>
   );

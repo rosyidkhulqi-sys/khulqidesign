@@ -9,15 +9,17 @@ import Icons from "./pages/icons/Icons";
 import Vectors from "./pages/vectors/Vectors";
 import Templates from "./pages/templates/Templates";
 import Footage from "./pages/footage/Footage";
-import Login from "./pages/auth/Login";
-import Register from "./pages/auth/Register";
-import Downloads from "./pages/downloads/Downloads";
 // the editor pulls in the canvas library, so load it only when opened
 const Create = lazy(() => import("./pages/create/Create"));
 // the AI page is loaded when opened too, to keep the first download small
 const Ai = lazy(() => import("./pages/ai/Ai"));
 // Logos carries its own search keywords, so it loads when opened as well
 const Logos = lazy(() => import("./pages/logos/Logos"));
+const Pricing = lazy(() => import("./pages/pricing/Pricing"));
+// pages visited now and then load on demand too
+const Login = lazy(() => import("./pages/auth/Login"));
+const Register = lazy(() => import("./pages/auth/Register"));
+const Downloads = lazy(() => import("./pages/downloads/Downloads"));
 
 
 function App() {
@@ -64,11 +66,19 @@ function App() {
   };
 
   if (page === "login") {
-    return <Login setPage={go} />;
+    return (
+      <Suspense fallback={null}>
+        <Login setPage={go} />
+      </Suspense>
+    );
   }
 
   if (page === "register") {
-    return <Register setPage={go} />;
+    return (
+      <Suspense fallback={null}>
+        <Register setPage={go} />
+      </Suspense>
+    );
   }
 
   const pages = {
@@ -87,7 +97,16 @@ function App() {
     ),
     templates: <Templates setPage={go} onCustomize={customize} initialSearch={searchQuery} />,
     footage: <Footage setPage={go} initialSearch={searchQuery} user={user} />,
-    downloads: <Downloads setPage={go} />,
+    downloads: (
+      <Suspense fallback={null}>
+        <Downloads setPage={go} />
+      </Suspense>
+    ),
+    pricing: (
+      <Suspense fallback={null}>
+        <Pricing setPage={go} user={user} />
+      </Suspense>
+    ),
     create: (
       <Suspense fallback={null}>
         <Create draft={createDraft} clearDraft={() => setCreateDraft(null)} />
