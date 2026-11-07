@@ -364,38 +364,40 @@
 .results-grid {
   display: grid;
 
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 
-  gap: 14px;
+  gap: 12px;
 }
 
 
 /* =========================================================
    ICON CARD
+   Same pattern as Flaticon and The Noun Project: a plain light tile,
+   a large icon, and the name and actions only on hover.
    ========================================================= */
 
 .icon-card {
+  position: relative;
   min-width: 0;
 
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 11px;
+  border-radius: 8px;
 
-  background: rgba(255, 255, 255, 0.035);
+  background: #f4f4f5;
 
   overflow: hidden;
 
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    background 0.2s ease;
+  cursor: pointer;
+
+  transition: background 0.2s ease;
+}
+
+.icon-card:focus-visible {
+  outline: 2px solid var(--white);
+  outline-offset: 2px;
 }
 
 .icon-card:hover {
-  transform: translateY(-2px);
-
-  border-color: rgba(255, 255, 255, 0.18);
-
-  background: rgba(255, 255, 255, 0.06);
+  background: #e9e9ec;
 }
 
 
@@ -404,58 +406,49 @@
    ========================================================= */
 
 .icon-preview {
-  position: relative;
-
   aspect-ratio: 1 / 1;
 
   display: flex;
   align-items: center;
   justify-content: center;
-
-  padding: 18px;
-
-  background: #17191c;
 }
 
 .small-icon {
-  width: 52px;
-  height: 52px;
+  width: 50%;
+  height: auto;
+  aspect-ratio: 1 / 1;
 
   object-fit: contain;
-
-  border-radius: 7px;
 
   transition: transform 0.2s ease;
 }
 
 .icon-card:hover .small-icon {
-  transform: scale(1.06);
+  transform: scale(1.04);
 }
 
 
 /* =========================================================
-   CARD ACTIONS
+   CARD ACTIONS (hover)
    ========================================================= */
 
 .icon-actions {
   position: absolute;
 
-  right: 10px;
-  bottom: 10px;
+  top: 8px;
+  right: 8px;
 
   display: flex;
   gap: 6px;
 
   opacity: 0;
 
-  transform: translateY(4px);
-
-  transition: 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
-.icon-card:hover .icon-actions {
+.icon-card:hover .icon-actions,
+.icon-card:focus-within .icon-actions {
   opacity: 1;
-  transform: translateY(0);
 }
 
 .icon-actions button {
@@ -466,52 +459,63 @@
   align-items: center;
   justify-content: center;
 
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: none;
   border-radius: 7px;
 
-  background: rgba(15, 16, 18, 0.9);
+  background: #ffffff;
 
-  color: #ffffff;
+  color: #1d1d1d;
 
   cursor: pointer;
 
-  font-size: 16px;
+  font-size: 15px;
 
-  transition: 0.18s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
 .icon-actions button:hover {
-  background: #ffffff;
-  color: #111111;
+  background: #1d1d1d;
+  color: #ffffff;
 }
 
 
 /* =========================================================
-   ICON INFO
+   ICON INFO (name, shown on hover)
    ========================================================= */
 
 .icon-info {
-  min-height: 42px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
 
-  display: flex;
-  align-items: center;
+  padding: 8px 10px;
 
-  padding: 0 12px;
+  opacity: 0;
 
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  transition: opacity 0.2s ease;
+}
 
-  box-sizing: border-box;
+.icon-card:hover .icon-info,
+.icon-card:focus-within .icon-info {
+  opacity: 1;
 }
 
 .icon-info span {
+  display: block;
+
   overflow: hidden;
 
   white-space: nowrap;
   text-overflow: ellipsis;
 
-  color: #aeb3ba;
+  color: #3a3d41;
 
   font-size: 12px;
+  font-weight: 500;
+  text-align: center;
 }
 
 
@@ -635,7 +639,7 @@
 
 @media (max-width: 1300px) {
   .results-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
 
@@ -721,22 +725,23 @@
   }
 
   .results-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  /* touch screens have no hover: keep the name visible, actions hidden */
+  .icon-info {
+    opacity: 1;
+    padding: 6px;
+  }
+
+  .icon-info span {
+    font-size: 11px;
   }
 
   .small-icon {
-    width: 58px;
-    height: 58px;
-  }
-
-  .icon-preview {
-    padding: 12px;
-  }
-
-  .icon-actions {
-    opacity: 1;
-    transform: none;
+    width: 46%;
+    margin-bottom: 14px;
   }
 
   .pagination {

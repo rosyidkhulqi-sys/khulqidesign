@@ -1,19 +1,8 @@
 import { useEffect, useState } from "react";
+import { saveDownload } from "../lib/downloads";
 import "./AssetModal.css";
 
 const kindLabel = { icon: "Icon", vector: "Vector", footage: "Footage" };
-
-function saveDownload(entry) {
-  try {
-    const list = JSON.parse(localStorage.getItem("kd-downloads") || "[]");
-    localStorage.setItem(
-      "kd-downloads",
-      JSON.stringify([entry, ...list].slice(0, 100))
-    );
-  } catch {
-    /* storage unavailable */
-  }
-}
 
 function AssetModal({ asset, kind, options, specs, related = [], onSelect, onTag, onClose }) {
   const [choice, setChoice] = useState(0);

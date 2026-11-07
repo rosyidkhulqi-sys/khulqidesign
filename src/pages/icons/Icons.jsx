@@ -2,6 +2,38 @@ import "./Icons.css";
 import { useState } from "react";
 import "../../components/Footer.css";
 import Breadcrumb from "../../components/Breadcrumb";
+import IconModal from "../../components/IconModal";
+
+// trial icons uploaded to public/; replaced by real assets later
+const sampleIcons = [
+  { name: "Barcode", src: "/barcode.svg", style: "glyph", tags: ["barcode", "scan", "product", "price", "shopping"] },
+  { name: "Hot sale", src: "/hot%20sale.svg", style: "glyph", tags: ["sale", "discount", "fire", "promotion", "shopping"] },
+  { name: "Pin", src: "/pin.svg", style: "glyph", tags: ["pin", "location", "map", "marker", "navigation"] },
+  { name: "Promo", src: "/promo.svg", style: "glyph", tags: ["promo", "tag", "discount", "label", "offer"] },
+  { name: "Cashier", src: "/cashier.svg", style: "flat", tags: ["cashier", "store", "payment", "shop", "checkout"] },
+  { name: "E-commerce", src: "/ecommerce.svg", style: "glyph", tags: ["ecommerce", "online shop", "cart", "website", "shopping"] },
+  { name: "Wallet", src: "/wallet%20icon.svg", style: "glyph", tags: ["wallet", "money", "payment", "finance", "cash"] },
+  { name: "Coupon", src: "/coupon%202.svg", style: "gradient", tags: ["coupon", "voucher", "discount", "ticket", "sale"] },
+  { name: "Discount", src: "/discount.svg", style: "gradient", tags: ["discount", "percent", "badge", "sale", "offer"] },
+];
+
+const totalAssets = 200;
+
+const icons = Array.from({ length: totalAssets }, (_, index) => {
+  const sample = sampleIcons[index % sampleIcons.length];
+  return {
+    id: index + 1,
+    code: `KD-IC-${String(100000 + index * 11).padStart(6, "0")}`,
+    name: sample.name,
+    image: sample.src,
+    keywords: [...sample.tags, "icon", sample.style],
+    category: ["business", "social", "ui", "holiday", "nature"][index % 5],
+    style: sample.style,
+    type: index % 4 === 0 ? "set" : "icon",
+    price: index % 3 === 0 ? "paid" : "free",
+    license: index % 3 === 0 ? "premium" : "free",
+  };
+});
 
 function Icons({ setPage, initialSearch = "" }) {
   const [search, setSearch] = useState(initialSearch);
@@ -19,23 +51,18 @@ function Icons({ setPage, initialSearch = "" }) {
   const [openPrice, setOpenPrice] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [selected, setSelected] = useState(null);
 
   const itemsPerPage = 40;
-  const totalAssets = 200;
   const totalPages = Math.ceil(totalAssets / itemsPerPage);
 
-  const icons = Array.from({ length: totalAssets }, (_, index) => ({
-    id: index + 1,
-    name: `Icon ${index + 1}`,
-    category: ["business", "social", "ui", "holiday", "nature"][index % 5],
-    style: ["outline", "glyph", "filled", "flat", "gradient"][index % 5],
-    type: index % 4 === 0 ? "set" : "icon",
-    price: index % 3 === 0 ? "paid" : "free",
-  }));
+  const q = search.toLowerCase();
 
   const filteredIcons = icons.filter((icon) => {
     const matchSearch =
-      icon.name.toLowerCase().includes(search.toLowerCase());
+      icon.name.toLowerCase().includes(q) ||
+      // match from the start of a word, so "pin" doesn't find "shopping"
+      icon.keywords.some((k) => k.split(" ").some((word) => word.startsWith(q)));
 
     const matchCategory =
       category === "all" || icon.category === category;
@@ -87,6 +114,19 @@ function Icons({ setPage, initialSearch = "" }) {
     setter(value);
     setCurrentPage(1);
   };
+
+  const searchTag = (tag) => {
+    setSelected(null);
+    setSearch(tag);
+    setCurrentPage(1);
+  };
+
+  // one of each other trial icon; later, icons from the same set or style
+  const related = selected
+    ? sampleIcons
+        .filter((s) => s.src !== selected.image)
+        .map((s) => icons.find((i) => i.image === s.src))
+    : [];
 
   return (
     <section className="icons-page">
@@ -398,19 +438,24 @@ function Icons({ setPage, initialSearch = "" }) {
                 <div
                   className="icon-card"
                   key={icon.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${icon.name} icon`}
+                  onClick={() => setSelected(icon)}
+                  onKeyDown={(e) => e.key === "Enter" && setSelected(icon)}
                 >
 
                   <div className="icon-preview">
 
                     <img
-                      src="/preview1.jpg"
-                      alt={icon.name}
+                      src={icon.image}
+                      alt=""
                       className="small-icon"
                     />
 
-                    <div className="icon-actions">
-                      <button>♡</button>
-                      <button>+</button>
+                    <div className="icon-actions" onClick={(e) => e.stopPropagation()}>
+                      <button aria-label="Save">♡</button>
+                      <button aria-label="Add to collection">+</button>
                     </div>
 
                   </div>
@@ -489,6 +534,17 @@ function Icons({ setPage, initialSearch = "" }) {
         </main>
 
       </div>
+
+      {selected && (
+        <IconModal
+          key={selected.id}
+          icon={selected}
+          related={related}
+          onSelect={setSelected}
+          onTag={searchTag}
+          onClose={() => setSelected(null)}
+        />
+      )}
 
     </section>
   );
