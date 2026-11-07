@@ -32,3 +32,8 @@ figma-export/
 public/trial-footage/*
 !public/trial-footage/video background.mp4
 !public/trial-footage/video background.jpg
+
+# logo samples: the 6250 px originals stay local; the 1500 px previews the
+# Logos page shows are in git
+public/trial-logos/*
+!public/trial-logos/preview/

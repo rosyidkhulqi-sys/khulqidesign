@@ -5,6 +5,7 @@ const products = [
   ["ai", "AI"],
   ["icons", "Icons"],
   ["vectors", "Vectors"],
+  ["logos", "Logos"],
   ["templates", "Templates"],
   ["footage", "Footage"],
   ["create", "Create"],

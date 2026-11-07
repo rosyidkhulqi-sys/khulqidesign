@@ -5,6 +5,7 @@ const menuItems = [
   { key: "ai", label: "AI" },
   { key: "icons", label: "Icons" },
   { key: "vectors", label: "Vectors" },
+  { key: "logos", label: "Logos" },
   { key: "templates", label: "Templates" },
   { key: "footage", label: "Footage" },
   { key: "create", label: "Create" },

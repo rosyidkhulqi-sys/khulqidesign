@@ -17,6 +17,7 @@ const navItems = [
   { page: "ai", label: "AI", sparkle: true },
   { page: "icons", label: "Icons" },
   { page: "vectors", label: "Vectors" },
+  { page: "logos", label: "Logos" },
   { page: "templates", label: "Templates" },
   { page: "footage", label: "Footage" },
   { page: "create", label: "Create" },

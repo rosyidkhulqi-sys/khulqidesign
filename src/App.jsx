@@ -16,6 +16,8 @@ import Downloads from "./pages/downloads/Downloads";
 const Create = lazy(() => import("./pages/create/Create"));
 // the AI page is loaded when opened too, to keep the first download small
 const Ai = lazy(() => import("./pages/ai/Ai"));
+// Logos carries its own search keywords, so it loads when opened as well
+const Logos = lazy(() => import("./pages/logos/Logos"));
 
 
 function App() {
@@ -78,6 +80,11 @@ function App() {
     ),
     icons: <Icons setPage={go} initialSearch={searchQuery} user={user} onAnimate={animate} />,
     vectors: <Vectors setPage={go} initialSearch={searchQuery} user={user} />,
+    logos: (
+      <Suspense fallback={null}>
+        <Logos setPage={go} initialSearch={searchQuery} />
+      </Suspense>
+    ),
     templates: <Templates setPage={go} onCustomize={customize} initialSearch={searchQuery} />,
     footage: <Footage setPage={go} initialSearch={searchQuery} user={user} />,
     downloads: <Downloads setPage={go} />,

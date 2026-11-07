@@ -1,0 +1,117 @@
+/* LOGOS — builds on the library styles in Vectors.css */
+
+/* the three licenses in one line, under the filters */
+.logo-licenses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.logo-licenses b { margin-right: 6px; color: #e7e9ec; font-weight: 600; }
+.logo-licenses b::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: 1px;
+}
+.logo-licenses b.free::before { background: #8b9096; }
+.logo-licenses b.premium::before { background: var(--red); }
+.logo-licenses b.exclusive::before { background: #e8b44c; }
+
+/* every logo preview is square, so a plain grid lines up */
+.logo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 22px 16px;
+}
+.logo-grid .no-results { grid-column: 1 / -1; }
+
+.logo-card { min-width: 0; }
+
+.logo-thumb {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #f2f2f0;
+}
+.logo-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: inherit;
+  pointer-events: none;
+  transition: border-color 0.2s;
+}
+.logo-card:hover .logo-thumb::after { border-color: rgba(255, 255, 255, 0.35); }
+.logo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.logo-card:hover .logo-thumb img { transform: scale(1.03); }
+
+/* gold dot for Exclusive, next to the red one Vectors uses for Premium */
+.vector-badge.exclusive::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #e8b44c;
+}
+
+/* sold: the logo stays visible as proof of work, but greyed */
+.logo-card.is-sold .logo-thumb img { filter: grayscale(1); opacity: 0.45; }
+.logo-sold {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: 6px 14px;
+  border: 1.5px solid #222;
+  border-radius: 6px;
+  color: #222;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transform: translate(-50%, -50%) rotate(-8deg);
+}
+
+.logo-info {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.logo-industry { margin: 3px 2px 0; color: var(--muted); font-size: 12px; }
+.logo-price {
+  margin-top: 8px;
+  color: #e8b44c;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.logo-card.is-sold .logo-price { color: var(--muted); font-weight: 600; }
+
+.logo-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #c9ccd0;
+  font-size: 14px;
+  cursor: pointer;
+}
+.logo-toggle input { accent-color: var(--red); }
+
+@media (max-width: 640px) {
+  .logo-grid { grid-template-columns: repeat(2, 1fr); gap: 16px 10px; }
+  .logo-licenses { font-size: 12px; }
+}
