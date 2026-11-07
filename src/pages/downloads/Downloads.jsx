@@ -9,6 +9,7 @@ const kinds = [
   ["all", "All"],
   ["icon", "Icons"],
   ["vector", "Vectors"],
+  ["logo", "Logos"],
   ["template", "Templates"],
   ["footage", "Footage"],
 ];

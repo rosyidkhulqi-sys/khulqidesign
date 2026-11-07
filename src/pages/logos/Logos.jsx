@@ -1,19 +1,27 @@
 // Logos: ready-made logos for brand identity. Free to draw visitors in,
 // Premium (non-exclusive, with the subscription) and Exclusive (bought
-// outright by one buyer, then marked sold). The detail view comes next.
+// outright by one buyer, then marked sold). A card opens LogoModal.
 import { useState } from "react";
 import "../vectors/Vectors.css";
 import "./Logos.css";
 import Breadcrumb from "../../components/Breadcrumb";
 import AiSearchButton from "../../components/AiSearchButton";
+import LogoModal from "./LogoModal";
 import { industries, industryName, logos as allLogos, logoStyles } from "../../data/logosData";
 
 const licenseLabel = { free: "Free", premium: "Premium", exclusive: "Exclusive" };
 
-function LogoCard({ logo }) {
+function LogoCard({ logo, onOpen }) {
   const { license, price, sold } = logo;
   return (
-    <div className={`logo-card ${sold ? "is-sold" : ""}`}>
+    <div
+      className={`logo-card ${sold ? "is-sold" : ""}`}
+      role="button"
+      tabIndex={0}
+      aria-label={`${logo.title} logo`}
+      onClick={onOpen}
+      onKeyDown={(e) => e.key === "Enter" && onOpen()}
+    >
       <div className="logo-thumb">
         <img src={logo.image} alt={logo.title} loading="lazy" />
         <span className={`vector-badge ${license}`}>{licenseLabel[license]}</span>
@@ -32,7 +40,7 @@ function LogoCard({ logo }) {
   );
 }
 
-function Logos({ setPage, initialSearch = "" }) {
+function Logos({ setPage, initialSearch = "", user = null }) {
   const [search, setSearch] = useState(initialSearch);
   const [license, setLicense] = useState("all");
   const [industry, setIndustry] = useState("all");
@@ -40,6 +48,7 @@ function Logos({ setPage, initialSearch = "" }) {
   const [hideSold, setHideSold] = useState(false);
   const [sort, setSort] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selected, setSelected] = useState(null);
 
   const perPage = 24;
 
@@ -78,6 +87,12 @@ function Logos({ setPage, initialSearch = "" }) {
 
   const hasFilter =
     license !== "all" || industry !== "all" || style !== "all" || hideSold || search;
+
+  const searchTag = (tag) => {
+    setSelected(null);
+    setSearch(tag);
+    setCurrentPage(1);
+  };
 
   return (
     <section className="vectors-page">
@@ -173,7 +188,7 @@ function Logos({ setPage, initialSearch = "" }) {
       {/* GRID */}
       <div className="logo-grid">
         {items.length > 0 ? (
-          items.map((l) => <LogoCard key={l.id} logo={l} />)
+          items.map((l) => <LogoCard key={l.id} logo={l} onOpen={() => setSelected(l)} />)
         ) : (
           <div className="no-results">
             <h3>No logos found</h3>
@@ -215,6 +230,26 @@ function Logos({ setPage, initialSearch = "" }) {
           ›
         </button>
       </div>
+
+      {selected && (
+        <LogoModal
+          key={selected.id}
+          logo={selected}
+          related={allLogos
+            .filter((l) => l.industry === selected.industry && l.id !== selected.id)
+            .concat(allLogos.filter((l) => l.style === selected.style && l.industry !== selected.industry))
+            .slice(0, 6)}
+          user={user}
+          onAuth={(target) => {
+            setSelected(null);
+            setPage(target);
+            window.scrollTo(0, 0);
+          }}
+          onSelect={setSelected}
+          onTag={searchTag}
+          onClose={() => setSelected(null)}
+        />
+      )}
     </section>
   );
 }

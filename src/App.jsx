@@ -82,7 +82,7 @@ function App() {
     vectors: <Vectors setPage={go} initialSearch={searchQuery} user={user} />,
     logos: (
       <Suspense fallback={null}>
-        <Logos setPage={go} initialSearch={searchQuery} />
+        <Logos setPage={go} initialSearch={searchQuery} user={user} />
       </Suspense>
     ),
     templates: <Templates setPage={go} onCustomize={customize} initialSearch={searchQuery} />,

@@ -31,7 +31,7 @@
 }
 .logo-grid .no-results { grid-column: 1 / -1; }
 
-.logo-card { min-width: 0; }
+.logo-card { min-width: 0; cursor: pointer; }
 
 .logo-thumb {
   position: relative;
