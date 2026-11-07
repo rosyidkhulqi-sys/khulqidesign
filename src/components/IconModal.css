@@ -390,6 +390,41 @@
 .ie-cap { text-transform: capitalize; }
 
 
+/* FROM ICON SET */
+
+.ie-set-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.ie-set-head .asset-label { margin: 0; }
+.ie-set-head .asset-label span {
+  color: #e7e9ec;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.ie-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #e7e9ec;
+  font: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.ie-link:hover { color: var(--white); }
+
+/* the icon that is open now */
+.icon-modal .asset-related-grid button.is-icon.current {
+  box-shadow: 0 0 0 2px var(--white);
+  cursor: default;
+}
+
 /* similar icons: dark icons need a light tile */
 .icon-modal .asset-related-grid button.is-icon {
   border-color: transparent;

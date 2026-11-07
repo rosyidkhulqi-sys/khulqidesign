@@ -3,37 +3,15 @@ import { useState } from "react";
 import "../../components/Footer.css";
 import Breadcrumb from "../../components/Breadcrumb";
 import IconModal from "../../components/IconModal";
+import IconSetView, { SetCard } from "./IconSets";
+import { icons, iconSets, membersOf, setOf } from "../../data/iconsData";
 
-// trial icons uploaded to public/; replaced by real assets later
-const sampleIcons = [
-  { name: "Barcode", src: "/barcode.svg", style: "outline", tags: ["barcode", "scan", "product", "price", "shopping"] },
-  { name: "Hot sale", src: "/hot%20sale.svg", style: "outline", tags: ["sale", "discount", "fire", "promotion", "shopping"] },
-  { name: "Pin", src: "/pin.svg", style: "outline", tags: ["pin", "location", "map", "marker", "navigation"] },
-  { name: "Promo", src: "/promo.svg", style: "outline", tags: ["promo", "tag", "discount", "label", "offer"] },
-  { name: "Cashier", src: "/cashier.svg", style: "flat", tags: ["cashier", "store", "payment", "shop", "checkout"] },
-  { name: "E-commerce", src: "/ecommerce.svg", style: "glyph", tags: ["ecommerce", "online shop", "cart", "website", "shopping"] },
-  { name: "Wallet", src: "/wallet%20icon.svg", style: "glyph", tags: ["wallet", "money", "payment", "finance", "cash"] },
-  { name: "Coupon", src: "/coupon%202.svg", style: "gradient", tags: ["coupon", "voucher", "discount", "ticket", "sale"] },
-  { name: "Discount", src: "/discount.svg", style: "gradient", tags: ["discount", "percent", "badge", "sale", "offer"] },
-];
+// the price filter's "paid" means a Premium license
+const matchesPrice = (price, license) =>
+  price === "all" || (price === "paid" ? license === "premium" : license === "free");
 
-const totalAssets = 200;
-
-const icons = Array.from({ length: totalAssets }, (_, index) => {
-  const sample = sampleIcons[index % sampleIcons.length];
-  return {
-    id: index + 1,
-    code: `KD-IC-${String(100000 + index * 11).padStart(6, "0")}`,
-    name: sample.name,
-    image: sample.src,
-    keywords: [...sample.tags, "icon", sample.style],
-    category: ["business", "social", "ui", "holiday", "nature"][index % 5],
-    style: sample.style,
-    type: index % 4 === 0 ? "set" : "icon",
-    price: index % 3 === 0 ? "paid" : "free",
-    license: index % 3 === 0 ? "premium" : "free",
-  };
-});
+const wordStarts = (keywords, q) =>
+  keywords.some((k) => k.split(" ").some((word) => word.startsWith(q)));
 
 function Icons({ setPage, initialSearch = "", user = null }) {
   const [search, setSearch] = useState(initialSearch);
@@ -52,8 +30,13 @@ function Icons({ setPage, initialSearch = "", user = null }) {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState(null);
+  // color and size an icon opens with when picked from a customized set
+  const [openWith, setOpenWith] = useState(null);
+  // the icon set page shown in place of the library, or null
+  const [openSet, setOpenSet] = useState(null);
 
   const itemsPerPage = 40;
+  const showSets = type === "set";
 
   const q = search.toLowerCase();
 
@@ -61,7 +44,7 @@ function Icons({ setPage, initialSearch = "", user = null }) {
     const matchSearch =
       icon.name.toLowerCase().includes(q) ||
       // match from the start of a word, so "pin" doesn't find "shopping"
-      icon.keywords.some((k) => k.split(" ").some((word) => word.startsWith(q)));
+      wordStarts(icon.keywords, q);
 
     const matchCategory =
       category === "all" || icon.category === category;
@@ -69,20 +52,22 @@ function Icons({ setPage, initialSearch = "", user = null }) {
     const matchStyle =
       style === "all" || icon.style === style;
 
-    const matchType =
-      type === "all" || icon.type === type;
-
-    const matchPrice =
-      price === "all" || icon.price === price;
-
     return (
       matchSearch &&
       matchCategory &&
       matchStyle &&
-      matchType &&
-      matchPrice
+      matchesPrice(price, icon.license)
     );
   });
+
+  // sets match on their name or on any of their icons
+  const filteredSets = iconSets.filter(
+    (set) =>
+      (set.name.toLowerCase().includes(q) ||
+        membersOf(set).some((icon) => wordStarts(icon.keywords, q))) &&
+      (style === "all" || set.style === style) &&
+      matchesPrice(price, set.license)
+  );
 
   // pages follow the filtered results, not the whole library
   const totalPages = Math.max(1, Math.ceil(filteredIcons.length / itemsPerPage));
@@ -119,16 +104,75 @@ function Icons({ setPage, initialSearch = "", user = null }) {
 
   const searchTag = (tag) => {
     setSelected(null);
+    setOpenSet(null);
     setSearch(tag);
     setCurrentPage(1);
   };
 
-  // one of each other trial icon; later, icons from the same set or style
+  const showSet = (set) => {
+    setSelected(null);
+    setOpenSet(set);
+    window.scrollTo(0, 0);
+  };
+
+  // an icon opened from the library starts with the default look
+  const openIcon = (icon) => {
+    setOpenWith(null);
+    setSelected(icon);
+  };
+
+  const goAuth = (target) => {
+    setSelected(null);
+    setPage(target);
+    window.scrollTo(0, 0);
+  };
+
+  // icons outside this one's set (the set has its own strip); later, icons
+  // with a similar subject from the search index
   const related = selected
-    ? sampleIcons
-        .filter((s) => s.src !== selected.image)
-        .map((s) => icons.find((i) => i.image === s.src))
+    ? icons.slice(0, 9).filter((i) => i.setId !== selected.setId).slice(0, 6)
     : [];
+
+  const modal = selected && (
+    <IconModal
+      key={selected.id}
+      icon={selected}
+      initialEdits={openWith?.edits}
+      initialSize={openWith?.px}
+      set={setOf(selected)}
+      setMembers={membersOf(setOf(selected))}
+      onOpenSet={showSet}
+      related={related}
+      user={user}
+      onAuth={goAuth}
+      onSelect={openIcon}
+      onTag={searchTag}
+      onClose={() => setSelected(null)}
+    />
+  );
+
+  if (openSet) {
+    return (
+      <section className="icons-page">
+        <IconSetView
+          key={openSet.id}
+          set={openSet}
+          members={membersOf(openSet)}
+          otherSets={iconSets.filter((s) => s.id !== openSet.id)}
+          user={user}
+          setPage={setPage}
+          onAuth={goAuth}
+          onBack={() => setOpenSet(null)}
+          onOpenSet={showSet}
+          onOpenIcon={(icon, edits, px) => {
+            setOpenWith({ edits, px });
+            setSelected(icon);
+          }}
+        />
+        {modal}
+      </section>
+    );
+  }
 
   return (
     <section className="icons-page">
@@ -406,22 +450,50 @@ function Icons({ setPage, initialSearch = "", user = null }) {
 
             <div>
               <h2>
-                {category === "all"
-                  ? "All Icons"
-                  : `${category} Icons`}
+                {showSets
+                  ? "Icon Sets"
+                  : category === "all"
+                    ? "All Icons"
+                    : `${category} Icons`}
               </h2>
 
               <p>
-                {filteredIcons.length} assets
+                {showSets
+                  ? `${filteredSets.length} sets`
+                  : `${filteredIcons.length} assets`}
               </p>
             </div>
 
-            <span className="page-info">
-              Page {currentPage} / {totalPages}
-            </span>
+            {!showSets && (
+              <span className="page-info">
+                Page {currentPage} / {totalPages}
+              </span>
+            )}
 
           </div>
 
+
+          {/* SET GRID — Type: Icon Set */}
+          {showSets ? (
+            <div className="set-grid">
+              {filteredSets.length > 0 ? (
+                filteredSets.map((set) => (
+                  <SetCard
+                    key={set.id}
+                    set={set}
+                    members={membersOf(set)}
+                    onOpen={() => showSet(set)}
+                  />
+                ))
+              ) : (
+                <div className="no-results">
+                  <h3>No icon sets found</h3>
+                  <p>Try another search or filter.</p>
+                </div>
+              )}
+            </div>
+          ) : (
+          <>
 
           {/* ICON GRID */}
           <div className="results-grid">
@@ -434,8 +506,8 @@ function Icons({ setPage, initialSearch = "", user = null }) {
                   role="button"
                   tabIndex={0}
                   aria-label={`${icon.name} icon`}
-                  onClick={() => setSelected(icon)}
-                  onKeyDown={(e) => e.key === "Enter" && setSelected(icon)}
+                  onClick={() => openIcon(icon)}
+                  onKeyDown={(e) => e.key === "Enter" && openIcon(icon)}
                 >
 
                   <div className="icon-preview">
@@ -524,26 +596,14 @@ function Icons({ setPage, initialSearch = "", user = null }) {
 
           </div>
 
+          </>
+          )}
+
         </main>
 
       </div>
 
-      {selected && (
-        <IconModal
-          key={selected.id}
-          icon={selected}
-          related={related}
-          user={user}
-          onAuth={(target) => {
-            setSelected(null);
-            setPage(target);
-            window.scrollTo(0, 0);
-          }}
-          onSelect={setSelected}
-          onTag={searchTag}
-          onClose={() => setSelected(null)}
-        />
-      )}
+      {modal}
 
     </section>
   );

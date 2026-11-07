@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { saveBlob, saveDownload } from "../lib/downloads";
-import { buildIconSvg, defaultEdits, loadIconSvg, svgDataUrl, svgToPng } from "../lib/iconEditor";
+import {
+  buildIconSvg,
+  canRecolor as recolorable,
+  defaultEdits,
+  fileSlug as slug,
+  iconColors as colors,
+  loadIconSvg,
+  svgDataUrl,
+  svgToPng,
+} from "../lib/iconEditor";
+import { PremiumPrompt, PremiumTag, SizePicker, Swatches } from "./IconControls";
 import "./AssetModal.css";
 import "./IconModal.css";
 
-// 16–48 for UI work in Figma, 128–512 for slides, social and print
-const sizes = [16, 24, 32, 48, 64, 128, 256, 512];
-const colors = ["#000000", "#6b7280", "#f0202d", "#2563eb", "#16a34a", "#f59e0b"];
 const bgColors = ["#e4e4e7", "#000000", "#f0202d", "#2563eb", "#fde68a"];
 const shapes = [
   ["none", "No background"],
@@ -14,38 +21,6 @@ const shapes = [
   ["square", "Square"],
   ["rounded", "Rounded square"],
 ];
-
-// glyph and outline icons are one color, so the color can be changed safely
-const recolorable = (style) => style === "glyph" || style === "outline";
-
-const slug = (text) => text.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-
-function Swatches({ list, value, onChange, label }) {
-  return (
-    <div className="ie-swatches" role="radiogroup" aria-label={label}>
-      {list.map((c) => (
-        <button
-          key={c}
-          role="radio"
-          aria-checked={value === c}
-          aria-label={c}
-          className={value === c ? "active" : ""}
-          style={{ background: c }}
-          onClick={() => onChange(c)}
-        />
-      ))}
-      <label className="ie-picker" title="Custom color">
-        <input type="color" value={value} onChange={(e) => onChange(e.target.value)} />
-        <span>{value.toUpperCase()}</span>
-      </label>
-    </div>
-  );
-}
-
-// a quiet pill marking what a subscription includes
-function PremiumTag() {
-  return <span className="ie-tag">Premium</span>;
-}
 
 // flat icons: every color in the file, click one to replace it everywhere
 function Palette({ colors, palette, onChange }) {
@@ -73,11 +48,25 @@ function Palette({ colors, palette, onChange }) {
   );
 }
 
-function IconModal({ icon, related = [], user = null, onAuth, onSelect, onTag, onClose }) {
+function IconModal({
+  icon,
+  initialEdits = null,
+  initialSize = 512,
+  set: iconSet = null,
+  setMembers = [],
+  onOpenSet,
+  related = [],
+  user = null,
+  onAuth,
+  onSelect,
+  onTag,
+  onClose,
+}) {
   const [source, setSource] = useState(null);
   const [failed, setFailed] = useState(false);
-  const [edits, setEdits] = useState(defaultEdits);
-  const [px, setPx] = useState(512);
+  // opened from a set page, the icon starts with the set's color
+  const [edits, setEdits] = useState(() => ({ ...defaultEdits, ...initialEdits }));
+  const [px, setPx] = useState(initialSize);
   const [liked, setLiked] = useState(false);
   const [shared, setShared] = useState(false);
   const [copied, setCopied] = useState(null);
@@ -312,17 +301,10 @@ function IconModal({ icon, related = [], user = null, onAuth, onSelect, onTag, o
 
             {/* one size for every button below */}
             <p className="asset-label">Size</p>
-            <div className="ie-sizes" role="radiogroup" aria-label="Size in pixels">
-              {sizes.map((s) => (
-                <button key={s} role="radio" aria-checked={px === s}
-                        className={px === s ? "active" : ""} onClick={() => setPx(s)}>
-                  {s}
-                </button>
-              ))}
-            </div>
+            <SizePicker value={px} onChange={setPx} />
 
             {/* PNG is free on free icons; SVG and vector copy are always Premium.
-                The lock itself comes with the backend; for now the crown marks it. */}
+                The lock itself comes with the backend; for now the tag marks it. */}
             <div className="ie-download">
               <button className="ie-png" onClick={() => gate("png", download)} disabled={!source}>
                 ⬇ PNG{premium && <PremiumTag />}
@@ -341,24 +323,14 @@ function IconModal({ icon, related = [], user = null, onAuth, onSelect, onTag, o
             </div>
 
             {prompt ? (
-              <div className="ie-upsell" role="status">
-                <button className="ie-upsell-close" onClick={() => setPrompt(null)} aria-label="Dismiss">
-                  ✕
-                </button>
-                <strong>
-                  {premium ? "This is a Premium icon" : "SVG is part of Premium"}
-                </strong>
-                <p>
-                  {premium
-                    ? "Premium icons come with a subscription: every format, no attribution."
-                    : "Get editable vectors for Figma and Illustrator. PNG stays free."}
-                  {" "}Plans are coming soon. Log in to keep downloading during the preview.
-                </p>
-                <div>
-                  <button className="ie-upsell-main" onClick={() => onAuth("login")}>Log in</button>
-                  <button onClick={() => onAuth("register")}>Create account</button>
-                </div>
-              </div>
+              <PremiumPrompt
+                title={premium ? "This is a Premium icon" : "SVG is part of Premium"}
+                text={premium
+                  ? "Premium icons come with a subscription: every format, no attribution."
+                  : "Get editable vectors for Figma and Illustrator. PNG stays free."}
+                onAuth={onAuth}
+                onDismiss={() => setPrompt(null)}
+              />
             ) : (
               <p className="ie-premium">
                 {premium
@@ -402,11 +374,50 @@ function IconModal({ icon, related = [], user = null, onAuth, onSelect, onTag, o
                 <tr><th>Category</th><td className="ie-cap">{icon.category}</td></tr>
                 <tr><th>Formats</th><td>SVG, PNG · 16–512 px</td></tr>
                 <tr><th>Canvas</th><td>512 × 512 px</td></tr>
-                <tr><th>Type</th><td>{icon.type === "set" ? "Part of an icon set" : "Single icon"}</td></tr>
+                <tr>
+                  <th>Icon set</th>
+                  <td>
+                    {iconSet ? (
+                      <button className="ie-link" onClick={() => onOpenSet(iconSet)}>{iconSet.name}</button>
+                    ) : (
+                      "Single icon"
+                    )}
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
         </div>
+
+        {/* FROM ICON SET — the icon's group, each one opens on its own */}
+        {iconSet && setMembers.length > 1 && (
+          <div className="asset-related">
+            <div className="ie-set-head">
+              <p className="asset-label">
+                From icon set: <span>{iconSet.name}</span>
+              </p>
+              <button className="ie-link" onClick={() => onOpenSet(iconSet)}>
+                View all {setMembers.length} icons ›
+              </button>
+            </div>
+            <div className="asset-related-grid">
+              {setMembers.map((m) => {
+                const current = m.image === icon.image;
+                return (
+                  <button
+                    key={m.id}
+                    className={`is-icon ${current ? "current" : ""}`}
+                    onClick={() => !current && onSelect(m)}
+                    aria-label={m.name}
+                    aria-current={current || undefined}
+                  >
+                    <img src={m.image} alt="" loading="lazy" />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* RELATED */}
         {related.length > 0 && (
