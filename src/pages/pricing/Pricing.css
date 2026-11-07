@@ -221,6 +221,17 @@
 /* FAQ */
 .pr-faq { margin-top: 56px; }
 .pr-faq h2 { margin: 0 0 14px; font-size: 22px; font-weight: 600; }
+.pr-license { margin: -6px 0 16px; color: #aeb0b2; font-size: 14px; }
+.pr-license button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--white);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pr-license button:hover { color: var(--red); }
 .pr-faq details { border-top: 1px solid var(--line); }
 .pr-faq details:last-child { border-bottom: 1px solid var(--line); }
 .pr-faq summary {

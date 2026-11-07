@@ -16,6 +16,7 @@ const Ai = lazy(() => import("./pages/ai/Ai"));
 // Logos carries its own search keywords, so it loads when opened as well
 const Logos = lazy(() => import("./pages/logos/Logos"));
 const Pricing = lazy(() => import("./pages/pricing/Pricing"));
+const License = lazy(() => import("./pages/license/License"));
 // pages visited now and then load on demand too
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
@@ -100,6 +101,11 @@ function App() {
     downloads: (
       <Suspense fallback={null}>
         <Downloads setPage={go} />
+      </Suspense>
+    ),
+    license: (
+      <Suspense fallback={null}>
+        <License setPage={go} />
       </Suspense>
     ),
     pricing: (

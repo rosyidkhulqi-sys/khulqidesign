@@ -1,0 +1,84 @@
+/* LICENSE — builds on the library page head in Vectors.css */
+
+.license-page { max-width: 1080px; margin: 0 auto; }
+
+.lc-intro { max-width: 680px; margin: 4px 0 28px; color: #aeb0b2; font-size: 15px; line-height: 1.6; }
+
+/* comparison table; scrolls sideways on small screens */
+.lc-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.lc-table { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 14px; }
+.lc-table th,
+.lc-table td { padding: 14px 18px; border-bottom: 1px solid var(--line); text-align: left; }
+.lc-table tbody tr:last-child th,
+.lc-table tbody tr:last-child td { border-bottom: 0; }
+.lc-table thead th { color: var(--white); font-size: 14px; font-weight: 600; }
+.lc-table thead th:last-child { color: #e8b44c; }
+.lc-table tbody th { color: #aeb0b2; font-weight: 500; }
+.lc-table td { color: #d6d7d8; }
+.lc-table td.is-yes { color: var(--white); }
+.lc-table td.is-no { color: #6f7378; }
+
+/* can / can't */
+.lc-lists {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 18px;
+}
+.lc-lists > div {
+  padding: 26px 28px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.lc-lists h2 { margin: 0 0 14px; font-size: 18px; font-weight: 600; }
+.lc-lists ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.lc-lists li { position: relative; padding-left: 24px; color: #d6d7d8; font-size: 14px; line-height: 1.5; }
+.lc-lists li::before { position: absolute; left: 0; font-weight: 700; }
+.lc-yes li::before { content: "✓"; color: #c9ccd0; }
+.lc-no li::before { content: "✕"; color: var(--red); }
+
+/* one note per license */
+.lc-notes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 26px 40px;
+  margin-top: 44px;
+}
+.lc-notes h3 { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
+.lc-notes p { margin: 0; color: #aeb0b2; font-size: 14px; line-height: 1.65; }
+
+.lc-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 44px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+.lc-foot p { margin: 0; max-width: 620px; color: #aeb0b2; font-size: 14px; line-height: 1.6; }
+.lc-foot a { color: var(--white); text-decoration: underline; }
+.lc-foot button {
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--white);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lc-foot button:hover { color: var(--red); }
+
+@media (max-width: 760px) {
+  .lc-lists,
+  .lc-notes { grid-template-columns: 1fr; }
+  .lc-lists > div { padding: 22px; }
+  .lc-foot { flex-direction: column; align-items: flex-start; }
+}

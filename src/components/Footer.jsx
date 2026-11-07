@@ -10,6 +10,7 @@ const products = [
   ["footage", "Footage"],
   ["create", "Create"],
   ["pricing", "Pricing"],
+  ["license", "License"],
 ];
 
 const services = ["Brand identity", "UI design", "Motion design", "Client projects"];

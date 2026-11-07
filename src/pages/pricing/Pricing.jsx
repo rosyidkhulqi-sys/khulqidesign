@@ -221,6 +221,10 @@ function Pricing({ setPage, user = null }) {
       {/* FAQ */}
       <div className="pr-faq">
         <h2>Questions</h2>
+        <p className="pr-license">
+          What each license allows, in plain words:{" "}
+          <button onClick={go("license")}>Read the license →</button>
+        </p>
         {faqs.map(([q, a]) => (
           <details key={q}>
             <summary>{q}</summary>
