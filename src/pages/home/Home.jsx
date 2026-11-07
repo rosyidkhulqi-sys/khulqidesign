@@ -17,6 +17,32 @@ const services = [
   ["04", "Client projects", "A flexible creative partnership for ambitious briefs."],
 ];
 
+// How it works: the three ways to get a design here, in the order most
+// visitors need them. flow is the short path; cta opens the place to start.
+const ways = [
+  {
+    n: "01",
+    title: "Download",
+    text: "Pick an icon, vector, template or clip and download it. Free assets just need a credit line; Premium unlocks every format with no attribution.",
+    flow: ["Search", "Preview", "Download"],
+    cta: ["Browse the library", "#assets"],
+  },
+  {
+    n: "02",
+    title: "Make it yours",
+    text: "Change an icon's colors, put your own words and brand colors on a template in Create, or animate an icon with AI. Then download your version.",
+    flow: ["Pick", "Edit in the browser", "Download"],
+    cta: ["Open Create", "create"],
+  },
+  {
+    n: "03",
+    title: "Have it made",
+    text: "Need a logo, a brand identity or motion from scratch? Send a brief and our studio designs it with you, start to finish.",
+    flow: ["Brief", "Design & revise", "Final files"],
+    cta: ["See services", "#services"],
+  },
+];
+
 // send a hero search to the library that best matches the words typed
 function searchTarget(query) {
   const q = query.toLowerCase();
@@ -94,6 +120,35 @@ function Home({ setPage }) {
         <div className="home-hero-bottom">
           <div className="home-counter"><strong>34K+</strong><span>Original assets</span></div>
           <a className="home-scroll-cue" href="#assets"><span>Explore assets</span><Arrow /></a>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS — what a first-time visitor can do here, and the path */}
+      <section className="home-how" id="how">
+        <div className="home-section-title is-dark">
+          <div>
+            <p className="home-label">How it works</p>
+            <h2>Three ways to<br /><em>get it done.</em></h2>
+          </div>
+          <p>Use it as it is, make it yours,<br />or let our studio make it.</p>
+        </div>
+
+        <div className="home-how-grid">
+          {ways.map(({ n, title, text, flow, cta: [label, target] }) => (
+            <article className="home-way" key={n}>
+              <span className="home-way-n">{n}</span>
+              <h3>{title}</h3>
+              <p>{text}</p>
+              <ol className="home-way-flow">
+                {flow.map((step) => <li key={step}>{step}</li>)}
+              </ol>
+              {target.startsWith("#") ? (
+                <a href={target}>{label} <Arrow /></a>
+              ) : (
+                <button onClick={go(target)}>{label} <Arrow /></button>
+              )}
+            </article>
+          ))}
         </div>
       </section>
 
