@@ -6,10 +6,10 @@ import IconModal from "../../components/IconModal";
 
 // trial icons uploaded to public/; replaced by real assets later
 const sampleIcons = [
-  { name: "Barcode", src: "/barcode.svg", style: "glyph", tags: ["barcode", "scan", "product", "price", "shopping"] },
-  { name: "Hot sale", src: "/hot%20sale.svg", style: "glyph", tags: ["sale", "discount", "fire", "promotion", "shopping"] },
-  { name: "Pin", src: "/pin.svg", style: "glyph", tags: ["pin", "location", "map", "marker", "navigation"] },
-  { name: "Promo", src: "/promo.svg", style: "glyph", tags: ["promo", "tag", "discount", "label", "offer"] },
+  { name: "Barcode", src: "/barcode.svg", style: "outline", tags: ["barcode", "scan", "product", "price", "shopping"] },
+  { name: "Hot sale", src: "/hot%20sale.svg", style: "outline", tags: ["sale", "discount", "fire", "promotion", "shopping"] },
+  { name: "Pin", src: "/pin.svg", style: "outline", tags: ["pin", "location", "map", "marker", "navigation"] },
+  { name: "Promo", src: "/promo.svg", style: "outline", tags: ["promo", "tag", "discount", "label", "offer"] },
   { name: "Cashier", src: "/cashier.svg", style: "flat", tags: ["cashier", "store", "payment", "shop", "checkout"] },
   { name: "E-commerce", src: "/ecommerce.svg", style: "glyph", tags: ["ecommerce", "online shop", "cart", "website", "shopping"] },
   { name: "Wallet", src: "/wallet%20icon.svg", style: "glyph", tags: ["wallet", "money", "payment", "finance", "cash"] },
@@ -54,7 +54,6 @@ function Icons({ setPage, initialSearch = "" }) {
   const [selected, setSelected] = useState(null);
 
   const itemsPerPage = 40;
-  const totalPages = Math.ceil(totalAssets / itemsPerPage);
 
   const q = search.toLowerCase();
 
@@ -84,6 +83,9 @@ function Icons({ setPage, initialSearch = "" }) {
       matchPrice
     );
   });
+
+  // pages follow the filtered results, not the whole library
+  const totalPages = Math.max(1, Math.ceil(filteredIcons.length / itemsPerPage));
 
   const pageStart = (currentPage - 1) * itemsPerPage;
 
@@ -321,15 +323,6 @@ function Icons({ setPage, initialSearch = "" }) {
                       }
                     >
                       Glyph
-                    </button>
-
-                    <button
-                      className={style === "filled" ? "selected" : ""}
-                      onClick={() =>
-                        changeFilter(setStyle, "filled")
-                      }
-                    >
-                      Filled
                     </button>
 
                     <button
