@@ -95,12 +95,86 @@ function PagedGrid({ items, renderTile }) {
   );
 }
 
+/* ---------- recently used ---------- */
+
+// kept in this browser, newest first; later it can move to the account
+const RECENT_KEY = "kd-create-recent";
+const RECENT_MAX = 24;
+
+function loadRecent() {
+  try {
+    return JSON.parse(localStorage.getItem(RECENT_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+// a stored { kind, id } back as its tile, or null if the item is gone
+// (an element file removed from the folder, for example)
+function recentTile({ kind, id }, dragItem) {
+  const key = `${kind}:${id}`;
+  if (kind === "shape") {
+    const s = shapes.find((x) => x.id === id);
+    return s && (
+      <button key={key} className="cp-tile" {...dragItem("shape", id)} title={s.label}>
+        <span className={`shape-${id}`} />
+      </button>
+    );
+  }
+  if (kind === "element") {
+    const el = elements.find((x) => x.id === id);
+    return el && <ElementTile key={key} el={el} dragItem={dragItem} />;
+  }
+  if (kind === "basic") {
+    const icon = basicIcons.find((x) => x.id === id);
+    return icon && <BasicTile key={key} icon={icon} dragItem={dragItem} />;
+  }
+  if (kind === "icon") {
+    const icon = setIcons.find((x) => x.id === id);
+    return icon && <SetIconTile key={key} icon={icon} dragItem={dragItem} />;
+  }
+  return null;
+}
+
 /* ---------- panel ---------- */
 
-function ElementsPanel({ dragItem }) {
+function ElementsPanel({ dragItem: placeItem }) {
   const [search, setSearch] = useState("");
-  // the section open in full ("See all"): a category id, "icons", or null
+  // the section open in full ("See all"): a category id, "icons", "recent" or null
   const [view, setView] = useState(null);
+  const [recent, setRecent] = useState(loadRecent);
+
+  const remember = (kind, id) => {
+    const next = [{ kind, id }, ...recent.filter((r) => !(r.kind === kind && r.id === id))].slice(
+      0,
+      RECENT_MAX
+    );
+    setRecent(next);
+    try {
+      localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+    } catch {
+      /* storage unavailable */
+    }
+  };
+
+  // every tile places its item as before, and also records it as recently
+  // used: on click, or once a drag is dropped on the page (not on drag start,
+  // so the row doesn't reorder under the pointer mid-drag)
+  const dragItem = (kind, id) => {
+    const base = placeItem(kind, id);
+    return {
+      ...base,
+      onClick: () => {
+        remember(kind, id);
+        base.onClick();
+      },
+      onDragEnd: (e) => {
+        if (e.dataTransfer.dropEffect !== "none") remember(kind, id);
+      },
+    };
+  };
+
+  const recentTiles = recent.map((r) => recentTile(r, dragItem)).filter(Boolean);
 
   const q = search.trim().toLowerCase();
   const elementTile = (el) => <ElementTile key={el.id} el={el} dragItem={dragItem} />;
@@ -143,10 +217,12 @@ function ElementsPanel({ dragItem }) {
       <>
         <button className="cp-back" onClick={() => setView(null)}>
           <Icon name="arrowLeft" size={16} />
-          {category ? category.name : "Icons"}
+          {category ? category.name : view === "recent" ? "Recently used" : "Icons"}
         </button>
 
         {category && <PagedGrid items={category.items} renderTile={elementTile} />}
+
+        {view === "recent" && <div className="cp-grid three">{recentTiles}</div>}
 
         {view === "icons" && (
           <>
@@ -183,6 +259,18 @@ function ElementsPanel({ dragItem }) {
   return (
     <>
       <SearchBox value={search} onChange={setSearch} />
+
+      {/* the last things used, newest first; hidden until there are some */}
+      {recentTiles.length > 0 && (
+        <>
+          <SectionHead
+            title="Recently used"
+            count={recentTiles.length}
+            onAll={recentTiles.length > 6 ? () => setView("recent") : null}
+          />
+          <div className="cp-grid three">{recentTiles.slice(0, 6)}</div>
+        </>
+      )}
 
       <SectionHead title="Shapes" />
       <ShapeTiles list={shapes} dragItem={dragItem} />

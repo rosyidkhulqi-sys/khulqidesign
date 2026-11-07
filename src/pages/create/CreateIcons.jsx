@@ -27,6 +27,8 @@ const paths = {
   download: <path d="M12 4v12M7 11l5 5 5-5M5 20h14" />,
   chevron: <path d="M6 9l6 6 6-6" />,
   arrowLeft: <path d="M19 12H5M11 6l-6 6 6 6" />,
+  cloud: <path d="M7 18.5h10.5a4 4 0 0 0 .4-8 6 6 0 0 0-11.6 1.6A3.5 3.5 0 0 0 7 18.5z" />,
+  cloudCheck: <><path d="M7 18.5h10.5a4 4 0 0 0 .4-8 6 6 0 0 0-11.6 1.6A3.5 3.5 0 0 0 7 18.5z" /><path d="M9.5 14l2 2 3.5-3.5" /></>,
   alignLeft: <path d="M4 6h16M4 10h10M4 14h16M4 18h10" />,
   alignCenter: <path d="M4 6h16M7 10h10M4 14h16M7 18h10" />,
   alignRight: <path d="M4 6h16M10 10h10M4 14h16M10 18h10" />,

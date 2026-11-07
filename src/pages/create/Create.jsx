@@ -24,6 +24,7 @@ import { artboardPresets, fonts, svgDataUrl, textPresets } from "./createLibrary
 import "./Create.css";
 
 const DRAFT_KEY = "kd-create-draft";
+const PANEL_KEY = "kd-create-panel";
 const NAME_KEY = "kd-create-name";
 const DRAG_TYPE = "application/x-kd-item";
 const UNTITLED = "Untitled design";
@@ -139,10 +140,20 @@ function Create({ draft, clearDraft }) {
   const [stage, setStage] = useState({ w: 800, h: 600 });
   const [zoomMode, setZoomMode] = useState("fit");
   const [tab, setTab] = useState(draft ? "templates" : "elements");
+  // the library panel can be hidden to give the canvas more room (remembered)
+  const [panelOpen, setPanelOpen] = useState(() => {
+    try {
+      return localStorage.getItem(PANEL_KEY) !== "closed";
+    } catch {
+      return true;
+    }
+  });
   const [active, setActive] = useState(null);
   const [, setTick] = useState(0);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
+  // autosave state shown in the top bar: "saved", "saving" or "error"
+  const [saveState, setSaveState] = useState("saved");
   const [showNew, setShowNew] = useState(() => !draft && !loadDraft());
   const [custom, setCustom] = useState({ w: 1080, h: 1080 });
   const [lockRatio, setLockRatio] = useState(true);
@@ -169,32 +180,36 @@ function Create({ draft, clearDraft }) {
     setCanRedo(history.current.redo.length > 0);
   };
 
+  // false when the browser refuses (storage full or blocked)
   const persist = (snap) => {
     try {
       localStorage.setItem(DRAFT_KEY, snap);
+      return true;
     } catch {
-      /* storage full or unavailable */
+      return false;
     }
   };
 
   const resetHistory = () => {
     const snap = snapshot();
     history.current = { undo: [snap], redo: [], busy: false };
-    persist(snap);
+    setSaveState(persist(snap) ? "saved" : "error");
     syncHistory();
   };
 
+  // shows "Saving…" while a change waits, then "Saved" or "Not saved"
   const commit = () => {
     clearTimeout(commitTimer.current);
+    setSaveState("saving");
     commitTimer.current = setTimeout(() => {
       const h = history.current;
-      if (h.busy || !fc.current) return;
+      if (h.busy || !fc.current) return setSaveState("saved");
       const snap = snapshot();
-      if (h.undo[h.undo.length - 1] === snap) return;
+      if (h.undo[h.undo.length - 1] === snap) return setSaveState("saved");
       h.undo.push(snap);
       if (h.undo.length > 50) h.undo.shift();
       h.redo = [];
-      persist(snap);
+      setSaveState(persist(snap) ? "saved" : "error");
       syncHistory();
     }, 250);
   };
@@ -221,7 +236,7 @@ function Create({ draft, clearDraft }) {
     if (h.undo.length < 2) return;
     h.redo.push(h.undo.pop());
     await restore(JSON.parse(h.undo[h.undo.length - 1]));
-    persist(h.undo[h.undo.length - 1]);
+    setSaveState(persist(h.undo[h.undo.length - 1]) ? "saved" : "error");
     syncHistory();
   };
 
@@ -231,7 +246,7 @@ function Create({ draft, clearDraft }) {
     if (!snap) return;
     h.undo.push(snap);
     await restore(JSON.parse(snap));
-    persist(snap);
+    setSaveState(persist(snap) ? "saved" : "error");
     syncHistory();
   };
 
@@ -244,6 +259,21 @@ function Create({ draft, clearDraft }) {
     } catch {
       /* storage unavailable */
     }
+  };
+
+  const showPanel = (open) => {
+    setPanelOpen(open);
+    try {
+      localStorage.setItem(PANEL_KEY, open ? "open" : "closed");
+    } catch {
+      /* storage unavailable */
+    }
+  };
+
+  // switching tabs from anywhere also brings a hidden panel back
+  const openTab = (name) => {
+    setTab(name);
+    showPanel(true);
   };
 
   const newArtboard = (w, h) => {
@@ -691,7 +721,7 @@ function Create({ draft, clearDraft }) {
                 <button onClick={() => { setMenu(null); setShowNew(true); }}>
                   <Icon name="plus" /> New design
                 </button>
-                <button onClick={() => { setMenu(null); setTab("templates"); }}>
+                <button onClick={() => { setMenu(null); openTab("templates"); }}>
                   <Icon name="templates" /> Start from a template
                 </button>
                 <hr />
@@ -718,6 +748,18 @@ function Create({ draft, clearDraft }) {
               <Icon name="redo" />
             </button>
           </div>
+
+          {/* autosave status, like Canva's cloud icon */}
+          <span
+            className={`ct-saved is-${saveState}`}
+            role="status"
+            title={saveState === "error"
+              ? "This browser couldn't save the design. Download it to keep a copy."
+              : "Your design is saved in this browser"}
+          >
+            <Icon name={saveState === "saved" ? "cloudCheck" : "cloud"} size={18} />
+            {saveState === "saved" ? "Saved" : saveState === "saving" ? "Saving…" : "Not saved"}
+          </span>
 
           <span className="ct-size">{board.w} × {board.h} px</span>
 
@@ -750,11 +792,15 @@ function Create({ draft, clearDraft }) {
         </div>
         {menu && <div className="ct-backdrop" onClick={() => setMenu(null)} />}
 
-        <div className="create-body">
-          {/* TAB RAIL */}
+        <div className={`create-body ${panelOpen ? "" : "panel-closed"}`}>
+          {/* TAB RAIL — the open tab's button hides and shows the panel, as in Canva */}
           <nav className="create-rail">
             {tabs.map((t) => (
-              <button key={t} className={tab === t ? "active" : ""} onClick={() => setTab(t)}>
+              <button
+                key={t}
+                className={tab === t && panelOpen ? "active" : ""}
+                onClick={() => (t === tab && panelOpen ? showPanel(false) : openTab(t))}
+              >
                 <Icon name={t} size={22} />
                 {t[0].toUpperCase() + t.slice(1)}
               </button>
@@ -762,7 +808,8 @@ function Create({ draft, clearDraft }) {
           </nav>
 
           {/* LIBRARY PANEL */}
-          <div className="create-panel">
+          {/* stays in its grid column when hidden (width 0), so the canvas keeps its place */}
+          <div className="create-panel" inert={!panelOpen} aria-hidden={!panelOpen}>
             {tab === "templates" && (
               <div className="cp-grid two">
                 {allTemplates.map((t) => (
@@ -820,6 +867,18 @@ function Create({ draft, clearDraft }) {
             )}
           </div>
 
+          {/* sits on the edge between the panel and the canvas; outside the
+              stage, so it doesn't scroll away with the canvas */}
+          <button
+            className="panel-toggle"
+            onClick={() => showPanel(!panelOpen)}
+            aria-label={panelOpen ? "Hide panel" : "Show panel"}
+            aria-expanded={panelOpen}
+            title={panelOpen ? "Hide panel" : "Show panel"}
+          >
+            <Icon name="chevron" size={16} />
+          </button>
+
           {/* STAGE */}
           <div
             className="create-stage"
@@ -849,7 +908,7 @@ function Create({ draft, clearDraft }) {
                 <div className="ct-empty">
                   <p>Start with a template, or add text, shapes and icons from the left panel.</p>
                   <div>
-                    <button onClick={() => setTab("templates")}>
+                    <button onClick={() => openTab("templates")}>
                       <Icon name="templates" /> Browse templates
                     </button>
                     <button onClick={() => addText(textPresets[0])}>
@@ -1099,7 +1158,7 @@ function Create({ draft, clearDraft }) {
             </div>
 
             <div className="cn-footer">
-              <button className="ct-btn" onClick={() => { setShowNew(false); setTab("templates"); }}>
+              <button className="ct-btn" onClick={() => { setShowNew(false); openTab("templates"); }}>
                 Start from a template
               </button>
               <button className="ct-btn" onClick={() => setShowNew(false)}>Cancel</button>
