@@ -57,11 +57,12 @@ function Home({ setPage }) {
         <div className="home-grid-room" aria-hidden="true"><div /></div>
 
         <div className="home-hero-content">
-          <p className="home-kicker"><span /> Digital asset studio</p>
+          <p className="home-kicker"><span /> Design asset library & studio</p>
           <h1>Design<br />made <em>eazy.</em></h1>
+          {/* one plain sentence: what's here and what you can do with it */}
           <p className="home-hero-copy">
-            Premium icons, vectors, templates and footage. Customize them in Create,
-            or let our studio design it for you.
+            Download icons, vectors, templates and stock footage, edit them right in your
+            browser, or hire our studio for a custom design.
           </p>
 
           <form className="home-search" onSubmit={submitSearch}>
