@@ -293,6 +293,7 @@
   gap: 12px;
 }
 .asset-related-grid button {
+  position: relative;
   padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
@@ -301,14 +302,24 @@
   aspect-ratio: 4 / 3;
   cursor: pointer;
 }
-.asset-related-grid button.is-icon { aspect-ratio: 1 / 1; padding: 22%; }
+.asset-related-grid button.is-icon { aspect-ratio: 1 / 1; }
 .asset-related-grid button.is-footage { aspect-ratio: 16 / 9; }
 .asset-related-grid button:hover { border-color: rgba(255, 255, 255, 0.4); }
+
+/* Safari can't size a % height against a button's aspect-ratio height, so the
+   image used to drop to the bottom; absolute insets use the real box size */
 .asset-related-grid img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+}
+.asset-related-grid button.is-icon img {
+  inset: 22%;
+  width: 56%;
+  height: 56%;
 }
 
 

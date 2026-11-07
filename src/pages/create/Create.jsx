@@ -14,18 +14,13 @@ import {
   util,
 } from "fabric";
 import Icon from "./CreateIcons";
+import ElementsPanel from "./CreateElements";
 import TemplateThumb from "../../components/TemplateThumb";
 import { allTemplates } from "../../data/templatesData";
-import {
-  artboardPresets,
-  fonts,
-  libraryFootage,
-  libraryIcons,
-  libraryVectors,
-  shapes,
-  svgDataUrl,
-  textPresets,
-} from "./createLibrary";
+import { icons as libraryIcons } from "../../data/iconsData";
+import { elements as libraryElements } from "../../data/elementsData";
+import { basicIcons } from "./basicIcons";
+import { artboardPresets, fonts, svgDataUrl, textPresets } from "./createLibrary";
 import "./Create.css";
 
 const DRAFT_KEY = "kd-create-draft";
@@ -33,7 +28,8 @@ const NAME_KEY = "kd-create-name";
 const DRAG_TYPE = "application/x-kd-item";
 const UNTITLED = "Untitled design";
 
-const tabs = ["templates", "elements", "text", "icons", "vectors", "footage", "uploads"];
+// icons, vectors and footage live inside Elements, as Canva groups them
+const tabs = ["templates", "elements", "text", "uploads"];
 
 const exportFormats = [
   ["png", "PNG", "High quality image"],
@@ -362,9 +358,18 @@ function Create({ draft, clearDraft }) {
   const addItem = ({ kind, id }, point) => {
     if (kind === "shape") return addShape(id, point);
     if (kind === "text") return addText(textPresets.find((t) => t.id === id), point);
-    if (kind === "icon") return addSvg(libraryIcons.find((i) => i.id === id).svg, point);
-    if (kind === "vector") return addImage(libraryVectors.find((v) => v.id === id).src, point);
-    if (kind === "footage") return addImage(libraryFootage.find((f) => f.id === id).poster, point);
+    if (kind === "basic") return addSvg(basicIcons.find((i) => i.id === id).svg, point);
+    // the same SVG files as the Icons page, so their colors stay editable
+    if (kind === "icon") {
+      const icon = libraryIcons.find((i) => i.id === id);
+      return fetch(icon.image).then((r) => r.text()).then((markup) => addSvg(markup, point));
+    }
+    // element files: SVG stays editable vector, PNG goes in as an image
+    if (kind === "element") {
+      const el = libraryElements.find((e) => e.id === id);
+      if (el.type === "png") return addImage(el.url, point);
+      return fetch(el.url).then((r) => r.text()).then((markup) => addSvg(markup, point));
+    }
     if (kind === "upload") {
       const u = uploads.find((x) => x.id === id);
       return u.type === "svg" ? addSvg(u.data, point) : addImage(u.data, point);
@@ -770,18 +775,7 @@ function Create({ draft, clearDraft }) {
               </div>
             )}
 
-            {tab === "elements" && (
-              <>
-                <p className="cp-label">Shapes</p>
-                <div className="cp-grid three">
-                  {shapes.map((s) => (
-                    <button key={s.id} className="cp-tile" {...dragItem("shape", s.id)} title={s.label}>
-                      <span className={`shape-${s.id}`} />
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
+            {tab === "elements" && <ElementsPanel dragItem={dragItem} />}
 
             {tab === "text" && (
               <div className="cp-text">
@@ -796,42 +790,6 @@ function Create({ draft, clearDraft }) {
                 ))}
                 <p className="cp-hint">Double-click text on the canvas to edit it.</p>
               </div>
-            )}
-
-            {tab === "icons" && (
-              <>
-                <div className="cp-grid three">
-                  {libraryIcons.map((i) => (
-                    <button key={i.id} className="cp-tile" {...dragItem("icon", i.id)} title={i.name}>
-                      <img src={svgDataUrl(i.svg)} alt={i.name} />
-                    </button>
-                  ))}
-                </div>
-                <p className="cp-hint">Icons are SVG: change their colors, or Ungroup to edit each part.</p>
-              </>
-            )}
-
-            {tab === "vectors" && (
-              <div className="cp-grid two">
-                {libraryVectors.map((v) => (
-                  <button key={v.id} className="cp-tile wide" {...dragItem("vector", v.id)} title={v.name}>
-                    <img src={v.src} alt={v.name} />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {tab === "footage" && (
-              <>
-                <div className="cp-grid two">
-                  {libraryFootage.map((f) => (
-                    <button key={f.id} className="cp-tile wide play" {...dragItem("footage", f.id)} title={f.name}>
-                      <img src={f.poster} alt={f.name} />
-                    </button>
-                  ))}
-                </div>
-                <p className="cp-hint">Footage is placed as a still frame for now.</p>
-              </>
             )}
 
             {tab === "uploads" && (

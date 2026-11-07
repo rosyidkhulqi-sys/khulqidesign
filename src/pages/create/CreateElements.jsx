@@ -1,0 +1,232 @@
+// The Elements tab of the Create editor, laid out like Canva and MiriCanvas:
+// a search box, then sections that scroll down, each with "See all".
+//   Shapes   drawn by the editor
+//   <folder> single SVG/PNG elements from public/trial-elements/<folder>/
+//   Icons    basic everyday icons first, then the Khulqidesign icon sets
+// Vectors and footage are downloads, not design parts, so they aren't here.
+import { useEffect, useRef, useState } from "react";
+import Icon from "./CreateIcons";
+import { basicIcons } from "./basicIcons";
+import { shapes, svgDataUrl } from "./createLibrary";
+import { elementCategories, elements } from "../../data/elementsData";
+import { iconSets, membersOf } from "../../data/iconsData";
+
+const setGroups = iconSets.map((set) => ({ set, icons: membersOf(set) }));
+const setIcons = setGroups.flatMap((g) => g.icons);
+const iconCount = basicIcons.length + setIcons.length;
+
+// how many tiles a "See all" grid adds each time the list scrolls to its end
+const PAGE = 60;
+
+const has = (q, ...texts) => texts.some((t) => t.toLowerCase().includes(q));
+
+function SectionHead({ title, count, onAll }) {
+  return (
+    <div className="cp-head">
+      <p className="cp-label">{title}</p>
+      {onAll && (
+        <button className="cp-all" onClick={onAll}>
+          See all{count ? ` (${count})` : ""}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ---------- tiles ---------- */
+
+function ShapeTiles({ list, dragItem }) {
+  return (
+    <div className="cp-grid three">
+      {list.map((s) => (
+        <button key={s.id} className="cp-tile" {...dragItem("shape", s.id)} title={s.label}>
+          <span className={`shape-${s.id}`} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ElementTile({ el, dragItem }) {
+  return (
+    <button className="cp-tile" {...dragItem("element", el.id)} title={el.name}>
+      <img src={el.url} alt={el.name} draggable={false} loading="lazy" />
+    </button>
+  );
+}
+
+function BasicTile({ icon, dragItem }) {
+  return (
+    <button className="cp-tile" {...dragItem("basic", icon.id)} title={icon.name}>
+      <img src={svgDataUrl(icon.svg)} alt={icon.name} draggable={false} />
+    </button>
+  );
+}
+
+function SetIconTile({ icon, dragItem }) {
+  return (
+    <button className="cp-tile" {...dragItem("icon", icon.id)} title={icon.name}>
+      <img src={icon.image} alt={icon.name} draggable={false} loading="lazy" />
+    </button>
+  );
+}
+
+// A long grid that renders PAGE tiles at a time, adding more as it scrolls
+// into view, so a category with thousands of elements stays light.
+function PagedGrid({ items, renderTile }) {
+  const [count, setCount] = useState(PAGE);
+  const end = useRef(null);
+
+  useEffect(() => {
+    const node = end.current;
+    if (!node) return;
+    const watch = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) setCount((c) => c + PAGE);
+    });
+    watch.observe(node);
+    return () => watch.disconnect();
+  }, [items]);
+
+  return (
+    <>
+      <div className="cp-grid three">{items.slice(0, count).map(renderTile)}</div>
+      {count < items.length && <div ref={end} className="cp-more" aria-hidden="true" />}
+    </>
+  );
+}
+
+/* ---------- panel ---------- */
+
+function ElementsPanel({ dragItem }) {
+  const [search, setSearch] = useState("");
+  // the section open in full ("See all"): a category id, "icons", or null
+  const [view, setView] = useState(null);
+
+  const q = search.trim().toLowerCase();
+  const elementTile = (el) => <ElementTile key={el.id} el={el} dragItem={dragItem} />;
+
+  /* search results across every section */
+  if (q) {
+    const foundShapes = shapes.filter((s) => has(q, s.label));
+    const foundElements = elements.filter((e) => has(q, e.name, e.category));
+    const foundBasic = basicIcons.filter((i) => has(q, i.name));
+    const foundSet = setIcons.filter((i) => has(q, i.name, i.keywords.join(" ")));
+    const none = !foundShapes.length && !foundElements.length && !foundBasic.length && !foundSet.length;
+
+    return (
+      <>
+        <SearchBox value={search} onChange={setSearch} />
+        {none && <p className="cp-hint">No elements found for “{search}”.</p>}
+        {foundShapes.length > 0 && (
+          <><SectionHead title="Shapes" /><ShapeTiles list={foundShapes} dragItem={dragItem} /></>
+        )}
+        {foundElements.length > 0 && (
+          <><SectionHead title="Elements" /><PagedGrid items={foundElements} renderTile={elementTile} /></>
+        )}
+        {foundBasic.length + foundSet.length > 0 && (
+          <>
+            <SectionHead title="Icons" />
+            <div className="cp-grid three">
+              {foundBasic.map((i) => <BasicTile key={i.id} icon={i} dragItem={dragItem} />)}
+              {foundSet.map((i) => <SetIconTile key={i.id} icon={i} dragItem={dragItem} />)}
+            </div>
+          </>
+        )}
+      </>
+    );
+  }
+
+  /* one section in full */
+  if (view) {
+    const category = elementCategories.find((c) => c.id === view);
+    return (
+      <>
+        <button className="cp-back" onClick={() => setView(null)}>
+          <Icon name="arrowLeft" size={16} />
+          {category ? category.name : "Icons"}
+        </button>
+
+        {category && <PagedGrid items={category.items} renderTile={elementTile} />}
+
+        {view === "icons" && (
+          <>
+            <div className="cp-set">
+              <p className="cp-label">
+                Basic <span>{basicIcons.length}</span>
+              </p>
+              <div className="cp-grid three">
+                {basicIcons.map((i) => <BasicTile key={i.id} icon={i} dragItem={dragItem} />)}
+              </div>
+            </div>
+
+            {/* icon sets keep one style, so a design can stay consistent */}
+            {setGroups.map(({ set, icons }) => (
+              <div key={set.id} className="cp-set">
+                <p className="cp-label">
+                  {set.name}
+                  <span>
+                    {icons.length} · {set.style}
+                  </span>
+                </p>
+                <div className="cp-grid three">
+                  {icons.map((i) => <SetIconTile key={i.id} icon={i} dragItem={dragItem} />)}
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+      </>
+    );
+  }
+
+  /* overview: sections that scroll down, a short row each */
+  return (
+    <>
+      <SearchBox value={search} onChange={setSearch} />
+
+      <SectionHead title="Shapes" />
+      <ShapeTiles list={shapes} dragItem={dragItem} />
+
+      {elementCategories.map((c) => (
+        <div key={c.id}>
+          <SectionHead title={c.name} count={c.items.length} onAll={() => setView(c.id)} />
+          <div className="cp-grid three">{c.items.slice(0, 6).map(elementTile)}</div>
+        </div>
+      ))}
+
+      {/* a note for the developer only, while the folder is empty */}
+      {import.meta.env.DEV && elements.length === 0 && (
+        <p className="cp-hint">
+          Add SVG or PNG files to public/trial-elements/&lt;category&gt;/ and they appear here.
+        </p>
+      )}
+
+      <SectionHead title="Icons" count={iconCount} onAll={() => setView("icons")} />
+      <div className="cp-grid three">
+        {basicIcons.slice(0, 6).map((i) => <BasicTile key={i.id} icon={i} dragItem={dragItem} />)}
+      </div>
+
+      <p className="cp-hint">Click or drag onto the page. SVG elements and icons can be recolored.</p>
+    </>
+  );
+}
+
+function SearchBox({ value, onChange }) {
+  return (
+    <label className="cp-search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" />
+        <line x1="16.5" y1="16.5" x2="21" y2="21" />
+      </svg>
+      <input
+        type="search"
+        placeholder="Search elements"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </label>
+  );
+}
+
+export default ElementsPanel;

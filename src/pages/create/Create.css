@@ -187,7 +187,7 @@
   cursor: pointer;
 }
 .create-rail button:hover { background: rgba(255, 255, 255, 0.05); color: white; }
-.create-rail button.active { background: rgba(231, 33, 46, 0.14); color: white; }
+.create-rail button.active { background: rgba(255, 255, 255, 0.1); color: white; }
 
 
 /* LIBRARY PANEL */
@@ -208,6 +208,71 @@
 }
 .cp-label:not(:first-child) { margin-top: 18px; }
 
+/* section heading with a "See all" link, as in Canva's Elements tab */
+.cp-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 20px;
+}
+.cp-head .cp-label { margin: 0 0 10px; }
+.cp-all {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #8d939b;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.cp-all:hover { color: white; text-decoration: underline; }
+
+.cp-back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: white;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cp-back:hover { color: #c6cad0; }
+
+/* "See all" icons, one block per icon set */
+.cp-set + .cp-set { margin-top: 18px; }
+.cp-set .cp-label { display: flex; justify-content: space-between; gap: 8px; }
+.cp-set .cp-label span { color: #6b7179; letter-spacing: 0; text-transform: capitalize; font-weight: 500; }
+
+.cp-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #34373a;
+  border-radius: 9px;
+  background: var(--surface);
+  color: #8d939b;
+}
+.cp-search:focus-within { border-color: #8a8d91; }
+.cp-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: white;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+.cp-search input::placeholder { color: #777d85; }
+
 .cp-hint { margin: 12px 0 0; color: #777e87; font-size: 12px; line-height: 1.5; }
 
 .cp-grid { display: grid; gap: 8px; }
@@ -227,21 +292,21 @@
   cursor: grab;
   overflow: hidden;
 }
-.cp-tile:hover { border-color: var(--red); }
-.cp-tile img { width: 100%; height: 100%; object-fit: contain; }
-.cp-tile.wide { aspect-ratio: 4 / 3; padding: 0; background: #17191c; }
-.cp-tile.wide img { object-fit: cover; }
-.cp-tile.play::after {
-  content: "▶";
+.cp-tile:hover { border-color: rgba(255, 255, 255, 0.5); }
+/* absolute insets, not % heights: Safari can't size those against a
+   button's aspect-ratio height and drops the image to the bottom */
+.cp-tile img {
   position: absolute;
-  right: 6px;
-  bottom: 6px;
-  font-size: 10px;
-  padding: 3px 6px;
-  border-radius: 5px;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
+  inset: 16%;
+  width: 68%;
+  height: 68%;
+  object-fit: contain;
 }
+.cp-tile.wide { aspect-ratio: 4 / 3; padding: 0; background: #17191c; }
+.cp-tile.wide img { inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* marks the end of a long grid; scrolling it into view loads more tiles */
+.cp-more { height: 1px; }
 
 /* shape previews: fixed pixel sizes, because Safari sizes percentages inside
    <button> differently and stretched the shapes; each preview matches the
@@ -265,7 +330,7 @@
   cursor: pointer;
   align-self: start;
 }
-.cp-template:hover { border-color: var(--red); }
+.cp-template:hover { border-color: rgba(255, 255, 255, 0.5); }
 
 .cp-text { display: flex; flex-direction: column; gap: 8px; }
 .cp-text button {
@@ -278,7 +343,7 @@
   text-align: left;
   cursor: grab;
 }
-.cp-text button:hover { border-color: var(--red); }
+.cp-text button:hover { border-color: rgba(255, 255, 255, 0.5); }
 
 .cp-upload {
   width: 100%;
@@ -291,7 +356,7 @@
   font-size: 14px;
   cursor: pointer;
 }
-.cp-upload:hover { border-color: var(--red); }
+.cp-upload:hover { border-color: rgba(255, 255, 255, 0.5); }
 
 
 /* STAGE */
