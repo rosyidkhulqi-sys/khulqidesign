@@ -38,8 +38,18 @@ const speeds = [
 // seconds for one play at 1×
 const BASE = 1.2;
 
-function AnimateIcon() {
-  const [icon, setIcon] = useState(icons[0]);
+// opened from an icon's detail view: that icon is selected, and if it isn't
+// in a set it goes first in the picker
+function startList(initial) {
+  if (!initial || icons.some((i) => i.image === initial.image)) return icons;
+  return [initial, ...icons];
+}
+
+function AnimateIcon({ initialIcon = null }) {
+  const [list] = useState(() => startList(initialIcon));
+  const [icon, setIcon] = useState(
+    () => list.find((i) => i.image === initialIcon?.image) ?? list[0]
+  );
   const [preset, setPreset] = useState("bounce");
   const [speed, setSpeed] = useState(1);
   const [loop, setLoop] = useState(true);
@@ -173,10 +183,10 @@ function AnimateIcon() {
       <div className="animate-panel">
         <p className="animate-label">Icon</p>
         <div className="animate-icons">
-          {icons.map((i) => (
+          {list.map((i) => (
             <button
-              key={i.id}
-              className={i.id === icon.id ? "active" : ""}
+              key={i.image}
+              className={i.image === icon.image ? "active" : ""}
               onClick={() => {
                 // Draw isn't offered for flat and gradient icons
                 if (preset === "draw" && !canDraw(i)) setPreset("bounce");
@@ -184,7 +194,7 @@ function AnimateIcon() {
               }}
               title={i.name}
               aria-label={i.name}
-              aria-pressed={i.id === icon.id}
+              aria-pressed={i.image === icon.image}
             >
               <img src={i.image} alt="" />
             </button>

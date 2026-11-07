@@ -59,6 +59,8 @@
   cursor: pointer;
 }
 .clear-filters:hover { color: var(--white); }
+/* the same link under "No … found", so the way out sits right there */
+.no-results .clear-filters { margin-top: 14px; }
 
 
 /* masonry columns, so portrait and landscape artwork never leave gaps */

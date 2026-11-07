@@ -26,6 +26,8 @@ function App() {
   const [searchQuery, setSearchQuery] = useState("");
   // the signed-in Supabase user, or null when logged out
   const [user, setUser] = useState(null);
+  // the icon sent from an icon's detail view to the Animate studio
+  const [animateIcon, setAnimateIcon] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
@@ -37,7 +39,14 @@ function App() {
 
   const go = (nextPage, query = "") => {
     setSearchQuery(query);
+    setAnimateIcon(null);
     setPage(nextPage);
+  };
+
+  const animate = (icon) => {
+    go("ai");
+    setAnimateIcon(icon);
+    window.scrollTo(0, 0);
   };
 
   const logout = async () => {
@@ -64,10 +73,10 @@ function App() {
     home: <Home setPage={go} />,
     ai: (
       <Suspense fallback={null}>
-        <Ai setPage={go} />
+        <Ai setPage={go} animateIcon={animateIcon} />
       </Suspense>
     ),
-    icons: <Icons setPage={go} initialSearch={searchQuery} user={user} />,
+    icons: <Icons setPage={go} initialSearch={searchQuery} user={user} onAnimate={animate} />,
     vectors: <Vectors setPage={go} initialSearch={searchQuery} user={user} />,
     templates: <Templates setPage={go} onCustomize={customize} initialSearch={searchQuery} />,
     footage: <Footage setPage={go} initialSearch={searchQuery} user={user} />,

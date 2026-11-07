@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { saveDownload } from "../lib/downloads";
 import { PremiumPrompt, ToolGlyph } from "./IconControls";
+import { Sparkle } from "./AiSearchButton";
 import "./AssetModal.css";
 
 const kindLabel = { icon: "Icon", vector: "Vector", footage: "Footage" };
@@ -172,6 +173,16 @@ function AssetModal({
                 <ToolGlyph name="heart" size={20} filled={liked} />
               </button>
             </div>
+
+            {/* Image to video needs the AI backend; until that tool is built
+                the button only shows what's coming */}
+            {kind === "vector" && (
+              <button className="asset-ai" disabled>
+                <Sparkle size={16} />
+                Make a video
+                <span className="ai-soon">Coming soon</span>
+              </button>
+            )}
 
             {prompt && (
               <PremiumPrompt

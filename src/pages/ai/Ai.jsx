@@ -50,11 +50,13 @@ function Glyph({ name }) {
   );
 }
 
-function Ai({ setPage }) {
+// animateIcon: set when "Animate" was clicked on an icon's detail view; the
+// studio then opens straight away with that icon
+function Ai({ setPage, animateIcon = null }) {
   const [kind, setKind] = useState("image");
   const [prompt, setPrompt] = useState("");
   // the tool open in full, or null for the overview
-  const [tool, setTool] = useState(null);
+  const [tool, setTool] = useState(animateIcon ? "animate" : null);
 
   if (tool === "animate") {
     return (
@@ -65,7 +67,7 @@ function Ai({ setPage }) {
             Animate an icon <span className="library-count">Motion presets, live preview</span>
           </h1>
         </div>
-        <AnimateIcon />
+        <AnimateIcon initialIcon={animateIcon} />
       </section>
     );
   }

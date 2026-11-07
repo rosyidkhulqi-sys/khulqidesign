@@ -11,6 +11,7 @@ import {
   svgToPng,
 } from "../lib/iconEditor";
 import { PremiumPrompt, PremiumTag, SizePicker, Swatches, ToolGlyph } from "./IconControls";
+import { Sparkle } from "./AiSearchButton";
 import "./AssetModal.css";
 import "./IconModal.css";
 
@@ -60,6 +61,7 @@ function IconModal({
   onAuth,
   onSelect,
   onTag,
+  onAnimate,
   onClose,
 }) {
   const [source, setSource] = useState(null);
@@ -361,6 +363,12 @@ function IconModal({
                 {liked ? "♥" : "♡"} {liked ? "Saved" : "Save"}
               </button>
               <button onClick={share}>↗ {shared ? "Link copied" : "Share"}</button>
+              {/* opens the Animate studio on the AI page with this icon */}
+              {onAnimate && (
+                <button onClick={() => onAnimate(icon)}>
+                  <Sparkle size={15} /> Animate
+                </button>
+              )}
             </div>
 
             {premium ? (

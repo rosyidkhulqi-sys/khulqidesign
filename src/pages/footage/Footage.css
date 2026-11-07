@@ -45,6 +45,48 @@
 }
 .footage-card:hover .footage-thumb video { opacity: 1; }
 
+/* hover preview: a small spinner while the clip loads... */
+.footage-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border: 2.5px solid rgba(255, 255, 255, 0.25);
+  border-top-color: white;
+  border-radius: 50%;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
+  animation: footage-spin 0.8s linear infinite;
+  pointer-events: none;
+}
+@keyframes footage-spin { to { transform: rotate(360deg); } }
+
+/* ...and a thin bar along the bottom showing where it's playing */
+.footage-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.18);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+.footage-card:hover .footage-progress { opacity: 1; }
+.footage-progress span {
+  display: block;
+  height: 100%;
+  background: #e7212e;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footage-spinner { animation-duration: 2.4s; }
+}
+
 .footage-res,
 .footage-duration {
   position: absolute;

@@ -16,7 +16,7 @@ const matchesPrice = (price, license) =>
 const wordStarts = (keywords, q) =>
   keywords.some((k) => k.split(" ").some((word) => word.startsWith(q)));
 
-function Icons({ setPage, initialSearch = "", user = null }) {
+function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
   const [search, setSearch] = useState(initialSearch);
 
   const [category, setCategory] = useState("all");
@@ -139,6 +139,7 @@ function Icons({ setPage, initialSearch = "", user = null }) {
       onAuth={goAuth}
       onSelect={openIcon}
       onTag={searchTag}
+      onAnimate={onAnimate}
       onClose={() => setSelected(null)}
     />
   );
@@ -265,6 +266,11 @@ function Icons({ setPage, initialSearch = "", user = null }) {
             <div className="no-results">
               <h3>No icon sets found</h3>
               <p>Try another search or filter.</p>
+              {hasFilter && (
+                <button className="clear-filters" onClick={clearFilters}>
+                  Clear filters
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -305,6 +311,11 @@ function Icons({ setPage, initialSearch = "", user = null }) {
               <div className="no-results">
                 <h3>No icons found</h3>
                 <p>Try another search or filter.</p>
+                {hasFilter && (
+                  <button className="clear-filters" onClick={clearFilters}>
+                    Clear filters
+                  </button>
+                )}
               </div>
             )}
           </div>

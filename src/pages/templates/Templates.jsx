@@ -138,6 +138,11 @@ function Templates({ setPage, onCustomize, initialSearch = "" }) {
           <div className="no-results">
             <h3>No templates found</h3>
             <p>Try another search or filter.</p>
+            {hasFilter && (
+              <button className="clear-filters" onClick={clearFilters}>
+                Clear filters
+              </button>
+            )}
           </div>
         )}
       </div>

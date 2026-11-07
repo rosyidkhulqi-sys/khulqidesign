@@ -375,6 +375,10 @@
 }
 .ie-actions button {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   height: 40px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;

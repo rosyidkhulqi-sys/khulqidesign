@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AssetModal from "../../components/AssetModal";
 import "../vectors/Vectors.css";
 import "./Footage.css";
@@ -53,9 +53,38 @@ function clipSpecs(clip) {
 
 function FootageCard({ clip, onOpen }) {
   const ref = useRef(null);
+  const bar = useRef(null);
+  const frame = useRef(0);
+  // the clip is loading or buffering while the pointer is on the card
+  const [loading, setLoading] = useState(false);
 
-  const play = () => ref.current?.play().catch(() => {});
+  // stop the progress loop if the card leaves the page mid-play
+  useEffect(() => () => cancelAnimationFrame(frame.current), []);
+
+  // the progress bar follows the video every frame; timeupdate fires only
+  // about four times a second, which looks jumpy on a short clip
+  const track = () => {
+    const v = ref.current;
+    if (v && bar.current && v.duration) {
+      bar.current.style.transform = `scaleX(${v.currentTime / v.duration})`;
+    }
+    frame.current = requestAnimationFrame(track);
+  };
+
+  const play = () => {
+    const v = ref.current;
+    if (!v) return;
+    // HAVE_FUTURE_DATA: enough is loaded to start without waiting
+    if (v.readyState < 3) setLoading(true);
+    v.play().catch(() => setLoading(false));
+    cancelAnimationFrame(frame.current);
+    frame.current = requestAnimationFrame(track);
+  };
+
   const stop = () => {
+    cancelAnimationFrame(frame.current);
+    setLoading(false);
+    if (bar.current) bar.current.style.transform = "scaleX(0)";
     const v = ref.current;
     if (!v) return;
     v.pause();
@@ -69,7 +98,20 @@ function FootageCard({ clip, onOpen }) {
         style={{ aspectRatio: aspect[clip.orientation][0] }}
       >
         <img src={clip.image} alt={clip.title} loading="lazy" />
-        <video ref={ref} src={clip.file} muted loop playsInline preload="none" />
+        <video
+          ref={ref}
+          src={clip.file}
+          muted
+          loop
+          playsInline
+          preload="none"
+          onWaiting={() => setLoading(true)}
+          onPlaying={() => setLoading(false)}
+        />
+        {loading && <span className="footage-spinner" role="status" aria-label="Loading preview" />}
+        <span className="footage-progress" aria-hidden="true">
+          <span ref={bar} />
+        </span>
         <span className={`vector-badge ${clip.license}`}>
           {clip.license === "free" ? "Free" : "Premium"}
         </span>
@@ -239,6 +281,11 @@ function Footage({ setPage, initialSearch = "", user = null }) {
           <div className="no-results">
             <h3>No footage found</h3>
             <p>Try another search or filter.</p>
+            {hasFilter && (
+              <button className="clear-filters" onClick={clearFilters}>
+                Clear filters
+              </button>
+            )}
           </div>
         )}
       </div>
