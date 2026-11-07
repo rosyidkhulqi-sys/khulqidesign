@@ -27,7 +27,8 @@ dist-ssr
 # Figma Make export (reference only)
 figma-export/
 
-# new footage samples stay local; the existing sample clip stays in git so the
-# live Footage page keeps working
+# footage samples are heavy, so they stay local for fast pushes; only one
+# sample clip and its poster are in git, so the live Footage page has one
 public/trial-footage/*
 !public/trial-footage/video background.mp4
+!public/trial-footage/video background.jpg

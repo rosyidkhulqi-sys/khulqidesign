@@ -175,7 +175,9 @@ function AssetModal({
 
             {prompt && (
               <PremiumPrompt
-                title={`This is a Premium ${kindLabel[kind].toLowerCase()}`}
+                title={kind === "footage"
+                  ? "This is Premium footage"
+                  : `This is a Premium ${kindLabel[kind].toLowerCase()}`}
                 text="Premium files come with a subscription: every format, commercial use, no attribution."
                 onAuth={onAuth}
                 onDismiss={() => setPrompt(false)}
@@ -198,7 +200,10 @@ function AssetModal({
         {/* RELATED */}
         {related.length > 0 && (
           <div className="asset-related">
-            <p className="asset-label">Similar {kindLabel[kind].toLowerCase()}s</p>
+            {/* "footage" has no plural */}
+            <p className="asset-label">
+              Similar {kindLabel[kind].toLowerCase()}{kind === "footage" ? "" : "s"}
+            </p>
             <div className="asset-related-grid">
               {related.map((r) => (
                 <button key={r.id} onClick={() => onSelect(r)} className={`is-${kind}`}>

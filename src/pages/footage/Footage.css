@@ -58,7 +58,12 @@
   backdrop-filter: blur(6px);
 }
 .footage-res { left: 10px; }
-.footage-duration { right: 10px; }
+.footage-duration {
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
 
 @media (max-width: 640px) {
   .footage-grid { columns: 2; column-gap: 10px; }

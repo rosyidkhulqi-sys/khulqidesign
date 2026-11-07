@@ -3,46 +3,8 @@ import AssetModal from "../../components/AssetModal";
 import "../vectors/Vectors.css";
 import "./Footage.css";
 import Breadcrumb from "../../components/Breadcrumb";
-
-const previews = ["/preview4.jpg", "/preview2.jpg", "/preview3.jpg", "/preview1.jpg"];
-const clipFile = "/trial-footage/video%20background.mp4";
-
-const subjects = [
-  ["aerial view of tropical beach", "travel", ["aerial", "beach", "ocean", "drone", "summer"]],
-  ["timelapse of city traffic at night", "city", ["timelapse", "city", "traffic", "night", "urban"]],
-  ["abstract neon light loop", "abstract", ["abstract", "neon", "loop", "light", "background"]],
-  ["slow motion coffee pour", "food", ["coffee", "slow motion", "drink", "cafe", "morning"]],
-  ["sunrise over misty mountains", "nature", ["sunrise", "mountain", "fog", "landscape", "nature"]],
-  ["retro VHS glitch overlay", "abstract", ["retro", "vhs", "glitch", "overlay", "vintage"]],
-  ["business team meeting in office", "business", ["business", "team", "office", "meeting", "people"]],
-  ["floating particles background", "abstract", ["particles", "background", "loop", "bokeh", "motion"]],
-  ["rain drops on window glass", "nature", ["rain", "window", "water", "weather", "mood"]],
-  ["drone shot of rice terraces", "travel", ["drone", "rice field", "bali", "green", "aerial"]],
-  ["fireworks celebration at night", "holiday", ["fireworks", "celebration", "new year", "night", "festival"]],
-  ["ocean waves crashing slow motion", "nature", ["ocean", "waves", "slow motion", "sea", "water"]],
-];
-
-const allClips = Array.from({ length: 96 }, (_, i) => {
-  const [title, category, tags] = subjects[i % subjects.length];
-  const resolution = i % 3 === 2 ? "HD" : "4K";
-  return {
-    id: i + 1,
-    code: `KD-FT-${String(300000 + i * 7).padStart(6, "0")}`,
-    title,
-    category,
-    image: previews[i % previews.length],
-    file: clipFile,
-    resolution,
-    fps: [24, 30, 60][i % 3],
-    duration: 5 + ((i * 13) % 40),
-    orientation: ["horizontal", "horizontal", "square", "horizontal", "vertical"][i % 5],
-    license: i % 3 === 0 ? "premium" : "free",
-    loop: category === "abstract",
-    downloads: (i * 53) % 900,
-    // a Set drops repeats, e.g. an "abstract" tag in the "abstract" category
-    keywords: [...new Set([...tags, category, "footage", "stock video", resolution === "4K" ? "4k" : "hd"])],
-  };
-});
+import { ToolGlyph } from "../../components/IconControls";
+import { clips as allClips } from "../../data/footageData";
 
 const durationRange = {
   short: (d) => d < 10,
@@ -58,37 +20,33 @@ const aspect = {
   square: ["1 / 1", "1:1"],
 };
 
-// w×h given in landscape; flipped or squared to match the clip orientation
-const sizeFor = (orientation, w, h) =>
-  orientation === "vertical" ? `${h}×${w}` : orientation === "square" ? `${h}×${h}` : `${w}×${h}`;
+const px = ([w, h]) => `${w}×${h}`;
+const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 
+// one option per real file; HD and web renditions will come from the backend
 function clipOptions(clip) {
-  const mb = (rate) => `${Math.round(clip.duration * rate)} MB`;
-  const dim = (w, h) => sizeFor(clip.orientation, w, h);
-  const list = [
-    { label: "Full HD", detail: `${dim(1920, 1080)} · MP4 H.264`, size: mb(2.5) },
-    { label: "HD 720p", detail: `${dim(1280, 720)} · MP4 H.264`, size: mb(1.2) },
-    { label: "Web SD", detail: `${dim(640, 360)} · MP4 H.264`, size: mb(0.4) },
+  return [
+    {
+      label: clip.resolution === "4K" ? "4K UHD" : "Full HD",
+      detail: `${px(clip.size)} · MP4 H.264`,
+      size: clip.sizeLabel,
+      file: clip.file,
+      ext: "mp4",
+    },
   ];
-  if (clip.resolution === "4K") {
-    list.unshift({ label: "4K UHD", detail: `${dim(3840, 2160)} · MOV ProRes 422`, size: mb(18) });
-  }
-  return list;
 }
 
 function clipSpecs(clip) {
   return [
     ["Clip ID", clip.code],
     ["Duration", formatTime(clip.duration)],
-    ["Max resolution", clip.resolution === "4K"
-      ? `${sizeFor(clip.orientation, 3840, 2160)} (4K UHD)`
-      : `${sizeFor(clip.orientation, 1920, 1080)} (Full HD)`],
+    ["Resolution", `${px(clip.size)} (${clip.resolution === "4K" ? "4K UHD" : "Full HD"})`],
     ["Frame rate", `${clip.fps} fps`],
     ["Aspect ratio", aspect[clip.orientation][1]],
     ["Seamless loop", clip.loop ? "Yes" : "No"],
     ["Audio", "No audio"],
-    ["Release", "Model & property release not required"],
-    ["Category", clip.category],
+    ["Release", "Not required"],
+    ["Category", capitalize(clip.category)],
   ];
 }
 
@@ -115,7 +73,10 @@ function FootageCard({ clip, onOpen }) {
           {clip.license === "free" ? "Free" : "Premium"}
         </span>
         <span className="footage-res">{clip.resolution}</span>
-        <span className="footage-duration">▶ {formatTime(clip.duration)}</span>
+        <span className="footage-duration">
+          <ToolGlyph name="play" size={9} filled />
+          {formatTime(clip.duration)}
+        </span>
       </div>
       <p className="vector-name">{clip.title}</p>
     </div>
@@ -142,7 +103,13 @@ function Footage({ setPage, initialSearch = "", user = null }) {
 
   const q = search.toLowerCase();
   const filtered = allClips
-    .filter((c) => c.title.toLowerCase().includes(q) || c.keywords.some((k) => k.includes(q)))
+    // the short title, the clip's own title and description, a whole keyword
+    // phrase, or the start of any word in a keyword
+    .filter((c) =>
+      c.title.toLowerCase().includes(q) ||
+      c.searchText.includes(q) ||
+      c.keywords.some((k) => k.startsWith(q) || k.split(" ").some((word) => word.startsWith(q)))
+    )
     .filter((c) => resolution === "all" || c.resolution === resolution)
     .filter((c) => fps === "all" || c.fps === Number(fps))
     .filter((c) => duration === "all" || durationRange[duration](c.duration))
