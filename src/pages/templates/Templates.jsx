@@ -4,6 +4,7 @@ import { allTemplates, templateCategories } from "../../data/templatesData";
 import "../vectors/Vectors.css";
 import "./Templates.css";
 import Breadcrumb from "../../components/Breadcrumb";
+import AiSearchButton from "../../components/AiSearchButton";
 
 function Templates({ setPage, onCustomize, initialSearch = "" }) {
   const [search, setSearch] = useState(initialSearch);
@@ -49,8 +50,10 @@ function Templates({ setPage, onCustomize, initialSearch = "" }) {
     <section className="vectors-page">
       <div className="library-head">
         <Breadcrumb setPage={setPage} current="Templates" />
-        <h1>Templates</h1>
-        <p>Social posts, posters and presentations you can customize in Create.</p>
+        {/* the count sits by the title, so results start higher */}
+        <h1>
+          Templates <span className="library-count">{filtered.length} templates</span>
+        </h1>
       </div>
 
       {/* SEARCH */}
@@ -69,6 +72,7 @@ function Templates({ setPage, onCustomize, initialSearch = "" }) {
             ×
           </button>
         )}
+        <AiSearchButton example="Instagram post for a coffee shop promo" />
         <button className="search-submit" aria-label="Search">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
@@ -113,8 +117,6 @@ function Templates({ setPage, onCustomize, initialSearch = "" }) {
           </select>
         </div>
       </div>
-
-      <p className="vector-count">{filtered.length} templates</p>
 
       {/* GRID */}
       <div className="vector-grid">

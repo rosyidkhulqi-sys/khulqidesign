@@ -2,6 +2,7 @@ import { useState } from "react";
 import "./Vectors.css";
 import AssetModal from "../../components/AssetModal";
 import Breadcrumb from "../../components/Breadcrumb";
+import AiSearchButton from "../../components/AiSearchButton";
 import { ToolGlyph } from "../../components/IconControls";
 import { vectors as allVectors } from "../../data/vectorsData";
 
@@ -101,8 +102,10 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
     <section className="vectors-page">
       <div className="library-head">
         <Breadcrumb setPage={setPage} current="Vectors" />
-        <h1>Vectors</h1>
-        <p>Editable illustrations, backgrounds and patterns in EPS, AI and SVG.</p>
+        {/* the count sits by the title, so results start higher */}
+        <h1>
+          Vectors <span className="library-count">{filtered.length} vectors</span>
+        </h1>
       </div>
 
       {/* SEARCH */}
@@ -116,6 +119,7 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
           value={search}
           onChange={reset(setSearch)}
         />
+        <AiSearchButton example="Halloween poster with a castle and a full moon" />
         <button className="search-submit" aria-label="Search">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
@@ -160,8 +164,6 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
           </select>
         </div>
       </div>
-
-      <p className="vector-count">{filtered.length} vectors</p>
 
       {/* GRID */}
       <div className="vector-grid">

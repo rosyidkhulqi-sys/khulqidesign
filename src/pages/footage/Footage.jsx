@@ -3,6 +3,7 @@ import AssetModal from "../../components/AssetModal";
 import "../vectors/Vectors.css";
 import "./Footage.css";
 import Breadcrumb from "../../components/Breadcrumb";
+import AiSearchButton from "../../components/AiSearchButton";
 import { ToolGlyph } from "../../components/IconControls";
 import { clips as allClips } from "../../data/footageData";
 
@@ -147,8 +148,10 @@ function Footage({ setPage, initialSearch = "", user = null }) {
     <section className="vectors-page">
       <div className="library-head">
         <Breadcrumb setPage={setPage} current="Footage" />
-        <h1>Footage</h1>
-        <p>4K and HD stock clips, loops and aerials.</p>
+        {/* the count sits by the title, so results start higher */}
+        <h1>
+          Footage <span className="library-count">{filtered.length} clips</span>
+        </h1>
       </div>
 
       {/* SEARCH */}
@@ -167,6 +170,7 @@ function Footage({ setPage, initialSearch = "", user = null }) {
             ×
           </button>
         )}
+        <AiSearchButton example="slow abstract loop in blue for a background" />
         <button className="search-submit" aria-label="Search">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
@@ -224,8 +228,6 @@ function Footage({ setPage, initialSearch = "", user = null }) {
           </select>
         </div>
       </div>
-
-      <p className="vector-count">{filtered.length} clips</p>
 
       {/* GRID */}
       <div className="footage-grid">

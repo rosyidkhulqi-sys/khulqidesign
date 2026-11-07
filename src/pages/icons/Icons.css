@@ -5,55 +5,9 @@
 .icons-page {
   width: 100%;
   min-height: 100vh;
-  padding: 32px var(--page-x) 60px;
+  padding: 18px var(--page-x) 60px;
   box-sizing: border-box;
   font-family: var(--font-sans);
-}
-
-
-/* =========================================================
-   HEADER
-   ========================================================= */
-
-.icons-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 30px;
-  margin-bottom: 24px;
-}
-
-.icons-header h1 {
-  margin: 0 0 8px;
-  font-size: 32px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-}
-
-.icons-header p {
-  margin: 0;
-  color: #8d939b;
-  font-size: 15px;
-}
-
-
-/* =========================================================
-   BACK BUTTON
-   ========================================================= */
-
-.back-btn {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  color: #ffffff;
-  padding: 10px 18px;
-  border-radius: 9px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: 0.2s ease;
-}
-
-.back-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
 }
 
 
@@ -66,12 +20,13 @@
   display: flex;
   align-items: stretch;
   width: 100%;
-  height: 52px;
-  margin-bottom: 20px;
+  height: 48px;
+  margin-bottom: 12px;
   border: 1px solid #34373a;
   border-radius: 10px;
   background: var(--surface);
-  overflow: hidden;
+  /* no overflow: hidden, so the AI note can show below the bar; the type
+     menu rounds its own left corners instead */
   transition: border-color 0.2s ease;
 }
 
@@ -110,6 +65,7 @@
   font-size: 14px;
   border: none;
   border-right: 1px solid #34373a;
+  border-radius: 9px 0 0 9px;
   padding: 0 36px 0 16px;
   min-width: 120px;
   cursor: pointer;
@@ -140,8 +96,8 @@
   margin: 6px;
   padding: 0;
   color: white;
-  /* square: 52px bar (minus border) less 6px margin top and bottom */
-  width: 38px;
+  /* square: 48px bar (minus border) less 6px margin top and bottom */
+  width: 34px;
   flex-shrink: 0;
   cursor: pointer;
   transition: 0.2s ease;
@@ -154,217 +110,14 @@
 
 
 /* =========================================================
-   MAIN LAYOUT
-   ========================================================= */
-
-.icons-layout {
-  display: grid;
-  grid-template-columns: 230px minmax(0, 1fr);
-  gap: 26px;
-  align-items: start;
-
-  transition: grid-template-columns 0.25s ease;
-}
-
-.icons-layout.sidebar-closed {
-  grid-template-columns: 58px minmax(0, 1fr);
-}
-
-
-/* =========================================================
-   SIDEBAR
-   ========================================================= */
-
-.icon-sidebar {
-  position: sticky;
-  top: 20px;
-
-  min-height: 500px;
-
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 14px;
-
-  background: rgba(255, 255, 255, 0.035);
-
-  overflow: hidden;
-}
-
-.sidebar-top {
-  height: 54px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  padding: 0 14px;
-
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  box-sizing: border-box;
-}
-
-.sidebar-top strong {
-  font-size: 12px;
-  letter-spacing: 1.5px;
-  color: #b9bec5;
-}
-
-.sidebar-toggle {
-  width: 30px;
-  height: 30px;
-
-  border: none;
-  border-radius: 7px;
-
-  background: transparent;
-  color: #aeb4bb;
-
-  cursor: pointer;
-  font-size: 22px;
-
-  transition: 0.2s ease;
-}
-
-.sidebar-toggle:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
-}
-
-
-/* =========================================================
-   FILTER CONTENT
-   ========================================================= */
-
-.filter-content {
-  padding: 8px 0;
-}
-
-.filter-section {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.filter-title {
-  width: 100%;
-  height: 48px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  padding: 0 16px;
-
-  border: none;
-  background: transparent;
-
-  color: #e7e9ec;
-
-  cursor: pointer;
-
-  font-size: 14px;
-  font-weight: 600;
-
-  text-align: left;
-}
-
-.filter-title:hover {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.filter-title span:last-child {
-  color: #747b84;
-  font-size: 18px;
-  font-weight: 400;
-}
-
-
-/* =========================================================
-   FILTER OPTIONS
-   ========================================================= */
-
-.filter-options {
-  padding: 0 10px 12px;
-}
-
-.filter-options button {
-  width: 100%;
-
-  display: block;
-
-  padding: 9px 10px;
-
-  border: none;
-  border-radius: 7px;
-
-  background: transparent;
-  color: #8f969f;
-
-  cursor: pointer;
-
-  font-size: 13px;
-  text-align: left;
-
-  transition: 0.18s ease;
-}
-
-.filter-options button:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #ffffff;
-}
-
-.filter-options button.selected {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
-}
-
-
-/* =========================================================
-   RESULTS AREA
-   ========================================================= */
-
-.icons-results {
-  min-width: 0;
-}
-
-.results-header {
-  min-height: 54px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  gap: 20px;
-
-  margin-bottom: 18px;
-}
-
-.results-header h2 {
-  margin: 0 0 5px;
-
-  font-size: 24px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.results-header p {
-  margin: 0;
-
-  color: #777e87;
-  font-size: 13px;
-}
-
-.page-info {
-  color: #747b84;
-  font-size: 13px;
-}
-
-
-/* =========================================================
    ICON GRID
    ========================================================= */
 
 .results-grid {
   display: grid;
 
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  /* the page is full width now there is no sidebar */
+  grid-template-columns: repeat(7, minmax(0, 1fr));
 
   gap: 12px;
 }
@@ -614,32 +367,12 @@
 
 
 /* =========================================================
-   SIDEBAR CLOSED
-   ========================================================= */
-
-.sidebar-closed .icon-sidebar {
-  min-height: 54px;
-}
-
-.sidebar-closed .sidebar-top {
-  justify-content: center;
-}
-
-.sidebar-closed .sidebar-toggle {
-  font-size: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-
-/* =========================================================
    RESPONSIVE — LARGE
    ========================================================= */
 
 @media (max-width: 1300px) {
   .results-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 
@@ -653,13 +386,8 @@
     padding: 28px 24px 50px;
   }
 
-  .icons-layout {
-    grid-template-columns: 200px minmax(0, 1fr);
-    gap: 18px;
-  }
-
   .results-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
 
@@ -673,39 +401,8 @@
     padding: 24px 18px 40px;
   }
 
-  .icons-header {
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .back-btn {
-    align-self: flex-start;
-  }
-
-  .icons-layout,
-  .icons-layout.sidebar-closed {
-    grid-template-columns: 1fr;
-  }
-
-  .icon-sidebar {
-    position: static;
-    min-height: auto;
-  }
-
-  .sidebar-closed .icon-sidebar {
-    min-height: 54px;
-  }
-
-  .sidebar-closed .filter-content {
-    display: none;
-  }
-
-  .sidebar-top {
-    justify-content: space-between;
-  }
-
   .results-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -715,10 +412,6 @@
    ========================================================= */
 
 @media (max-width: 520px) {
-  .icons-header h1 {
-    font-size: 26px;
-  }
-
   .icon-search input {
     height: 50px;
     font-size: 14px;

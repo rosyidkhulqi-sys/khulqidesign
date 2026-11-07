@@ -1,0 +1,72 @@
+/* ✨ AI button inside the library search bar, and its note */
+
+.ai-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ai-search-button {
+  width: 34px;
+  height: 34px;
+  margin: 0 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: #b9bdc3;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.ai-search-button:hover,
+.ai-search-button.open { background: rgba(255, 255, 255, 0.08); color: white; }
+
+.ai-search-pop {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: -44px;
+  z-index: 30;
+  width: 300px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+  color: var(--white);
+  font-family: var(--font-sans);
+}
+
+.ai-search-pop strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.ai-search-pop p {
+  margin: 8px 0 0;
+  color: #aeb3ba;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.ai-search-pop em { color: white; font-style: normal; }
+
+/* the small "Coming soon" pill, also used in Create's AI tab */
+.ai-soon {
+  flex-shrink: 0;
+  margin-left: auto;
+  white-space: nowrap;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #c6cad0;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+@media (max-width: 520px) {
+  .ai-search-pop { right: -40px; width: min(300px, 86vw); }
+}

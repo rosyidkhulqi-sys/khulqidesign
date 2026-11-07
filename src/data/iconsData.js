@@ -64,6 +64,8 @@ export const icons = Array.from({ length: totalAssets }, (_, index) => {
     style: set.style,
     setId: set.id,
     license: index % 3 === 0 ? "premium" : "free",
+    // made-up download counts for "Most popular", spread across the files
+    downloads: (index * 7919) % 1000,
   };
 });
 

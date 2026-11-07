@@ -16,11 +16,11 @@
   --radius-sm: 6px;
   --radius: 8px;
   --page-x: 4vw;
-  --header-h: 88px;
+  --header-h: 68px;
 }
 
 @media (max-width: 950px) {
-  :root { --header-h: 74px; }
+  :root { --header-h: 62px; }
 }
 
 body {

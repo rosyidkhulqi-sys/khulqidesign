@@ -1,7 +1,10 @@
 import "./Icons.css";
+import "../vectors/Vectors.css";
 import { useState } from "react";
 import "../../components/Footer.css";
+import { ToolGlyph } from "../../components/IconControls";
 import Breadcrumb from "../../components/Breadcrumb";
+import AiSearchButton from "../../components/AiSearchButton";
 import IconModal from "../../components/IconModal";
 import IconSetView, { SetCard } from "./IconSets";
 import { icons, iconSets, membersOf, setOf } from "../../data/iconsData";
@@ -18,15 +21,10 @@ function Icons({ setPage, initialSearch = "", user = null }) {
 
   const [category, setCategory] = useState("all");
   const [style, setStyle] = useState("all");
-  const [type, setType] = useState("all");
+  // "icon" lists single icons, "set" lists icon sets
+  const [type, setType] = useState("icon");
   const [price, setPrice] = useState("all");
-
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  const [openCategory, setOpenCategory] = useState(true);
-  const [openStyle, setOpenStyle] = useState(false);
-  const [openType, setOpenType] = useState(false);
-  const [openPrice, setOpenPrice] = useState(false);
+  const [sort, setSort] = useState("popular");
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState(null);
@@ -58,7 +56,7 @@ function Icons({ setPage, initialSearch = "", user = null }) {
       matchStyle &&
       matchesPrice(price, icon.license)
     );
-  });
+  }).sort((a, b) => (sort === "popular" ? b.downloads - a.downloads : b.id - a.id));
 
   // sets match on their name or on any of their icons
   const filteredSets = iconSets.filter(
@@ -79,26 +77,20 @@ function Icons({ setPage, initialSearch = "", user = null }) {
     pageStart + itemsPerPage
   );
 
-  const toggleSection = (section) => {
-    if (section === "category") {
-      setOpenCategory(!openCategory);
-    }
-
-    if (section === "style") {
-      setOpenStyle(!openStyle);
-    }
-
-    if (section === "type") {
-      setOpenType(!openType);
-    }
-
-    if (section === "price") {
-      setOpenPrice(!openPrice);
-    }
+  // every filter change starts again from page 1
+  const pick = (setter) => (e) => {
+    setter(e.target.value);
+    setCurrentPage(1);
   };
 
-  const changeFilter = (setter, value) => {
-    setter(value);
+  const hasFilter =
+    category !== "all" || style !== "all" || price !== "all" || search;
+
+  const clearFilters = () => {
+    setCategory("all");
+    setStyle("all");
+    setPrice("all");
+    setSearch("");
     setCurrentPage(1);
   };
 
@@ -176,328 +168,110 @@ function Icons({ setPage, initialSearch = "", user = null }) {
 
   return (
     <section className="icons-page">
-      <Breadcrumb setPage={setPage} current="Icons" />
+      <div className="library-head">
+        <Breadcrumb setPage={setPage} current="Icons" />
+        {/* the count sits by the title, so results start higher */}
+        <h1>
+          Icons{" "}
+          <span className="library-count">
+            {showSets ? `${filteredSets.length} icon sets` : `${filteredIcons.length} icons`}
+          </span>
+        </h1>
+      </div>
 
+      {/* SEARCH */}
+      <div className="icon-search">
+        {/* what to search: single icons or icon sets */}
+        <select className="search-type" value={type} onChange={pick(setType)} aria-label="Show">
+          <option value="icon">Icons</option>
+          <option value="set">Icon sets</option>
+        </select>
+        <input
+          type="text"
+          placeholder="Search icons, sets, business, social, UI..."
+          value={search}
+          onChange={pick(setSearch)}
+        />
+        {search && (
+          <button className="clear-search" onClick={() => setSearch("")}>
+            ×
+          </button>
+        )}
+        <AiSearchButton example="red outline shopping icons" />
+        <button className="search-submit" aria-label="Search">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+            <circle cx="11" cy="11" r="7" />
+            <line x1="16.5" y1="16.5" x2="21" y2="21" />
+          </svg>
+        </button>
+      </div>
 
-     {/* SEARCH */}
-<div className="icon-search">
-  <select
-    className="search-type"
-    value={type}
-    onChange={(e) => changeFilter(setType, e.target.value)}
-  >
-    <option value="all">All</option>
-    <option value="icon">Icon</option>
-    <option value="set">Icon Set</option>
-  </select>
+      {/* FILTER ROW — the same row as Vectors and Footage */}
+      <div className="vector-filters">
+        <select value={style} onChange={pick(setStyle)} aria-label="Style">
+          <option value="all">Style</option>
+          <option value="outline">Outline</option>
+          <option value="glyph">Glyph</option>
+          <option value="flat">Flat</option>
+          <option value="gradient">Gradient</option>
+        </select>
 
-  <input
-    type="text"
-    placeholder="Search icons, sets, business, social, UI..."
-    value={search}
-    onChange={(e) => {
-      setSearch(e.target.value);
-      setCurrentPage(1);
-    }}
-  />
+        {!showSets && (
+          <select value={category} onChange={pick(setCategory)} aria-label="Category">
+            <option value="all">Category</option>
+            <option value="business">Business</option>
+            <option value="social">Social</option>
+            <option value="ui">UI</option>
+            <option value="holiday">Holiday</option>
+            <option value="nature">Nature</option>
+          </select>
+        )}
 
-  {search && (
-    <button
-      className="clear-search"
-      onClick={() => {
-        setSearch("");
-        setCurrentPage(1);
-      }}
-    >
-      ×
-    </button>
-  )}
+        <select value={price} onChange={pick(setPrice)} aria-label="License">
+          <option value="all">License</option>
+          <option value="free">Free</option>
+          <option value="paid">Premium</option>
+        </select>
 
-  <button className="search-submit" aria-label="Search">
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-    >
-      <circle cx="11" cy="11" r="7" />
-      <line x1="16.5" y1="16.5" x2="21" y2="21" />
-    </svg>
-  </button>
-</div>
+        {hasFilter && (
+          <button className="clear-filters" onClick={clearFilters}>
+            Clear filters
+          </button>
+        )}
 
-
-      {/* MAIN CONTENT */}
-      <div
-        className={`icons-layout ${
-          sidebarOpen ? "sidebar-open" : "sidebar-closed"
-        }`}
-      >
-
-        {/* SIDEBAR */}
-        <aside className="icon-sidebar">
-
-          <div className="sidebar-top">
-            {sidebarOpen && <strong>FILTER</strong>}
-
-            <button
-              className="sidebar-toggle"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              {sidebarOpen ? "‹" : "›"}
-            </button>
+        {!showSets && (
+          <div className="vector-sort">
+            <select value={sort} onChange={pick(setSort)} aria-label="Sort">
+              <option value="popular">Most popular</option>
+              <option value="newest">Newest</option>
+            </select>
           </div>
+        )}
+      </div>
 
-
-          {sidebarOpen && (
-            <div className="filter-content">
-
-              {/* CATEGORY */}
-              <div className="filter-section">
-
-                <button
-                  className="filter-title"
-                  onClick={() => toggleSection("category")}
-                >
-                  <span>Category</span>
-                  <span>{openCategory ? "−" : "+"}</span>
-                </button>
-
-                {openCategory && (
-                  <div className="filter-options">
-
-                    <button
-                      className={category === "all" ? "selected" : ""}
-                      onClick={() =>
-                        changeFilter(setCategory, "all")
-                      }
-                    >
-                      All
-                    </button>
-
-                    <button
-                      className={category === "business" ? "selected" : ""}
-                      onClick={() =>
-                        changeFilter(setCategory, "business")
-                      }
-                    >
-                      Business
-                    </button>
-
-                    <button
-                      className={category === "social" ? "selected" : ""}
-                      onClick={() =>
-                        changeFilter(setCategory, "social")
-                      }
-                    >
-                      Social
-                    </button>
-
-                    <button
-                      className={category === "ui" ? "selected" : ""}
-                      onClick={() =>
-                        changeFilter(setCategory, "ui")
-                      }
-                    >
-                      UI
-                    </button>
-
-                    <button
-                      className={category === "holiday" ? "selected" : ""}
-                      onClick={() =>
-                        changeFilter(setCategory, "holiday")
-                      }
-                    >
-                      Holiday
-                    </button>
-
-                    <button
-                      className={category === "nature" ? "selected" : ""}
-                      onClick={() =>
-                        changeFilter(setCategory, "nature")
-                      }
-                    >
-                      Nature
-                    </button>
-
-                  </div>
-                )}
-              </div>
-
-
-              {/* STYLE */}
-              <div className="filter-section">
-
-                <button
-                  className="filter-title"
-                  onClick={() => toggleSection("style")}
-                >
-                  <span>Style</span>
-                  <span>{openStyle ? "−" : "+"}</span>
-                </button>
-
-                {openStyle && (
-                  <div className="filter-options">
-
-                    <button
-                      className={style === "all" ? "selected" : ""}
-                      onClick={() =>
-                        changeFilter(setStyle, "all")
-                      }
-                    >
-                      All
-                    </button>
-
-                    <button
-                      className={style === "outline" ? "selected" : ""}
-                      onClick={() =>
-                        changeFilter(setStyle, "outline")
-                      }
-                    >
-                      Outline
-                    </button>
-
-                    <button
-                      className={style === "glyph" ? "selected" : ""}
-                      onClick={() =>
-                        changeFilter(setStyle, "glyph")
-                      }
-                    >
-                      Glyph
-                    </button>
-
-                    <button
-                      className={style === "flat" ? "selected" : ""}
-                      onClick={() =>
-                        changeFilter(setStyle, "flat")
-                      }
-                    >
-                      Flat
-                    </button>
-
-                    <button
-                      className={style === "gradient" ? "selected" : ""}
-                      onClick={() =>
-                        changeFilter(setStyle, "gradient")
-                      }
-                    >
-                      Gradient
-                    </button>
-
-                  </div>
-                )}
-              </div>
-
-  
-              {/* PRICE */}
-              <div className="filter-section">
-
-                <button
-                  className="filter-title"
-                  onClick={() => toggleSection("price")}
-                >
-                  <span>Price</span>
-                  <span>{openPrice ? "−" : "+"}</span>
-                </button>
-
-                {openPrice && (
-                  <div className="filter-options">
-
-                    <button
-                      className={price === "all" ? "selected" : ""}
-                      onClick={() =>
-                        changeFilter(setPrice, "all")
-                      }
-                    >
-                      All
-                    </button>
-
-                    <button
-                      className={price === "free" ? "selected" : ""}
-                      onClick={() =>
-                        changeFilter(setPrice, "free")
-                      }
-                    >
-                      Free
-                    </button>
-
-                    <button
-                      className={price === "paid" ? "selected" : ""}
-                      onClick={() =>
-                        changeFilter(setPrice, "paid")
-                      }
-                    >
-                      Paid
-                    </button>
-
-                  </div>
-                )}
-              </div>
-
+      {showSets ? (
+        <div className="set-grid">
+          {filteredSets.length > 0 ? (
+            filteredSets.map((set) => (
+              <SetCard
+                key={set.id}
+                set={set}
+                members={membersOf(set)}
+                onOpen={() => showSet(set)}
+              />
+            ))
+          ) : (
+            <div className="no-results">
+              <h3>No icon sets found</h3>
+              <p>Try another search or filter.</p>
             </div>
           )}
-
-        </aside>
-
-
-        {/* RESULTS */}
-        <main className="icons-results">
-
-          <div className="results-header">
-
-            <div>
-              <h2>
-                {showSets
-                  ? "Icon Sets"
-                  : category === "all"
-                    ? "All Icons"
-                    : `${category} Icons`}
-              </h2>
-
-              <p>
-                {showSets
-                  ? `${filteredSets.length} sets`
-                  : `${filteredIcons.length} assets`}
-              </p>
-            </div>
-
-            {!showSets && (
-              <span className="page-info">
-                Page {currentPage} / {totalPages}
-              </span>
-            )}
-
-          </div>
-
-
-          {/* SET GRID — Type: Icon Set */}
-          {showSets ? (
-            <div className="set-grid">
-              {filteredSets.length > 0 ? (
-                filteredSets.map((set) => (
-                  <SetCard
-                    key={set.id}
-                    set={set}
-                    members={membersOf(set)}
-                    onOpen={() => showSet(set)}
-                  />
-                ))
-              ) : (
-                <div className="no-results">
-                  <h3>No icon sets found</h3>
-                  <p>Try another search or filter.</p>
-                </div>
-              )}
-            </div>
-          ) : (
-          <>
-
+        </div>
+      ) : (
+        <>
           {/* ICON GRID */}
           <div className="results-grid">
-
             {currentIcons.length > 0 ? (
               currentIcons.map((icon) => (
                 <div
@@ -509,102 +283,64 @@ function Icons({ setPage, initialSearch = "", user = null }) {
                   onClick={() => openIcon(icon)}
                   onKeyDown={(e) => e.key === "Enter" && openIcon(icon)}
                 >
-
                   <div className="icon-preview">
-
-                    <img
-                      src={icon.image}
-                      alt=""
-                      className="small-icon"
-                    />
+                    <img src={icon.image} alt="" className="small-icon" />
 
                     <div className="icon-actions" onClick={(e) => e.stopPropagation()}>
-                      <button aria-label="Save">♡</button>
-                      <button aria-label="Add to collection">+</button>
+                      <button aria-label="Save">
+                        <ToolGlyph name="heart" size={15} />
+                      </button>
+                      <button aria-label="Add to collection">
+                        <ToolGlyph name="plus" size={15} />
+                      </button>
                     </div>
-
                   </div>
 
                   <div className="icon-info">
                     <span>{icon.name}</span>
                   </div>
-
                 </div>
               ))
             ) : (
               <div className="no-results">
                 <h3>No icons found</h3>
-                <p>
-                  Try another search or filter.
-                </p>
+                <p>Try another search or filter.</p>
               </div>
             )}
-
           </div>
-
 
           {/* PAGINATION */}
           <div className="pagination">
-
             <button
               className="page-arrow"
-              onClick={() =>
-                setCurrentPage(
-                  Math.max(1, currentPage - 1)
-                )
-              }
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
             >
               ‹
             </button>
-
-
-            {Array.from(
-              { length: totalPages },
-              (_, index) => index + 1
-            )
-              .slice(
-                Math.max(0, currentPage - 3),
-                Math.min(totalPages, currentPage + 2)
-              )
+            {Array.from({ length: totalPages }, (_, index) => index + 1)
+              .slice(Math.max(0, currentPage - 3), Math.min(totalPages, currentPage + 2))
               .map((page) => (
                 <button
                   key={page}
-                  className={`page-number ${
-                    currentPage === page ? "active" : ""
-                  }`}
-                  onClick={() =>
-                    setCurrentPage(page)
-                  }
+                  className={`page-number ${currentPage === page ? "active" : ""}`}
+                  onClick={() => setCurrentPage(page)}
                 >
                   {page}
                 </button>
               ))}
-
-
             <button
               className="page-arrow"
-              onClick={() =>
-                setCurrentPage(
-                  Math.min(totalPages, currentPage + 1)
-                )
-              }
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
             >
               ›
             </button>
-
           </div>
-
-          </>
-          )}
-
-        </main>
-
-      </div>
+        </>
+      )}
 
       {modal}
-
     </section>
   );
 }

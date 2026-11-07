@@ -86,6 +86,7 @@ const glyphs = {
     <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
   ),
   play: <path d="M8 5.5v13l10-6.5z" />,
+  plus: <path d="M12 5v14M5 12h14" />,
 };
 
 // filled: a solid shape, for a saved heart

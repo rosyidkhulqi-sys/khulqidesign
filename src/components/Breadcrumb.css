@@ -1,4 +1,4 @@
-.breadcrumb { margin-bottom: 10px; font-family: var(--font-sans); }
+.breadcrumb { margin-bottom: 6px; font-family: var(--font-sans); }
 
 .breadcrumb ol {
   display: flex;

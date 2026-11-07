@@ -22,6 +22,7 @@ import { elements as libraryElements } from "../../data/elementsData";
 import { basicIcons } from "./basicIcons";
 import { artboardPresets, fonts, svgDataUrl, textPresets } from "./createLibrary";
 import ProjectsPanel from "./CreateProjects";
+import AiPanel from "./CreateAi";
 import {
   currentProjectId,
   deleteProject,
@@ -46,7 +47,8 @@ const DRAG_TYPE = "application/x-kd-item";
 const UNTITLED = "Untitled design";
 
 // icons, vectors and footage live inside Elements, as Canva groups them
-const tabs = ["templates", "elements", "text", "uploads", "projects"];
+const tabs = ["templates", "elements", "text", "uploads", "projects", "ai"];
+const tabLabel = (t) => (t === "ai" ? "AI" : t[0].toUpperCase() + t.slice(1));
 
 const exportFormats = [
   ["png", "PNG", "High quality image"],
@@ -998,7 +1000,7 @@ function Create({ draft, clearDraft }) {
                 onClick={() => (t === tab && panelOpen ? showPanel(false) : openTab(t))}
               >
                 <Icon name={t} size={22} />
-                {t[0].toUpperCase() + t.slice(1)}
+                {tabLabel(t)}
               </button>
             ))}
           </nav>
@@ -1019,6 +1021,8 @@ function Create({ draft, clearDraft }) {
             )}
 
             {tab === "elements" && <ElementsPanel dragItem={dragItem} />}
+
+            {tab === "ai" && <AiPanel />}
 
             {tab === "projects" && (
               <ProjectsPanel

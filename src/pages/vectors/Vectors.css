@@ -2,14 +2,23 @@
    Calm and functional: the artwork carries the color, red is kept for actions. */
 
 .vectors-page {
-  padding: 32px var(--page-x) 60px;
+  padding: 18px var(--page-x) 60px;
   color: var(--white);
   font-family: var(--font-sans);
 }
 
-.library-head { margin-bottom: 20px; }
-.library-head h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.01em; }
-.library-head p { margin-top: 6px; color: var(--muted); font-size: 14px; }
+/* compact page top, as on modern stock sites: breadcrumb, then the title
+   with its result count, then search and filters */
+.library-head { margin-bottom: 14px; }
+.library-head h1 {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.library-count { color: var(--muted); font-size: 14px; font-weight: 400; letter-spacing: 0; }
 
 .vector-filters {
   display: flex;
@@ -50,7 +59,6 @@
 }
 .clear-filters:hover { color: var(--white); }
 
-.vector-count { margin: 0 0 16px; color: var(--muted); font-size: 13px; }
 
 /* masonry columns, so portrait and landscape artwork never leave gaps */
 .vector-grid {

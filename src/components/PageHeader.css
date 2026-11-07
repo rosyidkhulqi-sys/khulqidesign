@@ -26,23 +26,16 @@
 }
 
 .site-brand { display: inline-flex; align-items: center; gap: 12px; justify-self: start; }
-.site-brand-mark { width: 50px; height: 50px; object-fit: contain; }
+.site-brand-mark { width: 40px; height: 40px; object-fit: contain; }
 /* the wordmark image has empty space around the letters, so it needs extra height */
-.site-brand-word { height: 56px; width: auto; object-fit: contain; }
+.site-brand-word { height: 44px; width: auto; object-fit: contain; }
 
-.site-nav { display: flex; gap: 40px; font-size: 17px; font-weight: 500; }
-.site-nav a { position: relative; transition: color 0.2s; }
-.site-nav a:hover { color: var(--red); }
-.site-nav a.active { color: var(--red); }
-.site-nav a.active::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -8px;
-  height: 2px;
-  background: var(--red);
-}
+/* modern nav: quiet grey links, the open page in white; no underline, and
+   red is kept for Register */
+.site-nav { display: flex; gap: 32px; font-size: 15px; font-weight: 500; }
+.site-header .site-nav a { color: #9a9ea5; transition: color 0.2s; }
+.site-header .site-nav a:hover { color: var(--white); }
+.site-header .site-nav a.active { color: var(--white); }
 
 .site-account { display: flex; align-items: center; gap: 8px; justify-self: end; }
 
@@ -50,18 +43,21 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 11px 14px;
+  padding: 9px 12px;
   border-radius: 999px;
-  font-size: 15px;
+  color: #9a9ea5;
+  font-size: 14px;
   font-weight: 500;
   transition: background 0.2s, color 0.2s;
 }
 .site-downloads:hover { background: rgba(255, 255, 255, 0.07); }
-.site-header .site-downloads.active { color: var(--red); }
+.site-header .site-downloads { color: #9a9ea5; }
+.site-header .site-downloads:hover,
+.site-header .site-downloads.active { color: var(--white); }
 
 .site-login,
-.site-register { padding: 13px 22px; font-size: 16px; font-weight: 600; }
-.site-login:hover { color: var(--red); }
+.site-register { padding: 10px 18px; font-size: 15px; font-weight: 600; }
+.site-header .site-login:hover { color: #c9ccd0; }
 .site-header .site-register { background: var(--red); border-radius: 999px; color: white; transition: background 0.2s; }
 .site-register:hover { background: var(--red-dark); }
 
@@ -177,15 +173,15 @@
 
 /* when space runs out, drop the Downloads label and tighten gaps before shrinking text */
 @media (max-width: 1360px) {
-  .site-nav { gap: 28px; }
+  .site-nav { gap: 24px; }
   .site-downloads span { display: none; }
   .site-login,
-  .site-register { padding: 13px 18px; }
+  .site-register { padding: 10px 16px; }
 }
 
 @media (max-width: 1120px) {
-  .site-nav { gap: 22px; font-size: 15px; }
-  .site-brand-word { height: 46px; }
+  .site-nav { gap: 18px; font-size: 14px; }
+  .site-brand-word { height: 38px; }
 }
 
 @media (max-width: 950px) {
@@ -196,5 +192,5 @@
 }
 
 @media (max-width: 420px) {
-  .site-brand-word { height: 40px; }
+  .site-brand-word { height: 36px; }
 }
