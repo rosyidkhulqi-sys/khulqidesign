@@ -104,7 +104,7 @@ function Home({ setPage }) {
             <p className="home-label">Curated library</p>
             <h2>Browse assets</h2>
           </div>
-          <p>Fresh creative resources,<br />ready for your next idea.</p>
+          <p>Download as it is,<br />or make it yours first.</p>
         </div>
 
         <div className="home-asset-grid">
@@ -121,11 +121,20 @@ function Home({ setPage }) {
                 {cat.key === "templates" && <span className="home-edit-hint">Edit in Create →</span>}
               </button>
               <div className="home-asset-details">
-                <p>Library</p>
                 <h3>{cat.title}</h3>
+                <p>{cat.desc}</p>
+                <span>{cat.meta}</span>
               </div>
             </article>
           ))}
+        </div>
+
+        {/* the rest of the ecosystem: build it yourself, or have it made */}
+        <div className="home-asset-more">
+          <p>Can't find the right one?</p>
+          <button onClick={go("create")}>Build it in Create <Arrow /></button>
+          <button onClick={go("ai")}>Make it with AI <Arrow /></button>
+          <a href="#services">Ask our studio <Arrow /></a>
         </div>
       </section>
 

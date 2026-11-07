@@ -295,8 +295,45 @@
 .home-asset-preview:hover .home-edit-hint { transform: translateY(0); }
 
 .home-asset-details { padding-top: 14px; }
-.home-asset-details p { color: #777; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
-.home-asset-details h3 { margin-top: 5px; font-size: 18px; font-weight: 600; }
+.home-asset-details h3 { font-size: 18px; font-weight: 600; }
+.home-asset-details p { margin-top: 6px; color: #555; font-size: 14px; line-height: 1.45; }
+.home-asset-details span {
+  display: block;
+  margin-top: 8px;
+  color: #888;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Create, AI and the studio, as the next step after the library */
+.home-asset-more {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 26px;
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid #d6d6d6;
+  font-size: 15px;
+}
+.home-asset-more p { margin-right: auto; color: #555; }
+.home-asset-more button,
+.home-asset-more a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  background: none;
+  border: 0;
+  font-weight: 600;
+}
+.home-asset-more .home-icon { width: 16px; height: 16px; color: var(--red); transition: transform 0.2s; }
+.home-asset-more button:hover,
+.home-asset-more a:hover { color: var(--red); }
+.home-asset-more button:hover .home-icon,
+.home-asset-more a:hover .home-icon { transform: translateX(4px); }
 
 
 /* SERVICES */
@@ -406,6 +443,8 @@
   .home-assets,
   .home-services { padding: 64px 20px; }
   .home-asset-grid { gap: 32px 10px; }
+  .home-asset-details p { font-size: 13px; }
+  .home-asset-more { flex-direction: column; align-items: flex-start; }
   .home-service { grid-template-columns: 30px 1fr auto; min-height: 88px; }
   .home-service p { display: none; }
   .home-creator-art { min-height: 260px; padding: 30px; }
