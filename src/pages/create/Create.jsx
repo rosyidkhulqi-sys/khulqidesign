@@ -21,38 +21,38 @@ import { icons as libraryIcons } from "../../data/iconsData";
 import { elements as libraryElements } from "../../data/elementsData";
 import { basicIcons } from "./basicIcons";
 import { artboardPresets, fonts, svgDataUrl, textPresets } from "./createLibrary";
+import ProjectsPanel from "./CreateProjects";
+import {
+  currentProjectId,
+  deleteProject,
+  listProjects,
+  loadProject,
+  migrateOldDraft,
+  newProjectId,
+  renameProject,
+  saveProject,
+  setCurrentProject,
+} from "./projectsStore";
 import "./Create.css";
 
-const DRAFT_KEY = "kd-create-draft";
 const PANEL_KEY = "kd-create-panel";
-const NAME_KEY = "kd-create-name";
+const PAGE_KEY = "kd-create-page";
+// zoom slider range, in percent
+const ZOOM_MIN = 10;
+const ZOOM_MAX = 300;
+// height of the page bar above the artboard and Add page below it
+const PAGE_CHROME = 96;
 const DRAG_TYPE = "application/x-kd-item";
 const UNTITLED = "Untitled design";
 
 // icons, vectors and footage live inside Elements, as Canva groups them
-const tabs = ["templates", "elements", "text", "uploads"];
+const tabs = ["templates", "elements", "text", "uploads", "projects"];
 
 const exportFormats = [
   ["png", "PNG", "High quality image"],
   ["jpg", "JPG", "Smaller file size"],
   ["svg", "SVG", "Scalable vector"],
 ];
-
-function loadDraft() {
-  try {
-    return JSON.parse(localStorage.getItem(DRAFT_KEY));
-  } catch {
-    return null;
-  }
-}
-
-function loadName() {
-  try {
-    return localStorage.getItem(NAME_KEY) || UNTITLED;
-  } catch {
-    return UNTITLED;
-  }
-}
 
 const isLocked = (obj) => Boolean(obj?.lockMovementX);
 
@@ -132,6 +132,9 @@ function Create({ draft, clearDraft }) {
   const fc = useRef(null);
   const boardRef = useRef({ w: 1080, h: 1080 });
   const history = useRef({ undo: [], redo: [], busy: false });
+  // every page of the design as Fabric JSON; list[index] is the page on the
+  // canvas, so its entry is refreshed from the canvas when it's needed
+  const pagesRef = useRef({ list: [null], index: 0 });
   const commitTimer = useRef(null);
   const fileInput = useRef(null);
 
@@ -154,40 +157,141 @@ function Create({ draft, clearDraft }) {
   const [canRedo, setCanRedo] = useState(false);
   // autosave state shown in the top bar: "saved", "saving" or "error"
   const [saveState, setSaveState] = useState("saved");
-  const [showNew, setShowNew] = useState(() => !draft && !loadDraft());
+  // the design to reopen: the last one open, else the newest (the old
+  // single saved design becomes a project first)
+  const [opening] = useState(() => {
+    migrateOldDraft();
+    const list = listProjects();
+    const last = list.find((p) => p.id === currentProjectId()) ?? list[0] ?? null;
+    return { id: last?.id ?? null, name: last?.name ?? UNTITLED, any: list.length > 0 };
+  });
+  // the open project's id; null until a new design has something to save
+  const projectRef = useRef(opening.id);
+  // the same id as state, for the Projects list to mark the open design
+  const [openId, setOpenId] = useState(opening.id);
+  const switchProject = (id) => {
+    projectRef.current = id;
+    setOpenId(id);
+    if (id) setCurrentProject(id);
+  };
+  const nameRef = useRef(opening.name);
+  // true once the open design is on the canvas; until then there is nothing
+  // to save, and saving would write an empty canvas over that design
+  const loadedRef = useRef(false);
+  const [projects, setProjects] = useState(listProjects);
+  const [showNew, setShowNew] = useState(() => !draft && !opening.any);
   const [custom, setCustom] = useState({ w: 1080, h: 1080 });
   const [lockRatio, setLockRatio] = useState(true);
   const [uploads, setUploads] = useState([]);
-  const [name, setName] = useState(loadName);
+  const [name, setName] = useState(opening.name);
   const [menu, setMenu] = useState(null);
   const [isEmpty, setIsEmpty] = useState(true);
+  const [pageInfo, setPageInfo] = useState({ index: 0, count: 1 });
+  const [fullscreen, setFullscreen] = useState(false);
+  const editorRef = useRef(null);
+
+  // follow the browser's full-screen state, including leaving it with Esc
+  useEffect(() => {
+    const sync = () =>
+      setFullscreen((document.fullscreenElement || document.webkitFullscreenElement) === editorRef.current);
+    document.addEventListener("fullscreenchange", sync);
+    document.addEventListener("webkitfullscreenchange", sync);
+    return () => {
+      document.removeEventListener("fullscreenchange", sync);
+      document.removeEventListener("webkitfullscreenchange", sync);
+    };
+  }, []);
+
+  // the editor alone fills the screen; Safari still uses the webkit names
+  const toggleFullscreen = () => {
+    const el = editorRef.current;
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    } else {
+      (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+    }
+  };
   const [dragging, setDragging] = useState(false);
 
   const zoom =
     zoomMode === "fit"
-      ? Math.max(0.05, Math.min((stage.w - 80) / board.w, (stage.h - 80) / board.h))
+      ? Math.max(0.05, Math.min((stage.w - 80) / board.w, (stage.h - 80 - PAGE_CHROME) / board.h))
       : zoomMode;
 
   const refresh = () => setTick((t) => t + 1);
 
   /* ---------- history & draft ---------- */
 
+  // the pages with the one on the canvas refreshed
+  const currentPages = () => {
+    const p = pagesRef.current;
+    return p.list.map((json, i) => (i === p.index ? fc.current.toJSON() : json));
+  };
+
+  // a whole design: size and every page (which page is open is kept apart,
+  // so moving between pages isn't an undo step)
   const snapshot = () =>
-    JSON.stringify({ ...boardRef.current, json: fc.current.toJSON() });
+    JSON.stringify({ ...boardRef.current, pages: currentPages() });
+
+  const syncPages = () =>
+    setPageInfo({ index: pagesRef.current.index, count: pagesRef.current.list.length });
+
+  const rememberPage = (i) => {
+    try {
+      localStorage.setItem(PAGE_KEY, String(i));
+    } catch {
+      /* storage unavailable */
+    }
+  };
 
   const syncHistory = () => {
     setCanUndo(history.current.undo.length > 1);
     setCanRedo(history.current.redo.length > 0);
   };
 
-  // false when the browser refuses (storage full or blocked)
-  const persist = (snap) => {
+  // a small picture of page 1 for the Projects list. The canvas is set to
+  // the thumbnail's size just for this, then put back, so the picture is
+  // whole whatever the zoom is (or before the first zoom is applied).
+  const thumbnail = () => {
+    const c = fc.current;
+    const b = boardRef.current;
+    const view = c.viewportTransform.slice();
+    const size = { width: c.getWidth(), height: c.getHeight() };
+    const s = 280 / Math.max(b.w, b.h);
     try {
-      localStorage.setItem(DRAFT_KEY, snap);
-      return true;
+      c.setViewportTransform([s, 0, 0, s, 0, 0]);
+      c.setDimensions({ width: Math.round(b.w * s), height: Math.round(b.h * s) });
+      return c.toDataURL({ format: "jpeg", quality: 0.7 });
     } catch {
-      return false;
+      return undefined;
+    } finally {
+      c.setDimensions(size);
+      c.setViewportTransform(view);
     }
+  };
+
+  // saves the design into its project; false when the browser refuses
+  // (storage full or blocked). A new, still empty design isn't saved, so
+  // opening Create doesn't fill Projects with blank designs.
+  const persist = (snap) => {
+    const c = fc.current;
+    const pages = pagesRef.current;
+    if (!projectRef.current) {
+      if (pages.list.length === 1 && c && !c.getObjects().length) return true;
+      switchProject(newProjectId());
+    }
+    const b = boardRef.current;
+    const meta = { name: nameRef.current, w: b.w, h: b.h, pages: pages.list.length };
+    if (pages.index === 0 && c) meta.thumb = thumbnail();
+    const ok = saveProject(projectRef.current, snap, meta);
+    setProjects(listProjects());
+    return ok;
+  };
+
+  // saves right away, before leaving this design
+  const flushSave = () => {
+    clearTimeout(commitTimer.current);
+    if (loadedRef.current && fc.current && !history.current.busy) persist(snapshot());
   };
 
   const resetHistory = () => {
@@ -219,16 +323,74 @@ function Create({ draft, clearDraft }) {
     setBoard(size);
   };
 
-  const restore = async (snap) => {
+  // loads a saved design; drafts from before pages existed have one "json"
+  const restore = async (snap, index = pagesRef.current.index) => {
     const c = fc.current;
     history.current.busy = true;
     setBoardSize({ w: snap.w, h: snap.h });
-    await c.loadFromJSON(snap.json);
+    const list = snap.pages ?? [snap.json];
+    const i = Math.max(0, Math.min(index, list.length - 1));
+    pagesRef.current = { list, index: i };
+    await c.loadFromJSON(list[i]);
+    c.discardActiveObject();
+    c.requestRenderAll();
+    setBg(c.backgroundColor || "#ffffff");
+    setActive(null);
+    syncPages();
+    history.current.busy = false;
+  };
+
+  /* ---------- pages ---------- */
+
+  // puts page i on the canvas; save: keep the edits of the page being left
+  const showPage = async (i, save = true) => {
+    const p = pagesRef.current;
+    const c = fc.current;
+    if (save) p.list[p.index] = c.toJSON();
+    p.index = i;
+    history.current.busy = true;
+    await c.loadFromJSON(p.list[i]);
     c.discardActiveObject();
     c.requestRenderAll();
     setBg(c.backgroundColor || "#ffffff");
     setActive(null);
     history.current.busy = false;
+    syncPages();
+    rememberPage(i);
+  };
+
+  const goToPage = async (i) => {
+    if (i < 0 || i >= pagesRef.current.list.length || i === pagesRef.current.index) return;
+    await showPage(i);
+    commit();
+  };
+
+  // a blank page, or a copy of the open one, right after it
+  const addPage = async (copy = false) => {
+    const p = pagesRef.current;
+    p.list[p.index] = fc.current.toJSON();
+    const page = copy
+      ? structuredClone(p.list[p.index])
+      : { version: p.list[p.index].version, objects: [], background: "#ffffff" };
+    p.list.splice(p.index + 1, 0, page);
+    await showPage(p.index + 1, false);
+    commit();
+  };
+
+  const deletePage = async () => {
+    const p = pagesRef.current;
+    if (p.list.length < 2) return;
+    if (fc.current.getObjects().length && !window.confirm("Delete this page?")) return;
+    p.list.splice(p.index, 1);
+    await showPage(Math.min(p.index, p.list.length - 1), false);
+    commit();
+  };
+
+  // a new or replaced design starts with one page
+  const resetPages = () => {
+    pagesRef.current = { list: [null], index: 0 };
+    syncPages();
+    rememberPage(0);
   };
 
   const undo = async () => {
@@ -254,11 +416,37 @@ function Create({ draft, clearDraft }) {
 
   const renameDesign = (value) => {
     setName(value);
-    try {
-      localStorage.setItem(NAME_KEY, value);
-    } catch {
-      /* storage unavailable */
+    nameRef.current = value;
+    if (projectRef.current) {
+      renameProject(projectRef.current, value);
+      setProjects(listProjects());
     }
+  };
+
+  // clears the canvas for a fresh one-page design
+  const blankCanvas = () => {
+    const c = fc.current;
+    c.clear();
+    c.backgroundColor = "#ffffff";
+    setBg("#ffffff");
+    setActive(null);
+    resetPages();
+  };
+
+  // opens a saved design from Projects; the one being left is saved first
+  const openProject = async (id, saveCurrent = true) => {
+    if (id === projectRef.current) return;
+    const snap = loadProject(id);
+    if (!snap) return;
+    if (saveCurrent) flushSave();
+    switchProject(id);
+    const meta = listProjects().find((p) => p.id === id);
+    setName(meta?.name || UNTITLED);
+    nameRef.current = meta?.name || UNTITLED;
+    await restore(snap, 0);
+    rememberPage(0);
+    setShowNew(false);
+    resetHistory();
   };
 
   const showPanel = (open) => {
@@ -276,42 +464,48 @@ function Create({ draft, clearDraft }) {
     showPanel(true);
   };
 
+  // a new design is a new project; the current one stays in Projects
   const newArtboard = (w, h) => {
+    flushSave();
+    switchProject(null);
     renameDesign(UNTITLED);
-    const c = fc.current;
-    c.clear();
-    c.backgroundColor = "#ffffff";
-    setBg("#ffffff");
+    blankCanvas();
     setBoardSize({ w, h });
-    setActive(null);
     setShowNew(false);
     resetHistory();
   };
 
-  const deleteDesign = () => {
+  // deletes a design from Projects; deleting the open one moves to the
+  // newest other design, or to a blank canvas when none is left
+  const deleteDesign = async (id = projectRef.current) => {
     if (!window.confirm("Delete this design? This cannot be undone.")) return;
     clearTimeout(commitTimer.current);
-    const c = fc.current;
-    c.clear();
-    c.backgroundColor = "#ffffff";
-    setBg("#ffffff");
-    setActive(null);
+    if (id) deleteProject(id);
+    setProjects(listProjects());
+    if (id && id !== projectRef.current) return;
+
+    switchProject(null);
+    const next = listProjects()[0];
+    if (next) return openProject(next.id, false);
+
     setName(UNTITLED);
-    try {
-      localStorage.removeItem(DRAFT_KEY);
-      localStorage.removeItem(NAME_KEY);
-    } catch {
-      /* storage unavailable */
-    }
+    nameRef.current = UNTITLED;
+    blankCanvas();
     history.current = { undo: [snapshot()], redo: [], busy: false };
     syncHistory();
     setShowNew(true);
   };
 
-  const openTemplate = async (t, ask = true) => {
+  // in the editor a template replaces the open design (after asking);
+  // asNew starts a new project for it, as when it comes from the Templates page
+  const openTemplate = async (t, ask = true, asNew = false) => {
     const c = fc.current;
     if (ask && c.getObjects().length && !window.confirm("Replace the current design with this template?")) {
       return;
+    }
+    if (asNew) {
+      flushSave();
+      switchProject(null);
     }
     // text metrics are wrong if the web font is not loaded yet
     await loadFonts();
@@ -325,6 +519,7 @@ function Create({ draft, clearDraft }) {
     c.requestRenderAll();
     setActive(null);
     setShowNew(false);
+    resetPages();
     resetHistory();
   };
 
@@ -575,7 +770,9 @@ function Create({ draft, clearDraft }) {
     const a = document.createElement("a");
     a.href = url;
     const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    a.download = `${slug || "khulqidesign"}-${b.w}x${b.h}.${format}`;
+    const { index, list } = pagesRef.current;
+    const pageTag = list.length > 1 ? `-page-${index + 1}` : "";
+    a.download = `${slug || "khulqidesign"}-${b.w}x${b.h}${pageTag}.${format}`;
     a.click();
   };
 
@@ -604,14 +801,24 @@ function Create({ draft, clearDraft }) {
 
   const start = useEffectEvent(async () => {
     if (draft) {
-      await openTemplate(draft, false);
+      await openTemplate(draft, false, true);
       clearDraft();
+      loadedRef.current = true;
       return;
     }
     await loadFonts();
-    const saved = loadDraft();
-    if (saved) await restore(saved);
+    const saved = projectRef.current ? loadProject(projectRef.current) : null;
+    if (saved) {
+      let page = 0;
+      try {
+        page = Number(localStorage.getItem(PAGE_KEY)) || 0;
+      } catch {
+        /* storage unavailable */
+      }
+      await restore(saved, page);
+    }
     resetHistory();
+    loadedRef.current = true;
   });
 
   const onKey = useEffectEvent((e) => {
@@ -709,7 +916,7 @@ function Create({ draft, clearDraft }) {
   return (
     <section className="create-page">
 
-      <div className="create-editor">
+      <div className="create-editor" ref={editorRef}>
         {/* TOP BAR */}
         <div className="create-topbar">
           <div className="ct-menu">
@@ -763,17 +970,6 @@ function Create({ draft, clearDraft }) {
 
           <span className="ct-size">{board.w} × {board.h} px</span>
 
-          <select
-            className="ct-select"
-            value={zoomMode}
-            onChange={(e) => setZoomMode(e.target.value === "fit" ? "fit" : Number(e.target.value))}
-          >
-            <option value="fit">Fit ({Math.round(zoom * 100)}%)</option>
-            {[0.25, 0.5, 0.75, 1].map((z) => (
-              <option key={z} value={z}>{z * 100}%</option>
-            ))}
-          </select>
-
           <div className="ct-menu ct-export">
             <button className="ct-btn primary" onClick={() => setMenu(menu === "download" ? null : "download")}>
               <Icon name="download" /> Download <Icon name="chevron" size={14} />
@@ -823,6 +1019,16 @@ function Create({ draft, clearDraft }) {
             )}
 
             {tab === "elements" && <ElementsPanel dragItem={dragItem} />}
+
+            {tab === "projects" && (
+              <ProjectsPanel
+                projects={projects}
+                openId={openId}
+                onOpen={(id) => openProject(id)}
+                onDelete={(id) => deleteDesign(id)}
+                onNew={() => setShowNew(true)}
+              />
+            )}
 
             {tab === "text" && (
               <div className="cp-text">
@@ -879,13 +1085,36 @@ function Create({ draft, clearDraft }) {
             <Icon name="chevron" size={16} />
           </button>
 
-          {/* STAGE */}
+          {/* STAGE + BOTTOM BAR */}
+          <div className="create-center">
           <div
             className="create-stage"
             ref={stageRef}
             onDragOver={(e) => e.preventDefault()}
             onDrop={onDrop}
           >
+            <div className="create-pages">
+            {/* the open page: number, duplicate and delete, as in Canva */}
+            <div className="ct-pagebar" style={{ width: Math.round(board.w * zoom) }}>
+              <span>
+                Page {pageInfo.index + 1}
+                {pageInfo.count > 1 && ` of ${pageInfo.count}`}
+              </span>
+              <div>
+                <button onClick={() => addPage(true)} title="Duplicate page" aria-label="Duplicate page">
+                  <Icon name="copy" size={16} />
+                </button>
+                <button
+                  onClick={deletePage}
+                  disabled={pageInfo.count < 2}
+                  title="Delete page"
+                  aria-label="Delete page"
+                >
+                  <Icon name="trash" size={16} />
+                </button>
+              </div>
+            </div>
+
             <div className="create-artboard">
               <canvas ref={canvasEl} />
 
@@ -918,6 +1147,69 @@ function Create({ draft, clearDraft }) {
                 </div>
               )}
             </div>
+
+            <button
+              className="ct-addpage"
+              style={{ width: Math.round(board.w * zoom) }}
+              onClick={() => addPage(false)}
+            >
+              <Icon name="plus" size={16} /> Add page
+            </button>
+            </div>
+          </div>
+
+          {/* pages, zoom and full screen, under the canvas as in Canva */}
+          <div className="create-bottombar">
+            <div className="cb-pages">
+              <button
+                className="cb-icon"
+                onClick={() => goToPage(pageInfo.index - 1)}
+                disabled={pageInfo.index === 0}
+                title="Previous page"
+                aria-label="Previous page"
+              >
+                <Icon name="chevronLeft" size={16} />
+              </button>
+              <span>
+                {pageInfo.index + 1} / {pageInfo.count}
+              </span>
+              <button
+                className="cb-icon"
+                onClick={() => goToPage(pageInfo.index + 1)}
+                disabled={pageInfo.index === pageInfo.count - 1}
+                title="Next page"
+                aria-label="Next page"
+              >
+                <Icon name="chevronRight" size={16} />
+              </button>
+            </div>
+            <button
+              className={`cb-fit ${zoomMode === "fit" ? "on" : ""}`}
+              onClick={() => setZoomMode("fit")}
+              title="Fit the page to the screen"
+            >
+              Fit
+            </button>
+            <input
+              type="range"
+              min={ZOOM_MIN}
+              max={ZOOM_MAX}
+              step="1"
+              value={Math.round(zoom * 100)}
+              onChange={(e) => setZoomMode(Number(e.target.value) / 100)}
+              aria-label="Zoom"
+            />
+            <span className="cb-zoom">{Math.round(zoom * 100)}%</span>
+            <span className="cb-sep" />
+            <button
+              className="cb-icon"
+              onClick={toggleFullscreen}
+              title={fullscreen ? "Exit full screen (Esc)" : "Full screen"}
+              aria-label={fullscreen ? "Exit full screen" : "Full screen"}
+            >
+              <Icon name={fullscreen ? "minimize" : "maximize"} size={16} />
+            </button>
+          </div>
           </div>
 
           {/* PROPERTIES */}

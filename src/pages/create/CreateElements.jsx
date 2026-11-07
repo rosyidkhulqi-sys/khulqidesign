@@ -18,6 +18,10 @@ const iconCount = basicIcons.length + setIcons.length;
 // how many tiles a "See all" grid adds each time the list scrolls to its end
 const PAGE = 60;
 
+// from this many element categories, the overview shows Browse categories
+const BROWSE_FROM = 6;
+const browse = elementCategories.length >= BROWSE_FROM;
+
 const has = (q, ...texts) => texts.some((t) => t.toLowerCase().includes(q));
 
 function SectionHead({ title, count, onAll }) {
@@ -67,6 +71,18 @@ function SetIconTile({ icon, dragItem }) {
   return (
     <button className="cp-tile" {...dragItem("icon", icon.id)} title={icon.name}>
       <img src={icon.image} alt={icon.name} draggable={false} loading="lazy" />
+    </button>
+  );
+}
+
+// a category in Browse categories: its picture, name and count
+function CategoryTile({ name, count, picture, onOpen }) {
+  return (
+    <button className="cp-cat" onClick={onOpen} title={`${name} (${count})`}>
+      <span className="cp-cat-pic">
+        <img src={picture} alt="" draggable={false} loading="lazy" />
+      </span>
+      <span className="cp-cat-name">{name}</span>
     </button>
   );
 }
@@ -157,6 +173,18 @@ function ElementsPanel({ dragItem: placeItem }) {
     }
   };
 
+  // empties the recently used list and goes back to the overview
+  const clearRecent = () => {
+    if (!window.confirm("Clear recently used elements?")) return;
+    setRecent([]);
+    setView(null);
+    try {
+      localStorage.removeItem(RECENT_KEY);
+    } catch {
+      /* storage unavailable */
+    }
+  };
+
   // every tile places its item as before, and also records it as recently
   // used: on click, or once a drag is dropped on the page (not on drag start,
   // so the row doesn't reorder under the pointer mid-drag)
@@ -222,7 +250,14 @@ function ElementsPanel({ dragItem: placeItem }) {
 
         {category && <PagedGrid items={category.items} renderTile={elementTile} />}
 
-        {view === "recent" && <div className="cp-grid three">{recentTiles}</div>}
+        {view === "recent" && (
+          <>
+            <div className="cp-grid three">{recentTiles}</div>
+            <button className="cp-clear" onClick={clearRecent}>
+              <Icon name="trash" size={14} /> Clear recently used
+            </button>
+          </>
+        )}
 
         {view === "icons" && (
           <>
@@ -263,10 +298,11 @@ function ElementsPanel({ dragItem: placeItem }) {
       {/* the last things used, newest first; hidden until there are some */}
       {recentTiles.length > 0 && (
         <>
+          {/* "See all" is always there, as it also holds Clear */}
           <SectionHead
             title="Recently used"
             count={recentTiles.length}
-            onAll={recentTiles.length > 6 ? () => setView("recent") : null}
+            onAll={() => setView("recent")}
           />
           <div className="cp-grid three">{recentTiles.slice(0, 6)}</div>
         </>
@@ -275,12 +311,37 @@ function ElementsPanel({ dragItem: placeItem }) {
       <SectionHead title="Shapes" />
       <ShapeTiles list={shapes} dragItem={dragItem} />
 
-      {elementCategories.map((c) => (
-        <div key={c.id}>
-          <SectionHead title={c.name} count={c.items.length} onAll={() => setView(c.id)} />
-          <div className="cp-grid three">{c.items.slice(0, 6).map(elementTile)}</div>
-        </div>
-      ))}
+      {/* many categories: one grid of picture tiles, as Canva's Browse
+          categories; few: a short row for each */}
+      {browse ? (
+        <>
+          <SectionHead title="Browse categories" />
+          <div className="cp-grid three">
+            {elementCategories.map((c) => (
+              <CategoryTile
+                key={c.id}
+                name={c.name}
+                count={c.items.length}
+                picture={c.cover}
+                onOpen={() => setView(c.id)}
+              />
+            ))}
+            <CategoryTile
+              name="Icons"
+              count={iconCount}
+              picture={svgDataUrl(basicIcons.find((i) => i.id === "star").svg)}
+              onOpen={() => setView("icons")}
+            />
+          </div>
+        </>
+      ) : (
+        elementCategories.map((c) => (
+          <div key={c.id}>
+            <SectionHead title={c.name} count={c.items.length} onAll={() => setView(c.id)} />
+            <div className="cp-grid three">{c.items.slice(0, 6).map(elementTile)}</div>
+          </div>
+        ))
+      )}
 
       {/* a note for the developer only, while the folder is empty */}
       {import.meta.env.DEV && elements.length === 0 && (
@@ -289,10 +350,15 @@ function ElementsPanel({ dragItem: placeItem }) {
         </p>
       )}
 
-      <SectionHead title="Icons" count={iconCount} onAll={() => setView("icons")} />
-      <div className="cp-grid three">
-        {basicIcons.slice(0, 6).map((i) => <BasicTile key={i.id} icon={i} dragItem={dragItem} />)}
-      </div>
+      {/* with the category grid, Icons is one of its tiles */}
+      {!browse && (
+        <>
+          <SectionHead title="Icons" count={iconCount} onAll={() => setView("icons")} />
+          <div className="cp-grid three">
+            {basicIcons.slice(0, 6).map((i) => <BasicTile key={i.id} icon={i} dragItem={dragItem} />)}
+          </div>
+        </>
+      )}
 
       <p className="cp-hint">Click or drag onto the page. SVG elements and icons can be recolored.</p>
     </>

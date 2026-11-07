@@ -11,13 +11,25 @@ const paths = Object.keys(import.meta.glob("/public/trial-elements/*/*.{svg,png,
 const label = (text) =>
   text.replace(/[-_]+/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 
+const fileUrl = (folder, file) =>
+  `/trial-elements/${encodeURIComponent(folder)}/${encodeURIComponent(file)}`;
+
+// a "_cover.png" or "_cover.svg" in a folder is that category's picture in
+// Browse categories; files starting with "_" are not elements
+const covers = {};
+paths.forEach((path) => {
+  const [, , , folder, file] = path.split("/");
+  if (/^_cover\.(svg|png)$/i.test(file)) covers[folder] = fileUrl(folder, file);
+});
+
 export const elements = paths
+  .filter((path) => !path.split("/")[4].startsWith("_"))
   .map((path) => {
     // "/public/trial-elements/stickers/happy-sun.svg"
     const [, , , folder, file] = path.split("/");
     return {
       id: path,
-      url: `/trial-elements/${encodeURIComponent(folder)}/${encodeURIComponent(file)}`,
+      url: fileUrl(folder, file),
       type: file.toLowerCase().endsWith(".svg") ? "svg" : "png",
       category: folder,
       name: label(file.replace(/\.(svg|png)$/i, "")),
@@ -25,11 +37,11 @@ export const elements = paths
   })
   .sort((a, b) => a.name.localeCompare(b.name));
 
-// categories in name order, each with its elements
+// categories in name order, each with its elements and a cover picture
+// (its _cover file, else its first element)
 export const elementCategories = [...new Set(elements.map((e) => e.category))]
   .sort()
-  .map((id) => ({
-    id,
-    name: label(id),
-    items: elements.filter((e) => e.category === id),
-  }));
+  .map((id) => {
+    const items = elements.filter((e) => e.category === id);
+    return { id, name: label(id), items, cover: covers[id] ?? items[0].url };
+  });

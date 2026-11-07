@@ -406,7 +406,264 @@
   cursor: pointer;
 }
 .cp-upload:hover { border-color: rgba(255, 255, 255, 0.5); }
+.cp-upload { display: flex; align-items: center; justify-content: center; gap: 8px; }
 
+/* PROJECTS: saved designs as cards */
+.cp-projects {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+.cp-project { position: relative; }
+.cp-project-main {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: white;
+  text-align: left;
+  cursor: pointer;
+}
+.cp-project-thumb {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* one card shape for every design; the picture fits inside it */
+  aspect-ratio: 4 / 3;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #2a2d31;
+  color: #8d939b;
+  font-size: 11px;
+}
+/* absolute insets, not % heights, so Safari sizes it inside the button */
+.cp-project-thumb img {
+  position: absolute;
+  inset: 8%;
+  width: 84%;
+  height: 84%;
+  object-fit: contain;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+.cp-project-main:hover .cp-project-thumb { border-color: rgba(255, 255, 255, 0.5); }
+.cp-project.open .cp-project-thumb { border-color: white; box-shadow: 0 0 0 1px white; }
+.cp-project-name {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.cp-project-meta { color: #8d939b; font-size: 11px; }
+.cp-project-delete {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: rgba(10, 10, 10, 0.72);
+  color: white;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.cp-project:hover .cp-project-delete,
+.cp-project-delete:focus-visible { opacity: 1; }
+.cp-project-delete:hover { background: var(--red); }
+@media (hover: none) { .cp-project-delete { opacity: 1; } }
+
+/* BROWSE CATEGORIES: a picture tile and the name under it */
+.cp-cat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #c6cad0;
+  font-size: 12px;
+  cursor: pointer;
+}
+.cp-cat-pic {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: #f4f4f5;
+  overflow: hidden;
+}
+/* absolute insets so Safari sizes the picture inside the button */
+.cp-cat-pic img {
+  position: absolute;
+  inset: 16%;
+  width: 68%;
+  height: 68%;
+  object-fit: contain;
+}
+.cp-cat:hover .cp-cat-pic { border-color: rgba(255, 255, 255, 0.5); }
+.cp-cat:hover { color: white; }
+.cp-cat-name {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* "Show more" under a long list, and "Clear" under recently used */
+.cp-showmore,
+.cp-clear {
+  width: 100%;
+  height: 38px;
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9px;
+  background: transparent;
+  color: #c6cad0;
+  font-size: 13px;
+  cursor: pointer;
+}
+.cp-showmore:hover,
+.cp-clear:hover { background: rgba(255, 255, 255, 0.06); color: white; }
+
+
+/* STAGE + BOTTOM BAR */
+
+.create-center {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+/* zoom and full screen, under the canvas as in Canva */
+.create-bottombar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  height: 44px;
+  padding: 0 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface);
+  color: #aeb3ba;
+  font-size: 12px;
+}
+.create-bottombar input[type="range"] {
+  width: 160px;
+  accent-color: #e7e9ec;
+  cursor: pointer;
+}
+.cb-zoom {
+  min-width: 40px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.cb-fit,
+.cb-icon {
+  height: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 7px;
+  background: transparent;
+  color: #c6cad0;
+  font-size: 12px;
+  cursor: pointer;
+}
+.cb-fit { padding: 0 10px; }
+.cb-fit.on { border-color: rgba(255, 255, 255, 0.5); color: white; }
+.cb-icon {
+  width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.cb-fit:hover,
+.cb-icon:hover { background: rgba(255, 255, 255, 0.08); color: white; }
+.cb-sep { width: 1px; height: 18px; background: rgba(255, 255, 255, 0.1); }
+.cb-icon:disabled { opacity: 0.35; cursor: default; background: transparent; }
+
+/* page navigation, on the left of the bottom bar */
+.cb-pages {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+/* the open page with its bar above and Add page below */
+.create-pages {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.ct-pagebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 220px;
+  height: 26px;
+  color: #aeb3ba;
+  font-size: 13px;
+}
+.ct-pagebar div { display: flex; gap: 4px; }
+.ct-pagebar button {
+  width: 28px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #aeb3ba;
+  cursor: pointer;
+}
+.ct-pagebar button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); color: white; }
+.ct-pagebar button:disabled { opacity: 0.35; cursor: default; }
+
+.ct-addpage {
+  min-width: 220px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #e7e9ec;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ct-addpage:hover { border-color: rgba(255, 255, 255, 0.4); background: rgba(255, 255, 255, 0.06); color: white; }
+
+/* full screen: the editor alone fills the display */
+.create-editor:fullscreen { border: none; border-radius: 0; }
+.create-editor:-webkit-full-screen { width: 100%; height: 100%; border: none; border-radius: 0; }
 
 /* STAGE */
 
@@ -738,6 +995,7 @@ input[type="color"] {
   .create-rail button { min-width: 68px; }
   .create-panel { max-height: 220px; border-right: none; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
   .create-stage { height: 60vh; padding: 16px; }
+  .create-bottombar input[type="range"] { width: 110px; }
   .create-props { border-left: none; border-top: 1px solid rgba(255, 255, 255, 0.08); }
   .ct-export { margin-left: 0; }
 }
