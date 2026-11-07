@@ -1,0 +1,128 @@
+/* AI PAGE — the prompt and the coming tools, in the library pages' calm style */
+
+.ai-prompt {
+  max-width: 880px;
+  margin-bottom: 28px;
+  padding: 14px;
+  border: 1px solid #34373a;
+  border-radius: 14px;
+  background: var(--surface);
+}
+.ai-prompt:focus-within { border-color: #8a8d91; }
+
+.ai-kinds { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.ai-kinds button {
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: transparent;
+  color: #aeb3ba;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.ai-kinds button:hover { color: white; border-color: rgba(255, 255, 255, 0.3); }
+.ai-kinds button.active { background: var(--white); border-color: var(--white); color: #111; }
+
+.ai-prompt-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #b9bdc3;
+}
+.ai-prompt-row input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  border: none;
+  background: transparent;
+  color: white;
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+}
+.ai-prompt-row input::placeholder { color: #777d85; }
+
+.ai-generate {
+  height: 40px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 10px;
+  background: var(--red);
+  color: white;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ai-generate:hover:not(:disabled) { background: var(--red-dark); }
+.ai-generate:disabled { background: rgba(255, 255, 255, 0.1); color: #8d939b; cursor: default; }
+
+.ai-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0;
+  color: #8d939b;
+  font-size: 12px;
+}
+.ai-note .ai-soon { margin-left: 0; }
+
+.ai-section {
+  margin: 0 0 12px;
+  color: #8d939b;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.ai-tools {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+}
+
+.ai-tool {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.ai-tool-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #e7e9ec;
+}
+.ai-tool strong { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+/* the pill sits in the card's corner, so titles stay on one line */
+.ai-tool .ai-soon { position: absolute; top: 18px; right: 18px; }
+.ai-tool.is-open {
+  color: white;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.ai-tool.is-open:hover { border-color: rgba(255, 255, 255, 0.45); }
+.ai-tool .ai-try { background: var(--white); color: #111; }
+.ai-tool p { margin: 0; color: #aeb3ba; font-size: 13px; line-height: 1.5; }
+.ai-from { margin-top: auto; color: #6b7179; font-size: 12px; }
+
+.ai-foot { margin: 22px 0 0; color: #6b7179; font-size: 13px; }
+
+@media (max-width: 520px) {
+  .ai-prompt-row { flex-wrap: wrap; }
+  .ai-prompt-row input { flex-basis: calc(100% - 30px); }
+  .ai-generate { width: 100%; }
+}

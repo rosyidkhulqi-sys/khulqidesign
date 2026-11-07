@@ -14,6 +14,8 @@ import Register from "./pages/auth/Register";
 import Downloads from "./pages/downloads/Downloads";
 // the editor pulls in the canvas library, so load it only when opened
 const Create = lazy(() => import("./pages/create/Create"));
+// the AI page is loaded when opened too, to keep the first download small
+const Ai = lazy(() => import("./pages/ai/Ai"));
 
 
 function App() {
@@ -60,6 +62,11 @@ function App() {
 
   const pages = {
     home: <Home setPage={go} />,
+    ai: (
+      <Suspense fallback={null}>
+        <Ai setPage={go} />
+      </Suspense>
+    ),
     icons: <Icons setPage={go} initialSearch={searchQuery} user={user} />,
     vectors: <Vectors setPage={go} initialSearch={searchQuery} user={user} />,
     templates: <Templates setPage={go} onCustomize={customize} initialSearch={searchQuery} />,

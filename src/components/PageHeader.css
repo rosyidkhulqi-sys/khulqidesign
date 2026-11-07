@@ -33,7 +33,13 @@
 /* modern nav: quiet grey links, the open page in white; no underline, and
    red is kept for Register */
 .site-nav { display: flex; gap: 32px; font-size: 15px; font-weight: 500; }
-.site-header .site-nav a { color: #9a9ea5; transition: color 0.2s; }
+.site-header .site-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #9a9ea5;
+  transition: color 0.2s;
+}
 .site-header .site-nav a:hover { color: var(--white); }
 .site-header .site-nav a.active { color: var(--white); }
 

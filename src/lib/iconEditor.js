@@ -52,7 +52,14 @@ export async function loadIconSvg(src) {
   const svg = new DOMParser().parseFromString(text, "image/svg+xml").documentElement;
   if (svg.nodeName !== "svg") throw new Error("Not an SVG file");
 
+  // keep only drawing: no scripts, embedded HTML, event handlers or
+  // javascript: links, since the markup may also be placed inline on a page
   svg.querySelectorAll("script, foreignObject").forEach((node) => node.remove());
+  svg.querySelectorAll("*").forEach((node) => {
+    [...node.attributes].forEach(({ name, value }) => {
+      if (/^on/i.test(name) || /^\s*javascript:/i.test(value)) node.removeAttribute(name);
+    });
+  });
 
   const width = parseFloat(svg.getAttribute("width")) || CANVAS;
   const height = parseFloat(svg.getAttribute("height")) || CANVAS;

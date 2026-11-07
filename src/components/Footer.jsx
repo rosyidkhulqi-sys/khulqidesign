@@ -2,6 +2,7 @@ import "./Footer.css";
 import LanguageSwitcher from "./LanguageSwitcher";
 
 const products = [
+  ["ai", "AI"],
   ["icons", "Icons"],
   ["vectors", "Vectors"],
   ["templates", "Templates"],

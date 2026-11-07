@@ -2,6 +2,7 @@ import "./SideMenu.css";
 import { accountInfo } from "../lib/account";
 
 const menuItems = [
+  { key: "ai", label: "AI" },
   { key: "icons", label: "Icons" },
   { key: "vectors", label: "Vectors" },
   { key: "templates", label: "Templates" },

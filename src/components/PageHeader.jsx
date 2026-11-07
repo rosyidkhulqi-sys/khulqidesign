@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Sparkle } from "./AiSearchButton";
 import SideMenu from "./SideMenu";
 import { accountInfo } from "../lib/account";
 import "./PageHeader.css";
@@ -11,7 +12,9 @@ function Avatar({ info }) {
   );
 }
 
+// AI comes first, as on Magnific and Envato: the stock library plus AI tools
 const navItems = [
+  { page: "ai", label: "AI", sparkle: true },
   { page: "icons", label: "Icons" },
   { page: "vectors", label: "Vectors" },
   { page: "templates", label: "Templates" },
@@ -63,6 +66,7 @@ function PageHeader({ page, setPage, user, onLogout }) {
               className={page === item.page ? "active" : ""}
               onClick={go(item.page)}
             >
+              {item.sparkle && <Sparkle size={15} />}
               {item.label}
             </a>
           ))}
