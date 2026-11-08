@@ -21,15 +21,38 @@ import meta from "./trialLogosMeta.json";
 const folder = "/trial-logos/preview/";
 const url = (file) => folder + encodeURIComponent(`${file}.jpg`);
 
+// industries in the spirit of logo marketplaces such as Logoground; the
+// ids are stored with each logo, so rename labels freely but keep the ids
 export const industries = [
-  ["food", "Food & drink"],
-  ["beauty", "Beauty & salon"],
-  ["health", "Health & wellness"],
-  ["tech", "Tech & gaming"],
-  ["business", "Business"],
-  ["travel", "Travel & outdoor"],
-  ["nature", "Nature & eco"],
+  ["agriculture", "Agriculture & farming"],
+  ["architecture", "Architecture & interior"],
+  ["art", "Art & design"],
   ["automotive", "Automotive"],
+  ["beauty", "Beauty & salon"],
+  ["business", "Business & consulting"],
+  ["construction", "Construction & tools"],
+  ["education", "Education"],
+  ["energy", "Energy & industry"],
+  ["entertainment", "Entertainment & events"],
+  ["fashion", "Fashion & clothing"],
+  ["finance", "Finance & law"],
+  ["food", "Food & drink"],
+  ["health", "Health & wellness"],
+  ["kids", "Kids & family"],
+  ["media", "Media & photography"],
+  ["medical", "Medical & pharmacy"],
+  ["music", "Music"],
+  ["nature", "Nature & eco"],
+  ["pets", "Pets & animals"],
+  ["realestate", "Real estate"],
+  ["religion", "Religion & community"],
+  ["retail", "Retail & e-commerce"],
+  ["science", "Science & research"],
+  ["security", "Security"],
+  ["sports", "Sports & fitness"],
+  ["tech", "Tech & gaming"],
+  ["transport", "Transport & logistics"],
+  ["travel", "Travel & outdoor"],
 ];
 
 export const logoStyles = [
