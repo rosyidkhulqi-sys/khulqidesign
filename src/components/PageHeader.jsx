@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { pathFor } from "../lib/router";
 import { Sparkle } from "./AiSearchButton";
 import SideMenu from "./SideMenu";
 import { accountInfo } from "../lib/account";
@@ -30,6 +31,8 @@ function PageHeader({ page, setPage, user, onLogout }) {
   const accountRef = useRef(null);
 
   const go = (target) => (e) => {
+    // Cmd/Ctrl-click opens the real address in a new tab
+    if (e.metaKey || e.ctrlKey || e.shiftKey) return;
     e.preventDefault();
     setAccountOpen(false);
     setPage(target);
@@ -54,7 +57,7 @@ function PageHeader({ page, setPage, user, onLogout }) {
   return (
     <>
       <header className="site-header">
-        <a className="site-brand" href="#" onClick={go("home")} aria-label="Khulqi Design home">
+        <a className="site-brand" href={pathFor("home")} onClick={go("home")} aria-label="Khulqi Design home">
           <img src="/logo.png" alt="" className="site-brand-mark" />
           <img src="/KD Logogram.png" alt="Khulqi Design" className="site-brand-word" />
         </a>
@@ -63,7 +66,7 @@ function PageHeader({ page, setPage, user, onLogout }) {
           {navItems.map((item) => (
             <a
               key={item.page}
-              href="#"
+              href={pathFor(item.page)}
               className={page === item.page ? "active" : ""}
               onClick={go(item.page)}
             >
@@ -75,14 +78,14 @@ function PageHeader({ page, setPage, user, onLogout }) {
 
         <div className="site-account">
           <a
-            href="#"
+            href={pathFor("pricing")}
             className={`site-pricing ${page === "pricing" ? "active" : ""}`}
             onClick={go("pricing")}
           >
             Pricing
           </a>
           <a
-            href="#"
+            href={pathFor("downloads")}
             className={`site-downloads ${page === "downloads" ? "active" : ""}`}
             onClick={go("downloads")}
             title="Your downloads"
@@ -116,9 +119,9 @@ function PageHeader({ page, setPage, user, onLogout }) {
                       <small>{info.email}</small>
                     </div>
                   </div>
-                  <a href="#" role="menuitem" onClick={go("account")}>Account</a>
-                  <a href="#" role="menuitem" onClick={go("downloads")}>Your downloads</a>
-                  <a href="#" role="menuitem" onClick={go("create")}>Your designs</a>
+                  <a href={pathFor("account")} role="menuitem" onClick={go("account")}>Account</a>
+                  <a href={pathFor("downloads")} role="menuitem" onClick={go("downloads")}>Your downloads</a>
+                  <a href={pathFor("create")} role="menuitem" onClick={go("create")}>Your designs</a>
                   <hr />
                   <button
                     role="menuitem"
@@ -135,8 +138,8 @@ function PageHeader({ page, setPage, user, onLogout }) {
             </div>
           ) : (
             <>
-              <a href="#" className="site-login" onClick={go("login")}>Log in</a>
-              <a href="#" className="site-register" onClick={go("register")}>Register</a>
+              <a href={pathFor("login")} className="site-login" onClick={go("login")}>Log in</a>
+              <a href={pathFor("register")} className="site-register" onClick={go("register")}>Register</a>
             </>
           )}
         </div>

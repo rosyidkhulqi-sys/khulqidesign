@@ -1,4 +1,5 @@
 import "./SideMenu.css";
+import { pathFor } from "../lib/router";
 import { accountInfo } from "../lib/account";
 
 const menuItems = [
@@ -13,6 +14,7 @@ const menuItems = [
 
 function SideMenu({ open, onClose, page, setPage, user, onLogout }) {
   const go = (p) => (e) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey) return;
     e.preventDefault();
     setPage(p);
     onClose();
@@ -46,8 +48,8 @@ function SideMenu({ open, onClose, page, setPage, user, onLogout }) {
           </div>
         ) : (
           <div className="sidemenu-auth">
-            <a href="#" onClick={go("login")}>Login</a>
-            <a href="#" className="sidemenu-register" onClick={go("register")}>
+            <a href={pathFor("login")} onClick={go("login")}>Login</a>
+            <a href={pathFor("register")} className="sidemenu-register" onClick={go("register")}>
               Register
             </a>
           </div>
@@ -57,7 +59,7 @@ function SideMenu({ open, onClose, page, setPage, user, onLogout }) {
         {menuItems.map((item) => (
           <a
             key={item.key}
-            href="#"
+            href={pathFor(item.key)}
             className={`sidemenu-link ${page === item.key ? "active" : ""}`}
             onClick={go(item.key)}
           >
@@ -67,18 +69,18 @@ function SideMenu({ open, onClose, page, setPage, user, onLogout }) {
 
         <p className="sidemenu-label" style={{ marginTop: 24 }}>ACCOUNT</p>
         {user && (
-          <a href="#" className={`sidemenu-link ${page === "account" ? "active" : ""}`} onClick={go("account")}>
+          <a href={pathFor("account")} className={`sidemenu-link ${page === "account" ? "active" : ""}`} onClick={go("account")}>
             Account
           </a>
         )}
-        <a href="#" className={`sidemenu-link ${page === "pricing" ? "active" : ""}`} onClick={go("pricing")}>
+        <a href={pathFor("pricing")} className={`sidemenu-link ${page === "pricing" ? "active" : ""}`} onClick={go("pricing")}>
           Pricing
         </a>
-        <a href="#" className={`sidemenu-link ${page === "downloads" ? "active" : ""}`} onClick={go("downloads")}>
+        <a href={pathFor("downloads")} className={`sidemenu-link ${page === "downloads" ? "active" : ""}`} onClick={go("downloads")}>
           Your Downloads
         </a>
 
-        <a href="#" className="sidemenu-link" onClick={go("home")}>
+        <a href={pathFor("home")} className="sidemenu-link" onClick={go("home")}>
           Home
         </a>
 

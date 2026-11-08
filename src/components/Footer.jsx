@@ -1,4 +1,5 @@
 import "./Footer.css";
+import { pathFor } from "../lib/router";
 import LanguageSwitcher from "./LanguageSwitcher";
 
 const products = [
@@ -17,6 +18,7 @@ const services = ["Brand identity", "UI design", "Motion design", "Client projec
 
 function Footer({ language, setLanguage, setPage }) {
   const go = (page) => (e) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey) return;
     e.preventDefault();
     setPage(page);
     window.scrollTo(0, 0);
@@ -40,7 +42,7 @@ function Footer({ language, setLanguage, setPage }) {
         <div>
           <h3>Products</h3>
           {products.map(([page, label]) => (
-            <a key={page} href="#" onClick={go(page)}>{label}</a>
+            <a key={page} href={pathFor(page)} onClick={go(page)}>{label}</a>
           ))}
         </div>
 
@@ -69,9 +71,9 @@ function Footer({ language, setLanguage, setPage }) {
       <div className="footer-bottom">
         <span>© {new Date().getFullYear()} Khulqi Design</span>
         <span className="footer-legal">
-          <a href="#" onClick={go("terms")}>Terms</a>
-          <a href="#" onClick={go("privacy")}>Privacy</a>
-          <a href="#" onClick={go("license")}>License</a>
+          <a href={pathFor("terms")} onClick={go("terms")}>Terms</a>
+          <a href={pathFor("privacy")} onClick={go("privacy")}>Privacy</a>
+          <a href={pathFor("license")} onClick={go("license")}>License</a>
         </span>
       </div>
     </footer>

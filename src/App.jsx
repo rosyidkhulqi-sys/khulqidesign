@@ -2,6 +2,7 @@ import Footer from "./components/Footer";
 import PageHeader from "./components/PageHeader";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "./lib/supabaseClient";
+import { pathFor, readLocation, titleFor } from "./lib/router";
 import "./styles/App.css";
 
 import Home from "./pages/home/Home";
@@ -23,14 +24,18 @@ const Account = lazy(() => import("./pages/account/Account"));
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
 const Downloads = lazy(() => import("./pages/downloads/Downloads"));
+const NotFound = lazy(() => import("./pages/notfound/NotFound"));
 
+
+// the address the visitor arrived on decides the first page
+const start = readLocation();
 
 function App() {
-  const [page, setPage] = useState("home");
+  const [page, setPage] = useState(start.page);
   const [language, setLanguage] = useState("EN");
   const [createDraft, setCreateDraft] = useState(null);
   // search typed on the home page, handed to the library page it opens
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(start.query);
   // the signed-in Supabase user, or null when logged out
   const [user, setUser] = useState(null);
   // the icon sent from an icon's detail view to the Animate studio
@@ -44,10 +49,32 @@ function App() {
     return () => data.subscription.unsubscribe();
   }, []);
 
+  // Back and Forward: show the page the address now points to
+  useEffect(() => {
+    const onPop = () => {
+      const { page: nextPage, query } = readLocation();
+      setSearchQuery(query);
+      setAnimateIcon(null);
+      setPage(nextPage);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  // the browser tab names the page, for people and for search engines
+  useEffect(() => {
+    document.title = titleFor(page);
+  }, [page]);
+
   const go = (nextPage, query = "") => {
     setSearchQuery(query);
     setAnimateIcon(null);
     setPage(nextPage);
+    // a new history entry only when the address actually changes
+    const next = pathFor(nextPage, query);
+    if (next !== window.location.pathname + window.location.search) {
+      window.history.pushState(null, "", next);
+    }
   };
 
   const animate = (icon) => {
@@ -91,15 +118,16 @@ function App() {
         <Ai setPage={go} animateIcon={animateIcon} />
       </Suspense>
     ),
-    icons: <Icons setPage={go} initialSearch={searchQuery} user={user} onAnimate={animate} />,
-    vectors: <Vectors setPage={go} initialSearch={searchQuery} user={user} />,
+    // keyed by the search, so ?q= from a link or Back starts a fresh search
+    icons: <Icons key={searchQuery} setPage={go} initialSearch={searchQuery} user={user} onAnimate={animate} />,
+    vectors: <Vectors key={searchQuery} setPage={go} initialSearch={searchQuery} user={user} />,
     logos: (
       <Suspense fallback={null}>
-        <Logos setPage={go} initialSearch={searchQuery} user={user} />
+        <Logos key={searchQuery} setPage={go} initialSearch={searchQuery} user={user} />
       </Suspense>
     ),
-    templates: <Templates setPage={go} onCustomize={customize} initialSearch={searchQuery} />,
-    footage: <Footage setPage={go} initialSearch={searchQuery} user={user} />,
+    templates: <Templates key={searchQuery} setPage={go} onCustomize={customize} initialSearch={searchQuery} />,
+    footage: <Footage key={searchQuery} setPage={go} initialSearch={searchQuery} user={user} />,
     downloads: (
       <Suspense fallback={null}>
         <Downloads setPage={go} />
@@ -135,13 +163,18 @@ function App() {
         <Create draft={createDraft} clearDraft={() => setCreateDraft(null)} />
       </Suspense>
     ),
+    notfound: (
+      <Suspense fallback={null}>
+        <NotFound setPage={go} />
+      </Suspense>
+    ),
   };
 
   // every page shares the header; the editor fills the screen, so it has no footer
   return (
     <>
       <PageHeader page={page} setPage={go} user={user} onLogout={logout} />
-      {pages[page] ?? pages.home}
+      {pages[page] ?? pages.notfound}
       {page !== "create" && (
         <Footer language={language} setLanguage={setLanguage} setPage={go} />
       )}
