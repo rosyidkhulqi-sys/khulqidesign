@@ -8,7 +8,7 @@ import "./Admin.css";
 import Breadcrumb from "../../components/Breadcrumb";
 import { supabase } from "../../lib/supabaseClient";
 import ManageAssets from "./ManageAssets";
-import IconUpload from "./IconUpload";
+import IconUpload from "./IconUpload.jsx";
 
 const TABS = [
   ["vector", "Vectors", "EPS + JPG pairs"],
