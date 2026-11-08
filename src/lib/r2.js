@@ -6,10 +6,10 @@
 //   private-files  originals, handed out later through signed download links
 import { supabase } from "./supabaseClient";
 
-// Public address of the public bucket. The r2.dev URL is for development;
-// before launch it becomes cdn.khulqidesign.com (cached by Cloudflare).
-export const PUBLIC_URL =
-  import.meta.env.VITE_R2_PUBLIC_URL || "https://pub-17be66a2c67049d295452fc44b5ac54e.r2.dev";
+// Public address of the public bucket: the custom domain, cached by
+// Cloudflare. (The *.r2.dev address is blocked by Indonesian ISPs, so it is
+// never used for the site.)
+export const PUBLIC_URL = import.meta.env.VITE_R2_PUBLIC_URL || "https://cdn.khulqidesign.com";
 
 export const publicUrl = (key) =>
   key ? `${PUBLIC_URL}/${key.split("/").map(encodeURIComponent).join("/")}` : null;
