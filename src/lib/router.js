@@ -24,6 +24,7 @@ export const pageTitles = {
   privacy: "Privacy Policy",
   login: "Log in",
   register: "Create account",
+  admin: "Admin",
   notfound: "Page not found",
 };
 

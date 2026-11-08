@@ -42,6 +42,8 @@ function AssetModal({
   const option = options[choice];
 
   const download = () => {
+    // uploaded originals wait for signed download links (next backend step)
+    if (option.pending) return;
     // Premium preview: the real check moves to the server with the backend
     if (premium && !user) {
       setPrompt(true);
@@ -79,10 +81,11 @@ function AssetModal({
               {kind === "footage" ? (
                 <video src={asset.file} poster={asset.image} autoPlay muted loop playsInline controls />
               ) : (
-                <img src={asset.image} alt={asset.title} />
+                // uploaded assets have a larger preview; the watermark is in its pixels
+                <img src={asset.previewImage || asset.image} alt={asset.title} />
               )}
 
-              {premium && (
+              {premium && !asset.previewImage && (
                 <div className="asset-watermark" aria-hidden="true">
                   {Array.from({ length: 12 }, (_, i) => (
                     <span key={i}>KHULQIDESIGN</span>
@@ -162,7 +165,7 @@ function AssetModal({
             <div className="asset-buttons">
               <button className="asset-download" onClick={download}>
                 <ToolGlyph name="download" />
-                Download {option.label}
+                {option.pending ? "Downloads open soon" : `Download ${option.label}`}
               </button>
               <button
                 className={`asset-like ${liked ? "liked" : ""}`}

@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./Vectors.css";
 import AssetModal from "../../components/AssetModal";
 import Breadcrumb from "../../components/Breadcrumb";
 import AiSearchButton from "../../components/AiSearchButton";
 import { ToolGlyph } from "../../components/IconControls";
-import { vectors as allVectors } from "../../data/vectorsData";
+import { vectors as trialVectors } from "../../data/vectorsData";
+import { fetchPublished, toVector } from "../../lib/catalog";
 
 const formats = ["EPS", "AI", "SVG", "PNG", "JPG"];
 
@@ -19,6 +20,8 @@ function vectorOptions(v) {
       detail: `Editable vector · ${px(v.artboard)} pt`,
       size: v.sources.EPS.size,
       file: v.sources.EPS.url,
+      // uploaded originals wait for signed download links
+      pending: !v.sources.EPS.url,
       ext: "eps",
     },
     {
@@ -26,6 +29,7 @@ function vectorOptions(v) {
       detail: `${px(v.preview)} px`,
       size: v.sources.JPG.size,
       file: v.sources.JPG.url,
+      pending: !v.sources.JPG.url,
       ext: "jpg",
     },
   ];
@@ -52,6 +56,22 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
   const [sort, setSort] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState(null);
+  // vectors uploaded through /admin, newest first, ahead of the trial files
+  const [uploaded, setUploaded] = useState([]);
+
+  useEffect(() => {
+    let alive = true;
+    fetchPublished("vector")
+      .then((rows) => alive && setUploaded(rows.map(toVector)))
+      .catch(() => {
+        /* the trial files still show if the catalogue can't be reached */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const allVectors = [...uploaded, ...trialVectors];
 
   const perPage = 24;
 

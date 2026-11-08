@@ -25,6 +25,8 @@ const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
 const Downloads = lazy(() => import("./pages/downloads/Downloads"));
 const NotFound = lazy(() => import("./pages/notfound/NotFound"));
+// the owner's upload desk; reads file metadata with exifr, so it loads apart
+const Admin = lazy(() => import("./pages/admin/Admin"));
 
 
 // the address the visitor arrived on decides the first page
@@ -161,6 +163,11 @@ function App() {
     create: (
       <Suspense fallback={null}>
         <Create draft={createDraft} clearDraft={() => setCreateDraft(null)} />
+      </Suspense>
+    ),
+    admin: (
+      <Suspense fallback={null}>
+        <Admin user={user} setPage={go} />
       </Suspense>
     ),
     notfound: (
