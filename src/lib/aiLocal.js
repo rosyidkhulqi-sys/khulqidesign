@@ -41,8 +41,13 @@ async function modelBytes(url, onProgress) {
   } catch {
     /* no Cache Storage (private window): download every time */
   }
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`The AI model couldn't be downloaded (${res.status})`);
+  let res;
+  try {
+    res = await fetch(url);
+  } catch {
+    throw new Error("The AI model couldn't be downloaded. Check your internet connection and try again.");
+  }
+  if (!res.ok) throw new Error(`The AI model couldn't be downloaded (error ${res.status}). Please try again later.`);
   const total = Number(res.headers.get("content-length")) || 0;
   const reader = res.body.getReader();
   const chunks = [];
