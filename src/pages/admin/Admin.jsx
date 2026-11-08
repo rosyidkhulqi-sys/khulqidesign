@@ -7,6 +7,7 @@ import "../vectors/Vectors.css";
 import "./Admin.css";
 import Breadcrumb from "../../components/Breadcrumb";
 import { supabase } from "../../lib/supabaseClient";
+import ManageAssets from "./ManageAssets";
 import {
   VECTOR_CATEGORIES,
   pairFiles,
@@ -23,6 +24,8 @@ function Admin({ user, setPage }) {
   const [items, setItems] = useState([]);
   const [publishing, setPublishing] = useState(false);
   const [dragging, setDragging] = useState(false);
+  // bumped after publishing so the uploaded list reloads
+  const [published, setPublished] = useState(0);
   const input = useRef(null);
   // preview URLs made for the table, released when items go away
   const urls = useRef([]);
@@ -95,6 +98,7 @@ function Admin({ user, setPage }) {
       }
     }
     setPublishing(false);
+    setPublished((n) => n + 1);
   };
 
   const clearDone = () => setItems((list) => list.filter((it) => it.status !== "done"));
@@ -238,6 +242,7 @@ function Admin({ user, setPage }) {
           </div>
         </>
       )}
+      <ManageAssets refreshKey={published} />
     </section>
   );
 }
