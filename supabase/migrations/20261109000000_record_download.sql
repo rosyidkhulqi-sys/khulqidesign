@@ -124,3 +124,6 @@ $$;
 
 revoke all on function public.downloads_today() from public, anon;
 grant execute on function public.downloads_today() to authenticated;
+
+-- make the API see the new functions right away
+notify pgrst, 'reload schema';
