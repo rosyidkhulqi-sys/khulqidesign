@@ -1,11 +1,13 @@
-// Uploaded vectors on /admin: hide or show one on the site, or delete it.
+// Uploaded vectors or icons on /admin: hide or show one on the site, or delete it.
 // Admins see every row (RLS); visitors only ever see published ones.
 // Deleting removes the row first, then its files from both R2 buckets.
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { deleteFromR2, publicUrl } from "../../lib/r2";
 
-function ManageAssets({ refreshKey }) {
+const LABEL = { vector: "vectors", icon: "icons" };
+
+function ManageAssets({ type = "vector", refreshKey }) {
   const [rows, setRows] = useState(null);
   const [busy, setBusy] = useState(null);
   const [error, setError] = useState(null);
@@ -16,7 +18,7 @@ function ManageAssets({ refreshKey }) {
     supabase
       .from("assets")
       .select("id, code, title, license, status, thumb_key, preview_key, files, created_at")
-      .eq("type", "vector")
+      .eq("type", type)
       .order("created_at", { ascending: false })
       .limit(200)
       .then(({ data, error: e }) => {
@@ -27,7 +29,7 @@ function ManageAssets({ refreshKey }) {
     return () => {
       alive = false;
     };
-  }, [refreshKey]);
+  }, [type, refreshKey]);
 
   const toggle = async (row) => {
     setBusy(row.id);
@@ -59,17 +61,17 @@ function ManageAssets({ refreshKey }) {
     setRows((list) => list.filter((r) => r.id !== row.id));
   };
 
-  if (rows === null && !error) return <p className="ad-note">Loading uploaded vectors…</p>;
+  if (rows === null && !error) return <p className="ad-note">Loading uploaded {LABEL[type]}…</p>;
 
   return (
     <div className="ad-manage">
-      <h2>Uploaded vectors <span>{rows?.length ?? 0}</span></h2>
+      <h2>Uploaded {LABEL[type]} <span>{rows?.length ?? 0}</span></h2>
       {error && <p className="ad-error">{error}</p>}
-      {rows?.length === 0 && <p className="ad-note">Nothing uploaded yet.</p>}
+      {rows?.length === 0 && <p className="ad-note">No {LABEL[type]} uploaded yet.</p>}
       <div className="ad-list">
         {rows?.map((row) => (
           <div className={`ad-item ad-row-item is-${row.status}`} key={row.id}>
-            <div className="ad-thumb">{row.thumb_key && <img src={publicUrl(row.thumb_key)} alt="" loading="lazy" />}</div>
+            <div className={`ad-thumb ${type === "icon" ? "is-icon" : ""}`}>{row.thumb_key && <img src={publicUrl(row.thumb_key)} alt="" loading="lazy" />}</div>
             <div className="ad-fields">
               <strong>{row.title}</strong>
               <span className="ad-file">

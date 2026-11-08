@@ -123,6 +123,81 @@
   text-decoration: underline;
 }
 
+/* asset type tabs */
+.ad-tabs { display: inline-flex; gap: 4px; margin: 0 0 18px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; }
+.ad-tabs button {
+  height: 34px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #aeb0b2;
+  font-size: 14px;
+  font-weight: 600;
+}
+.ad-tabs button.active { background: rgba(255, 255, 255, 0.12); color: var(--white); }
+
+/* icon set picker */
+.ad-set {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.ad-set-pick { display: flex; align-items: center; gap: 10px; color: #d6d7d8; font-size: 14px; font-weight: 600; }
+.ad-set-form { display: grid; gap: 8px; }
+.ad-set select,
+.ad-set input,
+.ad-icon input,
+.ad-icon select {
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: #0b0b0c;
+  color: var(--white);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  min-width: 0;
+}
+.ad-set-pick select { flex: 1; max-width: 420px; }
+
+/* icon cards */
+.ad-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
+}
+.ad-icon {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.ad-icon.is-done { border-color: rgba(143, 209, 158, 0.4); }
+.ad-icon.is-error,
+.ad-icon.is-failed { border-color: rgba(255, 139, 146, 0.45); }
+.ad-icon-preview {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background: #f4f4f5;
+}
+.ad-icon-preview img { width: 56%; height: 56%; object-fit: contain; }
+.ad-icon-status { color: #8d939b; font-size: 12px; line-height: 1.4; }
+.is-done .ad-icon-status { color: #8fd19e; }
+.is-error .ad-icon-status,
+.is-failed .ad-icon-status { color: #ff8b92; }
+.ad-thumb.is-icon { background: #f4f4f5; }
+.ad-thumb.is-icon img { padding: 18%; box-sizing: border-box; }
+
 /* uploaded assets */
 .ad-manage { margin-top: 44px; }
 .ad-manage h2 { margin: 0 0 12px; font-size: 20px; font-weight: 600; }

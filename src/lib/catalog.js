@@ -50,3 +50,50 @@ export function toVector(row) {
     keywords: row.keywords ?? [],
   };
 }
+
+// Published icons and the sets they belong to, shaped like data/iconsData.js
+export async function fetchIconCatalog() {
+  const [iconRes, setRes] = await Promise.all([
+    supabase
+      .from("assets")
+      .select("id, code, title, keywords, category, style, set_id, license, thumb_key, downloads, published_at, created_at")
+      .eq("type", "icon")
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(1000),
+    supabase
+      .from("asset_sets")
+      .select("id, name, style, license, description, created_at")
+      .eq("type", "icon")
+      .eq("status", "published")
+      .order("created_at", { ascending: false }),
+  ]);
+  if (iconRes.error) throw iconRes.error;
+  if (setRes.error) throw setRes.error;
+
+  const icons = (iconRes.data ?? []).map((row) => ({
+    id: Date.parse(row.published_at || row.created_at),
+    dbId: row.id,
+    code: row.code,
+    name: row.title,
+    image: publicUrl(row.thumb_key),
+    keywords: row.keywords ?? [],
+    category: row.category || "other",
+    style: row.style || "glyph",
+    setId: row.set_id,
+    license: row.license,
+    downloads: row.downloads,
+  }));
+  // a set shows only once it has a published icon
+  const used = new Set(icons.map((i) => i.setId));
+  const sets = (setRes.data ?? [])
+    .filter((set) => used.has(set.id))
+    .map((set) => ({
+      id: set.id,
+      name: set.name,
+      style: set.style,
+      license: set.license,
+      description: set.description || "",
+    }));
+  return { icons, sets };
+}

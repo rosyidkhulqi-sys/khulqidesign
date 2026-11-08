@@ -8,8 +8,6 @@ import "./styles/App.css";
 import Home from "./pages/home/Home";
 import Icons from "./pages/icons/Icons";
 import Vectors from "./pages/vectors/Vectors";
-import Templates from "./pages/templates/Templates";
-import Footage from "./pages/footage/Footage";
 // the editor pulls in the canvas library, so load it only when opened
 const Create = lazy(() => import("./pages/create/Create"));
 // the AI page is loaded when opened too, to keep the first download small
@@ -27,6 +25,8 @@ const Downloads = lazy(() => import("./pages/downloads/Downloads"));
 const NotFound = lazy(() => import("./pages/notfound/NotFound"));
 // the owner's upload desk; reads file metadata with exifr, so it loads apart
 const Admin = lazy(() => import("./pages/admin/Admin"));
+const Templates = lazy(() => import("./pages/templates/Templates"));
+const Footage = lazy(() => import("./pages/footage/Footage"));
 
 
 // the address the visitor arrived on decides the first page
@@ -128,8 +128,16 @@ function App() {
         <Logos key={searchQuery} setPage={go} initialSearch={searchQuery} user={user} />
       </Suspense>
     ),
-    templates: <Templates key={searchQuery} setPage={go} onCustomize={customize} initialSearch={searchQuery} />,
-    footage: <Footage key={searchQuery} setPage={go} initialSearch={searchQuery} user={user} />,
+    templates: (
+      <Suspense fallback={null}>
+        <Templates key={searchQuery} setPage={go} onCustomize={customize} initialSearch={searchQuery} />
+      </Suspense>
+    ),
+    footage: (
+      <Suspense fallback={null}>
+        <Footage key={searchQuery} setPage={go} initialSearch={searchQuery} user={user} />
+      </Suspense>
+    ),
     downloads: (
       <Suspense fallback={null}>
         <Downloads setPage={go} />

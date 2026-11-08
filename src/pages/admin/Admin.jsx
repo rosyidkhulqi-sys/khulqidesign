@@ -8,6 +8,12 @@ import "./Admin.css";
 import Breadcrumb from "../../components/Breadcrumb";
 import { supabase } from "../../lib/supabaseClient";
 import ManageAssets from "./ManageAssets";
+import IconUpload from "./IconUpload";
+
+const TABS = [
+  ["vector", "Vectors", "EPS + JPG pairs"],
+  ["icon", "Icons", "SVG icons in sets"],
+];
 import {
   VECTOR_CATEGORIES,
   pairFiles,
@@ -26,6 +32,8 @@ function Admin({ user, setPage }) {
   const [dragging, setDragging] = useState(false);
   // bumped after publishing so the uploaded list reloads
   const [published, setPublished] = useState(0);
+  // which kind of asset this desk uploads
+  const [tab, setTab] = useState("vector");
   const input = useRef(null);
   // preview URLs made for the table, released when items go away
   const urls = useRef([]);
@@ -132,10 +140,23 @@ function Admin({ user, setPage }) {
       <div className="library-head">
         <Breadcrumb setPage={setPage} current="Admin" />
         <h1>
-          Upload vectors <span className="library-count">EPS + JPG pairs</span>
+          Upload <span className="library-count">{TABS.find(([id]) => id === tab)[2]}</span>
         </h1>
       </div>
 
+      <div className="ad-tabs" role="tablist" aria-label="Asset type">
+        {TABS.map(([id, label]) => (
+          <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? "active" : ""}
+                  onClick={() => setTab(id)} disabled={publishing}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "icon" ? (
+        <IconUpload onPublished={() => setPublished((n) => n + 1)} />
+      ) : (
+      <>
       {/* DROP ZONE */}
       <div
         className={`ad-drop ${dragging ? "is-over" : ""}`}
@@ -242,7 +263,10 @@ function Admin({ user, setPage }) {
           </div>
         </>
       )}
-      <ManageAssets refreshKey={published} />
+      </>
+      )}
+
+      <ManageAssets type={tab} refreshKey={published} />
     </section>
   );
 }

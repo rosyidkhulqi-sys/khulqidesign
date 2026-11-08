@@ -1,13 +1,18 @@
 import "./Icons.css";
 import "../vectors/Vectors.css";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "../../components/Footer.css";
 import { ToolGlyph } from "../../components/IconControls";
 import Breadcrumb from "../../components/Breadcrumb";
 import AiSearchButton from "../../components/AiSearchButton";
 import IconModal from "../../components/IconModal";
 import IconSetView, { SetCard } from "./IconSets";
-import { icons, iconSets, membersOf, setOf } from "../../data/iconsData";
+import {
+  icons as trialIcons,
+  iconSets as trialSets,
+  membersOf as trialMembersOf,
+} from "../../data/iconsData";
+import { fetchIconCatalog } from "../../lib/catalog";
 
 // the price filter's "paid" means a Premium license
 const matchesPrice = (price, license) =>
@@ -32,6 +37,33 @@ function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
   const [openWith, setOpenWith] = useState(null);
   // the icon set page shown in place of the library, or null
   const [openSet, setOpenSet] = useState(null);
+
+  // icons and sets uploaded through /admin, ahead of the trial files
+  const [uploaded, setUploaded] = useState({ icons: [], sets: [] });
+  useEffect(() => {
+    let alive = true;
+    fetchIconCatalog()
+      .then((catalog) => alive && setUploaded(catalog))
+      .catch(() => {
+        /* the trial icons still show if the catalogue can't be reached */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const { icons, iconSets, membersOf, setOf } = useMemo(() => {
+    const allIcons = [...uploaded.icons, ...trialIcons];
+    const allSets = [...uploaded.sets, ...trialSets];
+    const byId = Object.fromEntries(allSets.map((s) => [s.id, s]));
+    const uploadedMembers = (set) => uploaded.icons.filter((i) => i.setId === set.id);
+    return {
+      icons: allIcons,
+      iconSets: allSets,
+      membersOf: (set) => (set ? (trialSets.includes(set) ? trialMembersOf(set) : uploadedMembers(set)) : []),
+      setOf: (icon) => byId[icon.setId] ?? null,
+    };
+  }, [uploaded]);
 
   const itemsPerPage = 40;
   const showSets = type === "set";
