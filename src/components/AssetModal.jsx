@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { saveDownload } from "../lib/downloads";
+import { DOWNLOAD_REFUSALS, requestDownload, saveDownload } from "../lib/downloads";
 import { PremiumPrompt, ToolGlyph } from "./IconControls";
 import { Sparkle } from "./AiSearchButton";
 import "./AssetModal.css";
@@ -27,6 +27,9 @@ function AssetModal({
   const [liked, setLiked] = useState(false);
   // a signed-out visitor tried to download a Premium file
   const [prompt, setPrompt] = useState(false);
+  // uploaded originals: why the server refused, or that it's working
+  const [refusal, setRefusal] = useState(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -41,9 +44,34 @@ function AssetModal({
   const premium = asset.license === "premium";
   const option = options[choice];
 
-  const download = () => {
-    // uploaded originals wait for signed download links (next backend step)
-    if (option.pending) return;
+  const download = async () => {
+    // uploaded originals: the server checks the license and hands out a link
+    if (option.pending) {
+      if (!user) {
+        setRefusal("sign_in_required");
+        return;
+      }
+      setBusy(true);
+      setRefusal(null);
+      try {
+        const result = await requestDownload(asset.dbId, option.format);
+        saveDownload({
+          id: asset.code,
+          title: asset.title,
+          kind,
+          image: asset.image,
+          file: null,
+          format: option.label,
+          license: result.license,
+          date: new Date().toISOString(),
+        });
+      } catch (e) {
+        setRefusal(e.code in DOWNLOAD_REFUSALS ? e.code : e.message);
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     // Premium preview: the real check moves to the server with the backend
     if (premium && !user) {
       setPrompt(true);
@@ -163,9 +191,9 @@ function AssetModal({
             )}
 
             <div className="asset-buttons">
-              <button className="asset-download" onClick={download}>
+              <button className="asset-download" onClick={download} disabled={busy}>
                 <ToolGlyph name="download" />
-                {option.pending ? "Downloads open soon" : `Download ${option.label}`}
+                {busy ? "Preparing…" : `Download ${option.label}`}
               </button>
               <button
                 className={`asset-like ${liked ? "liked" : ""}`}
@@ -185,6 +213,19 @@ function AssetModal({
                 Make a video
                 <span className="ai-soon">Coming soon</span>
               </button>
+            )}
+
+            {refusal && (
+              DOWNLOAD_REFUSALS[refusal] ? (
+                <PremiumPrompt
+                  title={DOWNLOAD_REFUSALS[refusal].title}
+                  text={DOWNLOAD_REFUSALS[refusal].text}
+                  onAuth={onAuth}
+                  onDismiss={() => setRefusal(null)}
+                />
+              ) : (
+                <p className="asset-note">Couldn't start the download: {refusal}</p>
+              )
             )}
 
             {prompt && (

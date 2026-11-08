@@ -4,7 +4,7 @@
 // shows the USD price with checkout marked Coming soon, or that it has sold.
 // Builds on AssetModal.css for the layout.
 import { useEffect, useState } from "react";
-import { saveDownload } from "../../lib/downloads";
+import { DOWNLOAD_REFUSALS, requestDownload, saveDownload } from "../../lib/downloads";
 import { PremiumPrompt, ToolGlyph } from "../../components/IconControls";
 import { industryName, styleName } from "../../data/logosData";
 import "../../components/AssetModal.css";
@@ -59,6 +59,10 @@ function LogoModal({ logo, related = [], user = null, onAuth, onSelect, onTag, o
   const [view, setView] = useState("logo");
   const [liked, setLiked] = useState(false);
   const [prompt, setPrompt] = useState(false);
+  // uploaded logos: which source file to download, and why one was refused
+  const [format, setFormat] = useState(logo.originals?.[0]?.format ?? null);
+  const [refusal, setRefusal] = useState(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -72,11 +76,36 @@ function LogoModal({ logo, related = [], user = null, onAuth, onSelect, onTag, o
 
   const { license, price, sold } = logo;
 
-  // uploaded logos: originals wait for signed download links
-  const pending = Boolean(logo.originals);
+  // uploaded logos: the real files, handed out by the server after its checks
+  const uploaded = Boolean(logo.originals);
 
-  const download = () => {
-    if (pending) return;
+  const download = async () => {
+    if (uploaded) {
+      if (!user) {
+        setRefusal("sign_in_required");
+        return;
+      }
+      setBusy(true);
+      setRefusal(null);
+      try {
+        const result = await requestDownload(logo.dbId, format);
+        saveDownload({
+          id: logo.code,
+          title: logo.title,
+          kind: "logo",
+          image: logo.image,
+          file: null,
+          format,
+          license: result.license,
+          date: new Date().toISOString(),
+        });
+      } catch (e) {
+        setRefusal(e.code in DOWNLOAD_REFUSALS ? e.code : e.message);
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     if (license === "premium" && !user) {
       setPrompt(true);
       return;
@@ -170,14 +199,30 @@ function LogoModal({ logo, related = [], user = null, onAuth, onSelect, onTag, o
             )}
 
             <p className="asset-label">What you get</p>
-            <ul className="lm-files">
-              {packFiles.map(([name, detail]) => (
-                <li key={name}>
-                  <b>{name}</b>
-                  <span>{detail}</span>
-                </li>
-              ))}
-            </ul>
+            {uploaded ? (
+              // the files this logo really has; pick one to download
+              <div className="asset-options">
+                {logo.originals.map((o) => (
+                  <label key={o.format} className={format === o.format ? "active" : ""}>
+                    <input type="radio" name="logo-file" checked={format === o.format} onChange={() => setFormat(o.format)} />
+                    <span className="opt-name">
+                      {o.format}
+                      <small>{o.label}</small>
+                    </span>
+                    <span className="opt-size">{(o.bytes / 1_000_000).toFixed(1)} MB</span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <ul className="lm-files">
+                {packFiles.map(([name, detail]) => (
+                  <li key={name}>
+                    <b>{name}</b>
+                    <span>{detail}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
 
             <div className="asset-buttons">
               {license === "exclusive" ? (
@@ -190,9 +235,9 @@ function LogoModal({ logo, related = [], user = null, onAuth, onSelect, onTag, o
                   </button>
                 )
               ) : (
-                <button className="asset-download" onClick={download}>
+                <button className="asset-download" onClick={download} disabled={busy}>
                   <ToolGlyph name="download" />
-                  {pending ? "Downloads open soon" : "Download"}
+                  {busy ? "Preparing…" : uploaded ? `Download ${format}` : "Download"}
                 </button>
               )}
               <button
@@ -204,6 +249,19 @@ function LogoModal({ logo, related = [], user = null, onAuth, onSelect, onTag, o
                 <ToolGlyph name="heart" size={20} filled={liked} />
               </button>
             </div>
+
+            {refusal && (
+              DOWNLOAD_REFUSALS[refusal] ? (
+                <PremiumPrompt
+                  title={DOWNLOAD_REFUSALS[refusal].title}
+                  text={DOWNLOAD_REFUSALS[refusal].text}
+                  onAuth={onAuth}
+                  onDismiss={() => setRefusal(null)}
+                />
+              ) : (
+                <p className="asset-note">Couldn't start the download: {refusal}</p>
+              )
+            )}
 
             {prompt && (
               <PremiumPrompt

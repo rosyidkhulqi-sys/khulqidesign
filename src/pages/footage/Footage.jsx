@@ -35,6 +35,7 @@ function clipOptions(clip) {
       size: `${(o.bytes / 1_000_000).toFixed(o.bytes > 100_000_000 ? 0 : 1)} MB`,
       file: null,
       pending: true,
+      format: o.format,
       ext: o.format.toLowerCase(),
     }));
   }

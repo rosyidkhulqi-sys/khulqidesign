@@ -22,6 +22,7 @@ function vectorOptions(v) {
       file: v.sources.EPS.url,
       // uploaded originals wait for signed download links
       pending: !v.sources.EPS.url,
+      format: "EPS",
       ext: "eps",
     },
     {
@@ -30,6 +31,7 @@ function vectorOptions(v) {
       size: v.sources.JPG.size,
       file: v.sources.JPG.url,
       pending: !v.sources.JPG.url,
+      format: "JPG",
       ext: "jpg",
     },
   ];

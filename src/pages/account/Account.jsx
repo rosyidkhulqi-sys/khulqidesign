@@ -3,7 +3,7 @@
 // Supabase. Download counts and designs are read from this browser, like
 // the Downloads page and Create; the plan, purchases and account deletion
 // move to the backend with subscriptions.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "../vectors/Vectors.css";
 import "./Account.css";
 import Breadcrumb from "../../components/Breadcrumb";
@@ -33,6 +33,17 @@ function Account({ user, setPage, onLogout }) {
   // { area: "name" | "password", ok: boolean, text }
   const [status, setStatus] = useState(null);
   const [busy, setBusy] = useState(null);
+  // today's downloads as the server counts them (the limit it applies)
+  const [today, setToday] = useState(null);
+
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    supabase.rpc("downloads_today").then(({ data }) => alive && data && setToday(data));
+    return () => {
+      alive = false;
+    };
+  }, [user]);
 
   const go = (page) => () => {
     setPage(page);
@@ -59,8 +70,10 @@ function Account({ user, setPage, onLogout }) {
   }
 
   const downloads = readDownloads();
-  const today = new Date().toDateString();
-  const usedToday = downloads.filter((d) => new Date(d.date).toDateString() === today).length;
+  const localDay = new Date().toDateString();
+  const downloadsToday = today;
+  const usedToday = downloadsToday?.taken ?? downloads.filter((d) => new Date(d.date).toDateString() === localDay).length;
+  const dailyLimit = downloadsToday?.limit ?? FREE_DAILY;
   const designs = listProjects().length;
   // email accounts have a password to change; Google accounts sign in there
   const provider = user.app_metadata?.provider ?? "email";
@@ -127,11 +140,11 @@ function Account({ user, setPage, onLogout }) {
         <div className="ac-card ac-plan">
           <p className="ac-label">Your plan</p>
           <h3>Free</h3>
-          <div className="ac-meter" aria-label={`${usedToday} of ${FREE_DAILY} downloads today`}>
-            <span style={{ width: `${Math.min(100, (usedToday / FREE_DAILY) * 100)}%` }} />
+          <div className="ac-meter" aria-label={`${usedToday} of ${dailyLimit} downloads today`}>
+            <span style={{ width: `${Math.min(100, (usedToday / dailyLimit) * 100)}%` }} />
           </div>
           <p className="ac-small">
-            {Math.min(usedToday, FREE_DAILY)} of {FREE_DAILY} downloads today · resets at midnight
+            {Math.min(usedToday, dailyLimit)} of {dailyLimit} downloads today · resets at midnight UTC
           </p>
           <button className="ac-main" onClick={go("pricing")}>Go Premium</button>
           <p className="ac-small">Unlimited downloads, no credit line, every format.</p>
