@@ -1,0 +1,67 @@
+/* TERMS + PRIVACY — builds on the library page head in Vectors.css */
+
+.legal-page { max-width: 1080px; margin: 0 auto; }
+.lg-lead { margin: 4px 0 32px; color: #aeb0b2; font-size: 15px; }
+
+.lg-body {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 48px;
+  align-items: start;
+}
+
+/* contents, pinned while reading */
+.lg-toc {
+  position: sticky;
+  top: calc(var(--header-h) + 20px);
+  display: grid;
+  gap: 2px;
+}
+.lg-toc p {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.lg-toc a {
+  padding: 5px 0;
+  color: #aeb0b2;
+  font-size: 14px;
+}
+.lg-toc a:hover { color: var(--white); }
+.lg-toc button {
+  justify-self: start;
+  margin-top: 18px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--white);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lg-toc button:hover { color: var(--red); }
+
+.lg-text section {
+  padding: 4px 0 26px;
+  scroll-margin-top: calc(var(--header-h) + 20px);
+}
+.lg-text section + section { padding-top: 26px; border-top: 1px solid var(--line); }
+.lg-text h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 0 12px;
+  font-size: 19px;
+  font-weight: 600;
+}
+.lg-text h2 span { color: var(--red); font-size: 13px; font-weight: 700; }
+.lg-text p { margin: 0 0 10px; max-width: 720px; color: #c4c6c9; font-size: 15px; line-height: 1.7; }
+
+@media (max-width: 820px) {
+  .lg-body { grid-template-columns: 1fr; gap: 24px; }
+  .lg-toc { position: static; }
+}

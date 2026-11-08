@@ -120,6 +120,18 @@
 .auth-submit:hover:not(:disabled) { background: var(--red-dark); }
 .auth-submit:disabled { opacity: 0.6; cursor: wait; }
 
+.auth-terms { margin: 14px 0 0; color: #8d939b; font-size: 12px; line-height: 1.5; text-align: center; }
+.auth-terms button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #c9ccd0;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.auth-terms button:hover { color: var(--white); }
+
 .auth-switch {
   margin-top: 22px;
   color: var(--muted);

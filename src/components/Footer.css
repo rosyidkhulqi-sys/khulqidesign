@@ -51,6 +51,10 @@
 
 .footer-back > a span { color: var(--red); font-size: 18px; }
 
+.footer-legal { display: flex; gap: 18px; }
+.footer-legal a { color: inherit; }
+.footer-legal a:hover { color: var(--white); }
+
 .footer-bottom {
   display: flex;
   justify-content: space-between;
@@ -68,5 +72,9 @@
   .footer-columns { grid-template-columns: 1fr 1fr; gap: 35px; }
   .footer-back { align-items: flex-start; }
   .footer-back h3 { text-align: left; }
-  .footer-bottom { flex-direction: column; }
+  .footer-legal { display: flex; gap: 18px; }
+.footer-legal a { color: inherit; }
+.footer-legal a:hover { color: var(--white); }
+
+.footer-bottom { flex-direction: column; }
 }

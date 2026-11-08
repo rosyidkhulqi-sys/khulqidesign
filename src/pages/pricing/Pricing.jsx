@@ -57,7 +57,7 @@ const premiumGroups = [
 const faqs = [
   [
     "Can I cancel anytime?",
-    "Yes. You can cancel whenever you like, and everything you downloaded while subscribed stays licensed for the projects you used it in.",
+    "Yes. Cancelling stops the next renewal; Premium stays active until the end of the period you paid for, and everything you downloaded stays licensed for the projects you used it in. Cancelling isn't a refund: refunds are only within 14 days if nothing was downloaded, minus payment fees (see Terms).",
   ],
   [
     "What's the difference between a Premium logo and an Exclusive logo?",
@@ -176,6 +176,7 @@ function Pricing({ setPage, user = null }) {
           <p className="pr-trust">
             <span>Cancel anytime</span>
             <span>Secure checkout</span>
+            <span>Visa · Mastercard · PayPal</span>
             <span>Prices in USD, taxes may apply</span>
           </p>
           <p className="pr-group">Everything in Free, plus</p>

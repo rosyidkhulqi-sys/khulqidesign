@@ -79,6 +79,12 @@ function Register({ setPage }) {
         </button>
       </form>
 
+      <p className="auth-terms">
+        By creating an account you agree to the{" "}
+        <button type="button" onClick={() => setPage("terms")}>Terms</button> and{" "}
+        <button type="button" onClick={() => setPage("privacy")}>Privacy Policy</button>.
+      </p>
+
       <p className="auth-switch">
         Already have an account?{" "}
         <button type="button" onClick={() => setPage("login")}>Log in</button>

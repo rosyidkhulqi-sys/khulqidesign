@@ -68,7 +68,11 @@ function Footer({ language, setLanguage, setPage }) {
 
       <div className="footer-bottom">
         <span>© {new Date().getFullYear()} Khulqi Design</span>
-        <span>Digital asset studio</span>
+        <span className="footer-legal">
+          <a href="#" onClick={go("terms")}>Terms</a>
+          <a href="#" onClick={go("privacy")}>Privacy</a>
+          <a href="#" onClick={go("license")}>License</a>
+        </span>
       </div>
     </footer>
   );
