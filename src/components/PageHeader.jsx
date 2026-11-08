@@ -116,6 +116,7 @@ function PageHeader({ page, setPage, user, onLogout }) {
                       <small>{info.email}</small>
                     </div>
                   </div>
+                  <a href="#" role="menuitem" onClick={go("account")}>Account</a>
                   <a href="#" role="menuitem" onClick={go("downloads")}>Your downloads</a>
                   <a href="#" role="menuitem" onClick={go("create")}>Your designs</a>
                   <hr />

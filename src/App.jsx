@@ -18,6 +18,7 @@ const Logos = lazy(() => import("./pages/logos/Logos"));
 const Pricing = lazy(() => import("./pages/pricing/Pricing"));
 const License = lazy(() => import("./pages/license/License"));
 const Legal = lazy(() => import("./pages/legal/Legal"));
+const Account = lazy(() => import("./pages/account/Account"));
 // pages visited now and then load on demand too
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
@@ -102,6 +103,11 @@ function App() {
     downloads: (
       <Suspense fallback={null}>
         <Downloads setPage={go} />
+      </Suspense>
+    ),
+    account: (
+      <Suspense fallback={null}>
+        <Account user={user} setPage={go} onLogout={logout} />
       </Suspense>
     ),
     terms: (

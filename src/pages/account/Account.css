@@ -1,0 +1,144 @@
+/* ACCOUNT — builds on the library page head in Vectors.css */
+
+.account-page { max-width: 1080px; margin: 0 auto; }
+
+.ac-card {
+  padding: 26px 28px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.ac-label {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ac-small { margin: 10px 0 0; color: #8d939b; font-size: 13px; line-height: 1.55; }
+.ac-small a { color: #c9ccd0; text-decoration: underline; }
+
+/* buttons: red for the main action, as elsewhere */
+.account-page button { font: inherit; cursor: pointer; }
+.ac-main,
+.ac-signin button,
+.ac-logout,
+.ac-settings form button {
+  height: 42px;
+  padding: 0 18px;
+  border: 1px solid #3a3c3f;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 600;
+}
+.ac-main,
+.ac-signin .ac-main { border: 0; background: var(--red); color: white; }
+.ac-main:hover { background: var(--red-dark); }
+.ac-logout:hover,
+.ac-settings form button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.06); }
+.account-page button:disabled { opacity: 0.45; cursor: default; }
+
+/* signed out */
+.ac-signin {
+  max-width: 520px;
+  padding: 34px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.ac-signin h2 { margin: 0 0 6px; font-size: 20px; }
+.ac-signin p { margin: 0 0 22px; color: #aeb0b2; }
+.ac-signin div { display: flex; gap: 10px; }
+
+/* profile */
+.ac-profile {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 6px 0 22px;
+}
+.ac-avatar {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #26282b;
+  color: var(--white);
+  font-size: 26px;
+  font-weight: 600;
+  object-fit: cover;
+}
+.ac-profile h2 { margin: 0; font-size: 22px; font-weight: 600; }
+.ac-profile p { margin: 4px 0 0; color: #8d939b; font-size: 14px; }
+.ac-logout { margin-left: auto; }
+
+.ac-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+
+/* plan */
+.ac-plan h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 18px; font-size: 26px; font-weight: 600; }
+.ac-meter { height: 6px; overflow: hidden; border-radius: 3px; background: #26282b; }
+.ac-meter span { display: block; height: 100%; border-radius: inherit; background: var(--white); }
+.ac-plan .ac-main { margin-top: 22px; }
+
+/* library rows */
+.ac-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 13px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  color: #d6d7d8;
+  font-size: 15px;
+  text-align: left;
+}
+.ac-row strong { color: var(--white); }
+.ac-row:hover span { color: var(--white); }
+.ac-row::after { content: "→"; margin-left: 12px; color: var(--red); }
+.ac-row strong { margin-left: auto; }
+
+/* settings */
+.ac-settings form,
+.ac-field { padding: 16px 0; border-top: 1px solid var(--line); }
+.ac-settings .ac-label + form { border-top: 0; padding-top: 4px; }
+.ac-settings label,
+.ac-field-name { display: block; margin-bottom: 8px; color: #d6d7d8; font-size: 14px; font-weight: 600; }
+.ac-settings form div { display: flex; gap: 10px; max-width: 520px; }
+.ac-settings input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid #333;
+  border-radius: 10px;
+  background: #0b0b0c;
+  color: var(--white);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+.ac-settings input:focus { border-color: #555; }
+.ac-field .ac-small { margin: 0; max-width: 620px; }
+.ac-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #c9ccd0;
+  text-decoration: underline;
+}
+
+.ac-status { margin: 8px 0 0; font-size: 13px; }
+.ac-status.ok { color: #8fd19e; }
+.ac-status.error { color: #ff8b92; }
+
+@media (max-width: 760px) {
+  .ac-grid { grid-template-columns: 1fr; }
+  .ac-card { padding: 22px; }
+  .ac-profile { flex-wrap: wrap; }
+  .ac-logout { margin-left: 0; }
+}

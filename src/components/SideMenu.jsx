@@ -66,6 +66,11 @@ function SideMenu({ open, onClose, page, setPage, user, onLogout }) {
         ))}
 
         <p className="sidemenu-label" style={{ marginTop: 24 }}>ACCOUNT</p>
+        {user && (
+          <a href="#" className={`sidemenu-link ${page === "account" ? "active" : ""}`} onClick={go("account")}>
+            Account
+          </a>
+        )}
         <a href="#" className={`sidemenu-link ${page === "pricing" ? "active" : ""}`} onClick={go("pricing")}>
           Pricing
         </a>
