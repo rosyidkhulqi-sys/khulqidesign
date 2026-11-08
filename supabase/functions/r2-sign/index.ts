@@ -12,12 +12,11 @@
 // Secrets (Supabase -> Edge Functions -> Secrets):
 //   R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY,
 //   R2_PUBLIC_BUCKET (public-files), R2_PRIVATE_BUCKET (private-files)
-// SUPABASE_URL (and SUPABASE_ANON_KEY on older projects) come from Supabase.
+// SUPABASE_URL comes from Supabase.
 //
 // Download links for buyers come later in their own function, which checks
 // the plan, the license and the daily limit before signing a GET.
 import { AwsClient } from "https://esm.sh/aws4fetch@1.0.20";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
 const ALLOWED_ORIGINS = [
   "https://khulqidesign.com",
@@ -30,7 +29,6 @@ const PREFIXES = ["icons/", "vectors/", "logos/", "footage/", "templates/", "ele
 const EXPIRES = 600;
 
 // The project's publishable key, public by design (it ships in the site).
-// Used when the runtime doesn't provide the legacy SUPABASE_ANON_KEY.
 const PUBLISHABLE_KEY = "sb_publishable_IxJSv34yZhNyGkgWbvYAjg_UFmo6CDO";
 
 const env = (name: string) => {
@@ -69,16 +67,30 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors(origin) });
   if (req.method !== "POST") return reply({ error: "method not allowed" }, 405, origin);
 
-  // who is asking: the signed-in user's own token, checked by Supabase
+  // Who is asking: the signed-in user's own token, checked by Supabase Auth,
+  // then their role with is_admin(). Both calls use the publishable key, which
+  // works on projects with the new API keys (the legacy anon key may not).
   const auth = req.headers.get("Authorization") ?? "";
-  if (!auth.startsWith("Bearer ")) return reply({ error: "sign in first" }, 401, origin);
-  const supabase = createClient(env("SUPABASE_URL"), Deno.env.get("SUPABASE_ANON_KEY") ?? PUBLISHABLE_KEY, {
-    global: { headers: { Authorization: auth } },
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!token || token.startsWith("sb_")) return reply({ error: "sign in first (no session token)" }, 401, origin);
+  const base = env("SUPABASE_URL");
+  const asUser = { apikey: PUBLISHABLE_KEY, Authorization: `Bearer ${token}` };
+
+  const userRes = await fetch(`${base}/auth/v1/user`, { headers: asUser });
+  if (!userRes.ok) {
+    const detail = await userRes.text().catch(() => "");
+    return reply({ error: `sign in first (auth ${userRes.status}: ${detail.slice(0, 120)})` }, 401, origin);
+  }
+
+  const roleRes = await fetch(`${base}/rest/v1/rpc/is_admin`, {
+    method: "POST",
+    headers: { ...asUser, "Content-Type": "application/json" },
+    body: "{}",
   });
-  const { data: userData, error: userError } = await supabase.auth.getUser(auth.slice(7));
-  if (userError || !userData.user) return reply({ error: "sign in first" }, 401, origin);
-  const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
-  if (roleError || isAdmin !== true) return reply({ error: "admins only" }, 403, origin);
+  const isAdmin = roleRes.ok ? await roleRes.json() : null;
+  if (isAdmin !== true) {
+    return reply({ error: roleRes.ok ? "admins only" : `role check failed (${roleRes.status})` }, 403, origin);
+  }
 
   let body: { action?: string; bucket?: string; key?: unknown; contentType?: unknown };
   try {
