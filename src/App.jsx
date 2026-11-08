@@ -2,7 +2,7 @@ import Footer from "./components/Footer";
 import PageHeader from "./components/PageHeader";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "./lib/supabaseClient";
-import { pathFor, readLocation, titleFor } from "./lib/router";
+import { pathFor, readLocation, titleFor, updateHeadFor } from "./lib/router";
 import "./styles/App.css";
 
 import Home from "./pages/home/Home";
@@ -66,6 +66,7 @@ function App() {
   // the browser tab names the page, for people and for search engines
   useEffect(() => {
     document.title = titleFor(page);
+    updateHeadFor(page);
   }, [page]);
 
   const go = (nextPage, query = "") => {

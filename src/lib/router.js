@@ -8,7 +8,7 @@
 
 // page key -> browser tab title
 export const pageTitles = {
-  home: "Khulqidesign: icons, vectors, logos, templates and footage",
+  home: "Khulqidesign: Icons, Vectors, Logos & Templates",
   ai: "AI tools",
   icons: "Icons",
   vectors: "Vectors",
@@ -47,4 +47,32 @@ export function readLocation() {
 
 export function titleFor(page) {
   return page === "home" ? pageTitles.home : `${pageTitles[page] ?? pageTitles.notfound} · Khulqidesign`;
+}
+
+// pages that are personal or for the owner: kept out of search results
+const PRIVATE_PAGES = new Set(["admin", "account", "downloads", "login", "register", "notfound"]);
+
+// the canonical address (always without www) and whether search engines may
+// list the page; called whenever the page changes
+export function updateHeadFor(page) {
+  const path = page === "home" ? "/" : `/${page}`;
+  let canonical = document.querySelector('link[rel="canonical"]');
+  if (!canonical) {
+    canonical = document.createElement("link");
+    canonical.rel = "canonical";
+    document.head.appendChild(canonical);
+  }
+  canonical.href = `https://khulqidesign.com${path}`;
+
+  let robots = document.querySelector('meta[name="robots"]');
+  if (PRIVATE_PAGES.has(page)) {
+    if (!robots) {
+      robots = document.createElement("meta");
+      robots.name = "robots";
+      document.head.appendChild(robots);
+    }
+    robots.content = "noindex";
+  } else if (robots) {
+    robots.remove();
+  }
 }
