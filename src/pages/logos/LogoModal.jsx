@@ -52,7 +52,7 @@ function Mockup({ logo, view }) {
     );
   }
   // "dark": an inverted preview until each pack ships its own dark version
-  return <img className={view === "dark" ? "lm-dark" : ""} src={logo.image} alt={logo.title} />;
+  return <img className={view === "dark" ? "lm-dark" : ""} src={logo.previewImage || logo.image} alt={logo.title} />;
 }
 
 function LogoModal({ logo, related = [], user = null, onAuth, onSelect, onTag, onClose }) {
@@ -72,7 +72,11 @@ function LogoModal({ logo, related = [], user = null, onAuth, onSelect, onTag, o
 
   const { license, price, sold } = logo;
 
+  // uploaded logos: originals wait for signed download links
+  const pending = Boolean(logo.originals);
+
   const download = () => {
+    if (pending) return;
     if (license === "premium" && !user) {
       setPrompt(true);
       return;
@@ -112,7 +116,7 @@ function LogoModal({ logo, related = [], user = null, onAuth, onSelect, onTag, o
           <div className="asset-left">
             <div className={`asset-preview lm-stage is-${view}`}>
               <Mockup logo={logo} view={view} />
-              {license !== "free" && view === "logo" && (
+              {license !== "free" && view === "logo" && !logo.previewImage && (
                 <div className="asset-watermark" aria-hidden="true">
                   {Array.from({ length: 12 }, (_, i) => (
                     <span key={i}>KHULQIDESIGN</span>
@@ -188,7 +192,7 @@ function LogoModal({ logo, related = [], user = null, onAuth, onSelect, onTag, o
               ) : (
                 <button className="asset-download" onClick={download}>
                   <ToolGlyph name="download" />
-                  Download
+                  {pending ? "Downloads open soon" : "Download"}
                 </button>
               )}
               <button

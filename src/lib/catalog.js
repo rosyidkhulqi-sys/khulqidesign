@@ -128,3 +128,25 @@ export function toClip(row) {
     originals: row.files,
   };
 }
+
+// a database row as a Logos page item
+export function toLogo(row) {
+  return {
+    id: Date.parse(row.published_at || row.created_at),
+    dbId: row.id,
+    code: row.code,
+    title: row.title,
+    searchText: `${row.long_title ?? ""} ${row.description ?? ""}`.toLowerCase(),
+    industry: row.industry || "business",
+    style: row.style || "abstract",
+    license: row.license,
+    price: row.price_cents ? row.price_cents / 100 : null,
+    sold: Boolean(row.sold_at),
+    // the watermark is in these pixels for Premium and Exclusive logos
+    image: publicUrl(row.thumb_key),
+    previewImage: publicUrl(row.preview_key),
+    downloads: row.downloads,
+    keywords: row.keywords ?? [],
+    originals: row.files,
+  };
+}

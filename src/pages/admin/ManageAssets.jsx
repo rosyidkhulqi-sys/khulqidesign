@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { deleteFromR2, publicUrl } from "../../lib/r2";
 
-const LABEL = { vector: "vectors", icon: "icons", footage: "clips", template: "templates" };
+const LABEL = { vector: "vectors", icon: "icons", logo: "logos", footage: "clips", template: "templates" };
 
 function ManageAssets({ type = "vector", refreshKey }) {
   const [rows, setRows] = useState(null);

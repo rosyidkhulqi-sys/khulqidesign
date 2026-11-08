@@ -10,10 +10,12 @@ import { supabase } from "../../lib/supabaseClient";
 import ManageAssets from "./ManageAssets";
 import IconUpload from "./IconUpload.jsx";
 import FootageUpload from "./FootageUpload.jsx";
+import LogoUpload from "./LogoUpload.jsx";
 
 const TABS = [
   ["vector", "Vectors", "EPS + JPG pairs"],
   ["icon", "Icons", "SVG icons in sets"],
+  ["logo", "Logos", "JPG preview + AI, EPS, SVG"],
   ["footage", "Footage", "MP4 and MOV clips"],
   ["template", "Templates", "made in Create"],
 ];
@@ -158,6 +160,8 @@ function Admin({ user, setPage }) {
 
       {tab === "icon" ? (
         <IconUpload onPublished={() => setPublished((n) => n + 1)} />
+      ) : tab === "logo" ? (
+        <LogoUpload onPublished={() => setPublished((n) => n + 1)} />
       ) : tab === "footage" ? (
         <FootageUpload onPublished={() => setPublished((n) => n + 1)} />
       ) : tab === "template" ? (

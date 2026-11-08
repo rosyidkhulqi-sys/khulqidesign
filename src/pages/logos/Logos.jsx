@@ -1,13 +1,14 @@
 // Logos: ready-made logos for brand identity. Free to draw visitors in,
 // Premium (non-exclusive, with the subscription) and Exclusive (bought
 // outright by one buyer, then marked sold). A card opens LogoModal.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "../vectors/Vectors.css";
 import "./Logos.css";
 import Breadcrumb from "../../components/Breadcrumb";
 import AiSearchButton from "../../components/AiSearchButton";
 import LogoModal from "./LogoModal";
-import { industries, industryName, logos as allLogos, logoStyles } from "../../data/logosData";
+import { industries, industryName, logos as trialLogos, logoStyles } from "../../data/logosData";
+import { fetchPublished, toLogo } from "../../lib/catalog";
 
 const licenseLabel = { free: "Free", premium: "Premium", exclusive: "Exclusive" };
 
@@ -49,6 +50,20 @@ function Logos({ setPage, initialSearch = "", user = null }) {
   const [sort, setSort] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState(null);
+  // logos uploaded through /admin, newest first, ahead of the trial logos
+  const [uploaded, setUploaded] = useState([]);
+  useEffect(() => {
+    let alive = true;
+    fetchPublished("logo")
+      .then((rows) => alive && setUploaded(rows.map(toLogo)))
+      .catch(() => {
+        /* the trial logos still show if the catalogue can't be reached */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const allLogos = [...uploaded, ...trialLogos];
 
   const perPage = 24;
 
