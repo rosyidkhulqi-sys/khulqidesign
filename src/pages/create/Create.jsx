@@ -140,6 +140,8 @@ function Create({ draft, clearDraft }) {
   const commitTimer = useRef(null);
   const fileInput = useRef(null);
 
+  // phones get a one-time hint that the editor is built for bigger screens
+  const [smallHint, setSmallHint] = useState(true);
   const [board, setBoard] = useState({ w: 1080, h: 1080 });
   const [bg, setBg] = useState("#ffffff");
   const [stage, setStage] = useState({ w: 800, h: 600 });
@@ -917,6 +919,13 @@ function Create({ draft, clearDraft }) {
 
   return (
     <section className="create-page">
+      {/* only shown on narrow screens (see Create.css); editing still works */}
+      {smallHint && (
+        <div className="create-small-hint" role="status">
+          <span>Create works best on a computer or tablet.</span>
+          <button onClick={() => setSmallHint(false)} aria-label="Dismiss">Got it</button>
+        </div>
+      )}
 
       <div className="create-editor" ref={editorRef}>
         {/* TOP BAR */}

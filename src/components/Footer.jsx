@@ -47,7 +47,8 @@ function Footer({ language, setLanguage, setPage }) {
         </div>
 
         <div>
-          <h3>Services</h3>
+          {/* the studio opens later; the list says so */}
+          <h3>Services <span className="footer-soon">Soon</span></h3>
           {services.map((s) => (
             <a key={s} href="#services" onClick={toServices}>{s}</a>
           ))}

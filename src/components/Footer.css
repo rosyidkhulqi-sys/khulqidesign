@@ -51,6 +51,18 @@
 
 .footer-back > a span { color: var(--red); font-size: 18px; }
 
+.footer-soon {
+  margin-left: 6px;
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  vertical-align: 2px;
+}
+
 .footer-legal { display: flex; gap: 18px; }
 .footer-legal a { color: inherit; }
 .footer-legal a:hover { color: var(--white); }
@@ -72,7 +84,19 @@
   .footer-columns { grid-template-columns: 1fr 1fr; gap: 35px; }
   .footer-back { align-items: flex-start; }
   .footer-back h3 { text-align: left; }
-  .footer-legal { display: flex; gap: 18px; }
+  .footer-soon {
+  margin-left: 6px;
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  vertical-align: 2px;
+}
+
+.footer-legal { display: flex; gap: 18px; }
 .footer-legal a { color: inherit; }
 .footer-legal a:hover { color: var(--white); }
 

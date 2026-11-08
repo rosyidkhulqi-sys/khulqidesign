@@ -48,7 +48,7 @@ function SideMenu({ open, onClose, page, setPage, user, onLogout }) {
           </div>
         ) : (
           <div className="sidemenu-auth">
-            <a href={pathFor("login")} onClick={go("login")}>Login</a>
+            <a href={pathFor("login")} onClick={go("login")}>Log in</a>
             <a href={pathFor("register")} className="sidemenu-register" onClick={go("register")}>
               Register
             </a>
