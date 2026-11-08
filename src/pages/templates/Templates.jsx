@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TemplateThumb from "../../components/TemplateThumb";
-import { allTemplates, templateCategories } from "../../data/templatesData";
+import { allTemplates as builtIn, templateCategories as builtInCategories } from "../../data/templatesData";
+import { fetchTemplates } from "../create/templatePublish";
 import "../vectors/Vectors.css";
 import "./Templates.css";
 import Breadcrumb from "../../components/Breadcrumb";
@@ -13,6 +14,22 @@ function Templates({ setPage, onCustomize, initialSearch = "" }) {
   const [license, setLicense] = useState("all");
   const [sort, setSort] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
+
+  // templates published from Create, newest first, ahead of the built-in ones
+  const [published, setPublished] = useState([]);
+  useEffect(() => {
+    let alive = true;
+    fetchTemplates()
+      .then((list) => alive && setPublished(list))
+      .catch(() => {
+        /* the built-in templates still show */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const allTemplates = [...published, ...builtIn];
+  const templateCategories = [...new Set([...published.map((t) => t.category), ...builtInCategories])];
 
   const perPage = 24;
 
@@ -122,9 +139,9 @@ function Templates({ setPage, onCustomize, initialSearch = "" }) {
       <div className="vector-grid">
         {items.length > 0 ? (
           items.map((t) => (
-            <div className="vector-card template-card" key={t.id} onClick={() => onCustomize(t)}>
+            <div className="vector-card template-card" key={t.dbId ?? t.id} onClick={() => onCustomize(t)}>
               <div className="vector-thumb" style={{ aspectRatio: `${t.w} / ${t.h}` }}>
-                <TemplateThumb scene={t.scene} />
+                {t.scene ? <TemplateThumb scene={t.scene} /> : <img src={t.image} alt="" loading="lazy" />}
                 <span className={`vector-badge ${t.license}`}>
                   {t.license === "free" ? "Free" : "Premium"}
                 </span>

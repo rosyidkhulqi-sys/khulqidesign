@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { deleteFromR2, publicUrl } from "../../lib/r2";
 
-const LABEL = { vector: "vectors", icon: "icons" };
+const LABEL = { vector: "vectors", icon: "icons", footage: "clips", template: "templates" };
 
 function ManageAssets({ type = "vector", refreshKey }) {
   const [rows, setRows] = useState(null);
@@ -17,7 +17,7 @@ function ManageAssets({ type = "vector", refreshKey }) {
     let alive = true;
     supabase
       .from("assets")
-      .select("id, code, title, license, status, thumb_key, preview_key, files, created_at")
+      .select("id, code, title, license, status, thumb_key, preview_key, preview_video_key, files, created_at")
       .eq("type", type)
       .order("created_at", { ascending: false })
       .limit(200)
@@ -55,6 +55,7 @@ function ManageAssets({ type = "vector", refreshKey }) {
       ...row.files.map((f) => ["private", f.key]),
       ["public", row.thumb_key],
       ["public", row.preview_key],
+      ["public", row.preview_video_key],
     ].filter(([, key]) => key);
     await Promise.allSettled(files.map(([bucket, key]) => deleteFromR2(bucket, key)));
     setBusy(null);

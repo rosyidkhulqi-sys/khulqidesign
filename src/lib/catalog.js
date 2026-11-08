@@ -97,3 +97,34 @@ export async function fetchIconCatalog() {
     }));
   return { icons, sets };
 }
+
+// a database row as a Footage page clip
+export function toClip(row) {
+  const w = row.width || 1920;
+  const h = row.height || 1080;
+  const mp4 = row.files.find((f) => f.format === "MP4") ?? row.files[0];
+  return {
+    id: Date.parse(row.published_at || row.created_at),
+    dbId: row.id,
+    code: row.code,
+    title: row.title,
+    searchText: `${row.long_title ?? ""} ${row.description ?? ""}`.toLowerCase(),
+    category: row.category || "other",
+    license: row.license,
+    image: publicUrl(row.thumb_key),
+    // the hover and detail video is the light, watermarked preview
+    file: publicUrl(row.preview_video_key),
+    previewImage: publicUrl(row.preview_key),
+    size: [w, h],
+    sizeLabel: mb(mp4?.bytes),
+    resolution: Math.max(w, h) >= 3840 ? "4K" : "HD",
+    fps: row.fps ? Math.round(Number(row.fps)) : null,
+    duration: Math.round(Number(row.duration_s) || 0),
+    orientation: w === h ? "square" : w > h ? "horizontal" : "vertical",
+    loop: false,
+    downloads: row.downloads,
+    keywords: row.keywords ?? [],
+    // originals sit in the private bucket; signed download links come next
+    originals: row.files,
+  };
+}

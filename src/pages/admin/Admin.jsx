@@ -9,10 +9,13 @@ import Breadcrumb from "../../components/Breadcrumb";
 import { supabase } from "../../lib/supabaseClient";
 import ManageAssets from "./ManageAssets";
 import IconUpload from "./IconUpload.jsx";
+import FootageUpload from "./FootageUpload.jsx";
 
 const TABS = [
   ["vector", "Vectors", "EPS + JPG pairs"],
   ["icon", "Icons", "SVG icons in sets"],
+  ["footage", "Footage", "MP4 and MOV clips"],
+  ["template", "Templates", "made in Create"],
 ];
 import {
   VECTOR_CATEGORIES,
@@ -155,6 +158,18 @@ function Admin({ user, setPage }) {
 
       {tab === "icon" ? (
         <IconUpload onPublished={() => setPublished((n) => n + 1)} />
+      ) : tab === "footage" ? (
+        <FootageUpload onPublished={() => setPublished((n) => n + 1)} />
+      ) : tab === "template" ? (
+        <div className="ad-drop">
+          <strong>Templates are published from Create</strong>
+          <span>
+            Design or open a design in Create (or import an SVG exported from Illustrator, with text
+            kept as text), then choose File → Publish as template. Every page is published exactly
+            as it is, so buyers can change its text, colors and pictures.
+          </span>
+          <button onClick={() => setPage("create")}>Open Create</button>
+        </div>
       ) : (
       <>
       {/* DROP ZONE */}

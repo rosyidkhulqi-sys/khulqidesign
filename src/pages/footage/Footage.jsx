@@ -5,7 +5,8 @@ import "./Footage.css";
 import Breadcrumb from "../../components/Breadcrumb";
 import AiSearchButton from "../../components/AiSearchButton";
 import { ToolGlyph } from "../../components/IconControls";
-import { clips as allClips } from "../../data/footageData";
+import { clips as trialClips } from "../../data/footageData";
+import { fetchPublished, toClip } from "../../lib/catalog";
 
 const durationRange = {
   short: (d) => d < 10,
@@ -13,7 +14,7 @@ const durationRange = {
   long: (d) => d > 30,
 };
 
-const formatTime = (s) => `0:${String(s).padStart(2, "0")}`;
+const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
 const aspect = {
   horizontal: ["16 / 9", "16:9"],
@@ -26,6 +27,17 @@ const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 
 // one option per real file; HD and web renditions will come from the backend
 function clipOptions(clip) {
+  // uploaded clips: one option per original, downloads open with signed links
+  if (clip.originals) {
+    return clip.originals.map((o) => ({
+      label: o.format === "MOV" ? "Master MOV" : clip.resolution === "4K" ? "4K UHD" : "Full HD",
+      detail: `${px([o.width ?? clip.size[0], o.height ?? clip.size[1]])} · ${o.format === "MOV" ? "QuickTime" : "MP4 H.264"}`,
+      size: `${(o.bytes / 1_000_000).toFixed(o.bytes > 100_000_000 ? 0 : 1)} MB`,
+      file: null,
+      pending: true,
+      ext: o.format.toLowerCase(),
+    }));
+  }
   return [
     {
       label: clip.resolution === "4K" ? "4K UHD" : "Full HD",
@@ -136,6 +148,20 @@ function Footage({ setPage, initialSearch = "", user = null }) {
   const [sort, setSort] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState(null);
+  // clips uploaded through /admin, newest first, ahead of the trial clips
+  const [uploaded, setUploaded] = useState([]);
+  useEffect(() => {
+    let alive = true;
+    fetchPublished("footage")
+      .then((rows) => alive && setUploaded(rows.map(toClip)))
+      .catch(() => {
+        /* the trial clips still show if the catalogue can't be reached */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const allClips = [...uploaded, ...trialClips];
 
   const perPage = 24;
 

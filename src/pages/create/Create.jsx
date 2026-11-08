@@ -35,6 +35,9 @@ import {
   setCurrentProject,
 } from "./projectsStore";
 import "./Create.css";
+import { supabase } from "../../lib/supabaseClient";
+import PublishTemplate from "./PublishTemplate";
+import { fetchTemplates } from "./templatePublish";
 
 const PANEL_KEY = "kd-create-panel";
 const PAGE_KEY = "kd-create-page";
@@ -192,6 +195,27 @@ function Create({ draft, clearDraft }) {
   const [isEmpty, setIsEmpty] = useState(true);
   const [pageInfo, setPageInfo] = useState({ index: 0, count: 1 });
   const [fullscreen, setFullscreen] = useState(false);
+  // admins can publish the open design as a template
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showPublish, setShowPublish] = useState(false);
+  // templates published from Create, ahead of the built-in ones
+  const [dbTemplates, setDbTemplates] = useState([]);
+
+  useEffect(() => {
+    let alive = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) return;
+      supabase.rpc("is_admin").then(({ data: ok }) => alive && setIsAdmin(ok === true));
+    });
+    fetchTemplates()
+      .then((list) => alive && setDbTemplates(list))
+      .catch(() => {
+        /* the built-in templates still show */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
   const editorRef = useRef(null);
 
   // follow the browser's full-screen state, including leaving it with Esc
@@ -513,6 +537,22 @@ function Create({ draft, clearDraft }) {
     }
     // text metrics are wrong if the web font is not loaded yet
     await loadFonts();
+    // a published template is a saved design: every page as it was made
+    if (t.designUrl) {
+      let snap;
+      try {
+        snap = await (await fetch(t.designUrl)).json();
+      } catch {
+        window.alert("This template couldn't be opened. Check your connection and try again.");
+        return;
+      }
+      renameDesign(t.title[0].toUpperCase() + t.title.slice(1));
+      await restore(snap, 0);
+      rememberPage(0);
+      setShowNew(false);
+      resetHistory();
+      return;
+    }
     const objects = await sceneObjects(t.scene);
     renameDesign(t.title[0].toUpperCase() + t.title.slice(1));
     c.clear();
@@ -942,6 +982,11 @@ function Create({ draft, clearDraft }) {
                 <button onClick={() => { setMenu(null); openTab("templates"); }}>
                   <Icon name="templates" /> Start from a template
                 </button>
+                {isAdmin && (
+                  <button onClick={() => { setMenu(null); setShowPublish(true); }}>
+                    <Icon name="templates" /> Publish as template
+                  </button>
+                )}
                 <hr />
                 <button className="danger" onClick={() => { setMenu(null); deleteDesign(); }}>
                   <Icon name="trash" /> Delete design
@@ -1019,10 +1064,10 @@ function Create({ draft, clearDraft }) {
           <div className="create-panel" inert={!panelOpen} aria-hidden={!panelOpen}>
             {tab === "templates" && (
               <div className="cp-grid two">
-                {allTemplates.map((t) => (
-                  <button key={t.id} className="cp-template" onClick={() => openTemplate(t)} title={t.title}>
+                {[...dbTemplates, ...allTemplates].map((t) => (
+                  <button key={t.dbId ?? t.id} className="cp-template" onClick={() => openTemplate(t)} title={t.title}>
                     <div style={{ aspectRatio: `${t.w} / ${t.h}` }}>
-                      <TemplateThumb scene={t.scene} />
+                      {t.scene ? <TemplateThumb scene={t.scene} /> : <img src={t.image} alt="" loading="lazy" />}
                     </div>
                   </button>
                 ))}
@@ -1470,6 +1515,16 @@ function Create({ draft, clearDraft }) {
             </div>
           </div>
         </div>
+      )}
+      {showPublish && (
+        <PublishTemplate
+          getDesign={() => ({ ...boardRef.current, pages: currentPages() })}
+          defaultTitle={name}
+          onClose={() => {
+            setShowPublish(false);
+            fetchTemplates().then(setDbTemplates).catch(() => {});
+          }}
+        />
       )}
     </section>
   );

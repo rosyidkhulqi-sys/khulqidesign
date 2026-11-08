@@ -79,7 +79,7 @@ export async function readArtboard(eps) {
   return [Math.round(x2 - x1), Math.round(y2 - y1)];
 }
 
-function drawWatermark(ctx, w, h) {
+export function drawWatermark(ctx, w, h) {
   const size = Math.max(18, Math.round(Math.max(w, h) / 22));
   ctx.save();
   ctx.translate(w / 2, h / 2);
