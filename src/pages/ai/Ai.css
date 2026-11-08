@@ -126,3 +126,6 @@
   .ai-prompt-row input { flex-basis: calc(100% - 30px); }
   .ai-generate { width: 100%; }
 }
+
+/* model credits */
+.ai-credits { margin-top: 6px; font-size: 12px; opacity: 0.75; }

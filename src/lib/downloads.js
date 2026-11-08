@@ -1,3 +1,5 @@
+import { supabase } from "./supabaseClient";
+
 // Download history kept in this browser; uploaded assets are also recorded
 // in the account (the downloads table) by requestDownload below.
 export function saveDownload(entry) {
@@ -48,7 +50,6 @@ export const DOWNLOAD_REFUSALS = {
 // minutes. Resolves { license } or throws an Error whose .code is one of
 // DOWNLOAD_REFUSALS (or something unexpected).
 export async function requestDownload(assetId, format) {
-  const { supabase } = await import("./supabaseClient");
   const { data, error } = await supabase.functions.invoke("r2-sign", {
     body: { action: "download", asset: assetId, format },
   });

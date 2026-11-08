@@ -9,9 +9,32 @@ import Breadcrumb from "../../components/Breadcrumb";
 import { Sparkle } from "../../components/AiSearchButton";
 import { aiReady } from "../../lib/ai";
 import AnimateIcon from "./AnimateIcon";
+import ImageTool from "./ImageTool";
+import { MODELS, UPSCALE_MAX_SIDE, removeBackground, upscale } from "../../lib/aiLocal";
 
 // tools that already work in the browser, without the AI backend
-const ready = new Set(["animate"]);
+const ready = new Set(["animate", "cutout", "upscale"]);
+
+// in-browser image tools: free to run, no account needed
+const imageTools = {
+  cutout: {
+    title: "Remove background",
+    sub: "Cut out the subject, on your device",
+    run: removeBackground,
+    suffix: "no-background",
+    modelMb: MODELS.cutout.mb,
+    hint: "Works best on a clear subject: a product, a person, an illustration.",
+  },
+  upscale: {
+    title: "Upscale",
+    sub: "2× or 4× bigger, with AI detail",
+    run: upscale,
+    suffix: "upscaled",
+    options: [[2, "2×"], [4, "4×"]],
+    modelMb: MODELS.upscale.mb,
+    hint: `Pictures larger than ${UPSCALE_MAX_SIDE} px are scaled down first; a large picture takes about a minute.`,
+  },
+};
 
 const kinds = [
   ["image", "Image"],
@@ -37,8 +60,8 @@ const tools = [
   ["video", "Image to video", "Bring a vector or still frame to life as a short clip.", ["Vectors", "Footage"]],
   ["image", "Generate an image", "New artwork in the style of our vector collections.", ["Vectors"]],
   ["edit", "Edit an image", "Change colors, swap parts or extend a picture.", ["Vectors"]],
-  ["cutout", "Remove background", "Cut the subject out of a photo or illustration.", ["Create"]],
-  ["upscale", "Upscale", "Enlarge a picture or frame without losing sharpness.", ["Vectors", "Footage"]],
+  ["cutout", "Remove background", "Cut the subject out of a photo or illustration. Free, on your device.", ["Your pictures"]],
+  ["upscale", "Upscale", "Enlarge a picture 2× or 4× without losing sharpness. Free, on your device.", ["Your pictures"]],
 ];
 
 function Glyph({ name }) {
@@ -57,6 +80,21 @@ function Ai({ setPage, animateIcon = null }) {
   const [prompt, setPrompt] = useState("");
   // the tool open in full, or null for the overview
   const [tool, setTool] = useState(animateIcon ? "animate" : null);
+
+  if (imageTools[tool]) {
+    const t = imageTools[tool];
+    return (
+      <section className="vectors-page ai-page">
+        <div className="library-head">
+          <Breadcrumb setPage={setPage} parent={{ label: "AI", onClick: () => setTool(null) }} current={t.title} />
+          <h1>
+            {t.title} <span className="library-count">{t.sub}</span>
+          </h1>
+        </div>
+        <ImageTool key={tool} run={t.run} suffix={t.suffix} options={t.options} modelMb={t.modelMb} hint={t.hint} />
+      </section>
+    );
+  }
 
   if (tool === "animate") {
     return (
@@ -148,6 +186,11 @@ function Ai({ setPage, animateIcon = null }) {
       <p className="ai-foot">
         Every tool starts from the Khulqidesign library, so results match our styles and come
         with a clear license.
+      </p>
+      {/* open-source models: their licenses ask for this notice */}
+      <p className="ai-foot ai-credits">
+        Remove background uses Silueta, based on U²-Net (Apache License 2.0). Upscale uses
+        Real-ESRGAN general x4v3, © 2021 Xintao Wang (BSD 3-Clause License).
       </p>
     </section>
   );
