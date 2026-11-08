@@ -205,7 +205,7 @@ function Home({ setPage }) {
             <p className="home-label">Services · Coming soon</p>
             <h2>Creative<br /><em>solutions.</em></h2>
           </div>
-          <p>Custom work from our studio<br />opens later.</p>
+          <p>Custom design work<br />opens later.</p>
         </div>
 
         {/* not links yet: the studio isn't taking projects */}
@@ -223,7 +223,7 @@ function Home({ setPage }) {
       {/* CREATOR */}
       <section className="home-creator">
         <div className="home-creator-art" aria-hidden="true">
-          <span>KD</span><span>ASSET</span><span>STUDIO</span>
+          <span>KD</span><span>DESIGN</span><span>ASSETS</span>
         </div>
         <div className="home-creator-copy">
           <p className="home-label">Made by creatives, for creatives</p>
