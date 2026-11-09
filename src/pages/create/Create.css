@@ -384,6 +384,78 @@
 .cp-template > div { overflow: hidden; }
 .cp-template img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
+/* Layers: one row per element, top element first */
+.cp-layers { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.cp-layers li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: grab;
+}
+.cp-layers li:hover { background: rgba(255, 255, 255, 0.05); }
+.cp-layers li.is-selected { border-color: rgba(255, 255, 255, 0.35); background: rgba(255, 255, 255, 0.06); }
+.cp-layers li.is-hidden .cp-layer-main { opacity: 0.45; }
+.cp-layers li.drop-above::before,
+.cp-layers li.drop-below::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--red);
+}
+.cp-layers li.drop-above::before { top: -3px; }
+.cp-layers li.drop-below::after { bottom: -3px; }
+.cp-layers button {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #8d939b;
+  cursor: pointer;
+}
+.cp-layers button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); color: white; }
+.cp-layers button.on { color: var(--white); }
+.cp-layers button.cp-layer-main {
+  display: flex;
+  flex: 1;
+  justify-content: flex-start;
+  gap: 10px;
+  min-width: 0;
+  height: 36px;
+  padding: 0 4px;
+  color: #e7e9ec;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+}
+.cp-layers button.cp-layer-main:disabled { cursor: default; }
+.cp-layer-preview {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #f2f1ed;
+  color: #101112;
+}
+.cp-layer-preview img { width: 100%; height: 100%; object-fit: cover; }
+.cp-layer-preview i { display: block; width: 18px; height: 18px; border-radius: 3px; }
+.cp-layer-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cp-layers-empty { margin: 4px; color: #8d939b; font-size: 14px; line-height: 1.5; }
+
 .cp-text { display: flex; flex-direction: column; gap: 8px; }
 .cp-text button {
   padding: 14px;

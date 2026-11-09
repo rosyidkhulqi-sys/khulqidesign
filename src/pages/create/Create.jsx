@@ -24,6 +24,7 @@ import { artboardPresets, fonts, svgDataUrl, textPresets } from "./createLibrary
 import { attachGuides } from "./createGuides";
 import { beginCrop } from "./createCrop";
 import ProjectsPanel from "./CreateProjects";
+import LayersPanel from "./CreateLayers";
 import AiPanel from "./CreateAi";
 import {
   currentProjectId,
@@ -53,7 +54,7 @@ const DRAG_TYPE = "application/x-kd-item";
 const UNTITLED = "Untitled design";
 
 // icons, vectors and footage live inside Elements, as Canva groups them
-const tabs = ["templates", "elements", "text", "uploads", "projects", "ai"];
+const tabs = ["templates", "elements", "text", "uploads", "layers", "projects", "ai"];
 const tabLabel = (t) => (t === "ai" ? "AI" : t[0].toUpperCase() + t.slice(1));
 
 const exportFormats = [
@@ -63,6 +64,8 @@ const exportFormats = [
 ];
 
 const isLocked = (obj) => Boolean(obj?.lockMovementX);
+// saved with a design, so a locked element stays locked after undo or reload
+const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls"];
 
 // web fonts only download once something uses them, and the canvas would
 // otherwise draw text with a fallback font before they arrive
@@ -253,14 +256,19 @@ function Create({ draft, clearDraft, user = null }) {
       ? Math.max(0.05, Math.min((stage.w - 80) / board.w, (stage.h - 80 - PAGE_CHROME) / board.h))
       : zoomMode;
 
-  const refresh = () => setTick((t) => t + 1);
+  // the Layers panel lists the top element first, the canvas the bottom one
+  const [layers, setLayers] = useState([]);
+  const refresh = () => {
+    setTick((t) => t + 1);
+    if (fc.current) setLayers(fc.current.getObjects().filter((o) => !o.isCropFrame).reverse());
+  };
 
   /* ---------- history & draft ---------- */
 
   // the pages with the one on the canvas refreshed
   const currentPages = () => {
     const p = pagesRef.current;
-    return p.list.map((json, i) => (i === p.index ? fc.current.toJSON() : json));
+    return p.list.map((json, i) => (i === p.index ? fc.current.toObject(LOCK_PROPS) : json));
   };
 
   // a whole design: size and every page (which page is open is kept apart,
@@ -382,7 +390,7 @@ function Create({ draft, clearDraft, user = null }) {
   const showPage = async (i, save = true) => {
     const p = pagesRef.current;
     const c = fc.current;
-    if (save) p.list[p.index] = c.toJSON();
+    if (save) p.list[p.index] = c.toObject(LOCK_PROPS);
     p.index = i;
     history.current.busy = true;
     await c.loadFromJSON(p.list[i]);
@@ -404,7 +412,7 @@ function Create({ draft, clearDraft, user = null }) {
   // a blank page, or a copy of the open one, right after it
   const addPage = async (copy = false) => {
     const p = pagesRef.current;
-    p.list[p.index] = fc.current.toJSON();
+    p.list[p.index] = fc.current.toObject(LOCK_PROPS);
     const page = copy
       ? structuredClone(p.list[p.index])
       : { version: p.list[p.index].version, objects: [], background: "#ffffff" };
@@ -804,9 +812,8 @@ function Create({ draft, clearDraft, user = null }) {
     render();
   };
 
-  const toggleLock = () => {
-    const lock = !isLocked(active);
-    active.set({
+  const setLocked = (obj, lock) => {
+    obj.set({
       lockMovementX: lock,
       lockMovementY: lock,
       lockScalingX: lock,
@@ -814,6 +821,29 @@ function Create({ draft, clearDraft, user = null }) {
       lockRotation: lock,
       hasControls: !lock,
     });
+    render();
+  };
+
+  const toggleLock = () => setLocked(active, !isLocked(active));
+
+  const selectLayer = (obj) => {
+    const c = fc.current;
+    c.setActiveObject(obj);
+    c.requestRenderAll();
+    refresh();
+  };
+
+  const moveLayer = (from, to) => {
+    const c = fc.current;
+    c.moveObjectTo(layers[from], layers.length - 1 - to);
+    render();
+  };
+
+  const toggleHidden = (obj) => {
+    const c = fc.current;
+    const hide = obj.visible;
+    if (hide && c.getActiveObject() === obj) c.discardActiveObject();
+    obj.set("visible", !hide);
     render();
   };
 
@@ -872,6 +902,7 @@ function Create({ draft, clearDraft, user = null }) {
 
   const syncEmpty = useEffectEvent(() => {
     setIsEmpty(fc.current.getObjects().length === 0);
+    refresh();
   });
 
   // hide the floating toolbar while an element is being dragged or resized
@@ -951,6 +982,7 @@ function Create({ draft, clearDraft, user = null }) {
     c.on("mouse:dblclick", onDoubleClick);
     c.on("text:editing:entered", syncSelection);
     c.on("text:editing:exited", syncSelection);
+    c.on("text:changed", syncSelection);
     const detachGuides = attachGuides(c, () => boardRef.current);
     Promise.resolve().then(start);
 
@@ -1124,6 +1156,18 @@ function Create({ draft, clearDraft, user = null }) {
             {tab === "elements" && <ElementsPanel dragItem={dragItem} />}
 
             {tab === "ai" && <AiPanel />}
+
+            {tab === "layers" && (
+              <LayersPanel
+                objects={layers}
+                active={active}
+                isLocked={isLocked}
+                onSelect={selectLayer}
+                onMove={moveLayer}
+                onToggleHidden={toggleHidden}
+                onToggleLock={(obj) => setLocked(obj, !isLocked(obj))}
+              />
+            )}
 
             {tab === "projects" && (
               <ProjectsPanel
