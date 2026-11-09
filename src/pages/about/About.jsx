@@ -1,14 +1,56 @@
-// About us: the company behind the site and what it stands for. Only things
-// that are true today; no big numbers until there are real ones to show.
+// About us: the company behind the site, the problem it solves and who it's
+// for. Only things that are true today; the numbers are real ones.
 import "../vectors/Vectors.css";
 import "./About.css";
 import Breadcrumb from "../../components/Breadcrumb";
 
+const facts = [
+  ["2018", "Creating digital assets since"],
+  ["5", "Asset types in one library"],
+  ["100%", "Of our assets made in-house"],
+  ["0", "Pictures uploaded by our free AI tools"],
+];
+
+const usual = [
+  "Buy the asset on a stock site",
+  "Open a separate editor to change it",
+  "Pay another service for AI",
+  "Check a different license every time",
+];
+
+const flow = [
+  ["Find", "An icon, vector, logo, template or clip"],
+  ["Edit", "Colors, text and layout, in your browser"],
+  ["Enhance", "Remove backgrounds, upscale, animate"],
+  ["Download", "With one license you can read"],
+];
+
+// a line icon per product, in the site's 24px / 1.8 stroke style
+const glyphs = {
+  library: <><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="10" r="2" /><path d="M21 16l-5-5-9 9" /></>,
+  create: <><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="M13.5 6.5l4 4" /></>,
+  ai: <><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" /><path d="M19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7z" /></>,
+  logos: <><circle cx="12" cy="9" r="5" /><path d="M8.5 13L7 21l5-3 5 3-1.5-8" /></>,
+};
+
 const offers = [
-  ["Library", "Icons, vectors, logos, templates and footage, with a clear license on every file.", "icons", "Browse the library"],
-  ["Create", "Design posts, posters and banners in your browser, with our assets ready to drag in.", "create", "Open Create"],
-  ["AI tools", "Remove backgrounds, upscale pictures and animate icons, free, on your own device.", "ai", "Try the AI tools"],
-  ["Logos", "Ready-made logos, from free to exclusive. An exclusive logo is sold once, then taken off sale.", "logos", "Browse logos"],
+  ["library", "Assets you can change", "Recolor and resize icons, then export them as PNG, SVG, GIF, MP4 or Lottie. Vectors and footage are ready to use.", "icons", "Browse the library"],
+  ["create", "Templates that open in an editor", "Every template opens in Create, where you change the text, colors and layout and add our icons and elements.", "templates", "See the templates"],
+  ["ai", "AI built into the work", "Remove backgrounds, upscale pictures and animate icons without leaving the site. Free, on your own device.", "ai", "Try the AI tools"],
+  ["logos", "Logos, from free to exclusive", "Start with a free logo or own one outright. An exclusive logo is sold once, then taken off sale.", "logos", "Browse logos"],
+];
+
+const audiences = [
+  ["Small businesses", "A logo, posts and promos, without hiring a designer for every job."],
+  ["Designers and freelancers", "Editable vectors and logos for client work, with a clear license."],
+  ["Content creators", "Templates, footage and animated icons for what you publish every day."],
+  ["Web and app teams", "SVG and Lottie files, ready to drop into a product."],
+];
+
+const inHouse = [
+  ["One standard", "Every file is drawn to the same quality and style."],
+  ["One source of rights", "No third-party uploads, so every license comes straight from us."],
+  ["True exclusives", "An exclusive logo is ours to sell, and it's sold only once."],
 ];
 
 const promises = [
@@ -16,6 +58,15 @@ const promises = [
   ["Your pictures stay yours", "The free AI tools run on your device, so your pictures are never uploaded."],
   ["Licenses in plain words", "What you can and can't do is written so anyone can read it."],
 ];
+
+function Glyph({ name }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+         strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {glyphs[name]}
+    </svg>
+  );
+}
 
 function About({ setPage }) {
   const go = (page) => () => {
@@ -40,24 +91,84 @@ function About({ setPage }) {
           together with the tools to make them your own.
         </p>
         <p>
-          The whole job happens in one place: find an asset, change it in your browser, and
-          download it with a license you can actually read.
-        </p>
-        <p>
           Khulqidesign was founded by Khulqi Rosyid, a graphic designer who has been creating
           digital assets since 2018.
         </p>
       </div>
 
-      <h2 className="ab-heading">What you'll find here</h2>
+      <div className="ab-facts">
+        <h2>The numbers behind it</h2>
+        <dl>
+          {facts.map(([value, label]) => (
+            <div key={label}>
+              <dd>{value}</dd>
+              <dt>{label}</dt>
+            </div>
+          ))}
+        </dl>
+      </div>
+
+      <h2 className="ab-heading">Why Khulqidesign exists</h2>
+      <p className="ab-lead">A simple design job often means jumping between sites. We put the whole job in one ecosystem.</p>
+      <div className="ab-compare">
+        <div className="ab-usual">
+          <p className="ab-label">The usual way</p>
+          <ul>
+            {usual.map((text) => <li key={text}>{text}</li>)}
+          </ul>
+        </div>
+        <div className="ab-one">
+          <p className="ab-label">With Khulqidesign</p>
+          <ol>
+            {flow.map(([title, text]) => (
+              <li key={title}>
+                <strong>{title}</strong>
+                <span>{text}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+
+      <h2 className="ab-heading">One ecosystem, not four separate tools</h2>
       <div className="ab-grid">
-        {offers.map(([title, text, page, label]) => (
+        {offers.map(([glyph, title, text, page, label]) => (
           <article key={title}>
+            <span className="ab-glyph"><Glyph name={glyph} /></span>
             <h3>{title}</h3>
             <p>{text}</p>
             <button onClick={go(page)}>{label} →</button>
           </article>
         ))}
+      </div>
+
+      <h2 className="ab-heading">Who it's for</h2>
+      <div className="ab-audience">
+        {audiences.map(([title, text]) => (
+          <div key={title}>
+            <h3>{title}</h3>
+            <p>{text}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="ab-inhouse">
+        <div>
+          <p className="ab-label">Our assets</p>
+          <h2>Made by us. Not an open marketplace.</h2>
+          <p>
+            Every asset here is created in-house. Contributor uploads aren't open yet, and that
+            is what keeps the library consistent.
+          </p>
+        </div>
+        <ul>
+          {inHouse.map(([title, text]) => (
+            <li key={title}>
+              <strong>{title}</strong>
+              <span>{text}</span>
+            </li>
+          ))}
+        </ul>
       </div>
 
       <h2 className="ab-heading">What we promise</h2>
@@ -68,17 +179,6 @@ function About({ setPage }) {
             <p>{text}</p>
           </div>
         ))}
-      </div>
-
-      <div className="ab-contact">
-        <div>
-          <h2>Questions or licensing?</h2>
-          <p>Write to us and we'll get back to you.</p>
-        </div>
-        <div className="ab-contact-links">
-          <a href="mailto:khulqidesign@mail.com">Email</a>
-          <a href="https://wa.me/6285236752860" target="_blank" rel="noopener noreferrer">WhatsApp</a>
-        </div>
       </div>
     </section>
   );
