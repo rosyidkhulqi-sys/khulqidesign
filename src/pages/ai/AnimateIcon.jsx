@@ -1,10 +1,16 @@
 // Animate an icon: pick an icon from the library and a motion preset, and
-// watch it play. Presets are plain CSS, so this works now, without AI or a
-// server. Exporting the motion as Lottie, GIF or MP4 needs the backend.
+// watch it play. Presets are plain CSS, so this works without AI or a server.
+// Anyone can try it; exporting asks for an account. Animated SVG is built here
+// in the browser (lib/animateExport.js); GIF, MP4 and Lottie aren't built yet.
 import { useEffect, useRef, useState } from "react";
 import "./AnimateIcon.css";
 import { iconSets, membersOf } from "../../data/iconsData";
-import { loadIconSvg } from "../../lib/iconEditor";
+import { fileSlug, loadIconSvg } from "../../lib/iconEditor";
+import { buildAnimatedSvg } from "../../lib/animateExport";
+import { saveBlob } from "../../lib/downloads";
+import { askLogin } from "../../lib/authGate";
+import { keepAnimate, takeAnimate } from "../../lib/aiKeep";
+import { PremiumTag } from "../../components/IconControls";
 
 // one entry per real icon file, in set order
 const icons = iconSets.flatMap((set) => membersOf(set));
@@ -45,14 +51,17 @@ function startList(initial) {
   return [initial, ...icons];
 }
 
-function AnimateIcon({ initialIcon = null }) {
-  const [list] = useState(() => startList(initialIcon));
+function AnimateIcon({ initialIcon = null, user = null }) {
+  // back from logging in to export: what the visitor had chosen
+  const [kept] = useState(takeAnimate);
+  const opening = initialIcon ?? kept?.icon ?? null;
+  const [list] = useState(() => startList(opening));
   const [icon, setIcon] = useState(
-    () => list.find((i) => i.image === initialIcon?.image) ?? list[0]
+    () => list.find((i) => i.image === opening?.image) ?? list[0]
   );
-  const [preset, setPreset] = useState("bounce");
-  const [speed, setSpeed] = useState(1);
-  const [loop, setLoop] = useState(true);
+  const [preset, setPreset] = useState(kept?.preset ?? "bounce");
+  const [speed, setSpeed] = useState(kept?.speed ?? 1);
+  const [loop, setLoop] = useState(kept?.loop ?? true);
   // changing the key restarts the animation (Replay)
   const [run, setRun] = useState(0);
   const [playing, setPlaying] = useState(true);
@@ -121,6 +130,18 @@ function AnimateIcon({ initialIcon = null }) {
       part.style.animationDelay = preset === "build" ? `${i * step}s` : "";
     });
   }, [svg, preset, duration, run]);
+
+  const exportSvg = () => {
+    if (!user) {
+      keepAnimate({ icon, preset, speed, loop });
+      askLogin("download");
+      return;
+    }
+    const iconEl = stage.current?.querySelector("svg.animate-icon");
+    if (!iconEl) return;
+    const file = buildAnimatedSvg(iconEl, { preset, duration, loop });
+    saveBlob(new Blob([file], { type: "image/svg+xml" }), `${fileSlug(icon.name)}-${preset}.svg`);
+  };
 
   const pick = (setter) => (value) => {
     setter(value);
@@ -235,7 +256,10 @@ function AnimateIcon({ initialIcon = null }) {
 
         <p className="animate-label">Export</p>
         <div className="animate-export">
-          {["Lottie JSON", "GIF", "MP4"].map((f) => (
+          <button className="is-ready" onClick={exportSvg} disabled={!svg}>
+            Animated SVG<PremiumTag />
+          </button>
+          {["GIF", "MP4", "Lottie JSON"].map((f) => (
             <button key={f} disabled>
               {f}
             </button>
@@ -243,7 +267,7 @@ function AnimateIcon({ initialIcon = null }) {
         </div>
         <p className="animate-note">
           <span className="ai-soon">Coming soon</span>
-          Exports are rendered on our server once it's live.
+          GIF, MP4 and Lottie JSON.
         </p>
       </div>
     </div>

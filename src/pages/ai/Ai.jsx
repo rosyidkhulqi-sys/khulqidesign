@@ -10,7 +10,7 @@ import { Sparkle } from "../../components/AiSearchButton";
 import { aiReady } from "../../lib/ai";
 import AnimateIcon from "./AnimateIcon";
 import ImageTool from "./ImageTool";
-import { keptTool } from "../../lib/aiKeep";
+import { keptAnimate, keptTool } from "../../lib/aiKeep";
 import { MODELS, UPSCALE_MAX_SIDE, removeBackground, upscale } from "../../lib/aiLocal";
 
 // tools that already work in the browser, without the AI backend
@@ -81,7 +81,7 @@ function Ai({ setPage, user = null, animateIcon = null }) {
   const [prompt, setPrompt] = useState("");
   // the tool open in full, or null for the overview
   // a result kept while the visitor logged in reopens its tool
-  const [tool, setTool] = useState(animateIcon ? "animate" : keptTool());
+  const [tool, setTool] = useState(animateIcon ? "animate" : keptTool() ?? (keptAnimate() ? "animate" : null));
 
   if (imageTools[tool]) {
     const t = imageTools[tool];
@@ -108,7 +108,7 @@ function Ai({ setPage, user = null, animateIcon = null }) {
             Animate an icon <span className="library-count">Motion presets, live preview</span>
           </h1>
         </div>
-        <AnimateIcon initialIcon={animateIcon} />
+        <AnimateIcon initialIcon={animateIcon} user={user} />
       </section>
     );
   }

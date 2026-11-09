@@ -158,7 +158,7 @@
 }
 .animate-loop input { accent-color: #e7e9ec; }
 
-.animate-export { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.animate-export { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 .animate-export button {
   height: 38px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -168,6 +168,16 @@
   font: inherit;
   font-size: 13px;
 }
+
+.animate-export button.is-ready {
+  border-color: rgba(255, 255, 255, 0.28);
+  color: var(--white);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.animate-export button.is-ready:hover:not(:disabled) { border-color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.06); }
+.animate-export button.is-ready:disabled { opacity: 0.45; cursor: default; }
 
 .animate-note {
   display: flex;

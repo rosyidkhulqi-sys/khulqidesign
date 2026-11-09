@@ -51,3 +51,33 @@ export function forgetResult() {
     /* nothing kept */
   }
 }
+
+// The Animate studio's choices, kept the same way while a visitor logs in to
+// export; read once, when the studio opens again.
+const ANIMATE = "kd-animate-choices";
+
+export function keepAnimate(choices) {
+  try {
+    sessionStorage.setItem(ANIMATE, JSON.stringify(choices));
+  } catch {
+    /* no storage: the studio just starts fresh */
+  }
+}
+
+export function keptAnimate() {
+  try {
+    return sessionStorage.getItem(ANIMATE) !== null;
+  } catch {
+    return false;
+  }
+}
+
+export function takeAnimate() {
+  try {
+    const choices = JSON.parse(sessionStorage.getItem(ANIMATE));
+    sessionStorage.removeItem(ANIMATE);
+    return choices;
+  } catch {
+    return null;
+  }
+}
