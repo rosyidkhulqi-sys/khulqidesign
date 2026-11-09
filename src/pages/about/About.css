@@ -1,0 +1,68 @@
+/* ABOUT — builds on the library page head in Vectors.css */
+
+.about-page { max-width: 1080px; margin: 0 auto; }
+
+.ab-story { max-width: 720px; margin: 8px 0 48px; }
+.ab-story h2 { margin: 0 0 18px; font-size: clamp(28px, 3.4vw, 40px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.12; }
+.ab-story p { margin: 0 0 14px; color: #c0c2c5; font-size: 17px; line-height: 1.65; }
+
+.ab-heading { margin: 0 0 16px; font-size: 20px; font-weight: 600; }
+
+.ab-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 44px; }
+.ab-grid article {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.ab-grid h3,
+.ab-promises h3 { margin: 0 0 8px; font-size: 18px; font-weight: 600; }
+.ab-grid p,
+.ab-promises p { margin: 0; color: #aeb0b2; font-size: 16px; line-height: 1.55; }
+.ab-grid button {
+  align-self: flex-start;
+  margin-top: 16px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--white);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ab-grid button:hover { color: #c9ccd0; }
+
+.ab-promises { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-bottom: 44px; }
+
+.ab-contact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.ab-contact h2 { margin: 0 0 4px; font-size: 18px; font-weight: 600; }
+.ab-contact p { margin: 0; color: #aeb0b2; font-size: 15px; }
+.ab-contact-links { display: flex; gap: 10px; }
+.ab-contact-links a {
+  padding: 10px 18px;
+  border: 1px solid #3a3c3f;
+  border-radius: 999px;
+  color: var(--white);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.ab-contact-links a:hover { border-color: #6a6d72; background: rgba(255, 255, 255, 0.08); }
+
+@media (max-width: 800px) {
+  .ab-grid,
+  .ab-promises { grid-template-columns: 1fr; }
+  .ab-promises { gap: 18px; }
+}

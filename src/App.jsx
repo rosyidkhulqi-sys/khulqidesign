@@ -18,6 +18,7 @@ const Ai = lazy(() => import("./pages/ai/Ai"));
 const Logos = lazy(() => import("./pages/logos/Logos"));
 const Pricing = lazy(() => import("./pages/pricing/Pricing"));
 const License = lazy(() => import("./pages/license/License"));
+const About = lazy(() => import("./pages/about/About"));
 const Legal = lazy(() => import("./pages/legal/Legal"));
 const Account = lazy(() => import("./pages/account/Account"));
 // pages visited now and then load on demand too
@@ -185,6 +186,11 @@ function App() {
     privacy: (
       <Suspense fallback={null}>
         <Legal key="privacy" doc="privacy" setPage={go} />
+      </Suspense>
+    ),
+    about: (
+      <Suspense fallback={null}>
+        <About setPage={go} />
       </Suspense>
     ),
     license: (
