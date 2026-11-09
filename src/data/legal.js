@@ -84,7 +84,7 @@ export const privacy = [
     "To improve the site. We don't sell your personal data, and we don't use your designs to train AI.",
   ]],
   ["share", "Who we share it with", [
-    "Only the services that help us run Khulqidesign: sign-in and database (Supabase), hosting and file storage, our payment provider, and email delivery. They may only use your data to provide that service.",
+    "Only the services that help us run Khulqidesign: sign-in and database (Supabase), hosting and file storage, font delivery (Google Fonts, which sees your IP address when it sends a font), our payment provider, and email delivery. They may only use your data to provide that service.",
     "We also share data when the law requires it.",
   ]],
   ["cookies", "Cookies and local storage", [

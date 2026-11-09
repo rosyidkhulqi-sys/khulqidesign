@@ -23,7 +23,9 @@ import { allTemplates } from "../../data/templatesData";
 import { icons as libraryIcons } from "../../data/iconsData";
 import { elements as libraryElements } from "../../data/elementsData";
 import { basicIcons } from "./basicIcons";
-import { artboardPresets, fonts, svgDataUrl, textPresets } from "./createLibrary";
+import { artboardPresets, svgDataUrl, textPresets } from "./createLibrary";
+import { loadFont, loadFontsOf, loadSiteFonts } from "./createFonts";
+import FontPicker from "./FontPicker";
 import { attachGuides } from "./createGuides";
 import { beginCrop } from "./createCrop";
 import ProjectsPanel from "./CreateProjects";
@@ -72,13 +74,6 @@ const exportFormats = [
 const isLocked = (obj) => Boolean(obj?.lockMovementX);
 // saved with a design, so a locked element stays locked after undo or reload
 const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls"];
-
-// web fonts only download once something uses them, and the canvas would
-// otherwise draw text with a fallback font before they arrive
-const loadFonts = () =>
-  Promise.all(
-    fonts.flatMap((f) => [400, 700].map((w) => document.fonts.load(`${w} 40px "${f}"`)))
-  ).catch(() => {});
 
 const toHex = (c) => `#${new Color(c).toHex().toLowerCase()}`;
 
@@ -402,6 +397,7 @@ function Create({ draft, clearDraft, user = null }) {
   const restore = async (snap, index = pagesRef.current.index) => {
     const c = fc.current;
     history.current.busy = true;
+    await loadFontsOf(snap);
     setBoardSize({ w: snap.w, h: snap.h });
     const list = snap.pages ?? [snap.json];
     const i = Math.max(0, Math.min(index, list.length - 1));
@@ -584,7 +580,7 @@ function Create({ draft, clearDraft, user = null }) {
       switchProject(null);
     }
     // text metrics are wrong if the web font is not loaded yet
-    await loadFonts();
+    await loadSiteFonts();
     // a published template is a saved design: every page as it was made
     if (t.designUrl) {
       let snap;
@@ -1001,7 +997,7 @@ function Create({ draft, clearDraft, user = null }) {
       loadedRef.current = true;
       return;
     }
-    await loadFonts();
+    await loadSiteFonts();
     const saved = projectRef.current ? loadProject(projectRef.current) : null;
     if (saved) {
       let page = 0;
@@ -1495,15 +1491,13 @@ function Create({ draft, clearDraft, user = null }) {
                       value={active.text}
                       onChange={(e) => setProp({ text: e.target.value })}
                     />
-                    <select
-                      className="pp-input"
+                    <FontPicker
                       value={active.fontFamily}
-                      onChange={(e) => setProp({ fontFamily: e.target.value })}
-                    >
-                      {fonts.map((f) => (
-                        <option key={f} value={f}>{f}</option>
-                      ))}
-                    </select>
+                      onPick={async (fontFamily) => {
+                        await loadFont(fontFamily);
+                        setProp({ fontFamily });
+                      }}
+                    />
                     <label className="pp-row">
                       <span>Font size</span>
                       <input

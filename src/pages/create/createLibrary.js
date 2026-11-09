@@ -11,19 +11,6 @@ export const artboardPresets = [
   { label: "Business Card", ratio: "7:4", w: 1050, h: 600 },
 ];
 
-export const fonts = [
-  "Space Grotesk",
-  "DM Sans",
-  "Instrument Serif",
-  "Arial",
-  "Helvetica",
-  "Georgia",
-  "Times New Roman",
-  "Courier New",
-  "Verdana",
-  "Impact",
-];
-
 export const shapes = [
   { id: "rect", label: "Square" },
   { id: "rounded", label: "Rounded" },

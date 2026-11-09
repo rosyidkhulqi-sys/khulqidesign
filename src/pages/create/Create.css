@@ -1276,3 +1276,68 @@ input[type="color"] {
   text-decoration: none;
 }
 .cp-links a:hover { border-color: rgba(255, 255, 255, 0.5); }
+
+/* font list */
+.fp { margin-bottom: 10px; }
+.fp-current {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 7px;
+  background: #141414;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+}
+.fp-current span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.fp-current svg { flex: none; }
+.fp-menu {
+  margin-top: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 7px;
+  background: #141414;
+}
+.fp-search {
+  box-sizing: border-box;
+  width: 100%;
+  height: 34px;
+  padding: 0 8px;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 7px 7px 0 0;
+  background: none;
+  color: white;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+.fp-list { max-height: 280px; overflow-y: auto; padding: 4px; }
+.fp-group {
+  margin: 8px 6px 4px;
+  color: #777e87;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.fp-font {
+  display: block;
+  width: 100%;
+  padding: 7px 6px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: white;
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+}
+.fp-font:hover { background: rgba(255, 255, 255, 0.08); }
+.fp-font.is-on { background: rgba(255, 255, 255, 0.14); }
+.fp-none { margin: 8px 6px; color: #777e87; font-size: 13px; }
