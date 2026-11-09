@@ -22,6 +22,7 @@ import { elements as libraryElements } from "../../data/elementsData";
 import { basicIcons } from "./basicIcons";
 import { artboardPresets, fonts, svgDataUrl, textPresets } from "./createLibrary";
 import { attachGuides } from "./createGuides";
+import { beginCrop } from "./createCrop";
 import ProjectsPanel from "./CreateProjects";
 import AiPanel from "./CreateAi";
 import {
@@ -144,6 +145,9 @@ function Create({ draft, clearDraft, user = null }) {
   // canvas, so its entry is refreshed from the canvas when it's needed
   const pagesRef = useRef({ list: [null], index: 0 });
   const commitTimer = useRef(null);
+  // the crop in progress: { apply(), cancel() }, or null
+  const cropRef = useRef(null);
+  const [cropping, setCropping] = useState(false);
   const fileInput = useRef(null);
 
   // phones get a one-time hint that the editor is built for bigger screens
@@ -338,7 +342,8 @@ function Create({ draft, clearDraft, user = null }) {
     setSaveState("saving");
     commitTimer.current = setTimeout(() => {
       const h = history.current;
-      if (h.busy || !fc.current) return setSaveState("saved");
+      // mid-crop the picture is expanded; the crop's end saves the result
+      if (h.busy || !fc.current || cropRef.current) return setSaveState("saved");
       const snap = snapshot();
       if (h.undo[h.undo.length - 1] === snap) return setSaveState("saved");
       h.undo.push(snap);
@@ -718,6 +723,26 @@ function Create({ draft, clearDraft, user = null }) {
     }
   };
 
+  const startCrop = () => {
+    const c = fc.current;
+    const image = c.getActiveObject();
+    if (cropRef.current || !(image instanceof FabricImage) || isLocked(image)) return;
+    cropRef.current = beginCrop(c, image);
+    setCropping(true);
+    refresh();
+  };
+
+  const finishCrop = (keep) => {
+    const session = cropRef.current;
+    if (!session) return;
+    if (keep) session.apply();
+    else session.cancel();
+    cropRef.current = null;
+    setCropping(false);
+    refresh();
+    if (keep) commit();
+  };
+
   const arrange = (how) => {
     const c = fc.current;
     if (how === "front") c.bringObjectToFront(active);
@@ -835,7 +860,12 @@ function Create({ draft, clearDraft, user = null }) {
     refresh();
   });
 
+  const onDoubleClick = useEffectEvent(({ target }) => {
+    if (target instanceof FabricImage) startCrop();
+  });
+
   const onModified = useEffectEvent(() => {
+    if (cropRef.current) return;
     syncSelection();
     commit();
   });
@@ -879,6 +909,12 @@ function Create({ draft, clearDraft, user = null }) {
     const obj = fc.current?.getActiveObject();
     if (obj?.isEditing) return;
 
+    if (cropRef.current) {
+      if (e.key === "Enter") finishCrop(true);
+      if (e.key === "Escape") finishCrop(false);
+      return;
+    }
+
     const mod = e.metaKey || e.ctrlKey;
     if (mod && e.key.toLowerCase() === "z") {
       e.preventDefault();
@@ -912,6 +948,7 @@ function Create({ draft, clearDraft, user = null }) {
     c.on("object:scaling", onTransform);
     c.on("object:rotating", onTransform);
     c.on("mouse:up", onMouseUp);
+    c.on("mouse:dblclick", onDoubleClick);
     c.on("text:editing:entered", syncSelection);
     c.on("text:editing:exited", syncSelection);
     const detachGuides = attachGuides(c, () => boardRef.current);
@@ -979,7 +1016,7 @@ function Create({ draft, clearDraft, user = null }) {
 
       <div className="create-editor" ref={editorRef}>
         {/* TOP BAR */}
-        <div className="create-topbar">
+        <div className="create-topbar" inert={cropping}>
           <div className="ct-menu">
             <button className="ct-btn" onClick={() => setMenu(menu === "file" ? null : "file")}>
               <Icon name="menu" /> File
@@ -1056,7 +1093,7 @@ function Create({ draft, clearDraft, user = null }) {
 
         <div className={`create-body ${panelOpen ? "" : "panel-closed"}`}>
           {/* TAB RAIL — the open tab's button hides and shows the panel, as in Canva */}
-          <nav className="create-rail">
+          <nav className="create-rail" inert={cropping}>
             {tabs.map((t) => (
               <button
                 key={t}
@@ -1071,7 +1108,7 @@ function Create({ draft, clearDraft, user = null }) {
 
           {/* LIBRARY PANEL */}
           {/* stays in its grid column when hidden (width 0), so the canvas keeps its place */}
-          <div className="create-panel" inert={!panelOpen} aria-hidden={!panelOpen}>
+          <div className="create-panel" inert={!panelOpen || cropping} aria-hidden={!panelOpen}>
             {tab === "templates" && (
               <div className="cp-grid two">
                 {[...dbTemplates, ...allTemplates].map((t) => (
@@ -1163,7 +1200,7 @@ function Create({ draft, clearDraft, user = null }) {
           >
             <div className="create-pages">
             {/* the open page: number, duplicate and delete, as in Canva */}
-            <div className="ct-pagebar" style={{ width: Math.round(board.w * zoom) }}>
+            <div className="ct-pagebar" inert={cropping} style={{ width: Math.round(board.w * zoom) }}>
               <span>
                 Page {pageInfo.index + 1}
                 {pageInfo.count > 1 && ` of ${pageInfo.count}`}
@@ -1186,8 +1223,18 @@ function Create({ draft, clearDraft, user = null }) {
             <div className="create-artboard">
               <canvas ref={canvasEl} />
 
-              {floatPos && (
+              {floatPos && cropping && (
+                <div className="ct-float ct-float-crop" style={floatPos}>
+                  <button onClick={() => finishCrop(false)}>Cancel</button>
+                  <button className="on" onClick={() => finishCrop(true)}>Done</button>
+                </div>
+              )}
+
+              {floatPos && !cropping && (
                 <div className="ct-float" style={floatPos}>
+                  {active instanceof FabricImage && !locked && (
+                    <button onClick={startCrop} title="Crop (double-click)"><Icon name="crop" /></button>
+                  )}
                   <button onClick={duplicate} title="Duplicate (Ctrl+D)"><Icon name="copy" /></button>
                   <button onClick={() => arrange("forward")} title="Bring forward"><Icon name="forward" /></button>
                   <button onClick={() => arrange("backward")} title="Send backward"><Icon name="backward" /></button>
@@ -1220,6 +1267,7 @@ function Create({ draft, clearDraft, user = null }) {
               className="ct-addpage"
               style={{ width: Math.round(board.w * zoom) }}
               onClick={() => addPage(false)}
+              inert={cropping}
             >
               <Icon name="plus" size={16} /> Add page
             </button>
@@ -1227,7 +1275,7 @@ function Create({ draft, clearDraft, user = null }) {
           </div>
 
           {/* pages, zoom and full screen, under the canvas as in Canva */}
-          <div className="create-bottombar">
+          <div className="create-bottombar" inert={cropping}>
             <div className="cb-pages">
               <button
                 className="cb-icon"
@@ -1281,7 +1329,7 @@ function Create({ draft, clearDraft, user = null }) {
           </div>
 
           {/* PROPERTIES */}
-          <aside className="create-props">
+          <aside className="create-props" inert={cropping}>
             {!active ? (
               <>
                 <p className="cp-label">Artboard</p>

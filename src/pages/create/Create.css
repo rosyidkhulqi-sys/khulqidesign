@@ -748,6 +748,17 @@
 .ct-float button.on { color: var(--red); }
 .ct-float button.danger:hover { background: var(--red); color: white; }
 .ct-float span { width: 1px; height: 20px; margin: 0 3px; background: var(--line); }
+/* while cropping: the two ways out, and the rest of the editor at rest */
+.ct-float-crop button { width: auto; padding: 0 14px; font: inherit; font-size: 14px; font-weight: 600; }
+.ct-float-crop button.on { background: var(--red); color: white; }
+.ct-float-crop button.on:hover { background: var(--red-dark); }
+.create-topbar[inert],
+.create-rail[inert],
+.create-panel[inert],
+.create-props[inert],
+.create-bottombar[inert],
+.ct-pagebar[inert],
+.create-center button[inert] { opacity: 0.4; }
 
 /* guidance shown on an empty canvas */
 .ct-empty {

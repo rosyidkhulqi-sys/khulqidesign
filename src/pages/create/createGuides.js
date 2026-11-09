@@ -34,7 +34,8 @@ export function attachGuides(canvas, getBoard) {
   };
 
   const onMoving = ({ target, e }) => {
-    if (e?.metaKey || e?.ctrlKey) return clear();
+    // the crop frame has its own limits
+    if (e?.metaKey || e?.ctrlKey || target.isCropFrame) return clear();
     target.setCoords();
     const box = target.getBoundingRect();
     const board = getBoard();
