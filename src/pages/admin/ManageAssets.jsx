@@ -1,15 +1,18 @@
-// Uploaded vectors or icons on /admin: hide or show one on the site, or delete it.
+// Uploaded assets on /admin: edit one's details, hide or show it, or delete it.
 // Admins see every row (RLS); visitors only ever see published ones.
 // Deleting removes the row first, then its files from both R2 buckets.
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { deleteFromR2, publicUrl } from "../../lib/r2";
+import EditAsset from "./EditAsset";
 
 const LABEL = { vector: "vectors", icon: "icons", logo: "logos", footage: "clips", template: "templates" };
 
 function ManageAssets({ type = "vector", refreshKey }) {
   const [rows, setRows] = useState(null);
   const [busy, setBusy] = useState(null);
+  // the id of the asset being edited
+  const [editing, setEditing] = useState(null);
   const [error, setError] = useState(null);
 
   // reloads on mount and after each publish (refreshKey changes)
@@ -17,7 +20,7 @@ function ManageAssets({ type = "vector", refreshKey }) {
     let alive = true;
     supabase
       .from("assets")
-      .select("id, code, title, license, status, thumb_key, preview_key, preview_video_key, files, created_at")
+      .select("id, code, title, description, keywords, category, industry, style, license, price_cents, sold_at, status, thumb_key, preview_key, preview_video_key, files, created_at")
       .eq("type", type)
       .order("created_at", { ascending: false })
       .limit(200)
@@ -76,12 +79,15 @@ function ManageAssets({ type = "vector", refreshKey }) {
             <div className="ad-fields">
               <strong>{row.title}</strong>
               <span className="ad-file">
-                {row.code} · {row.license === "free" ? "Free" : "Premium"} ·{" "}
+                {row.code} · {row.license.charAt(0).toUpperCase() + row.license.slice(1)} ·{" "}
                 {new Date(row.created_at).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
               </span>
             </div>
             <div className="ad-actions">
               <span className={`ad-pill is-${row.status}`}>{row.status === "published" ? "On the site" : "Hidden"}</span>
+              <button onClick={() => setEditing(editing === row.id ? null : row.id)} disabled={busy === row.id}>
+                Edit
+              </button>
               <button onClick={() => toggle(row)} disabled={busy === row.id}>
                 {row.status === "published" ? "Hide" : "Show"}
               </button>
@@ -89,6 +95,17 @@ function ManageAssets({ type = "vector", refreshKey }) {
                 Delete
               </button>
             </div>
+            {editing === row.id && (
+              <EditAsset
+                row={row}
+                type={type}
+                onCancel={() => setEditing(null)}
+                onSaved={(changes) => {
+                  setRows((list) => list.map((r) => (r.id === row.id ? { ...r, ...changes } : r)));
+                  setEditing(null);
+                }}
+              />
+            )}
           </div>
         ))}
       </div>

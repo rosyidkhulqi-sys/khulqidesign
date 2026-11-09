@@ -10,10 +10,7 @@ import { StaticCanvas } from "fabric";
 import { supabase } from "../../lib/supabaseClient";
 import { publicUrl, uploadToR2 } from "../../lib/r2";
 
-export const TEMPLATE_CATEGORIES = [
-  "social media", "story", "thumbnail", "presentation", "flyer", "poster",
-  "banner", "business card", "invitation", "resume", "other",
-];
+export { TEMPLATE_CATEGORIES } from "../../data/templateCategories";
 
 const newCode = () => `KD-TP-${String(Math.floor(1_000_000 + Math.random() * 9_000_000))}`;
 
