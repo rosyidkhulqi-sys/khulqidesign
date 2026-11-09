@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { categories } from "../../data/categories";
 import { PLANS } from "../../data/plans";
 import "./Home.css";
@@ -88,6 +88,26 @@ function searchTarget(query) {
   return "icons";
 }
 
+// the hero's changing word, one library after another
+const heroWords = ["icons", "vectors", "logos", "templates", "footage"];
+
+function RotatingWord({ words, every = 2200 }) {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    // people who asked for less motion get the word list without the changing
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = setInterval(() => setI((n) => (n + 1) % words.length), every);
+    return () => clearInterval(timer);
+  }, [words, every]);
+  return (
+    <>
+      {/* screen readers hear the whole list once, not a word every two seconds */}
+      <span className="home-sr-only">{words.join(", ")}</span>
+      <span className="home-rotate" key={i} aria-hidden="true">{words[i]}</span>
+    </>
+  );
+}
+
 function Arrow() {
   return (
     <svg className="home-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -124,8 +144,8 @@ function Home({ setPage, user = null }) {
           <h1>Design<br />made <em>eazy.</em></h1>
           {/* one plain sentence: what's here and what you can do with it */}
           <p className="home-hero-copy">
-            Download icons, vectors, logos, templates and stock footage, or edit them
-            right in your browser first.
+            Download ready-made <RotatingWord words={heroWords} />, or edit them right in
+            your browser first.
           </p>
 
           <form className="home-search" onSubmit={submitSearch}>

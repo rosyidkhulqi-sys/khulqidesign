@@ -103,6 +103,21 @@
   line-height: 1.6;
 }
 
+/* the word that changes in the hero line: each new word slides up into place */
+.home-rotate {
+  display: inline-block;
+  color: var(--white);
+  font-weight: 600;
+  animation: home-rotate-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes home-rotate-in {
+  from { opacity: 0; transform: translateY(0.6em); filter: blur(4px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-rotate { animation: none; }
+}
+
 .home-search {
   display: grid;
   grid-template-columns: auto 1fr auto;
