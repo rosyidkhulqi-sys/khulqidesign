@@ -3,7 +3,6 @@ import {
   ActiveSelection,
   Canvas,
   Circle,
-  Color,
   FabricImage,
   Group,
   Line,
@@ -26,6 +25,8 @@ import { basicIcons } from "./basicIcons";
 import { artboardPresets, svgDataUrl, textPresets } from "./createLibrary";
 import { loadFont, loadFontsOf, loadSiteFonts } from "./createFonts";
 import FontPicker from "./FontPicker";
+import CreateColors from "./CreateColors";
+import { toHex } from "./colorTools";
 import { attachGuides } from "./createGuides";
 import { beginCrop } from "./createCrop";
 import ProjectsPanel from "./CreateProjects";
@@ -74,24 +75,6 @@ const exportFormats = [
 const isLocked = (obj) => Boolean(obj?.lockMovementX);
 // saved with a design, so a locked element stays locked after undo or reload
 const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls"];
-
-const toHex = (c) => `#${new Color(c).toHex().toLowerCase()}`;
-
-// every drawable leaf of an object (groups and selections are flattened)
-const leaves = (obj) =>
-  obj instanceof Group ? obj.getObjects().flatMap(leaves) : [obj];
-
-function colorsOf(obj) {
-  const found = new Set();
-  leaves(obj).forEach((l) => {
-    [l.fill, l.stroke].forEach((c) => {
-      if (typeof c === "string" && c && c !== "none" && c !== "transparent") {
-        found.add(toHex(c));
-      }
-    });
-  });
-  return [...found].slice(0, 10);
-}
 
 // crop an image to fill w×h, like CSS object-fit: cover
 async function imageCover(src, w, h) {
@@ -742,15 +725,6 @@ function Create({ draft, clearDraft, user = null }) {
   const setProp = (props) => {
     active.set(props);
     active.setCoords();
-    render();
-  };
-
-  const changeColor = (from, to) => {
-    leaves(active).forEach((l) => {
-      if (typeof l.fill === "string" && l.fill && toHex(l.fill) === from) l.set("fill", to);
-      if (typeof l.stroke === "string" && l.stroke && toHex(l.stroke) === from) l.set("stroke", to);
-    });
-    active.set("dirty", true);
     render();
   };
 
@@ -1540,16 +1514,13 @@ function Create({ draft, clearDraft, user = null }) {
                   </>
                 )}
 
-                {colorsOf(active).length > 0 && (
-                  <>
-                    <p className="cp-label">Colors</p>
-                    <div className="pp-colors">
-                      {colorsOf(active).map((c) => (
-                        <input key={c} type="color" value={c} onChange={(e) => changeColor(c, e.target.value)} />
-                      ))}
-                    </div>
-                  </>
-                )}
+                <CreateColors
+                  object={active}
+                  onChange={() => {
+                    active.set("dirty", true);
+                    render();
+                  }}
+                />
 
                 {hasStroke && (
                   <label className="pp-row">
