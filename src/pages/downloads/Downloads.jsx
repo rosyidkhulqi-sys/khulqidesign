@@ -33,6 +33,7 @@ function loadLocal() {
 
 const fromServer = (row) => ({
   key: `s-${row.id}`,
+  rowId: row.id,
   assetId: row.asset_id,
   // a deleted or hidden asset can't be read any more
   gone: !row.assets,
@@ -63,6 +64,8 @@ function Downloads({ setPage, user }) {
     supabase
       .from("downloads")
       .select("id, asset_id, format, license, created_at, assets(code, type, title, thumb_key)")
+      // removed from the list by the member; the license record stays
+      .is("hidden_at", null)
       .order("created_at", { ascending: false })
       .limit(200)
       .then(({ data, error }) => {
@@ -95,15 +98,44 @@ function Downloads({ setPage, user }) {
     a.click();
   };
 
-  // only this browser's entries; the account history is the license record
-  const clearLocal = () => {
-    if (!window.confirm("Clear the download history kept on this device? Your account's history stays.")) return;
+  // writes this browser's list back after something was removed from it
+  const saveLocal = (next) => {
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? [];
+      const keys = new Set(next.map((d) => `${d.id}-${d.date}`));
+      // entries of uploaded assets (file: null) are shown from the account
+      const kept = stored.filter((d) => !d.file || keys.has(`${d.id}-${d.date}`));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(kept));
     } catch {
       /* storage unavailable */
     }
-    setLocal([]);
+    setLocal(next);
+  };
+
+  // takes a row off the list; the license record stays on the server
+  const removeOne = async (d) => {
+    setRowError(null);
+    if (!d.rowId) {
+      saveLocal(local.filter((x) => x.key !== d.key));
+      return;
+    }
+    const { error } = await supabase.rpc("hide_downloads", { p_ids: [d.rowId] });
+    if (error) setRowError({ key: d.key, text: "Couldn't remove this. Try again." });
+    else setServer((list) => list.filter((x) => x.key !== d.key));
+  };
+
+  const clearAll = async () => {
+    if (!window.confirm("Clear your download history? Files you already saved stay on your computer, and their licenses stay valid.")) return;
+    setLoadError(null);
+    if (user) {
+      const { error } = await supabase.rpc("hide_downloads");
+      if (error) {
+        setLoadError("Your history couldn't be cleared. Try again.");
+        return;
+      }
+      setServer([]);
+    }
+    saveLocal([]);
   };
 
   const summary = loading
@@ -117,8 +149,8 @@ function Downloads({ setPage, user }) {
           <h1>Your downloads</h1>
           <p>{summary}</p>
         </div>
-        {local.length > 0 && (
-          <button className="downloads-clear" onClick={clearLocal}>Clear this device</button>
+        {history.length > 0 && (
+          <button className="downloads-clear" onClick={clearAll}>Clear history</button>
         )}
       </div>
 
@@ -163,6 +195,12 @@ function Downloads({ setPage, user }) {
               <time dateTime={d.date}>{formatDate(d.date)}</time>
               <button className="downloads-again" onClick={() => downloadAgain(d)} disabled={d.gone || busy === d.key}>
                 {busy === d.key ? "Preparing…" : "Download again"}
+              </button>
+              <button className="downloads-remove" onClick={() => removeOne(d)}
+                      aria-label={`Remove ${d.title} from your history`} title="Remove from history">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5M14 11v5" />
+                </svg>
               </button>
             </li>
           ))}

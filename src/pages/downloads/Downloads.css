@@ -30,6 +30,22 @@
 }
 .downloads-clear:hover { border-color: #4a4d51; color: white; }
 
+.downloads-remove {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.downloads-remove:hover { border-color: #34373a; color: white; }
+.downloads-remove svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
 .downloads-note { margin: -8px 0 20px; color: var(--muted); font-size: 14px; }
 .downloads-note.is-error { color: #ff8b92; }
 .downloads-note button {
@@ -69,7 +85,7 @@
 .downloads-list { list-style: none; }
 .downloads-list li {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr) auto auto auto;
+  grid-template-columns: 64px minmax(0, 1fr) auto auto auto auto;
   align-items: center;
   gap: 16px;
   padding: 12px 0;
@@ -152,12 +168,13 @@
   .downloads-head { flex-direction: column; align-items: flex-start; }
   .downloads-list li {
     grid-template-columns: 56px minmax(0, 1fr) auto;
-    grid-template-areas: "img info again" "img meta meta";
+    grid-template-areas: "img info again" "img meta remove";
     row-gap: 6px;
   }
   .downloads-list img { grid-area: img; width: 56px; height: 42px; align-self: start; }
   .downloads-info { grid-area: info; }
   .downloads-again { grid-area: again; }
+  .downloads-remove { grid-area: remove; justify-self: end; }
   .downloads-license { grid-area: meta; justify-self: start; }
   .downloads-list time { display: none; }
 }
