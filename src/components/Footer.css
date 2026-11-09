@@ -22,6 +22,7 @@
   transition: color 0.2s;
 }
 .footer-columns a:hover { color: var(--white); }
+.footer-columns > div > span { color: var(--muted); font-size: 15px; }
 
 .footer-soon {
   margin-left: 6px;

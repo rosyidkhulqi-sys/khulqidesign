@@ -68,9 +68,12 @@ function Footer({ language, setLanguage, setPage }) {
         <div>
           {/* until the studio opens (data/services.js) the list says so */}
           <h3>Services {!SERVICES_OPEN && <span className="footer-soon">Soon</span>}</h3>
-          {services.map(([, title]) => (
-            <a key={title} href="#services" onClick={toServices}>{title}</a>
-          ))}
+          {/* plain text while closed: there is nothing to open yet */}
+          {services.map(([, title]) =>
+            SERVICES_OPEN
+              ? <a key={title} href="#services" onClick={toServices}>{title}</a>
+              : <span key={title}>{title}</span>
+          )}
         </div>
 
         <div>

@@ -320,42 +320,15 @@ function Home({ setPage, user = null }) {
       {/* SERVICES — the full section once the studio takes projects */}
       {SERVICES_OPEN && <HomeServices />}
 
-      {/* CLOSING — the last call for visitors, then the small print every
-          reader may need: services coming soon (the footer's service links
-          scroll here) and how to reach us */}
-      <section className={`home-close ${user ? "is-member" : ""}`}>
-        {!user && (
-          <>
-            <h2>Ready when <em>you are.</em></h2>
-            <p className="home-close-lead">Join free and download your first assets today.</p>
-            <button className="home-close-main" onClick={go("register")}>Start free <Arrow /></button>
-          </>
-        )}
-        <div className="home-close-notes">
-          {!SERVICES_OPEN && (
-            <p id="services">
-              <span className="home-close-soon">Soon</span>
-              Custom logos, brand identity, UI and motion design services.
-            </p>
-          )}
-          <div className="home-close-contact" id="contact">
-            <span>Questions or licensing?</span>
-            <a className="home-chip" href="mailto:khulqidesign@mail.com">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m4 7 8 6 8-6" /></svg>
-              Email
-            </a>
-            <a className="home-chip" href="https://wa.me/6285236752860">
-              {/* WhatsApp in the same line style as the mail icon: a chat bubble
-                  with a phone handset */}
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
-                <path d="M9 8.5c.2 3.2 3.3 6.3 6.5 6.5l1-1.6-2.1-1-1 .9a5 5 0 0 1-2.6-2.6l.9-1-1-2.1Z" />
-              </svg>
-              WhatsApp
-            </a>
-          </div>
-        </div>
-      </section>
+      {/* CLOSING — one last call for visitors; contact and services are in
+          the footer right below, so they aren't repeated here */}
+      {!user && (
+        <section className="home-close">
+          <h2>Ready when <em>you are.</em></h2>
+          <p className="home-close-lead">Join free and download your first assets today.</p>
+          <button className="home-close-main" onClick={go("register")}>Start free <Arrow /></button>
+        </section>
+      )}
     </main>
   );
 }
