@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
-import AuthLayout, { GoogleIcon } from "./AuthLayout";
-import { returnUrl } from "../../lib/router";
+import AuthLayout from "./AuthLayout";
+import GoogleButton from "./GoogleButton";
+import { returnPage } from "../../lib/router";
 
 function Register({ setPage }) {
   const [email, setEmail] = useState("");
@@ -28,15 +29,9 @@ function Register({ setPage }) {
     setLoading(false);
   };
 
-  // Google sign-in creates the account on first use
-  const handleGoogle = async () => {
-    setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: returnUrl() },
-    });
-    if (error) setError(error.message);
-  };
+  // Google creates the account on first use; then back to the page that
+  // asked for one, or Home
+  const afterGoogle = useCallback(() => setPage(returnPage(true) ?? "home"), [setPage]);
 
   return (
     <AuthLayout setPage={setPage}>
@@ -46,9 +41,7 @@ function Register({ setPage }) {
       {error && <p className="auth-error">{error}</p>}
       {message && <p className="auth-success">{message}</p>}
 
-      <button type="button" onClick={handleGoogle} className="auth-google">
-        <GoogleIcon /> Sign up with Google
-      </button>
+      <GoogleButton text="signup_with" onDone={afterGoogle} onError={setError} />
 
       <div className="auth-divider"><span>or sign up with email</span></div>
 

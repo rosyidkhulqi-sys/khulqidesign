@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
-import AuthLayout, { GoogleIcon } from "./AuthLayout";
-import { returnPage, returnUrl } from "../../lib/router";
+import AuthLayout from "./AuthLayout";
+import GoogleButton from "./GoogleButton";
+import { returnPage } from "../../lib/router";
 
 function Login({ setPage }) {
   const [email, setEmail] = useState("");
@@ -27,15 +28,9 @@ function Login({ setPage }) {
 
     setLoading(false);
   };
-  
-    const handleGoogle = async () => {
-    setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: returnUrl() },
-    });
-    if (error) setError(error.message);
-  };
+
+  // back to the page that asked for an account, or Home
+  const afterGoogle = useCallback(() => setPage(returnPage(true) ?? "home"), [setPage]);
 
   return (
     <AuthLayout setPage={setPage}>
@@ -44,9 +39,7 @@ function Login({ setPage }) {
 
       {error && <p className="auth-error">{error}</p>}
 
-      <button type="button" onClick={handleGoogle} className="auth-google">
-        <GoogleIcon /> Continue with Google
-      </button>
+      <GoogleButton text="continue_with" onDone={afterGoogle} onError={setError} />
 
       <div className="auth-divider"><span>or log in with email</span></div>
 

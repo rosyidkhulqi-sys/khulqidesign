@@ -67,6 +67,8 @@
   transition: background 0.2s, border-color 0.2s;
 }
 .auth-google:hover { background: rgba(255, 255, 255, 0.05); border-color: #4a4d51; }
+/* Google draws its own button in here; keep the row its height while it loads */
+.auth-google-box { display: flex; justify-content: center; width: 100%; min-height: 44px; }
 
 .auth-divider {
   display: flex;
