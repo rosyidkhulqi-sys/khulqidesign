@@ -6,8 +6,9 @@
 //   Upscale 2x / 4x    Real-ESRGAN general x4v3, the compact model
 //                      (BSD-3-Clause), 4.9 MB
 //
-// onnxruntime-web runs them in a worker (proxy mode), so the page stays
-// responsive while a model works.
+// The models run in our own worker (aiWorker.js), so the page stays
+// responsive while a model works. (onnxruntime's built-in proxy worker can't
+// be used: in the production build it loads the whole site into the worker.)
 import { PUBLIC_URL } from "./r2";
 
 const CACHE = "kd-models-v1";
@@ -17,14 +18,33 @@ export const MODELS = {
   upscale: { url: `${PUBLIC_URL}/models/realesr-general-x4v3.onnx`, mb: 5 },
 };
 
-let ortPromise;
-function loadOrt() {
-  ortPromise ??= import("onnxruntime-web").then((ort) => {
-    // the engine's .wasm file ships with the site (Vite bundles it)
-    ort.env.wasm.proxy = true;
-    return ort;
+// one worker for every model; each call gets an id so answers find their way back
+let worker = null;
+let nextId = 0;
+const waiting = new Map();
+
+function call(message, transfer = []) {
+  if (!worker) {
+    worker = new Worker(new URL("./aiWorker.js", import.meta.url), { type: "module" });
+    worker.onmessage = ({ data }) => {
+      const p = waiting.get(data.id);
+      waiting.delete(data.id);
+      if (data.error) p?.reject(new Error(data.error));
+      else p?.resolve(data);
+    };
+    // the worker itself couldn't start: fail every call and start fresh next time
+    worker.onerror = () => {
+      for (const p of waiting.values()) p.reject(new Error("The AI tool couldn't start in this browser. Try reloading the page."));
+      waiting.clear();
+      worker.terminate();
+      worker = null;
+    };
+  }
+  return new Promise((resolve, reject) => {
+    const id = ++nextId;
+    waiting.set(id, { resolve, reject });
+    worker.postMessage({ ...message, id }, transfer);
   });
-  return ortPromise;
 }
 
 // the model bytes, from the browser's cache when we have them;
@@ -73,13 +93,15 @@ async function modelBytes(url, onProgress) {
   return bytes;
 }
 
+// loads a model into the worker once; resolves run(input, dims) -> { data, dims }
 const sessions = {};
 async function session(name, onProgress) {
   if (!sessions[name]) {
     sessions[name] = (async () => {
-      const ort = await loadOrt();
       const bytes = await modelBytes(MODELS[name].url, onProgress);
-      return ort.InferenceSession.create(bytes, { executionProviders: ["wasm"] });
+      await call({ type: "load", name, bytes }, [bytes.buffer]);
+      // the input buffer moves to the worker, so callers make a new one each run
+      return (input, dims) => call({ type: "run", name, input, dims }, [input.buffer]);
     })();
     // a failed load can be retried
     sessions[name].catch(() => delete sessions[name]);
@@ -121,8 +143,7 @@ const STD = [0.229, 0.224, 0.225];
 // onStep(label, 0..1). Resolves a PNG with a transparent background.
 export async function removeBackground(file, onStep) {
   onStep?.("Loading the AI model", 0);
-  const s = await session("cutout", (p) => onStep?.("Loading the AI model", p));
-  const ort = await loadOrt();
+  const run = await session("cutout", (p) => onStep?.("Loading the AI model", p));
   onStep?.("Finding the subject", 0);
 
   const bitmap = await bitmapOf(file, 4096);
@@ -136,8 +157,7 @@ export async function removeBackground(file, onStep) {
   for (let i = 0; i < SIZE * SIZE; i++) {
     for (let c = 0; c < 3; c++) input[c * SIZE * SIZE + i] = (px[i * 4 + c] / 255 - MEAN[c]) / STD[c];
   }
-  const out = await s.run({ [s.inputNames[0]]: new ort.Tensor("float32", input, [1, 3, SIZE, SIZE]) });
-  const mask = out[s.outputNames[0]].data;
+  const { data: mask } = await run(input, [1, 3, SIZE, SIZE]);
 
   // stretch the mask to 0..1, then to full size
   let lo = Infinity;
@@ -178,8 +198,7 @@ export const UPSCALE_MAX_SIDE = 1024;
 // scale 2 or 4; onStep(label, 0..1). Resolves a PNG.
 export async function upscale(file, onStep, scale = 2) {
   onStep?.("Loading the AI model", 0);
-  const s = await session("upscale", (p) => onStep?.("Loading the AI model", p));
-  const ort = await loadOrt();
+  const run = await session("upscale", (p) => onStep?.("Loading the AI model", p));
 
   const bitmap = await bitmapOf(file, UPSCALE_MAX_SIDE);
   const { width: w, height: h } = bitmap;
@@ -221,8 +240,7 @@ export async function upscale(file, onStep, scale = 2) {
           input[2 * TILE * TILE + di] = pixels[si + 2] / 255;
         }
       }
-      const res = await s.run({ [s.inputNames[0]]: new ort.Tensor("float32", input, [1, 3, TILE, TILE]) });
-      const rec = res[s.outputNames[0]].data;
+      const { data: rec } = await run(input, [1, 3, TILE, TILE]);
       const TS = TILE * S;
       const tile = new ImageData(TS, TS);
       for (let i = 0; i < TS * TS; i++) {
