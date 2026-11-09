@@ -315,28 +315,27 @@ function Home({ setPage, user = null }) {
       </section>
       )}
 
-      {/* SERVICES — one line until custom work opens; the footer's service
-          links scroll here */}
-      <section className="home-soon-strip" id="services">
-        <p className="home-label">Services · Coming soon</p>
-        <p>Custom logos, brand identity, UI and motion design open later. Until then, everything here is ready to use.</p>
-      </section>
-
-      {/* LAST CALL — one clear next step before the footer */}
-      {!user && (
-        <section className="home-cta">
-          <h2>Ready when <em>you are.</em></h2>
-          <p>Join free and download your first assets today.</p>
-          <button onClick={go("register")}>Start free <Arrow /></button>
-        </section>
-      )}
-
-      {/* CONTACT — a quiet line before the footer */}
-      <section className="home-contact" id="contact">
-        <p>Questions or licensing?</p>
-        <div>
-          <a href="mailto:khulqidesign@mail.com">Email <Arrow /></a>
-          <a href="https://wa.me/6285236752860">WhatsApp <Arrow /></a>
+      {/* CLOSING — the last call for visitors, then the small print every
+          reader may need: services coming soon (the footer's service links
+          scroll here) and how to reach us */}
+      <section className={`home-close ${user ? "is-member" : ""}`}>
+        {!user && (
+          <>
+            <h2>Ready when <em>you are.</em></h2>
+            <p className="home-close-lead">Join free and download your first assets today.</p>
+            <button className="home-close-main" onClick={go("register")}>Start free <Arrow /></button>
+          </>
+        )}
+        <div className="home-close-notes">
+          <p id="services">
+            <span>Services · Coming soon</span>
+            Custom logos, brand identity, UI and motion design open later.
+          </p>
+          <p id="contact">
+            Questions or licensing?{" "}
+            <a href="mailto:khulqidesign@mail.com">Email</a> ·{" "}
+            <a href="https://wa.me/6285236752860">WhatsApp</a>
+          </p>
         </div>
       </section>
     </main>

@@ -420,48 +420,6 @@
 .home-asset-more a:hover .home-icon { transform: translateX(4px); }
 
 
-/* SERVICES — a single line while custom work is coming soon */
-
-.home-soon-strip {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 8px 20px;
-  padding: 28px var(--page-x);
-  border-top: 1px solid var(--line);
-}
-.home-soon-strip .home-label { margin: 0; }
-.home-soon-strip p:not(.home-label) { margin: 0; color: var(--muted); font-size: 16px; }
-
-
-/* CONTACT — a quiet line before the footer */
-
-.home-contact {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 28px var(--page-x);
-  border-top: 1px solid var(--line);
-}
-.home-contact p { margin: 0; color: #b2b3b4; font-size: 16px; }
-.home-contact > div { display: flex; gap: 12px; }
-.home-contact > div a {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border: 1px solid #3a3c3f;
-  border-radius: 999px;
-  font-size: 15px;
-  font-weight: 600;
-  transition: border-color 0.2s;
-}
-.home-contact > div a:hover { border-color: var(--white); }
-.home-contact .home-icon { width: 16px; height: 16px; }
-
-
 /* JOIN — the hero's invitation for visitors */
 .home-join { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 16px; margin-top: 22px; }
 .home-join button {
@@ -574,13 +532,13 @@
 .home-plan-actions .home-icon { width: 16px; height: 16px; }
 
 
-/* LAST CALL */
-.home-cta {
-  padding: clamp(56px, 7vw, 104px) var(--page-x);
+/* CLOSING — one section: the last call, then services and contact as small print */
+.home-close {
+  padding: clamp(56px, 7vw, 104px) var(--page-x) clamp(40px, 4vw, 56px);
   border-top: 1px solid var(--line);
   text-align: center;
 }
-.home-cta h2 {
+.home-close h2 {
   margin: 0;
   font-size: clamp(36px, 5vw, 68px);
   font-weight: 600;
@@ -588,8 +546,8 @@
   line-height: 0.95;
   text-transform: uppercase;
 }
-.home-cta p { margin: 18px 0 30px; color: var(--muted); font-size: 17px; }
-.home-cta button {
+.home-close-lead { margin: 18px 0 30px; color: var(--muted); font-size: 17px; }
+.home-close-main {
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -604,8 +562,25 @@
   font-weight: 600;
   cursor: pointer;
 }
-.home-cta button:hover { background: var(--red-dark); }
-.home-cta .home-icon { width: 18px; height: 18px; }
+.home-close-main:hover { background: var(--red-dark); }
+.home-close-main .home-icon { width: 18px; height: 18px; }
+.home-close-notes { display: grid; gap: 10px; }
+/* members don't get the last call, so only the small print remains */
+.home-close.is-member { padding: 32px var(--page-x); }
+/* after the button, the small print sits well below it */
+.home-close-main + .home-close-notes,
+.home-close-lead ~ .home-close-notes { margin-top: clamp(48px, 6vw, 80px); }
+.home-close-notes p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; }
+.home-close-notes span {
+  margin-right: 10px;
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.home-close-notes a { color: var(--white); text-decoration: underline; text-underline-offset: 3px; }
+.home-close-notes a:hover { color: var(--red); }
 
 
 /* RESPONSIVE */
@@ -633,8 +608,7 @@
   .home-how,
   .home-assets,
   .home-ai,
-  .home-plans,
-  .home-cta { padding: 48px 20px; }
+  .home-plans { padding: 48px 20px; }
   .home-way { padding: 22px; }
   .home-asset-grid { gap: 32px 10px; }
   .home-asset-details p { font-size: 14px; }
