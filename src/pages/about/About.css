@@ -31,7 +31,7 @@
 
 /* the numbers: the light panel, as the library section on Home */
 .ab-facts { padding: clamp(28px, 4vw, 44px); border-radius: 10px; background: var(--paper); color: #101112; }
-.ab-facts dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin: 0; }
+.ab-facts dl { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin: 0; }
 .ab-facts dl > div { display: flex; flex-direction: column; }
 /* tabular digits, so the number doesn't jitter while counting */
 .ab-facts dd { margin: 0; font-size: clamp(44px, 6vw, 72px); font-variant-numeric: tabular-nums; font-weight: 600; letter-spacing: -0.05em; line-height: 1; }
@@ -153,6 +153,7 @@
 .ab-inhouse span { color: #aeb0b2; font-size: 15px; line-height: 1.45; }
 
 @media (max-width: 900px) {
+  .ab-facts dl,
   .ab-audience { grid-template-columns: repeat(2, 1fr); }
   .ab-compare,
   .ab-inhouse { grid-template-columns: 1fr; }
@@ -161,7 +162,6 @@
 }
 
 @media (max-width: 640px) {
-  .ab-facts dl { grid-template-columns: 1fr; }
   .ab-grid { grid-template-columns: 1fr; }
   .ab-audience { grid-template-columns: 1fr; }
   .ab-audience > div,

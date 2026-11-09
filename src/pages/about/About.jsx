@@ -8,6 +8,8 @@ import Breadcrumb from "../../components/Breadcrumb";
 // [final value, what it counts up from, what follows the number, label]
 const facts = [
   [2018, 2010, "", "Creating digital assets since"],
+  // placeholder until the real count comes from the database
+  [34, 0, "K+", "Design assets"],
   [5, 0, "", "Asset types in one library"],
   [100, 0, "%", "Of our assets made in-house"],
 ];
