@@ -13,6 +13,7 @@ import {
   membersOf as trialMembersOf,
 } from "../../data/iconsData";
 import { fetchIconCatalog } from "../../lib/catalog";
+import { matchesSearch } from "../../lib/search";
 
 // the price filter's "paid" means a Premium license
 const matchesPrice = (price, license) =>
@@ -71,10 +72,11 @@ function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
   const q = search.toLowerCase();
 
   const filteredIcons = icons.filter((icon) => {
-    const matchSearch =
-      icon.name.toLowerCase().includes(q) ||
+    const matchSearch = matchesSearch(q, (term) =>
+      icon.name.toLowerCase().includes(term) ||
       // match from the start of a word, so "pin" doesn't find "shopping"
-      wordStarts(icon.keywords, q);
+      wordStarts(icon.keywords, term)
+    , ["icon", "icons"]);
 
     const matchCategory =
       category === "all" || icon.category === category;
@@ -93,8 +95,10 @@ function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
   // sets match on their name or on any of their icons
   const filteredSets = iconSets.filter(
     (set) =>
-      (set.name.toLowerCase().includes(q) ||
-        membersOf(set).some((icon) => wordStarts(icon.keywords, q))) &&
+      matchesSearch(q, (term) =>
+        set.name.toLowerCase().includes(term) ||
+        membersOf(set).some((icon) => wordStarts(icon.keywords, term))
+      , ["icon", "icons", "set", "sets"]) &&
       (style === "all" || set.style === style) &&
       matchesPrice(price, set.license)
   );
@@ -207,7 +211,9 @@ function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
         <h1>
           Icons{" "}
           <span className="library-count">
-            {showSets ? `${filteredSets.length} icon sets` : `${filteredIcons.length} icons`}
+            {showSets
+              ? `${filteredSets.length} icon ${filteredSets.length === 1 ? "set" : "sets"}`
+              : `${filteredIcons.length} ${filteredIcons.length === 1 ? "icon" : "icons"}`}
           </span>
         </h1>
       </div>

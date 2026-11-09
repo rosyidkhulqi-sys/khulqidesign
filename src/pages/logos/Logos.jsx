@@ -9,6 +9,7 @@ import AiSearchButton from "../../components/AiSearchButton";
 import LogoModal from "./LogoModal";
 import { industries, industryName, logos as trialLogos, logoStyles } from "../../data/logosData";
 import { fetchPublished, toLogo } from "../../lib/catalog";
+import { matchesSearch } from "../../lib/search";
 
 const licenseLabel = { free: "Free", premium: "Premium", exclusive: "Exclusive" };
 
@@ -74,11 +75,11 @@ function Logos({ setPage, initialSearch = "", user = null }) {
 
   const q = search.toLowerCase();
   const filtered = allLogos
-    .filter((l) =>
-      l.title.toLowerCase().includes(q) ||
-      l.searchText.includes(q) ||
-      l.keywords.some((k) => k.startsWith(q) || k.split(" ").some((word) => word.startsWith(q)))
-    )
+    .filter((l) => matchesSearch(q, (term) =>
+      l.title.toLowerCase().includes(term) ||
+      l.searchText.includes(term) ||
+      l.keywords.some((k) => k.startsWith(term) || k.split(" ").some((word) => word.startsWith(term)))
+    , ["logo", "logos"]))
     .filter((l) => license === "all" || l.license === license)
     .filter((l) => industry === "all" || l.industry === industry)
     .filter((l) => style === "all" || l.style === style)
@@ -114,7 +115,7 @@ function Logos({ setPage, initialSearch = "", user = null }) {
       <div className="library-head">
         <Breadcrumb setPage={setPage} current="Logos" />
         <h1>
-          Logos <span className="library-count">{filtered.length} logos</span>
+          Logos <span className="library-count">{filtered.length} {filtered.length === 1 ? "logo" : "logos"}</span>
         </h1>
       </div>
 

@@ -7,6 +7,7 @@ import AiSearchButton from "../../components/AiSearchButton";
 import { ToolGlyph } from "../../components/IconControls";
 import { clips as trialClips } from "../../data/footageData";
 import { fetchPublished, toClip } from "../../lib/catalog";
+import { matchesSearch } from "../../lib/search";
 
 const durationRange = {
   short: (d) => d < 10,
@@ -175,11 +176,11 @@ function Footage({ setPage, initialSearch = "", user = null }) {
   const filtered = allClips
     // the short title, the clip's own title and description, a whole keyword
     // phrase, or the start of any word in a keyword
-    .filter((c) =>
-      c.title.toLowerCase().includes(q) ||
-      c.searchText.includes(q) ||
-      c.keywords.some((k) => k.startsWith(q) || k.split(" ").some((word) => word.startsWith(q)))
-    )
+    .filter((c) => matchesSearch(q, (term) =>
+      c.title.toLowerCase().includes(term) ||
+      c.searchText.includes(term) ||
+      c.keywords.some((k) => k.startsWith(term) || k.split(" ").some((word) => word.startsWith(term)))
+    , ["footage", "video", "videos", "clip", "clips"]))
     .filter((c) => resolution === "all" || c.resolution === resolution)
     .filter((c) => fps === "all" || c.fps === Number(fps))
     .filter((c) => duration === "all" || durationRange[duration](c.duration))
@@ -219,7 +220,7 @@ function Footage({ setPage, initialSearch = "", user = null }) {
         <Breadcrumb setPage={setPage} current="Footage" />
         {/* the count sits by the title, so results start higher */}
         <h1>
-          Footage <span className="library-count">{filtered.length} clips</span>
+          Footage <span className="library-count">{filtered.length} {filtered.length === 1 ? "clip" : "clips"}</span>
         </h1>
       </div>
 

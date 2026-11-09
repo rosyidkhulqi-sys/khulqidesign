@@ -6,6 +6,7 @@ import "../vectors/Vectors.css";
 import "./Templates.css";
 import Breadcrumb from "../../components/Breadcrumb";
 import AiSearchButton from "../../components/AiSearchButton";
+import { matchesSearch } from "../../lib/search";
 
 function Templates({ setPage, onCustomize, initialSearch = "" }) {
   const [search, setSearch] = useState(initialSearch);
@@ -40,7 +41,8 @@ function Templates({ setPage, onCustomize, initialSearch = "" }) {
 
   const q = search.toLowerCase();
   const filtered = allTemplates
-    .filter((t) => t.title.includes(q) || t.keywords.some((k) => k.includes(q)))
+    .filter((t) => matchesSearch(q, (term) => t.title.includes(term) || t.keywords.some((k) => k.includes(term)),
+      ["template", "templates"]))
     .filter((t) => category === "all" || t.category === category)
     .filter((t) => orientation === "all" || t.orientation === orientation)
     .filter((t) => license === "all" || t.license === license)
@@ -69,7 +71,7 @@ function Templates({ setPage, onCustomize, initialSearch = "" }) {
         <Breadcrumb setPage={setPage} current="Templates" />
         {/* the count sits by the title, so results start higher */}
         <h1>
-          Templates <span className="library-count">{filtered.length} templates</span>
+          Templates <span className="library-count">{filtered.length} {filtered.length === 1 ? "template" : "templates"}</span>
         </h1>
       </div>
 

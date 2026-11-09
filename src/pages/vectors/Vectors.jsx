@@ -6,6 +6,7 @@ import AiSearchButton from "../../components/AiSearchButton";
 import { ToolGlyph } from "../../components/IconControls";
 import { vectors as trialVectors } from "../../data/vectorsData";
 import { fetchPublished, toVector } from "../../lib/catalog";
+import { matchesSearch } from "../../lib/search";
 
 const formats = ["EPS", "AI", "SVG", "PNG", "JPG"];
 
@@ -87,11 +88,11 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
     // the short title, the file's own title and description, a whole keyword
     // phrase ("copy space"), or the start of any word in a keyword ("lantern"
     // finds "jack o lantern")
-    .filter((v) =>
-      v.title.toLowerCase().includes(q) ||
-      v.searchText.includes(q) ||
-      v.keywords.some((k) => k.startsWith(q) || k.split(" ").some((word) => word.startsWith(q)))
-    )
+    .filter((v) => matchesSearch(q, (term) =>
+      v.title.toLowerCase().includes(term) ||
+      v.searchText.includes(term) ||
+      v.keywords.some((k) => k.startsWith(term) || k.split(" ").some((word) => word.startsWith(term)))
+    , ["vector", "vectors"]))
     .filter((v) => format === "all" || v.files.includes(format))
     .filter((v) => license === "all" || v.license === license)
     .filter((v) => orientation === "all" || v.orientation === orientation)
@@ -126,7 +127,7 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
         <Breadcrumb setPage={setPage} current="Vectors" />
         {/* the count sits by the title, so results start higher */}
         <h1>
-          Vectors <span className="library-count">{filtered.length} vectors</span>
+          Vectors <span className="library-count">{filtered.length} {filtered.length === 1 ? "vector" : "vectors"}</span>
         </h1>
       </div>
 
