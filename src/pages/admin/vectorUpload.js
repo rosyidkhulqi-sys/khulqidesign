@@ -80,27 +80,31 @@ export async function readArtboard(eps) {
 }
 
 // Tiled, as stock previews are, so no corner can be cropped out clean, but
-// spaced out so the work can still be judged. White with a hairline of dark
-// keeps it readable on both light and dark pictures.
+// spaced out so the work can still be judged. Sized from the picture, so every
+// asset looks alike. The trial previews draw the same mark with CSS
+// (.asset-watermark).
 export function drawWatermark(ctx, w, h) {
-  const size = Math.max(16, Math.round(Math.max(w, h) / 26));
+  const longSide = Math.max(w, h);
+  const size = Math.max(11, Math.round(longSide / 27));
+  const stepX = longSide * 0.467;
+  const stepY = longSide * 0.35;
   ctx.save();
   ctx.translate(w / 2, h / 2);
-  ctx.rotate(-Math.PI / 7);
-  ctx.font = `600 ${size}px "DM Sans", system-ui, sans-serif`;
+  ctx.rotate((-25 * Math.PI) / 180);
+  ctx.font = `700 ${size}px "DM Sans", system-ui, sans-serif`;
+  // not in every browser; the mark just sits a little tighter without it
+  if ("letterSpacing" in ctx) ctx.letterSpacing = `${(size / 6).toFixed(1)}px`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillStyle = "rgba(255, 255, 255, 0.36)";
-  ctx.strokeStyle = "rgba(0, 0, 0, 0.09)";
-  ctx.lineWidth = Math.max(1, size / 24);
-  const stepX = size * 12;
-  const stepY = size * 6;
-  const reach = Math.hypot(w, h);
-  for (let y = -reach; y <= reach; y += stepY) {
-    const shift = (Math.round(y / stepY) % 2) * (stepX / 2);
-    for (let x = -reach; x <= reach; x += stepX) {
-      ctx.strokeText("KHULQIDESIGN", x + shift, y);
-      ctx.fillText("KHULQIDESIGN", x + shift, y);
+  ctx.fillStyle = "rgba(255, 255, 255, 0.22)";
+  // the soft dark edge is what keeps white letters visible on a white picture
+  ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
+  ctx.shadowBlur = Math.max(1, size / 11);
+  const columns = Math.ceil(Math.hypot(w, h) / stepX);
+  const rows = Math.ceil(Math.hypot(w, h) / stepY);
+  for (let row = -rows; row <= rows; row++) {
+    for (let col = -columns; col <= columns; col++) {
+      ctx.fillText("KHULQIDESIGN", col * stepX, row * stepY);
     }
   }
   ctx.restore();

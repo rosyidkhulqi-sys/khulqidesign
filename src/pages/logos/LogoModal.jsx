@@ -149,7 +149,7 @@ function LogoModal({ logo, related = [], user = null, onAuth, onSelect, onTag, o
               <Mockup logo={logo} view={view} />
               {license !== "free" && view === "logo" && !logo.previewImage && (
                 <div className="asset-watermark" aria-hidden="true">
-                  {Array.from({ length: 9 }, (_, i) => (
+                  {Array.from({ length: 12 }, (_, i) => (
                     <span key={i}>KHULQIDESIGN</span>
                   ))}
                 </div>
