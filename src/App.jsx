@@ -2,7 +2,9 @@ import Footer from "./components/Footer";
 import PageHeader from "./components/PageHeader";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "./lib/supabaseClient";
-import { pathFor, readLocation, titleFor, updateHeadFor } from "./lib/router";
+import { pathFor, readLocation, rememberReturn, titleFor, updateHeadFor } from "./lib/router";
+import { ASK_LOGIN, askLogin } from "./lib/authGate";
+import LoginDialog, { LoginWall } from "./components/LoginDialog";
 import "./styles/App.css";
 
 import Home from "./pages/home/Home";
@@ -40,15 +42,31 @@ function App() {
   const [searchQuery, setSearchQuery] = useState(start.query);
   // the signed-in Supabase user, or null when logged out
   const [user, setUser] = useState(null);
+  // false until the saved session has been read, so gated pages don't flash
+  const [authReady, setAuthReady] = useState(false);
+  // why the "log in to continue" dialog is open, or null when it's closed
+  const [loginReason, setLoginReason] = useState(null);
   // the icon sent from an icon's detail view to the Animate studio
   const [animateIcon, setAnimateIcon] = useState(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+      setAuthReady(true);
+    });
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      // logged in from another tab or after Google: no need to ask any more
+      if (session) setLoginReason(null);
     });
     return () => data.subscription.unsubscribe();
+  }, []);
+
+  // askLogin() from any page opens the dialog
+  useEffect(() => {
+    const onAsk = (e) => setLoginReason(e.detail);
+    window.addEventListener(ASK_LOGIN, onAsk);
+    return () => window.removeEventListener(ASK_LOGIN, onAsk);
   }, []);
 
   // Back and Forward: show the page the address now points to
@@ -80,7 +98,19 @@ function App() {
     }
   };
 
+  // leave for Log in / Create account / Pricing, and come back here after
+  const authFromDialog = (target) => {
+    rememberReturn(page);
+    setLoginReason(null);
+    go(target);
+    window.scrollTo(0, 0);
+  };
+
   const animate = (icon) => {
+    if (!user) {
+      askLogin("edit");
+      return;
+    }
     go("ai");
     setAnimateIcon(icon);
     window.scrollTo(0, 0);
@@ -93,6 +123,10 @@ function App() {
   };
 
   const customize = (template) => {
+    if (!user) {
+      askLogin("create");
+      return;
+    }
     setCreateDraft(template);
     go("create");
     window.scrollTo(0, 0);
@@ -171,7 +205,12 @@ function App() {
     ),
     create: (
       <Suspense fallback={null}>
-        <Create draft={createDraft} clearDraft={() => setCreateDraft(null)} />
+        {/* the editor is for signed-in accounts; visitors get an invitation */}
+        {user ? (
+          <Create draft={createDraft} clearDraft={() => setCreateDraft(null)} />
+        ) : (
+          authReady && <LoginWall onAuth={authFromDialog} />
+        )}
       </Suspense>
     ),
     admin: (
@@ -191,7 +230,10 @@ function App() {
     <>
       <PageHeader page={page} setPage={go} user={user} onLogout={logout} />
       {pages[page] ?? pages.notfound}
-      {page !== "create" && (
+      {loginReason && !user && (
+        <LoginDialog reason={loginReason} onAuth={authFromDialog} onClose={() => setLoginReason(null)} />
+      )}
+      {(page !== "create" || !user) && (
         <Footer language={language} setLanguage={setLanguage} setPage={go} />
       )}
     </>

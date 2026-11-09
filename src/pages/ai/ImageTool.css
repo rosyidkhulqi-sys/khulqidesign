@@ -75,27 +75,6 @@
 .it-options { display: inline-flex; gap: 4px; margin-right: auto; padding: 4px; border: 1px solid var(--line); border-radius: 999px; }
 .it-actions .it-options button { height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: #aeb0b2; }
 .it-actions .it-options button.active { background: rgba(255, 255, 255, 0.12); color: var(--white); }
-.it-gate {
-  margin-top: 16px;
-  padding: 18px 20px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--surface);
-}
-.it-gate strong { font-size: 16px; }
-.it-gate p { margin: 6px 0 14px; color: #aeb0b2; font-size: 14px; }
-.it-gate div { display: flex; flex-wrap: wrap; gap: 10px; }
-.it-gate button {
-  height: 40px;
-  padding: 0 16px;
-  border: 1px solid #3a3c3f;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--white);
-  font-size: 14px;
-  font-weight: 600;
-}
-.it-gate .it-primary { border: 0; background: var(--red); color: white; }
 .it-error { margin: 12px 0 0; color: #ff8b92; font-size: 14px; }
 .it-note { margin: 18px 0 0; max-width: 720px; color: #8d939b; font-size: 13px; line-height: 1.6; }
 

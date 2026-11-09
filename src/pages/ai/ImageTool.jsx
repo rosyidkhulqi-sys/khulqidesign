@@ -2,14 +2,13 @@
 // pick a picture, run the model on this device, compare, download a PNG.
 import { useEffect, useRef, useState } from "react";
 import "./ImageTool.css";
+import { askLogin } from "../../lib/authGate";
 
 const ACCEPT = "image/png,image/jpeg,image/webp";
 
 // options: optional [[value, label], ...], e.g. the upscale factor
-// user: the signed-in account; the tools need one (a free account is enough).
-// onAuth("login" | "register" | "pricing") leaves for that page and comes back.
-function ImageTool({ run, suffix, options = null, modelMb, hint, user, onAuth }) {
-  const [askLogin, setAskLogin] = useState(false);
+// user: the signed-in account; the tools need one (a free account is enough)
+function ImageTool({ run, suffix, options = null, modelMb, hint, user }) {
   const [option, setOption] = useState(options?.[0]?.[0] ?? null);
   const [file, setFile] = useState(null);
   const [before, setBefore] = useState(null);
@@ -43,7 +42,7 @@ function ImageTool({ run, suffix, options = null, modelMb, hint, user, onAuth })
 
   const start = async () => {
     if (!user) {
-      setAskLogin(true);
+      askLogin("ai");
       return;
     }
     setError(null);
@@ -130,18 +129,6 @@ function ImageTool({ run, suffix, options = null, modelMb, hint, user, onAuth })
 
       <input ref={input} type="file" accept={ACCEPT} hidden
              onChange={(e) => { pick(e.target.files); e.target.value = ""; }} />
-
-      {askLogin && !user && (
-        <div className="it-gate" role="status">
-          <strong>Log in to use the AI tools</strong>
-          <p>A free account is enough to start. Premium adds more and bigger results.</p>
-          <div>
-            <button className="it-primary" onClick={() => onAuth("login")}>Log in</button>
-            <button onClick={() => onAuth("register")}>Create free account</button>
-            <button onClick={() => onAuth("pricing")}>See plans</button>
-          </div>
-        </div>
-      )}
 
       {error && <p className="it-error">{error}</p>}
 

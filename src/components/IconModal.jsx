@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { saveBlob, saveDownload } from "../lib/downloads";
+import { askLogin } from "../lib/authGate";
 import {
   buildIconSvg,
   canRecolor as recolorable,
@@ -133,6 +134,11 @@ function IconModal({
   // check moves to the server with the backend.
   const needsPremium = (format) => premium || format === "svg";
   const gate = (format, action) => {
+    // downloading or copying needs an account (a free one is enough)
+    if (!user) {
+      askLogin("edit");
+      return;
+    }
     if (!user && needsPremium(format)) {
       setPrompt(format);
       return;

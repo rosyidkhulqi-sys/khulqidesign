@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { DOWNLOAD_REFUSALS, requestDownload, saveDownload } from "../lib/downloads";
+import { askLogin } from "../lib/authGate";
 import { PremiumPrompt, ToolGlyph } from "./IconControls";
 import { Sparkle } from "./AiSearchButton";
 import "./AssetModal.css";
@@ -45,12 +46,13 @@ function AssetModal({
   const option = options[choice];
 
   const download = async () => {
+    // every download needs an account (a free one is enough)
+    if (!user) {
+      askLogin("download");
+      return;
+    }
     // uploaded originals: the server checks the license and hands out a link
     if (option.pending) {
-      if (!user) {
-        setRefusal("sign_in_required");
-        return;
-      }
       setBusy(true);
       setRefusal(null);
       try {

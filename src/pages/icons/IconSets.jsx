@@ -3,6 +3,7 @@ import "./IconSets.css";
 import Breadcrumb from "../../components/Breadcrumb";
 import { PremiumPrompt, PremiumTag, SizePicker, Swatches } from "../../components/IconControls";
 import { saveBlob, saveDownload } from "../../lib/downloads";
+import { askLogin } from "../../lib/authGate";
 import {
   buildIconSvg,
   canRecolor,
@@ -98,6 +99,10 @@ function IconSetView({
       : icon.image;
 
   const downloadSet = async (format) => {
+    if (!user) {
+      askLogin("download");
+      return;
+    }
     if (!user && (premium || format === "svg")) {
       setPrompt(format);
       return;

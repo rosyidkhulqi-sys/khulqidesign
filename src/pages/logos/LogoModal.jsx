@@ -5,6 +5,7 @@
 // Builds on AssetModal.css for the layout.
 import { useEffect, useState } from "react";
 import { DOWNLOAD_REFUSALS, requestDownload, saveDownload } from "../../lib/downloads";
+import { askLogin } from "../../lib/authGate";
 import { PremiumPrompt, ToolGlyph } from "../../components/IconControls";
 import { industryName, styleName } from "../../data/logosData";
 import "../../components/AssetModal.css";
@@ -80,11 +81,12 @@ function LogoModal({ logo, related = [], user = null, onAuth, onSelect, onTag, o
   const uploaded = Boolean(logo.originals);
 
   const download = async () => {
+    // every download needs an account (a free one is enough)
+    if (!user) {
+      askLogin("download");
+      return;
+    }
     if (uploaded) {
-      if (!user) {
-        setRefusal("sign_in_required");
-        return;
-      }
       setBusy(true);
       setRefusal(null);
       try {

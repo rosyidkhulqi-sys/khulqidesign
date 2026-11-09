@@ -1,0 +1,80 @@
+.login-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  /* above the asset and logo windows that open it */
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.7);
+}
+.login-dialog {
+  position: relative;
+  width: min(420px, 100%);
+  padding: 32px 28px 24px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #141517;
+  color: var(--white);
+  font-family: var(--font-sans);
+}
+.login-dialog h2 { margin: 0; font-size: 22px; font-weight: 600; }
+.login-dialog p { margin: 8px 0 18px; color: #aeb0b2; font-size: 14px; line-height: 1.5; }
+.login-dialog ul { display: grid; gap: 8px; margin: 0 0 22px; padding: 0; list-style: none; }
+.login-dialog li { position: relative; padding-left: 24px; color: #d4d6d9; font-size: 14px; }
+.login-dialog li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--red);
+  font-weight: 700;
+}
+.login-dialog button { font: inherit; cursor: pointer; }
+.login-dialog-main,
+.login-dialog-second {
+  display: block;
+  width: 100%;
+  height: 46px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.login-dialog-main { border: 0; background: var(--red); color: white; }
+.login-dialog-main:hover { background: var(--red-dark); }
+.login-dialog-second { margin-top: 10px; border: 1px solid #3a3c3f; background: transparent; color: var(--white); }
+.login-dialog-second:hover { border-color: #55585c; }
+.login-dialog-link {
+  display: block;
+  margin: 14px auto 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: underline;
+}
+.login-wall {
+  max-width: 560px;
+  min-height: calc(100vh - var(--header-h) - 200px);
+  margin: 0 auto;
+  padding: 96px 16px 80px;
+  text-align: center;
+  font-family: var(--font-sans);
+}
+.login-wall h1 { margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -0.01em; }
+.login-wall p { margin: 12px 0 28px; color: #aeb0b2; font-size: 16px; line-height: 1.6; }
+.login-wall div { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.login-wall button { width: auto; min-width: 180px; padding: 0 22px; font: inherit; font-weight: 600; cursor: pointer; }
+.login-wall .login-dialog-second { margin-top: 0; }
+.login-dialog-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+}
+.login-dialog-close:hover { background: rgba(255, 255, 255, 0.08); color: var(--white); }
