@@ -171,7 +171,7 @@ function Home({ setPage, user = null }) {
 
           {!user && (
             <div className="home-join">
-              <button onClick={go("register")}>Create free account</button>
+              <button onClick={go("register")}>Start free</button>
               <span>{PLANS.freePerDay} free downloads a day. No card needed.</span>
             </div>
           )}
@@ -342,7 +342,7 @@ function Home({ setPage, user = null }) {
         <section className="home-cta">
           <h2>Ready when <em>you are.</em></h2>
           <p>Join free and download your first assets today.</p>
-          <button onClick={go("register")}>Create free account <Arrow /></button>
+          <button onClick={go("register")}>Start free <Arrow /></button>
         </section>
       )}
 

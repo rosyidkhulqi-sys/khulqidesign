@@ -528,14 +528,15 @@
   padding: 0 22px;
   border: 0;
   border-radius: 999px;
-  background: var(--white);
-  color: #101112;
+  /* the same red button as the closing call, one look for the main action */
+  background: var(--red);
+  color: white;
   font: inherit;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
 }
-.home-join button:hover { background: #e4e5e7; }
+.home-join button:hover { background: var(--red-dark); }
 .home-join span { color: var(--muted); font-size: 14px; }
 
 
