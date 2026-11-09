@@ -149,7 +149,7 @@ function App() {
   }
 
   const pages = {
-    home: <Home setPage={go} />,
+    home: <Home setPage={go} user={user} />,
     ai: (
       <Suspense fallback={null}>
         <Ai setPage={go} user={user} animateIcon={animateIcon} />

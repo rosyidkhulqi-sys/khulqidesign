@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { categories } from "../../data/categories";
+import { PLANS } from "../../data/plans";
 import "./Home.css";
 
 const libraryLinks = [
@@ -27,7 +28,7 @@ const ways = [
   {
     n: "01",
     title: "Download",
-    text: "Pick an icon, vector, template or clip and download it. Free assets just need a credit line; Premium unlocks every format with no attribution.",
+    text: `Pick an icon, vector, template or clip and download it. A free account takes ${PLANS.freePerDay} a day; Premium unlocks every format with no credit line.`,
     flow: ["Search", "Preview", "Download"],
     cta: ["Browse the library", "#assets"],
   },
@@ -44,6 +45,36 @@ const ways = [
     text: "Buy an exclusive logo once and it's yours alone: taken off sale, with the full files and rights. Free and Premium logos are there too.",
     flow: ["Pick a logo", "Buy once", "Yours alone"],
     cta: ["Browse logos", "logos"],
+  },
+];
+
+// free with an account, running in the visitor's browser
+const aiTools = [
+  ["Remove background", "Cut the subject out of a photo, product shot or illustration, ready as a transparent PNG."],
+  ["Upscale 2× and 4×", "Make a small picture bigger and sharper for print, slides or a website."],
+  ["Animate an icon", "Turn any icon in the library into a short animation."],
+];
+
+// a short version of the Pricing page; the details live there
+const plans = [
+  {
+    name: "Free",
+    price: "$0",
+    per: "forever",
+    points: [`${PLANS.freePerDay} downloads a day`, "Edit in Create and the icon editor", "Free AI tools", "Credit line required"],
+  },
+  {
+    name: "Premium",
+    price: `$${PLANS.yearly}`,
+    per: `a month, billed yearly ($${PLANS.monthly} monthly)`,
+    points: ["Every Premium asset", "Unlimited downloads (fair use)", "SVG, EPS and copy to Figma", "No credit line"],
+    featured: true,
+  },
+  {
+    name: "Founding member",
+    price: `$${PLANS.founding}`,
+    per: `a year, for the first ${PLANS.foundingSeats} members`,
+    points: ["Everything in Premium", "Price locked while you stay", "Helps shape the library"],
   },
 ];
 
@@ -65,7 +96,8 @@ function Arrow() {
   );
 }
 
-function Home({ setPage }) {
+// user: the signed-in account, or null; visitors also see invitations to join
+function Home({ setPage, user = null }) {
   const [query, setQuery] = useState("");
 
   const go = (page) => (e) => {
@@ -116,6 +148,13 @@ function Home({ setPage }) {
               <button key={item.page} onClick={go(item.page)}>{item.label}</button>
             ))}
           </div>
+
+          {!user && (
+            <div className="home-join">
+              <button onClick={go("register")}>Create free account</button>
+              <span>{PLANS.freePerDay} free downloads a day. No card needed.</span>
+            </div>
+          )}
 
           {/* the newest product, where the studio link used to be */}
           <button className="home-studio-link" onClick={go("logos")}>
@@ -198,6 +237,52 @@ function Home({ setPage }) {
         </div>
       </section>
 
+      {/* FREE AI TOOLS — a reason to sign up today */}
+      <section className="home-ai">
+        <div className="home-section-title">
+          <div>
+            <p className="home-label">Free AI tools</p>
+            <h2>AI that runs<br /><em>in your browser.</em></h2>
+          </div>
+          <p>Free with an account.<br />Your pictures never leave your device.</p>
+        </div>
+        <div className="home-ai-grid">
+          {aiTools.map(([title, text]) => (
+            <button className="home-ai-card" key={title} onClick={go("ai")}>
+              <h3>{title}</h3>
+              <p>{text}</p>
+              <span>Try it <Arrow /></span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* PLANS — Free and Premium at a glance */}
+      <section className="home-plans">
+        <div className="home-section-title is-dark">
+          <div>
+            <p className="home-label">Plans</p>
+            <h2>Start free,<br /><em>grow with Premium.</em></h2>
+          </div>
+          <p>Prices in USD.<br />Cancel anytime.</p>
+        </div>
+        <div className="home-plan-grid">
+          {plans.map((p) => (
+            <article className={`home-plan ${p.featured ? "is-featured" : ""}`} key={p.name}>
+              <h3>{p.name}</h3>
+              <p className="home-plan-price"><strong>{p.price}</strong><span>{p.per}</span></p>
+              <ul>
+                {p.points.map((x) => <li key={x}>{x}</li>)}
+              </ul>
+            </article>
+          ))}
+        </div>
+        <div className="home-plan-actions">
+          {!user && <button className="home-plan-main" onClick={go("register")}>Create free account</button>}
+          <button onClick={go("pricing")}>Compare plans <Arrow /></button>
+        </div>
+      </section>
+
       {/* SERVICES */}
       <section className="home-services" id="services">
         <div className="home-section-title is-dark">
@@ -232,6 +317,15 @@ function Home({ setPage }) {
           <a href="#assets">Start exploring <Arrow /></a>
         </div>
       </section>
+
+      {/* LAST CALL — one clear next step before the footer */}
+      {!user && (
+        <section className="home-cta">
+          <h2>Ready when <em>you are.</em></h2>
+          <p>Join free and download your first assets today.</p>
+          <button onClick={go("register")}>Create free account <Arrow /></button>
+        </section>
+      )}
 
       {/* CONTACT */}
       <section className="home-contact" id="contact">

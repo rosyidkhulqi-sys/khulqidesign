@@ -1,6 +1,6 @@
 // Pricing: Free and Premium, billed in USD, a Founding member offer for
 // launch, and Exclusive logos as a one-time purchase outside any plan.
-// Prices live in PLANS below so they change in one place. Checkout comes
+// Prices live in PLANS (data/plans.js) so they change in one place. Checkout comes
 // with the backend; until then the paid buttons are marked Coming soon.
 //
 // Set from competitor research (Nov 2026): Envato Core from $8.99/mo,
@@ -12,15 +12,8 @@ import { useState } from "react";
 import "../vectors/Vectors.css";
 import "./Pricing.css";
 import Breadcrumb from "../../components/Breadcrumb";
+import { PLANS } from "../../data/plans";
 
-const PLANS = {
-  monthly: 10,
-  // per month, billed once a year
-  yearly: 6,
-  // per year, locked for as long as the member stays subscribed
-  founding: 59,
-  foundingSeats: 500,
-};
 
 const yearlyTotal = PLANS.yearly * 12;
 const saving = Math.round((1 - PLANS.yearly / PLANS.monthly) * 100);
@@ -28,7 +21,7 @@ const saving = Math.round((1 - PLANS.yearly / PLANS.monthly) * 100);
 // limits are enforced by the backend; the page states them up front
 const freeFeatures = [
   "Free icons, vectors, logos, templates and footage",
-  "10 downloads a day",
+  `${PLANS.freePerDay} downloads a day`,
   "PNG icons up to 512 px",
   "Edit in Create and the icon editor",
   "Animate icons",
