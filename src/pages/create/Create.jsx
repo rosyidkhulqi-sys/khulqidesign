@@ -16,6 +16,8 @@ import {
 import Icon from "./CreateIcons";
 import ElementsPanel from "./CreateElements";
 import BackgroundPanel from "./CreateBackground";
+import CreateSearch from "./CreateSearch";
+import { SearchBox } from "./CreateElements";
 import TemplateThumb from "../../components/TemplateThumb";
 import { allTemplates } from "../../data/templatesData";
 import { icons as libraryIcons } from "../../data/iconsData";
@@ -42,7 +44,7 @@ import "./Create.css";
 import { supabase } from "../../lib/supabaseClient";
 import PublishTemplate from "./PublishTemplate";
 import { fetchTemplates } from "./templatePublish";
-import { fetchPublished, toCreatePart } from "../../lib/catalog";
+import { fetchIconCatalog, fetchPublished, toCreatePart, toVector } from "../../lib/catalog";
 import { askLogin } from "../../lib/authGate";
 
 const PANEL_KEY = "kd-create-panel";
@@ -57,6 +59,8 @@ const UNTITLED = "Untitled design";
 
 // icons, vectors and footage live inside Elements, as Canva groups them
 const tabs = ["templates", "elements", "background", "text", "uploads", "layers", "projects", "ai"];
+// the tabs that browse the library, under the one search box
+const SEARCH_TABS = ["templates", "elements", "background"];
 const tabLabel = (t) => (t === "ai" ? "AI" : t[0].toUpperCase() + t.slice(1));
 
 const exportFormats = [
@@ -218,6 +222,11 @@ function Create({ draft, clearDraft, user = null }) {
   const [dbTemplates, setDbTemplates] = useState([]);
   // elements and backgrounds uploaded on /admin
   const [dbParts, setDbParts] = useState([]);
+  // the one search box; icons and vectors load the first time it's used
+  const [query, setQuery] = useState("");
+  const [library, setLibrary] = useState({ icons: [], vectors: [] });
+  const libraryAsked = useRef(false);
+  const allDesigns = useMemo(() => [...dbTemplates, ...allTemplates], [dbTemplates]);
   const dbElements = useMemo(() => dbParts.filter((p) => p.kind === "element"), [dbParts]);
   const dbBackgrounds = useMemo(() => dbParts.filter((p) => p.kind === "background"), [dbParts]);
 
@@ -527,6 +536,7 @@ function Create({ draft, clearDraft, user = null }) {
   // switching tabs from anywhere also brings a hidden panel back
   const openTab = (name) => {
     setTab(name);
+    setQuery("");
     showPanel(true);
   };
 
@@ -606,6 +616,8 @@ function Create({ draft, clearDraft, user = null }) {
     resetHistory();
   };
 
+  const searching = SEARCH_TABS.includes(tab) && query.trim() !== "";
+
   /* ---------- adding elements ---------- */
 
   const place = (obj, point) => {
@@ -669,7 +681,7 @@ function Create({ draft, clearDraft, user = null }) {
     if (kind === "basic") return addSvg(basicIcons.find((i) => i.id === id).svg, point);
     // the same SVG files as the Icons page, so their colors stay editable
     if (kind === "icon") {
-      const icon = libraryIcons.find((i) => i.id === id);
+      const icon = library.icons.find((i) => i.id === id) ?? libraryIcons.find((i) => i.id === id);
       return fetch(icon.image).then((r) => r.text()).then((markup) => addSvg(markup, point));
     }
     // element files: SVG stays editable vector, PNG goes in as an image
@@ -677,6 +689,10 @@ function Create({ draft, clearDraft, user = null }) {
       const el = dbElements.find((e) => e.id === id) ?? libraryElements.find((e) => e.id === id);
       if (el.type !== "svg") return addImage(el.url, point);
       return fetch(el.url).then((r) => r.text()).then((markup) => addSvg(markup, point));
+    }
+    if (kind === "vector") {
+      const vector = library.vectors.find((v) => v.id === id);
+      return addImage(vector.previewImage ?? vector.image, point);
     }
     if (kind === "background") return setBackgroundPhoto(dbBackgrounds.find((p) => p.id === id).url);
     if (kind === "upload") {
@@ -893,6 +909,32 @@ function Create({ draft, clearDraft, user = null }) {
     fc.current.requestRenderAll();
     commit();
   };
+
+  const search = (text) => {
+    setQuery(text);
+    if (libraryAsked.current) return;
+    libraryAsked.current = true;
+    Promise.allSettled([fetchIconCatalog(), fetchPublished("vector"), import("../../data/vectorsData")]).then(
+      ([icons, vectors, trial]) => {
+        // codes as ids: rows published together can share a timestamp
+        setLibrary({
+          icons: (icons.value?.icons ?? []).map((i) => ({ ...i, id: i.code })),
+          vectors: [
+            ...(vectors.value ?? []).map((row) => ({ ...toVector(row), id: row.code })),
+            ...(trial.value?.vectors ?? []),
+          ],
+        });
+      }
+    );
+  };
+
+  const templateTile = (t) => (
+    <button key={t.dbId ?? t.id} className="cp-template" onClick={() => openTemplate(t)} title={t.title}>
+      <div style={{ aspectRatio: `${t.w} / ${t.h}` }}>
+        {t.scene ? <TemplateThumb scene={t.scene} /> : <img src={t.image} alt="" loading="lazy" />}
+      </div>
+    </button>
+  );
 
   const exportFile = (format) => {
     // the design is autosaved on this device, so nothing is lost meanwhile
@@ -1181,20 +1223,27 @@ function Create({ draft, clearDraft, user = null }) {
           {/* LIBRARY PANEL */}
           {/* stays in its grid column when hidden (width 0), so the canvas keeps its place */}
           <div className="create-panel" inert={!panelOpen || cropping} aria-hidden={!panelOpen}>
-            {tab === "templates" && (
-              <div className="cp-grid two">
-                {[...dbTemplates, ...allTemplates].map((t) => (
-                  <button key={t.dbId ?? t.id} className="cp-template" onClick={() => openTemplate(t)} title={t.title}>
-                    <div style={{ aspectRatio: `${t.w} / ${t.h}` }}>
-                      {t.scene ? <TemplateThumb scene={t.scene} /> : <img src={t.image} alt="" loading="lazy" />}
-                    </div>
-                  </button>
-                ))}
-              </div>
+            {SEARCH_TABS.includes(tab) && <SearchBox value={query} onChange={search} placeholder="Search everything" />}
+
+            {searching && (
+              <CreateSearch
+                key={query}
+                query={query}
+                tab={tab}
+                templates={allDesigns}
+                uploaded={dbElements}
+                backgrounds={dbBackgrounds}
+                photo={bgPhoto}
+                library={library}
+                dragItem={dragItem}
+                templateTile={templateTile}
+              />
             )}
 
-            {tab === "elements" && <ElementsPanel dragItem={dragItem} uploaded={dbElements} />}
-            {tab === "background" && (
+            {!searching && tab === "templates" && <div className="cp-grid two">{allDesigns.map(templateTile)}</div>}
+
+            {!searching && tab === "elements" && <ElementsPanel dragItem={dragItem} uploaded={dbElements} />}
+            {!searching && tab === "background" && (
               <BackgroundPanel
                 color={toHex(bg)}
                 photo={bgPhoto}

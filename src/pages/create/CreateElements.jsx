@@ -4,11 +4,12 @@
 //   <folder> single SVG/PNG elements from public/trial-elements/<folder>/
 //            and the ones uploaded on /admin, by category
 //   Icons    basic everyday icons first, then the Khulqidesign icon sets
-// Vectors and footage are downloads, not design parts, so they aren't here.
+// Searching happens in CreateSearch, one box for the whole library.
 import { useEffect, useMemo, useRef, useState } from "react";
 import Icon from "./CreateIcons";
 import { basicIcons } from "./basicIcons";
 import { shapes, svgDataUrl } from "./createLibrary";
+import { clearRecent as forgetRecent, loadRecent, saveRecent, withRecent } from "./createRecent";
 import { elementCategories, elements as trialElements } from "../../data/elementsData";
 import { iconSets, membersOf } from "../../data/iconsData";
 
@@ -35,8 +36,6 @@ function mergeCategories(uploaded) {
   return [...merged.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-const has = (q, ...texts) => texts.some((t) => t.toLowerCase().includes(q));
-
 function SectionHead({ title, count, onAll }) {
   return (
     <div className="cp-head">
@@ -52,19 +51,23 @@ function SectionHead({ title, count, onAll }) {
 
 /* ---------- tiles ---------- */
 
+export function ShapeTile({ shape, dragItem }) {
+  return (
+    <button className="cp-tile" {...dragItem("shape", shape.id)} title={shape.label}>
+      <span className={`shape-${shape.id}`} />
+    </button>
+  );
+}
+
 function ShapeTiles({ list, dragItem }) {
   return (
     <div className="cp-grid three">
-      {list.map((s) => (
-        <button key={s.id} className="cp-tile" {...dragItem("shape", s.id)} title={s.label}>
-          <span className={`shape-${s.id}`} />
-        </button>
-      ))}
+      {list.map((s) => <ShapeTile key={s.id} shape={s} dragItem={dragItem} />)}
     </div>
   );
 }
 
-function ElementTile({ el, dragItem }) {
+export function ElementTile({ el, dragItem }) {
   return (
     <button className="cp-tile" {...dragItem("element", el.id)} title={el.name}>
       {/* crossOrigin: the same CDN file is read again when it's placed */}
@@ -73,7 +76,7 @@ function ElementTile({ el, dragItem }) {
   );
 }
 
-function BasicTile({ icon, dragItem }) {
+export function BasicTile({ icon, dragItem }) {
   return (
     <button className="cp-tile" {...dragItem("basic", icon.id)} title={icon.name}>
       <img src={svgDataUrl(icon.svg)} alt={icon.name} draggable={false} />
@@ -81,10 +84,10 @@ function BasicTile({ icon, dragItem }) {
   );
 }
 
-function SetIconTile({ icon, dragItem }) {
+export function SetIconTile({ icon, dragItem }) {
   return (
     <button className="cp-tile" {...dragItem("icon", icon.id)} title={icon.name}>
-      <img src={icon.image} alt={icon.name} draggable={false} loading="lazy" />
+      <img src={icon.image} alt={icon.name} draggable={false} loading="lazy" crossOrigin="anonymous" />
     </button>
   );
 }
@@ -127,18 +130,6 @@ export function PagedGrid({ items, renderTile, columns = "three" }) {
 
 /* ---------- recently used ---------- */
 
-// kept in this browser, newest first; later it can move to the account
-const RECENT_KEY = "kd-create-recent";
-const RECENT_MAX = 24;
-
-function loadRecent() {
-  try {
-    return JSON.parse(localStorage.getItem(RECENT_KEY)) || [];
-  } catch {
-    return [];
-  }
-}
-
 // a stored { kind, id } back as its tile, or null if the item is gone
 // (an element file removed from the folder, for example)
 function recentTile({ kind, id }, dragItem, elements) {
@@ -172,88 +163,25 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [] }) {
   const elements = useMemo(() => [...uploaded, ...trialElements], [uploaded]);
   const categories = useMemo(() => mergeCategories(uploaded), [uploaded]);
   const browse = categories.length >= BROWSE_FROM;
-  const [search, setSearch] = useState("");
   // the section open in full ("See all"): a category id, "icons", "recent" or null
   const [view, setView] = useState(null);
   const [recent, setRecent] = useState(loadRecent);
 
-  const remember = (kind, id) => {
-    const next = [{ kind, id }, ...recent.filter((r) => !(r.kind === kind && r.id === id))].slice(
-      0,
-      RECENT_MAX
-    );
-    setRecent(next);
-    try {
-      localStorage.setItem(RECENT_KEY, JSON.stringify(next));
-    } catch {
-      /* storage unavailable */
-    }
-  };
+  const remember = (kind, id) => setRecent(saveRecent(kind, id));
 
   // empties the recently used list and goes back to the overview
   const clearRecent = () => {
     if (!window.confirm("Clear recently used elements?")) return;
     setRecent([]);
     setView(null);
-    try {
-      localStorage.removeItem(RECENT_KEY);
-    } catch {
-      /* storage unavailable */
-    }
+    forgetRecent();
   };
 
-  // every tile places its item as before, and also records it as recently
-  // used: on click, or once a drag is dropped on the page (not on drag start,
-  // so the row doesn't reorder under the pointer mid-drag)
-  const dragItem = (kind, id) => {
-    const base = placeItem(kind, id);
-    return {
-      ...base,
-      onClick: () => {
-        remember(kind, id);
-        base.onClick();
-      },
-      onDragEnd: (e) => {
-        if (e.dataTransfer.dropEffect !== "none") remember(kind, id);
-      },
-    };
-  };
+  const dragItem = withRecent(placeItem, remember);
 
   const recentTiles = recent.map((r) => recentTile(r, dragItem, elements)).filter(Boolean);
 
-  const q = search.trim().toLowerCase();
   const elementTile = (el) => <ElementTile key={el.id} el={el} dragItem={dragItem} />;
-
-  /* search results across every section */
-  if (q) {
-    const foundShapes = shapes.filter((s) => has(q, s.label));
-    const foundElements = elements.filter((e) => has(q, e.name, e.category, (e.keywords ?? []).join(" ")));
-    const foundBasic = basicIcons.filter((i) => has(q, i.name));
-    const foundSet = setIcons.filter((i) => has(q, i.name, i.keywords.join(" ")));
-    const none = !foundShapes.length && !foundElements.length && !foundBasic.length && !foundSet.length;
-
-    return (
-      <>
-        <SearchBox value={search} onChange={setSearch} />
-        {none && <p className="cp-hint">No elements found for “{search}”.</p>}
-        {foundShapes.length > 0 && (
-          <><SectionHead title="Shapes" /><ShapeTiles list={foundShapes} dragItem={dragItem} /></>
-        )}
-        {foundElements.length > 0 && (
-          <><SectionHead title="Elements" /><PagedGrid items={foundElements} renderTile={elementTile} /></>
-        )}
-        {foundBasic.length + foundSet.length > 0 && (
-          <>
-            <SectionHead title="Icons" />
-            <div className="cp-grid three">
-              {foundBasic.map((i) => <BasicTile key={i.id} icon={i} dragItem={dragItem} />)}
-              {foundSet.map((i) => <SetIconTile key={i.id} icon={i} dragItem={dragItem} />)}
-            </div>
-          </>
-        )}
-      </>
-    );
-  }
 
   /* one section in full */
   if (view) {
@@ -310,8 +238,6 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [] }) {
   /* overview: sections that scroll down, a short row each */
   return (
     <>
-      <SearchBox value={search} onChange={setSearch} />
-
       {/* the last things used, newest first; hidden until there are some */}
       {recentTiles.length > 0 && (
         <>

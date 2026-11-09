@@ -1,8 +1,7 @@
 // The Background tab of the Create editor, laid out like VistaCreate's: one
 // click fills the whole page with a color or a photo. The page keeps a single
 // background, so choosing one replaces the last.
-import { useState } from "react";
-import { PagedGrid, SearchBox } from "./CreateElements";
+import { PagedGrid } from "./CreateElements";
 
 const COLORS = [
   "#ffffff", "#f4f1ea", "#d9d9d9", "#8a8f98", "#1d1d1d", "#000000",
@@ -10,19 +9,17 @@ const COLORS = [
   "#7c3aed", "#ec4899", "#fde2e4", "#dbeafe", "#dcfce7", "#fef3c7",
 ];
 
-function BackgroundPanel({ color, photo, photos, onColor, dragItem }) {
-  const [search, setSearch] = useState("");
-  const q = search.trim().toLowerCase();
-  const found = q
-    ? photos.filter((p) => `${p.name} ${p.category} ${p.keywords.join(" ")}`.toLowerCase().includes(q))
-    : photos;
+export function PhotoTile({ photo, on, dragItem }) {
+  return (
+    <button className={`cp-tile wide ${on ? "is-on" : ""}`} {...dragItem("background", photo.id)} title={photo.name}>
+      <img src={photo.thumb} alt={photo.name} draggable={false} loading="lazy" crossOrigin="anonymous" />
+    </button>
+  );
+}
 
+function BackgroundPanel({ color, photo, photos, onColor, dragItem }) {
   return (
     <>
-      {photos.length > 0 && <SearchBox value={search} onChange={setSearch} placeholder="Search backgrounds" />}
-
-      {!q && (
-        <>
           <p className="cp-label">Color</p>
           <div className="cp-swatches">
             {COLORS.map((c) => (
@@ -42,26 +39,14 @@ function BackgroundPanel({ color, photo, photos, onColor, dragItem }) {
             <span>Custom color</span>
             <strong>{color.toUpperCase()}</strong>
           </label>
-        </>
-      )}
 
       {photos.length > 0 && (
         <>
           <p className="cp-label">Photos</p>
-          {found.length === 0 && <p className="cp-hint">No backgrounds found for “{search}”.</p>}
           <PagedGrid
-            items={found}
+            items={photos}
             columns="two"
-            renderTile={(p) => (
-              <button
-                key={p.id}
-                className={`cp-tile wide ${photo === p.url ? "is-on" : ""}`}
-                {...dragItem("background", p.id)}
-                title={p.name}
-              >
-                <img src={p.thumb} alt={p.name} draggable={false} loading="lazy" crossOrigin="anonymous" />
-              </button>
-            )}
+            renderTile={(p) => <PhotoTile key={p.id} photo={p} on={photo === p.url} dragItem={dragItem} />}
           />
         </>
       )}
