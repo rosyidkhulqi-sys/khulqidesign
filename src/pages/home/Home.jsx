@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { categories } from "../../data/categories";
 import { PLANS } from "../../data/plans";
 import { supabase } from "../../lib/supabaseClient";
+import { SERVICES_OPEN } from "../../data/services";
+import HomeServices from "./HomeServices";
 import "./Home.css";
 
 const libraryLinks = [
@@ -315,6 +317,9 @@ function Home({ setPage, user = null }) {
       </section>
       )}
 
+      {/* SERVICES — the full section once the studio takes projects */}
+      {SERVICES_OPEN && <HomeServices />}
+
       {/* CLOSING — the last call for visitors, then the small print every
           reader may need: services coming soon (the footer's service links
           scroll here) and how to reach us */}
@@ -327,15 +332,23 @@ function Home({ setPage, user = null }) {
           </>
         )}
         <div className="home-close-notes">
-          <p id="services">
-            <span>Services · Coming soon</span>
-            Custom logos, brand identity, UI and motion design open later.
-          </p>
-          <p id="contact">
-            Questions or licensing?{" "}
-            <a href="mailto:khulqidesign@mail.com">Email</a> ·{" "}
-            <a href="https://wa.me/6285236752860">WhatsApp</a>
-          </p>
+          {!SERVICES_OPEN && (
+            <p id="services">
+              <span className="home-close-soon">Soon</span>
+              Custom logos, brand identity, UI and motion design services.
+            </p>
+          )}
+          <div className="home-close-contact" id="contact">
+            <span>Questions or licensing?</span>
+            <a className="home-chip" href="mailto:khulqidesign@mail.com">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m4 7 8 6 8-6" /></svg>
+              Email
+            </a>
+            <a className="home-chip" href="https://wa.me/6285236752860">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4A8 8 0 1 1 20 12z" /><path d="M9 10c.5 2 2 3.5 4 4" /></svg>
+              WhatsApp
+            </a>
+          </div>
         </div>
       </section>
     </main>

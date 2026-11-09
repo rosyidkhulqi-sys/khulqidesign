@@ -534,10 +534,30 @@
 
 /* CLOSING — one section: the last call, then services and contact as small print */
 .home-close {
+  position: relative;
+  overflow: hidden;
   padding: clamp(56px, 7vw, 104px) var(--page-x) clamp(40px, 4vw, 56px);
   border-top: 1px solid var(--line);
   text-align: center;
 }
+/* a soft red light behind the heading that slowly breathes */
+.home-close::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -10%;
+  width: min(900px, 120%);
+  aspect-ratio: 2 / 1;
+  background: radial-gradient(closest-side, rgba(231, 33, 46, 0.22), transparent 70%);
+  transform: translateX(-50%);
+  pointer-events: none;
+  animation: home-glow 7s ease-in-out infinite alternate;
+}
+@keyframes home-glow {
+  from { opacity: 0.55; transform: translateX(-50%) scale(0.92); }
+  to { opacity: 1; transform: translateX(-50%) scale(1.06); }
+}
+.home-close > * { position: relative; }
 .home-close h2 {
   margin: 0;
   font-size: clamp(36px, 5vw, 68px);
@@ -560,27 +580,51 @@
   font: inherit;
   font-size: 16px;
   font-weight: 600;
+  box-shadow: 0 10px 40px rgba(231, 33, 46, 0.35);
   cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
 }
-.home-close-main:hover { background: var(--red-dark); }
+.home-close-main:hover { background: var(--red-dark); transform: translateY(-1px); }
 .home-close-main .home-icon { width: 18px; height: 18px; }
-.home-close-notes { display: grid; gap: 10px; }
+
+.home-close-notes { display: grid; justify-items: center; gap: 16px; }
+.home-close-lead ~ .home-close-notes { margin-top: clamp(48px, 6vw, 72px); }
+.home-close-notes p { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; margin: 0; color: var(--muted); font-size: 15px; }
+/* the same quiet pill as "Soon" in the footer */
+.home-close-soon {
+  padding: 3px 10px;
+  border: 1px solid #3a3c3f;
+  border-radius: 999px;
+  color: #c9ccd0;
+  font-size: 12px;
+  font-weight: 600;
+}
+.home-close-contact { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; }
+.home-close-contact > span { margin-right: 4px; color: var(--muted); font-size: 15px; }
+.home-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid #3a3c3f;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 600;
+  transition: border-color 0.2s, background 0.2s;
+}
+.home-chip:hover { border-color: rgba(231, 33, 46, 0.7); background: rgba(231, 33, 46, 0.08); }
+.home-chip svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
 /* members don't get the last call, so only the small print remains */
 .home-close.is-member { padding: 32px var(--page-x); }
-/* after the button, the small print sits well below it */
-.home-close-main + .home-close-notes,
-.home-close-lead ~ .home-close-notes { margin-top: clamp(48px, 6vw, 80px); }
-.home-close-notes p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; }
-.home-close-notes span {
-  margin-right: 10px;
-  color: var(--red);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+.home-close.is-member::before { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .home-close::before { animation: none; }
 }
-.home-close-notes a { color: var(--white); text-decoration: underline; text-underline-offset: 3px; }
-.home-close-notes a:hover { color: var(--red); }
 
 
 /* RESPONSIVE */
@@ -609,6 +653,8 @@
   .home-assets,
   .home-ai,
   .home-plans { padding: 48px 20px; }
+  /* on phones the question sits above its two buttons */
+  .home-close-contact > span { flex-basis: 100%; margin: 0; }
   .home-way { padding: 22px; }
   .home-asset-grid { gap: 32px 10px; }
   .home-asset-details p { font-size: 14px; }
