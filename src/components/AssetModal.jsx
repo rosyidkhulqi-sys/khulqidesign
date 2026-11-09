@@ -117,7 +117,7 @@ function AssetModal({
 
               {premium && !asset.previewImage && (
                 <div className="asset-watermark" aria-hidden="true">
-                  {Array.from({ length: 12 }, (_, i) => (
+                  {Array.from({ length: 9 }, (_, i) => (
                     <span key={i}>KHULQIDESIGN</span>
                   ))}
                 </div>

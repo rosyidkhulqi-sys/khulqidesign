@@ -79,19 +79,22 @@ export async function readArtboard(eps) {
   return [Math.round(x2 - x1), Math.round(y2 - y1)];
 }
 
+// Tiled, as stock previews are, so no corner can be cropped out clean, but
+// spaced out so the work can still be judged. White with a hairline of dark
+// keeps it readable on both light and dark pictures.
 export function drawWatermark(ctx, w, h) {
-  const size = Math.max(18, Math.round(Math.max(w, h) / 22));
+  const size = Math.max(16, Math.round(Math.max(w, h) / 26));
   ctx.save();
   ctx.translate(w / 2, h / 2);
   ctx.rotate(-Math.PI / 7);
-  ctx.font = `700 ${size}px "DM Sans", system-ui, sans-serif`;
+  ctx.font = `600 ${size}px "DM Sans", system-ui, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillStyle = "rgba(255, 255, 255, 0.34)";
-  ctx.strokeStyle = "rgba(0, 0, 0, 0.14)";
-  ctx.lineWidth = Math.max(1, size / 18);
-  const stepX = size * 9;
-  const stepY = size * 3.2;
+  ctx.fillStyle = "rgba(255, 255, 255, 0.36)";
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.09)";
+  ctx.lineWidth = Math.max(1, size / 24);
+  const stepX = size * 12;
+  const stepY = size * 6;
   const reach = Math.hypot(w, h);
   for (let y = -reach; y <= reach; y += stepY) {
     const shift = (Math.round(y / stepY) % 2) * (stepX / 2);
