@@ -11,6 +11,7 @@ import { aiReady } from "../../lib/ai";
 import AnimateIcon from "./AnimateIcon";
 import ImageTool from "./ImageTool";
 import { MODELS, UPSCALE_MAX_SIDE, removeBackground, upscale } from "../../lib/aiLocal";
+import { rememberReturn } from "../../lib/router";
 
 // tools that already work in the browser, without the AI backend
 const ready = new Set(["animate", "cutout", "upscale"]);
@@ -75,7 +76,12 @@ function Glyph({ name }) {
 
 // animateIcon: set when "Animate" was clicked on an icon's detail view; the
 // studio then opens straight away with that icon
-function Ai({ setPage, animateIcon = null }) {
+function Ai({ setPage, user = null, animateIcon = null }) {
+  // log in or sign up, then come back to the AI page
+  const onAuth = (page) => {
+    rememberReturn("ai");
+    setPage(page);
+  };
   const [kind, setKind] = useState("image");
   const [prompt, setPrompt] = useState("");
   // the tool open in full, or null for the overview
@@ -91,7 +97,8 @@ function Ai({ setPage, animateIcon = null }) {
             {t.title} <span className="library-count">{t.sub}</span>
           </h1>
         </div>
-        <ImageTool key={tool} run={t.run} suffix={t.suffix} options={t.options} modelMb={t.modelMb} hint={t.hint} />
+        <ImageTool key={tool} run={t.run} suffix={t.suffix} options={t.options} modelMb={t.modelMb} hint={t.hint}
+                   user={user} onAuth={onAuth} />
       </section>
     );
   }

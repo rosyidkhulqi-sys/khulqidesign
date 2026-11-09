@@ -45,6 +45,31 @@ export function readLocation() {
   return { page: known.has(slug) && slug !== "home" ? slug : "notfound", query };
 }
 
+// the page to come back to after logging in, kept for this tab only
+const RETURN_KEY = "kd-return-to";
+
+export function rememberReturn(page) {
+  try {
+    sessionStorage.setItem(RETURN_KEY, page);
+  } catch {
+    /* storage unavailable: the visitor lands on Home instead */
+  }
+}
+
+// the remembered page, or null; take = also forget it
+export function returnPage(take = false) {
+  try {
+    const page = sessionStorage.getItem(RETURN_KEY);
+    if (take) sessionStorage.removeItem(RETURN_KEY);
+    return known.has(page) ? page : null;
+  } catch {
+    return null;
+  }
+}
+
+// where Google sends the visitor back to after signing in
+export const returnUrl = () => window.location.origin + pathFor(returnPage() ?? "home");
+
 export function titleFor(page) {
   return page === "home" ? pageTitles.home : `${pageTitles[page] ?? pageTitles.notfound} · Khulqidesign`;
 }

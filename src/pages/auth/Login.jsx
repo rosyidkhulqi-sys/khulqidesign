@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import AuthLayout, { GoogleIcon } from "./AuthLayout";
+import { returnPage, returnUrl } from "../../lib/router";
 
 function Login({ setPage }) {
   const [email, setEmail] = useState("");
@@ -21,7 +22,7 @@ function Login({ setPage }) {
     if (error) {
       setError(error.message);
     } else {
-      setPage("home");
+      setPage(returnPage(true) ?? "home");
     }
 
     setLoading(false);
@@ -31,7 +32,7 @@ function Login({ setPage }) {
     setError(null);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo: returnUrl() },
     });
     if (error) setError(error.message);
   };
