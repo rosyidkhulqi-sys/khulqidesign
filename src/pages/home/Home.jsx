@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { categories } from "../../data/categories";
 import { PLANS } from "../../data/plans";
 import { supabase } from "../../lib/supabaseClient";
@@ -111,11 +111,59 @@ function Arrow() {
 }
 
 // user: the signed-in account, or null; visitors also see invitations to join
+// what fades up into place as it scrolls into view; the hero is already on
+// screen, so it isn't here
+const REVEAL = [
+  ".home-section-title",
+  ".home-way",
+  ".home-asset-card",
+  ".home-asset-more",
+  ".home-ai-card",
+  ".home-plan",
+  ".home-plan-actions",
+  ".home-upgrade",
+  ".home-close > *",
+].join(", ");
+
+// Sections and cards rise in as they come into view, cards in a row one
+// after another. Nothing is hidden unless this runs (the "reveal" class on
+// the page turns it on), and people who asked for less motion see it all.
+function useReveal(root, deps) {
+  useEffect(() => {
+    const page = root.current;
+    if (!page || !("IntersectionObserver" in window)) return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const items = [...page.querySelectorAll(REVEAL)].filter((el) => !el.classList.contains("is-in"));
+    // cards in the same row follow each other by 80ms, at most 0.4s
+    for (const el of items) {
+      const i = [...el.parentElement.children].indexOf(el);
+      el.style.transitionDelay = `${Math.min(i, 5) * 80}ms`;
+    }
+    const seen = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        const el = e.target;
+        el.classList.add("is-in");
+        seen.unobserve(el);
+        // once in place, hover effects shouldn't wait for the row's delay
+        setTimeout(() => (el.style.transitionDelay = ""), 1300);
+      }
+    }, { rootMargin: "0px 0px -8% 0px" });
+    items.forEach((el) => seen.observe(el));
+    page.classList.add("reveal");
+    return () => seen.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+}
+
 function Home({ setPage, user = null }) {
+  const pageRef = useRef(null);
   const [query, setQuery] = useState("");
   // the signed-in account's plan ("free" | "premium" | "founding"), null
   // until known; it decides what the Plans section shows
   const [plan, setPlan] = useState(null);
+  // sections come and go with the account, so look again when they change
+  useReveal(pageRef, [user, plan]);
 
   useEffect(() => {
     if (!user) return;
@@ -137,7 +185,7 @@ function Home({ setPage, user = null }) {
   };
 
   return (
-    <main className="home" id="top">
+    <main className="home" id="top" ref={pageRef}>
       {/* HERO */}
       <section className="home-hero">
         <div className="home-grid-room" aria-hidden="true"><div /></div>
