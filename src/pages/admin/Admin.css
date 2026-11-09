@@ -103,6 +103,19 @@
 }
 .ad-fields input:focus,
 .ad-fields select:focus { border-color: #555; }
+.ad-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.ad-tag {
+  padding: 3px 9px;
+  border: 1px solid #333;
+  border-radius: 999px;
+  background: #17191c;
+  color: var(--white);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.ad-tag span { color: #8d939b; }
+.ad-tag:hover:not(:disabled) { border-color: #666; }
 .ad-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .ad-file { color: #6f7378; font-size: 12px; }
 .ad-keywords { margin: 0; color: #8d939b; font-size: 12px; line-height: 1.5; }

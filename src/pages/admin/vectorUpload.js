@@ -62,6 +62,10 @@ export function shortTitle(long) {
   return short ? short.charAt(0).toUpperCase() + short.slice(1).toLowerCase() : "";
 }
 
+// "logo, Logo , mark" as a clean list, for typed keyword fields
+export const parseKeywords = (text) =>
+  [...new Set(text.split(/[,;\n]/).map((k) => k.trim().toLowerCase()).filter(Boolean))];
+
 export async function readMetadata(jpg) {
   const meta = (await exifr.parse(jpg, { iptc: true, xmp: true, tiff: false, exif: false })) ?? {};
   const longTitle = text(meta.title) || text(meta.ObjectName) || text(meta.Headline);

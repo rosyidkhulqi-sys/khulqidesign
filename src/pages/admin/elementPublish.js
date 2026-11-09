@@ -4,11 +4,14 @@
 // the public bucket, at most 3000 px on its long side.
 import { supabase } from "../../lib/supabaseClient";
 import { uploadToR2 } from "../../lib/r2";
-import { readMetadata, shortTitle } from "./vectorUpload";
+import { parseKeywords, readMetadata, shortTitle } from "./vectorUpload";
 
 export const ELEMENT_CATEGORIES = ["stickers", "illustrations", "shapes", "frames", "lines", "badges", "other"];
 export const BACKGROUND_CATEGORIES = ["abstract", "gradient", "nature", "pattern", "texture", "holiday", "business", "other"];
 export const categoriesOf = (kind) => (kind === "background" ? BACKGROUND_CATEGORIES : ELEMENT_CATEGORIES);
+
+// as on MiriCanvas: a short name and a few keywords that really fit
+export const MAX_KEYWORDS = 25;
 
 const MAX_PX = 3000;
 const THUMB_PX = 480;
@@ -21,38 +24,60 @@ const orientationOf = (w, h) => (w === h ? "square" : w > h ? "landscape" : "por
 
 export const isElementFile = (file) => ["svg", "png", "jpg", "jpeg"].includes(extOf(file.name));
 
-async function svgSize(file) {
+const clean = (node) => node?.textContent.replace(/\s+/g, " ").trim() ?? "";
+
+// SVG metadata lives in the file itself: <title> and <desc>, and Dublin Core
+// (title, description, subject) when Illustrator or Inkscape wrote it
+function svgMetadata(svg) {
+  const own = (name) => [...svg.children].find((n) => n.localName === name);
+  const dublin = (name) => svg.getElementsByTagNameNS("http://purl.org/dc/elements/1.1/", name)[0];
+  const subject = dublin("subject");
+  return {
+    longTitle: clean(dublin("title")) || clean(own("title")),
+    description: clean(dublin("description")) || clean(own("desc")),
+    keywords: subject ? [...subject.getElementsByTagNameNS("*", "li")].map(clean).filter(Boolean) : [],
+  };
+}
+
+async function readSvg(file) {
   const doc = new DOMParser().parseFromString(await file.text(), "image/svg+xml");
   const svg = doc.documentElement;
   if (svg.nodeName !== "svg" || doc.querySelector("parsererror")) throw new Error("This SVG file can't be read");
   const box = (svg.getAttribute("viewBox") || "").trim().split(/[\s,]+/).map(Number);
   const width = box[2] || parseFloat(svg.getAttribute("width")) || 512;
   const height = box[3] || parseFloat(svg.getAttribute("height")) || 512;
-  return { width: Math.round(width), height: Math.round(height) };
+  return { width: Math.round(width), height: Math.round(height), meta: svgMetadata(svg) };
+}
+
+// what still has to be filled in; search and SEO depend on these
+export function missingField(item) {
+  if (!item.title.trim()) return "title";
+  if (!item.category) return "category";
+  if (!item.keywords.length) return "keywords";
+  return null;
 }
 
 // what a dropped file is, read before anyone publishes it
 export async function readElement(file) {
   const format = extOf(file.name) === "svg" ? "SVG" : extOf(file.name) === "png" ? "PNG" : "JPG";
   const kind = format === "JPG" ? "background" : "element";
-  let size;
+  const blank = { longTitle: "", description: "", keywords: [] };
+  let size, meta;
   if (format === "SVG") {
-    size = await svgSize(file);
+    ({ meta, ...size } = await readSvg(file));
   } else {
     const bitmap = await createImageBitmap(file);
     size = { width: bitmap.width, height: bitmap.height };
     bitmap.close();
+    meta = await readMetadata(file).catch(() => blank);
   }
-  const meta = format === "SVG"
-    ? { longTitle: "", description: "", keywords: [] }
-    : await readMetadata(file).catch(() => ({ longTitle: "", description: "", keywords: [] }));
   const fromName = baseName(file.name).replace(/[-_]+/g, " ");
   return {
     ...meta,
     ...size,
+    keywords: parseKeywords(meta.keywords.join(",")).slice(0, MAX_KEYWORDS),
     format,
     kind,
-    category: categoriesOf(kind)[0],
     title: shortTitle(meta.longTitle) || shortTitle(fromName) || fromName,
   };
 }

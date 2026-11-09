@@ -6,7 +6,8 @@ import { TEMPLATE_CATEGORIES } from "../../data/templateCategories";
 import { VECTOR_CATEGORIES } from "./vectorUpload";
 import { ICON_CATEGORIES } from "./iconPublish";
 import { FOOTAGE_CATEGORIES } from "./footagePublish";
-import { categoriesOf } from "./elementPublish";
+import { MAX_KEYWORDS, categoriesOf } from "./elementPublish";
+import { parseKeywords } from "./vectorUpload";
 
 const CATEGORIES = {
   vector: VECTOR_CATEGORIES,
@@ -19,9 +20,6 @@ const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 // these types get a watermark baked into their preview when they aren't free
 const hasWatermark = (type, license) => ["vector", "logo", "footage"].includes(type) && license !== "free";
-
-const parseKeywords = (text) =>
-  [...new Set(text.split(/[,;\n]/).map((k) => k.trim().toLowerCase()).filter(Boolean))];
 
 // row: the asset. onSaved(changes) after saving, onCancel() to close.
 function EditAsset({ row, type, onSaved, onCancel }) {
@@ -62,7 +60,7 @@ function EditAsset({ row, type, onSaved, onCancel }) {
     const changes = {
       title,
       description: form.description.trim() || null,
-      keywords: parseKeywords(form.keywords),
+      keywords: type === "element" ? parseKeywords(form.keywords).slice(0, MAX_KEYWORDS) : parseKeywords(form.keywords),
       license: form.license,
       price_cents: form.license === "exclusive" ? Math.round(price * 100) : null,
       ...(isLogo ? { industry: form.industry, style: form.style } : { category: form.category }),
@@ -89,7 +87,7 @@ function EditAsset({ row, type, onSaved, onCancel }) {
       </label>
 
       <label className="is-wide">
-        Keywords, separated by commas
+        Keywords, separated by commas{type === "element" && ` (max ${MAX_KEYWORDS})`}
         <textarea rows="2" value={form.keywords} onChange={set("keywords")} />
       </label>
 
