@@ -298,7 +298,6 @@ function Home({ setPage, user = null }) {
           ))}
         </div>
         <div className="home-plan-actions">
-          {!user && <button className="home-plan-main" onClick={go("register")}>Create free account</button>}
           <button onClick={go("pricing")}>Compare plans <Arrow /></button>
         </div>
       </section>
