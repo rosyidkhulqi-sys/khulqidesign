@@ -6,7 +6,7 @@ import { supabase } from "../../lib/supabaseClient";
 import { deleteFromR2, publicUrl } from "../../lib/r2";
 import EditAsset from "./EditAsset";
 
-const LABEL = { vector: "vectors", icon: "icons", logo: "logos", footage: "clips", template: "templates" };
+const LABEL = { vector: "vectors", icon: "icons", logo: "logos", footage: "clips", template: "templates", element: "elements" };
 
 function ManageAssets({ type = "vector", refreshKey }) {
   const [rows, setRows] = useState(null);
@@ -55,12 +55,14 @@ function ManageAssets({ type = "vector", refreshKey }) {
       return;
     }
     const files = [
-      ...row.files.map((f) => ["private", f.key]),
+      // templates and Create elements are read by the editor, so they're public
+      ...row.files.map((f) => [f.bucket ?? (type === "template" ? "public" : "private"), f.key]),
       ["public", row.thumb_key],
       ["public", row.preview_key],
       ["public", row.preview_video_key],
     ].filter(([, key]) => key);
-    await Promise.allSettled(files.map(([bucket, key]) => deleteFromR2(bucket, key)));
+    const unique = [...new Map(files.map((f) => [f.join("/"), f])).values()];
+    await Promise.allSettled(unique.map(([bucket, key]) => deleteFromR2(bucket, key)));
     setBusy(null);
     setRows((list) => list.filter((r) => r.id !== row.id));
   };
@@ -75,7 +77,7 @@ function ManageAssets({ type = "vector", refreshKey }) {
       <div className="ad-list">
         {rows?.map((row) => (
           <div className={`ad-item ad-row-item is-${row.status}`} key={row.id}>
-            <div className={`ad-thumb ${type === "icon" ? "is-icon" : ""}`}>{row.thumb_key && <img src={publicUrl(row.thumb_key)} alt="" loading="lazy" />}</div>
+            <div className={`ad-thumb ${type === "icon" || type === "element" ? "is-icon" : ""}`}>{row.thumb_key && <img src={publicUrl(row.thumb_key)} alt="" loading="lazy" />}</div>
             <div className="ad-fields">
               <strong>{row.title}</strong>
               <span className="ad-file">

@@ -11,6 +11,7 @@ import ManageAssets from "./ManageAssets";
 import IconUpload from "./IconUpload.jsx";
 import FootageUpload from "./FootageUpload.jsx";
 import LogoUpload from "./LogoUpload.jsx";
+import ElementUpload from "./ElementUpload.jsx";
 
 const TABS = [
   ["vector", "Vectors", "EPS + JPG pairs"],
@@ -18,6 +19,7 @@ const TABS = [
   ["logo", "Logos", "JPG preview + AI, EPS, SVG"],
   ["footage", "Footage", "MP4 and MOV clips"],
   ["template", "Templates", "made in Create"],
+  ["element", "Elements", "SVG, PNG and JPG for Create"],
 ];
 import {
   VECTOR_CATEGORIES,
@@ -164,6 +166,8 @@ function Admin({ user, setPage }) {
         <LogoUpload onPublished={() => setPublished((n) => n + 1)} />
       ) : tab === "footage" ? (
         <FootageUpload onPublished={() => setPublished((n) => n + 1)} />
+      ) : tab === "element" ? (
+        <ElementUpload onPublished={() => setPublished((n) => n + 1)} />
       ) : tab === "template" ? (
         <div className="ad-drop">
           <strong>Templates are published from Create</strong>

@@ -6,6 +6,7 @@ import { TEMPLATE_CATEGORIES } from "../../data/templateCategories";
 import { VECTOR_CATEGORIES } from "./vectorUpload";
 import { ICON_CATEGORIES } from "./iconPublish";
 import { FOOTAGE_CATEGORIES } from "./footagePublish";
+import { categoriesOf } from "./elementPublish";
 
 const CATEGORIES = {
   vector: VECTOR_CATEGORIES,
@@ -40,7 +41,7 @@ function EditAsset({ row, type, onSaved, onCancel }) {
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
   const isLogo = type === "logo";
   const sold = Boolean(row.sold_at);
-  const categories = CATEGORIES[type] ?? [];
+  const categories = type === "element" ? categoriesOf(row.style) : CATEGORIES[type] ?? [];
   // a value set before the list changed stays selectable
   const categoryOptions = categories.includes(form.category) ? categories : [form.category, ...categories];
   const watermarkDiffers = hasWatermark(type, row.license) !== hasWatermark(type, form.license);
