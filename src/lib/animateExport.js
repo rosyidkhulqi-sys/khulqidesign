@@ -76,3 +76,124 @@ export function buildAnimatedSvg(iconEl, { preset, duration, loop }) {
 
   return new XMLSerializer().serializeToString(root);
 }
+
+// ---------------------------------------------------------- GIF and MP4
+
+const VIDEO_FPS = 30;
+const GIF_FPS = 20;
+// with Loop on, a clip plays over and over until it lasts about this long,
+// since a one-second video is hard to use on its own
+const MP4_LOOP_SECONDS = 5;
+
+const PROPS = ["transform", "opacity", "fillOpacity", "strokeOpacity", "strokeDashoffset"];
+
+const loadImage = (url) =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("This frame couldn't be drawn"));
+    img.src = url;
+  });
+
+// A hidden copy of the animation that can be stopped at any moment. Each
+// moment is frozen into a still SVG (a picture of a running animation can't
+// be asked for a given time) and drawn on a white canvas.
+// A clip is whole passes of the motion, so it loops cleanly; passesFor(seconds)
+// says how many, given how long one takes.
+async function renderFrames(iconEl, options, fps, passesFor, onFrame) {
+  const file = buildAnimatedSvg(iconEl, { ...options, loop: false });
+  const host = document.createElement("div");
+  host.style.cssText = `position:fixed;left:-10000px;top:0;width:${FILE_PX}px;height:${FILE_PX}px`;
+  host.innerHTML = file;
+  document.body.appendChild(host);
+
+  try {
+    const live = host.firstElementChild;
+    const animations = live.getAnimations({ subtree: true });
+    animations.forEach((a) => a.pause());
+    const length = Math.max(...animations.map((a) => a.effect.getComputedTiming().endTime));
+    const perPass = Math.max(1, Math.round((length / 1000) * fps));
+
+    const nodes = [...live.querySelectorAll("*")];
+    const moving = [...new Set(animations.map((a) => a.effect.target))];
+
+    const canvas = document.createElement("canvas");
+    canvas.width = FILE_PX;
+    canvas.height = FILE_PX;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const total = perPass * passesFor(length / 1000);
+
+    for (let n = 0; n < total; n++) {
+      // the last frame lands on the end of the motion
+      const t = perPass > 1 ? ((n % perPass) / (perPass - 1)) * length : length;
+      animations.forEach((a) => (a.currentTime = t));
+
+      const still = live.cloneNode(true);
+      const copies = still.querySelectorAll("*");
+      for (const el of moving) {
+        const seen = getComputedStyle(el);
+        const copy = copies[nodes.indexOf(el)];
+        copy.style.animation = "none";
+        for (const prop of PROPS) copy.style[prop] = seen[prop];
+      }
+
+      const url = URL.createObjectURL(
+        new Blob([new XMLSerializer().serializeToString(still)], { type: "image/svg+xml" })
+      );
+      try {
+        const img = await loadImage(url);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, FILE_PX, FILE_PX);
+        ctx.drawImage(img, 0, 0, FILE_PX, FILE_PX);
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+      await onFrame(canvas, ctx, n, total);
+    }
+  } finally {
+    host.remove();
+  }
+}
+
+// onProgress(0..1). Resolves a GIF Blob.
+export async function buildGif(iconEl, options, onProgress) {
+  const { GIFEncoder, quantize, applyPalette } = await import("gifenc");
+  const gif = GIFEncoder();
+  await renderFrames(iconEl, options, GIF_FPS, () => 1, (_canvas, ctx, n, total) => {
+    const { data } = ctx.getImageData(0, 0, FILE_PX, FILE_PX);
+    const palette = quantize(data, 256);
+    gif.writeFrame(applyPalette(data, palette), FILE_PX, FILE_PX, {
+      palette,
+      delay: 1000 / GIF_FPS,
+      repeat: options.loop ? 0 : -1,
+    });
+    onProgress?.((n + 1) / total);
+  });
+  gif.finish();
+  return new Blob([gif.bytes()], { type: "image/gif" });
+}
+
+// onProgress(0..1). Resolves an MP4 Blob, or throws where the browser has no
+// H.264 encoder.
+export async function buildMp4(iconEl, options, onProgress) {
+  const { Output, Mp4OutputFormat, BufferTarget, CanvasSource, QUALITY_HIGH, canEncodeVideo } = await import("mediabunny");
+  const supported = await canEncodeVideo("avc", { width: FILE_PX, height: FILE_PX, bitrate: QUALITY_HIGH }).catch(() => false);
+  if (!supported) throw new Error("This browser can't make MP4 files. Try the latest Chrome, Edge or Safari, or export a GIF.");
+
+  const passesFor = (seconds) => (options.loop ? Math.max(1, Math.ceil(MP4_LOOP_SECONDS / seconds)) : 1);
+
+  let output;
+  let source;
+  await renderFrames(iconEl, options, VIDEO_FPS, passesFor, async (canvas, _ctx, n, total) => {
+    if (!output) {
+      output = new Output({ format: new Mp4OutputFormat(), target: new BufferTarget() });
+      source = new CanvasSource(canvas, { codec: "avc", bitrate: QUALITY_HIGH });
+      output.addVideoTrack(source, { frameRate: VIDEO_FPS });
+      await output.start();
+    }
+    await source.add(n / VIDEO_FPS, 1 / VIDEO_FPS);
+    onProgress?.((n + 1) / total);
+  });
+  await output.finalize();
+  return new Blob([output.target.buffer], { type: "video/mp4" });
+}

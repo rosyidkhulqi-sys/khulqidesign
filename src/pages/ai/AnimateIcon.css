@@ -179,8 +179,11 @@
 .animate-export button.is-ready:hover:not(:disabled) { border-color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.06); }
 .animate-export button.is-ready:disabled { opacity: 0.45; cursor: default; }
 
+.animate-error { margin: 10px 0 0; color: #ff8b92; font-size: 13px; }
+
 .animate-note {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   margin: 10px 0 0;

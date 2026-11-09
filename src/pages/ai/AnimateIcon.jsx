@@ -1,12 +1,12 @@
 // Animate an icon: pick an icon from the library and a motion preset, and
 // watch it play. Presets are plain CSS, so this works without AI or a server.
-// Anyone can try it; exporting asks for an account. Animated SVG is built here
-// in the browser (lib/animateExport.js); GIF, MP4 and Lottie aren't built yet.
+// Anyone can try it; exporting asks for an account. Animated SVG, GIF and MP4
+// are built here in the browser (lib/animateExport.js); Lottie isn't yet.
 import { useEffect, useRef, useState } from "react";
 import "./AnimateIcon.css";
 import { iconSets, membersOf } from "../../data/iconsData";
 import { fileSlug, loadIconSvg } from "../../lib/iconEditor";
-import { buildAnimatedSvg } from "../../lib/animateExport";
+import { buildAnimatedSvg, buildGif, buildMp4 } from "../../lib/animateExport";
 import { saveBlob } from "../../lib/downloads";
 import { askLogin } from "../../lib/authGate";
 import { keepAnimate, takeAnimate } from "../../lib/aiKeep";
@@ -67,6 +67,9 @@ function AnimateIcon({ initialIcon = null, user = null }) {
   const [playing, setPlaying] = useState(true);
   const [svg, setSvg] = useState(null);
   const stage = useRef(null);
+  // the export being made: { kind, progress }, or null
+  const [making, setMaking] = useState(null);
+  const [exportError, setExportError] = useState(null);
 
   // the icon's SVG, cleaned, so its parts can move one by one
   useEffect(() => {
@@ -131,17 +134,38 @@ function AnimateIcon({ initialIcon = null, user = null }) {
     });
   }, [svg, preset, duration, run]);
 
-  const exportSvg = () => {
+  const exportAs = async (kind) => {
     if (!user) {
       keepAnimate({ icon, preset, speed, loop });
       askLogin("download");
       return;
     }
     const iconEl = stage.current?.querySelector("svg.animate-icon");
-    if (!iconEl) return;
-    const file = buildAnimatedSvg(iconEl, { preset, duration, loop });
-    saveBlob(new Blob([file], { type: "image/svg+xml" }), `${fileSlug(icon.name)}-${preset}.svg`);
+    if (!iconEl || making) return;
+    const options = { preset, duration, loop };
+    const name = `${fileSlug(icon.name)}-${preset}`;
+    setExportError(null);
+
+    if (kind === "svg") {
+      const file = buildAnimatedSvg(iconEl, options);
+      saveBlob(new Blob([file], { type: "image/svg+xml" }), `${name}.svg`);
+      return;
+    }
+
+    setMaking({ kind, progress: 0 });
+    try {
+      const build = kind === "gif" ? buildGif : buildMp4;
+      const blob = await build(iconEl, options, (progress) => setMaking({ kind, progress }));
+      saveBlob(blob, `${name}.${kind}`);
+    } catch (e) {
+      setExportError(e.message || "This export didn't work. Try again.");
+    } finally {
+      setMaking(null);
+    }
   };
+
+  const exportLabel = (kind, label) =>
+    making?.kind === kind ? `${Math.round(making.progress * 100)}%` : label;
 
   const pick = (setter) => (value) => {
     setter(value);
@@ -256,18 +280,21 @@ function AnimateIcon({ initialIcon = null, user = null }) {
 
         <p className="animate-label">Export</p>
         <div className="animate-export">
-          <button className="is-ready" onClick={exportSvg} disabled={!svg}>
+          <button className="is-ready" onClick={() => exportAs("gif")} disabled={!svg || Boolean(making)}>
+            {exportLabel("gif", "GIF")}
+          </button>
+          <button className="is-ready" onClick={() => exportAs("mp4")} disabled={!svg || Boolean(making)}>
+            {exportLabel("mp4", "MP4")}
+          </button>
+          <button className="is-ready" onClick={() => exportAs("svg")} disabled={!svg || Boolean(making)}>
             Animated SVG<PremiumTag />
           </button>
-          {["GIF", "MP4", "Lottie JSON"].map((f) => (
-            <button key={f} disabled>
-              {f}
-            </button>
-          ))}
+          <button disabled>Lottie JSON</button>
         </div>
+        {exportError && <p className="animate-error" role="alert">{exportError}</p>}
         <p className="animate-note">
-          <span className="ai-soon">Coming soon</span>
-          GIF, MP4 and Lottie JSON.
+          GIF and MP4 have a white background.
+          <span className="ai-soon">Lottie coming soon</span>
         </p>
       </div>
     </div>

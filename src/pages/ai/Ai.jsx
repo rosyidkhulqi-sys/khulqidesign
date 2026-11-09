@@ -56,7 +56,7 @@ const glyphs = {
 };
 
 const tools = [
-  ["animate", "Animate an icon", "Turn a flat or outline icon into a Lottie, GIF or MP4 animation.", ["Icons"]],
+  ["animate", "Animate an icon", "Turn an icon into a GIF, MP4 or animated SVG, right in your browser.", ["Icons"]],
   ["template", "Template from text", "Describe a post or poster; AI fills one of our templates with your words and colors.", ["Templates"]],
   ["video", "Image to video", "Bring a vector or still frame to life as a short clip.", ["Vectors", "Footage"]],
   ["image", "Generate an image", "New artwork in the style of our vector collections.", ["Vectors"]],
