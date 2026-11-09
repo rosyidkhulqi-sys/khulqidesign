@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { categories } from "../../data/categories";
 import { PLANS } from "../../data/plans";
+import { supabase } from "../../lib/supabaseClient";
 import "./Home.css";
 
 const libraryLinks = [
@@ -10,15 +11,6 @@ const libraryLinks = [
   { page: "templates", label: "Templates" },
   { page: "footage", label: "Footage" },
   { page: "create", label: "Create" },
-];
-
-// The studio opens later (about a year from Nov 2026); until then Services
-// only says what's coming, and every call to action points to a product.
-const services = [
-  ["01", "Brand identity", "Custom logos and brand systems, designed from scratch."],
-  ["02", "UI design", "Digital products that feel clear, useful, and distinctly yours."],
-  ["03", "Motion design", "Stories brought to life through rhythm, type, and movement."],
-  ["04", "Client projects", "A flexible creative partnership for ambitious briefs."],
 ];
 
 // How it works: the three ways to get a design here, in the order most
@@ -119,6 +111,15 @@ function Arrow() {
 // user: the signed-in account, or null; visitors also see invitations to join
 function Home({ setPage, user = null }) {
   const [query, setQuery] = useState("");
+  // the signed-in account's plan ("free" | "premium" | "founding"), null
+  // until known; it decides what the Plans section shows
+  const [plan, setPlan] = useState(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("plan").eq("id", user.id).maybeSingle()
+      .then(({ data }) => setPlan(data?.plan ?? "free"));
+  }, [user]);
 
   const go = (page) => (e) => {
     e?.preventDefault();
@@ -277,7 +278,18 @@ function Home({ setPage, user = null }) {
         </div>
       </section>
 
-      {/* PLANS — Free and Premium at a glance */}
+      {/* PLANS — visitors see the plans; a Free member gets one quiet line
+          about Premium; Premium and Founding members see nothing to buy */}
+      {user && plan === "free" && (
+        <section className="home-upgrade">
+          <p>
+            <strong>You're on Free</strong> · {PLANS.freePerDay} downloads a day. Premium unlocks every
+            asset, SVG and EPS, with no credit line, from ${PLANS.yearly} a month.
+          </p>
+          <button onClick={go("pricing")}>See Premium <Arrow /></button>
+        </section>
+      )}
+      {!user && (
       <section className="home-plans">
         <div className="home-section-title is-dark">
           <div>
@@ -301,40 +313,13 @@ function Home({ setPage, user = null }) {
           <button onClick={go("pricing")}>Compare plans <Arrow /></button>
         </div>
       </section>
+      )}
 
-      {/* SERVICES */}
-      <section className="home-services" id="services">
-        <div className="home-section-title is-dark">
-          <div>
-            <p className="home-label">Services · Coming soon</p>
-            <h2>Creative<br /><em>solutions.</em></h2>
-          </div>
-          <p>Custom design work<br />opens later.</p>
-        </div>
-
-        {/* not links yet: the studio isn't taking projects */}
-        <div className="home-service-list is-soon">
-          {services.map(([number, title, copy]) => (
-            <div className="home-service" key={number}>
-              <span>{number}</span>
-              <div><h3>{title}</h3><p>{copy}</p></div>
-              <em className="home-soon">Coming soon</em>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CREATOR */}
-      <section className="home-creator">
-        <div className="home-creator-art" aria-hidden="true">
-          <span>KD</span><span>DESIGN</span><span>ASSETS</span>
-        </div>
-        <div className="home-creator-copy">
-          <p className="home-label">Made by creatives, for creatives</p>
-          <h2>Build beyond<br />the ordinary.</h2>
-          <p>Every asset is created with care, ready to customize, and licensed to keep your workflow moving.</p>
-          <a href="#assets">Start exploring <Arrow /></a>
-        </div>
+      {/* SERVICES — one line until custom work opens; the footer's service
+          links scroll here */}
+      <section className="home-soon-strip" id="services">
+        <p className="home-label">Services · Coming soon</p>
+        <p>Custom logos, brand identity, UI and motion design open later. Until then, everything here is ready to use.</p>
       </section>
 
       {/* LAST CALL — one clear next step before the footer */}
@@ -346,12 +331,11 @@ function Home({ setPage, user = null }) {
         </section>
       )}
 
-      {/* CONTACT */}
+      {/* CONTACT — a quiet line before the footer */}
       <section className="home-contact" id="contact">
-        <p className="home-label">Questions or licensing?</p>
-        <h2>Get in<br /><em>touch.</em></h2>
+        <p>Questions or licensing?</p>
         <div>
-          <a href="mailto:khulqidesign@mail.com">Email me <Arrow /></a>
+          <a href="mailto:khulqidesign@mail.com">Email <Arrow /></a>
           <a href="https://wa.me/6285236752860">WhatsApp <Arrow /></a>
         </div>
       </section>

@@ -225,9 +225,7 @@
   text-transform: uppercase;
 }
 
-.home-section-title h2,
-.home-creator-copy h2,
-.home-contact h2 {
+.home-section-title h2 {
   margin-top: 14px;
   font-size: clamp(32px, 4vw, 56px);
   font-weight: 600;
@@ -422,103 +420,46 @@
 .home-asset-more a:hover .home-icon { transform: translateX(4px); }
 
 
-/* SERVICES */
+/* SERVICES — a single line while custom work is coming soon */
 
-.home-services { padding: clamp(48px, 6vw, 88px) var(--page-x); }
-.home-service-list { border-top: 1px solid var(--line); }
-.home-service {
-  display: grid;
-  grid-template-columns: 50px 1fr auto;
-  align-items: center;
-  gap: 30px;
-  min-height: 104px;
-  padding: 0 15px;
-  border-bottom: 1px solid var(--line);
-  transition: background 0.25s, padding 0.25s;
-}
-.home-service:hover { background: var(--red); padding: 0 30px; }
-/* Coming soon: no hover, a quiet pill instead of the arrow */
-.home-service-list.is-soon .home-service:hover { background: none; padding: 0 15px; }
-.home-service-list.is-soon h3 { color: #b9bbbe; }
-.home-soon {
-  padding: 4px 10px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  color: var(--muted);
-  font-size: 12px;
-  font-style: normal;
-  white-space: nowrap;
-}
-.home-service > span { color: var(--muted); font-size: 14px; }
-.home-service h3 { font-size: clamp(22px, 2.2vw, 30px); font-weight: 500; letter-spacing: -0.045em; }
-.home-service p { margin-top: 7px; color: var(--muted); font-size: 16px; }
-.home-service:hover p,
-.home-service:hover > span { color: white; }
-
-
-/* CREATOR */
-
-.home-creator {
-  display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  min-height: 520px;
-  background: var(--paper);
-  color: #111;
-}
-.home-creator-art {
-  display: grid;
-  align-content: center;
-  padding: 5vw;
-  overflow: hidden;
-  background: var(--red);
-  color: white;
-}
-.home-creator-art span {
-  font-size: clamp(56px, 7.5vw, 116px);
-  font-weight: 700;
-  letter-spacing: -0.1em;
-  line-height: 0.72;
-  white-space: nowrap;
-}
-.home-creator-art span:nth-child(2) {
-  -webkit-text-stroke: 2px white;
-  color: transparent;
-  transform: translateX(12%);
-}
-.home-creator-copy { align-self: center; padding: clamp(48px, 6vw, 96px); }
-.home-creator-copy h2 { margin: 14px 0 24px; }
-.home-creator-copy > p:not(.home-label) { max-width: 460px; color: #555; line-height: 1.7; }
-.home-creator-copy a {
+.home-soon-strip {
   display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 20px;
+  padding: 28px var(--page-x);
+  border-top: 1px solid var(--line);
+}
+.home-soon-strip .home-label { margin: 0; }
+.home-soon-strip p:not(.home-label) { margin: 0; color: var(--muted); font-size: 16px; }
+
+
+/* CONTACT — a quiet line before the footer */
+
+.home-contact {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  width: 210px;
-  margin-top: 32px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid #111;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  gap: 16px;
+  padding: 28px var(--page-x);
+  border-top: 1px solid var(--line);
 }
-.home-creator-copy a:hover { color: var(--red); border-color: var(--red); }
-
-
-/* CONTACT */
-
-.home-contact { padding: clamp(48px, 6vw, 88px) var(--page-x); }
-.home-contact h2 { margin: 14px 0 36px; }
-.home-contact > div { display: flex; gap: 15px; }
+.home-contact p { margin: 0; color: #b2b3b4; font-size: 16px; }
+.home-contact > div { display: flex; gap: 12px; }
 .home-contact > div a {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 30px;
-  padding: 18px 24px;
-  border: 1px solid #444;
-  transition: background 0.2s;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 1px solid #3a3c3f;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 600;
+  transition: border-color 0.2s;
 }
-.home-contact > div a:first-child,
-.home-contact > div a:hover { background: var(--red); border-color: var(--red); }
+.home-contact > div a:hover { border-color: var(--white); }
+.home-contact .home-icon { width: 16px; height: 16px; }
 
 
 /* JOIN — the hero's invitation for visitors */
@@ -586,6 +527,36 @@
 .home-plan ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
 .home-plan li { position: relative; padding-left: 24px; color: #d4d6d9; font-size: 16px; }
 .home-plan li::before { content: "✓"; position: absolute; left: 0; color: var(--red); font-weight: 700; }
+/* a Free member's one line about Premium, in place of the plans */
+.home-upgrade {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 32px;
+  margin: clamp(32px, 4vw, 56px) var(--page-x);
+  padding: 22px 28px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.home-upgrade p { margin: 0; color: #b2b3b4; font-size: 16px; line-height: 1.5; }
+.home-upgrade strong { color: var(--white); }
+.home-upgrade button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--white);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.home-upgrade .home-icon { width: 16px; height: 16px; color: var(--red); }
 .home-plan-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-top: 32px; }
 .home-plan-actions button {
   display: inline-flex;
@@ -648,8 +619,6 @@
   .home-how-grid { grid-template-columns: 1fr; }
   .home-ai-grid,
   .home-plan-grid { grid-template-columns: 1fr; }
-  .home-creator { grid-template-columns: 1fr; }
-  .home-creator-art { min-height: 360px; }
 }
 
 @media (max-width: 650px) {
@@ -663,7 +632,6 @@
   .home-section-title { flex-direction: column; align-items: flex-start; }
   .home-how,
   .home-assets,
-  .home-services,
   .home-ai,
   .home-plans,
   .home-cta { padding: 48px 20px; }
@@ -671,11 +639,4 @@
   .home-asset-grid { gap: 32px 10px; }
   .home-asset-details p { font-size: 14px; }
   .home-asset-more { flex-direction: column; align-items: flex-start; }
-  .home-service { grid-template-columns: 30px 1fr auto; min-height: 88px; }
-  .home-service p { display: none; }
-  .home-creator-art { min-height: 260px; padding: 30px; }
-  .home-creator-copy { padding: 48px 22px; }
-  .home-contact { padding: 48px 22px; }
-  .home-contact > div { flex-direction: column; align-items: stretch; }
-  .home-contact > div a { justify-content: space-between; }
 }
