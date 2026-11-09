@@ -38,6 +38,7 @@ import "./Create.css";
 import { supabase } from "../../lib/supabaseClient";
 import PublishTemplate from "./PublishTemplate";
 import { fetchTemplates } from "./templatePublish";
+import { askLogin } from "../../lib/authGate";
 
 const PANEL_KEY = "kd-create-panel";
 const PAGE_KEY = "kd-create-page";
@@ -131,7 +132,8 @@ function sceneObjects(scene) {
   );
 }
 
-function Create({ draft, clearDraft }) {
+// user: the signed-in account; anyone can design, downloading needs one
+function Create({ draft, clearDraft, user = null }) {
   const canvasEl = useRef(null);
   const stageRef = useRef(null);
   const fc = useRef(null);
@@ -797,6 +799,11 @@ function Create({ draft, clearDraft }) {
   };
 
   const exportFile = (format) => {
+    // the design is autosaved on this device, so nothing is lost meanwhile
+    if (!user) {
+      askLogin("design");
+      return;
+    }
     const c = fc.current;
     const b = boardRef.current;
     c.discardActiveObject();

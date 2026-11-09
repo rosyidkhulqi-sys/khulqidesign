@@ -3,11 +3,12 @@
 import { useEffect } from "react";
 import "./LoginDialog.css";
 
-const titles = {
-  download: "Log in to download",
-  edit: "Log in to edit and copy",
-  create: "Log in to use Create",
-  ai: "Log in to use the AI tools",
+// [title, line under it] per reason askLogin() was called with
+const copy = {
+  download: ["Log in to download", "A free account is all you need. It takes a few seconds with Google."],
+  edit: ["Log in to download and copy", "A free account is all you need. It takes a few seconds with Google."],
+  result: ["Your result is ready", "Log in or create a free account to download it. It stays here while you do."],
+  design: ["Log in to download your design", "Your design is saved on this device. Log in or create a free account to download it."],
 };
 
 const perks = [
@@ -29,8 +30,8 @@ function LoginDialog({ reason, onAuth, onClose }) {
       <div className="login-dialog" role="dialog" aria-modal="true" aria-labelledby="login-dialog-title"
            onClick={(e) => e.stopPropagation()}>
         <button className="login-dialog-close" onClick={onClose} aria-label="Close">✕</button>
-        <h2 id="login-dialog-title">{titles[reason] ?? titles.download}</h2>
-        <p>A free account is all you need. It takes a few seconds with Google.</p>
+        <h2 id="login-dialog-title">{(copy[reason] ?? copy.download)[0]}</h2>
+        <p>{(copy[reason] ?? copy.download)[1]}</p>
         <ul>
           {perks.map((p) => (
             <li key={p}>{p}</li>
@@ -41,23 +42,6 @@ function LoginDialog({ reason, onAuth, onClose }) {
         <button className="login-dialog-link" onClick={() => onAuth("pricing")}>See Premium plans</button>
       </div>
     </div>
-  );
-}
-
-// in place of the Create editor for signed-out visitors
-export function LoginWall({ onAuth }) {
-  return (
-    <section className="login-wall">
-      <h1>Design with Create</h1>
-      <p>
-        Drag in our icons, vectors and templates, add your text, and download a
-        post, poster or banner. Free with an account.
-      </p>
-      <div>
-        <button className="login-dialog-main" onClick={() => onAuth("register")}>Create free account</button>
-        <button className="login-dialog-second" onClick={() => onAuth("login")}>Log in</button>
-      </div>
-    </section>
   );
 }
 

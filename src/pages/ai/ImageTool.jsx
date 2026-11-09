@@ -1,14 +1,17 @@
 // One screen for the in-browser image tools (Remove background, Upscale):
 // pick a picture, run the model on this device, compare, download a PNG.
+// Anyone can try it; downloading the result needs an account (a free one),
+// as on remove.bg and Photoroom. The result is kept while they log in.
 import { useEffect, useRef, useState } from "react";
 import "./ImageTool.css";
 import { askLogin } from "../../lib/authGate";
+import { forgetResult, keepResult, restoreResult } from "../../lib/aiKeep";
 
 const ACCEPT = "image/png,image/jpeg,image/webp";
 
 // options: optional [[value, label], ...], e.g. the upscale factor
-// user: the signed-in account; the tools need one (a free account is enough)
-function ImageTool({ run, suffix, options = null, modelMb, hint, user }) {
+// tool: "cutout" | "upscale"; user: the signed-in account, or null
+function ImageTool({ tool, run, suffix, options = null, modelMb, hint, user }) {
   const [option, setOption] = useState(options?.[0]?.[0] ?? null);
   const [file, setFile] = useState(null);
   const [before, setBefore] = useState(null);
@@ -23,6 +26,19 @@ function ImageTool({ run, suffix, options = null, modelMb, hint, user }) {
   // release the preview URLs when they're replaced or the page closes
   useEffect(() => () => before && URL.revokeObjectURL(before), [before]);
   useEffect(() => () => after && URL.revokeObjectURL(after), [after]);
+
+  // back from logging in to download: show the kept result again
+  useEffect(() => {
+    restoreResult(tool).then((kept) => {
+      if (!kept) return;
+      setFile(kept.file);
+      setBefore(URL.createObjectURL(kept.file));
+      setResult(kept.blob);
+      setAfter(URL.createObjectURL(kept.blob));
+      if (kept.option != null) setOption(kept.option);
+      setStep("Done");
+    });
+  }, [tool]);
 
   const busy = step && step !== "Done";
 
@@ -41,10 +57,6 @@ function ImageTool({ run, suffix, options = null, modelMb, hint, user }) {
   };
 
   const start = async () => {
-    if (!user) {
-      askLogin("ai");
-      return;
-    }
     setError(null);
     setAfter(null);
     setResult(null);
@@ -61,7 +73,13 @@ function ImageTool({ run, suffix, options = null, modelMb, hint, user }) {
     }
   };
 
-  const download = () => {
+  const download = async () => {
+    if (!user) {
+      await keepResult(tool, file, result, option);
+      askLogin("result");
+      return;
+    }
+    forgetResult();
     const a = document.createElement("a");
     a.href = after;
     a.download = `${file.name.replace(/\.[^.]+$/, "")}-${suffix}${option ? `-${option}x` : ""}.png`;

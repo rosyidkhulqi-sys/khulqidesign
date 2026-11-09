@@ -10,7 +10,7 @@ import { Sparkle } from "../../components/AiSearchButton";
 import { aiReady } from "../../lib/ai";
 import AnimateIcon from "./AnimateIcon";
 import ImageTool from "./ImageTool";
-import { askLogin } from "../../lib/authGate";
+import { keptTool } from "../../lib/aiKeep";
 import { MODELS, UPSCALE_MAX_SIDE, removeBackground, upscale } from "../../lib/aiLocal";
 
 // tools that already work in the browser, without the AI backend
@@ -80,7 +80,8 @@ function Ai({ setPage, user = null, animateIcon = null }) {
   const [kind, setKind] = useState("image");
   const [prompt, setPrompt] = useState("");
   // the tool open in full, or null for the overview
-  const [tool, setTool] = useState(animateIcon ? "animate" : null);
+  // a result kept while the visitor logged in reopens its tool
+  const [tool, setTool] = useState(animateIcon ? "animate" : keptTool());
 
   if (imageTools[tool]) {
     const t = imageTools[tool];
@@ -92,7 +93,7 @@ function Ai({ setPage, user = null, animateIcon = null }) {
             {t.title} <span className="library-count">{t.sub}</span>
           </h1>
         </div>
-        <ImageTool key={tool} run={t.run} suffix={t.suffix} options={t.options} modelMb={t.modelMb} hint={t.hint}
+        <ImageTool key={tool} tool={tool} run={t.run} suffix={t.suffix} options={t.options} modelMb={t.modelMb} hint={t.hint}
                    user={user} />
       </section>
     );
@@ -176,16 +177,7 @@ function Ai({ setPage, user = null, animateIcon = null }) {
           );
           // tools that work now open; the rest are a description for now
           return open ? (
-            <button key={id} className="ai-tool is-open" onClick={() => {
-              // the Animate studio exports right away, so it asks first;
-              // the image tools ask when Start is pressed
-              if (id === "animate" && !user) {
-                askLogin("ai");
-                return;
-              }
-              setTool(id);
-              window.scrollTo(0, 0);
-            }}>
+            <button key={id} className="ai-tool is-open" onClick={() => { setTool(id); window.scrollTo(0, 0); }}>
               {body}
             </button>
           ) : (

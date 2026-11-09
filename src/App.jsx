@@ -3,8 +3,8 @@ import PageHeader from "./components/PageHeader";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "./lib/supabaseClient";
 import { pathFor, readLocation, rememberReturn, titleFor, updateHeadFor } from "./lib/router";
-import { ASK_LOGIN, askLogin } from "./lib/authGate";
-import LoginDialog, { LoginWall } from "./components/LoginDialog";
+import { ASK_LOGIN } from "./lib/authGate";
+import LoginDialog from "./components/LoginDialog";
 import "./styles/App.css";
 
 import Home from "./pages/home/Home";
@@ -42,18 +42,13 @@ function App() {
   const [searchQuery, setSearchQuery] = useState(start.query);
   // the signed-in Supabase user, or null when logged out
   const [user, setUser] = useState(null);
-  // false until the saved session has been read, so gated pages don't flash
-  const [authReady, setAuthReady] = useState(false);
   // why the "log in to continue" dialog is open, or null when it's closed
   const [loginReason, setLoginReason] = useState(null);
   // the icon sent from an icon's detail view to the Animate studio
   const [animateIcon, setAnimateIcon] = useState(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
-      setAuthReady(true);
-    });
+    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       // logged in from another tab or after Google: no need to ask any more
@@ -107,10 +102,6 @@ function App() {
   };
 
   const animate = (icon) => {
-    if (!user) {
-      askLogin("edit");
-      return;
-    }
     go("ai");
     setAnimateIcon(icon);
     window.scrollTo(0, 0);
@@ -123,10 +114,6 @@ function App() {
   };
 
   const customize = (template) => {
-    if (!user) {
-      askLogin("create");
-      return;
-    }
     setCreateDraft(template);
     go("create");
     window.scrollTo(0, 0);
@@ -205,12 +192,8 @@ function App() {
     ),
     create: (
       <Suspense fallback={null}>
-        {/* the editor is for signed-in accounts; visitors get an invitation */}
-        {user ? (
-          <Create draft={createDraft} clearDraft={() => setCreateDraft(null)} />
-        ) : (
-          authReady && <LoginWall onAuth={authFromDialog} />
-        )}
+        {/* anyone can design; downloading the design asks for an account */}
+        <Create draft={createDraft} clearDraft={() => setCreateDraft(null)} user={user} />
       </Suspense>
     ),
     admin: (
@@ -233,7 +216,7 @@ function App() {
       {loginReason && !user && (
         <LoginDialog reason={loginReason} onAuth={authFromDialog} onClose={() => setLoginReason(null)} />
       )}
-      {(page !== "create" || !user) && (
+      {page !== "create" && (
         <Footer language={language} setLanguage={setLanguage} setPage={go} />
       )}
     </>
