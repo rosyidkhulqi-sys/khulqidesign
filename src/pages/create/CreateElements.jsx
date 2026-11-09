@@ -2,13 +2,14 @@
 // a search box, then sections that scroll down, each with "See all".
 //   Shapes   drawn by the editor
 //   <folder> single SVG/PNG elements from public/trial-elements/<folder>/
+//            and the ones uploaded on /admin, by category
 //   Icons    basic everyday icons first, then the Khulqidesign icon sets
 // Vectors and footage are downloads, not design parts, so they aren't here.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Icon from "./CreateIcons";
 import { basicIcons } from "./basicIcons";
 import { shapes, svgDataUrl } from "./createLibrary";
-import { elementCategories, elements } from "../../data/elementsData";
+import { elementCategories, elements as trialElements } from "../../data/elementsData";
 import { iconSets, membersOf } from "../../data/iconsData";
 
 const setGroups = iconSets.map((set) => ({ set, icons: membersOf(set) }));
@@ -20,7 +21,19 @@ const PAGE = 60;
 
 // from this many element categories, the overview shows Browse categories
 const BROWSE_FROM = 6;
-const browse = elementCategories.length >= BROWSE_FROM;
+
+const label = (id) => id.charAt(0).toUpperCase() + id.slice(1);
+
+// the trial folders plus the uploaded parts, newest uploads first
+function mergeCategories(uploaded) {
+  const merged = new Map(elementCategories.map((c) => [c.id, { ...c, items: [...c.items] }]));
+  [...uploaded].reverse().forEach((el) => {
+    const category = merged.get(el.category);
+    if (category) category.items.unshift(el);
+    else merged.set(el.category, { id: el.category, name: label(el.category), items: [el], cover: el.thumb });
+  });
+  return [...merged.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
 
 const has = (q, ...texts) => texts.some((t) => t.toLowerCase().includes(q));
 
@@ -54,7 +67,8 @@ function ShapeTiles({ list, dragItem }) {
 function ElementTile({ el, dragItem }) {
   return (
     <button className="cp-tile" {...dragItem("element", el.id)} title={el.name}>
-      <img src={el.url} alt={el.name} draggable={false} loading="lazy" />
+      {/* crossOrigin: the same CDN file is read again when it's placed */}
+      <img src={el.thumb ?? el.url} alt={el.name} draggable={false} loading="lazy" crossOrigin="anonymous" />
     </button>
   );
 }
@@ -80,7 +94,7 @@ function CategoryTile({ name, count, picture, onOpen }) {
   return (
     <button className="cp-cat" onClick={onOpen} title={`${name} (${count})`}>
       <span className="cp-cat-pic">
-        <img src={picture} alt="" draggable={false} loading="lazy" />
+        <img src={picture} alt="" draggable={false} loading="lazy" crossOrigin="anonymous" />
       </span>
       <span className="cp-cat-name">{name}</span>
     </button>
@@ -89,7 +103,7 @@ function CategoryTile({ name, count, picture, onOpen }) {
 
 // A long grid that renders PAGE tiles at a time, adding more as it scrolls
 // into view, so a category with thousands of elements stays light.
-function PagedGrid({ items, renderTile }) {
+export function PagedGrid({ items, renderTile, columns = "three" }) {
   const [count, setCount] = useState(PAGE);
   const end = useRef(null);
 
@@ -105,7 +119,7 @@ function PagedGrid({ items, renderTile }) {
 
   return (
     <>
-      <div className="cp-grid three">{items.slice(0, count).map(renderTile)}</div>
+      <div className={`cp-grid ${columns}`}>{items.slice(0, count).map(renderTile)}</div>
       {count < items.length && <div ref={end} className="cp-more" aria-hidden="true" />}
     </>
   );
@@ -127,7 +141,7 @@ function loadRecent() {
 
 // a stored { kind, id } back as its tile, or null if the item is gone
 // (an element file removed from the folder, for example)
-function recentTile({ kind, id }, dragItem) {
+function recentTile({ kind, id }, dragItem, elements) {
   const key = `${kind}:${id}`;
   if (kind === "shape") {
     const s = shapes.find((x) => x.id === id);
@@ -154,7 +168,10 @@ function recentTile({ kind, id }, dragItem) {
 
 /* ---------- panel ---------- */
 
-function ElementsPanel({ dragItem: placeItem }) {
+function ElementsPanel({ dragItem: placeItem, uploaded = [] }) {
+  const elements = useMemo(() => [...uploaded, ...trialElements], [uploaded]);
+  const categories = useMemo(() => mergeCategories(uploaded), [uploaded]);
+  const browse = categories.length >= BROWSE_FROM;
   const [search, setSearch] = useState("");
   // the section open in full ("See all"): a category id, "icons", "recent" or null
   const [view, setView] = useState(null);
@@ -202,7 +219,7 @@ function ElementsPanel({ dragItem: placeItem }) {
     };
   };
 
-  const recentTiles = recent.map((r) => recentTile(r, dragItem)).filter(Boolean);
+  const recentTiles = recent.map((r) => recentTile(r, dragItem, elements)).filter(Boolean);
 
   const q = search.trim().toLowerCase();
   const elementTile = (el) => <ElementTile key={el.id} el={el} dragItem={dragItem} />;
@@ -210,7 +227,7 @@ function ElementsPanel({ dragItem: placeItem }) {
   /* search results across every section */
   if (q) {
     const foundShapes = shapes.filter((s) => has(q, s.label));
-    const foundElements = elements.filter((e) => has(q, e.name, e.category));
+    const foundElements = elements.filter((e) => has(q, e.name, e.category, (e.keywords ?? []).join(" ")));
     const foundBasic = basicIcons.filter((i) => has(q, i.name));
     const foundSet = setIcons.filter((i) => has(q, i.name, i.keywords.join(" ")));
     const none = !foundShapes.length && !foundElements.length && !foundBasic.length && !foundSet.length;
@@ -240,7 +257,7 @@ function ElementsPanel({ dragItem: placeItem }) {
 
   /* one section in full */
   if (view) {
-    const category = elementCategories.find((c) => c.id === view);
+    const category = categories.find((c) => c.id === view);
     return (
       <>
         <button className="cp-back" onClick={() => setView(null)}>
@@ -317,7 +334,7 @@ function ElementsPanel({ dragItem: placeItem }) {
         <>
           <SectionHead title="Browse categories" />
           <div className="cp-grid three">
-            {elementCategories.map((c) => (
+            {categories.map((c) => (
               <CategoryTile
                 key={c.id}
                 name={c.name}
@@ -335,7 +352,7 @@ function ElementsPanel({ dragItem: placeItem }) {
           </div>
         </>
       ) : (
-        elementCategories.map((c) => (
+        categories.map((c) => (
           <div key={c.id}>
             <SectionHead title={c.name} count={c.items.length} onAll={() => setView(c.id)} />
             <div className="cp-grid three">{c.items.slice(0, 6).map(elementTile)}</div>
@@ -365,7 +382,7 @@ function ElementsPanel({ dragItem: placeItem }) {
   );
 }
 
-function SearchBox({ value, onChange }) {
+export function SearchBox({ value, onChange, placeholder = "Search elements" }) {
   return (
     <label className="cp-search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -375,7 +392,7 @@ function SearchBox({ value, onChange }) {
       </svg>
       <input
         type="search"
-        placeholder="Search elements"
+        placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

@@ -1222,3 +1222,26 @@ input[type="color"] {
   .pt-body { grid-template-columns: 1fr; }
   .pt-preview { max-width: 220px; }
 }
+
+/* Background tab */
+.cp-swatches { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.cp-swatch {
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.cp-swatch:hover { border-color: rgba(255, 255, 255, 0.6); }
+.cp-swatch.is-on, .cp-tile.is-on { outline: 2px solid #fff; outline-offset: 1px; }
+.cp-custom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  color: #c9ced6;
+  font-size: 13px;
+  cursor: pointer;
+}
+.cp-custom input { width: 32px; height: 32px; padding: 0; border: 0; background: none; cursor: pointer; }
+.cp-custom strong { margin-left: auto; color: #fff; font-size: 12px; font-weight: 500; }

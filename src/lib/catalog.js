@@ -19,6 +19,21 @@ export async function fetchPublished(type) {
   return data ?? [];
 }
 
+// a database row as a part for the Create editor: an element or a background
+export function toCreatePart(row) {
+  const file = row.files[0];
+  return {
+    id: row.code,
+    url: publicUrl(file.key),
+    thumb: publicUrl(row.thumb_key),
+    type: file.format.toLowerCase(),
+    kind: row.style === "background" ? "background" : "element",
+    category: row.category || "other",
+    name: row.title,
+    keywords: row.keywords ?? [],
+  };
+}
+
 // a database row as a Vectors page item
 export function toVector(row) {
   const file = (format) => row.files.find((f) => f.format === format);

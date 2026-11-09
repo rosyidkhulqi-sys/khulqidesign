@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import {
   ActiveSelection,
   Canvas,
@@ -15,6 +15,7 @@ import {
 } from "fabric";
 import Icon from "./CreateIcons";
 import ElementsPanel from "./CreateElements";
+import BackgroundPanel from "./CreateBackground";
 import TemplateThumb from "../../components/TemplateThumb";
 import { allTemplates } from "../../data/templatesData";
 import { icons as libraryIcons } from "../../data/iconsData";
@@ -41,6 +42,7 @@ import "./Create.css";
 import { supabase } from "../../lib/supabaseClient";
 import PublishTemplate from "./PublishTemplate";
 import { fetchTemplates } from "./templatePublish";
+import { fetchPublished, toCreatePart } from "../../lib/catalog";
 import { askLogin } from "../../lib/authGate";
 
 const PANEL_KEY = "kd-create-panel";
@@ -54,7 +56,7 @@ const DRAG_TYPE = "application/x-kd-item";
 const UNTITLED = "Untitled design";
 
 // icons, vectors and footage live inside Elements, as Canva groups them
-const tabs = ["templates", "elements", "text", "uploads", "layers", "projects", "ai"];
+const tabs = ["templates", "elements", "background", "text", "uploads", "layers", "projects", "ai"];
 const tabLabel = (t) => (t === "ai" ? "AI" : t[0].toUpperCase() + t.slice(1));
 
 const exportFormats = [
@@ -94,7 +96,7 @@ function colorsOf(obj) {
 
 // crop an image to fill w×h, like CSS object-fit: cover
 async function imageCover(src, w, h) {
-  const img = await FabricImage.fromURL(src);
+  const img = await FabricImage.fromURL(src, { crossOrigin: "anonymous" });
   const scale = Math.max(w / img.width, h / img.height);
   const cw = w / scale;
   const ch = h / scale;
@@ -157,6 +159,10 @@ function Create({ draft, clearDraft, user = null }) {
   const [smallHint, setSmallHint] = useState(true);
   const [board, setBoard] = useState({ w: 1080, h: 1080 });
   const [bg, setBg] = useState("#ffffff");
+  // the address of the page's background photo, or null
+  const [bgPhoto, setBgPhoto] = useState(null);
+  // only the last background chosen counts, however slowly a photo loads
+  const bgRequest = useRef(0);
   const [stage, setStage] = useState({ w: 800, h: 600 });
   const [zoomMode, setZoomMode] = useState("fit");
   const [tab, setTab] = useState(draft ? "templates" : "elements");
@@ -210,6 +216,10 @@ function Create({ draft, clearDraft, user = null }) {
   const [showPublish, setShowPublish] = useState(false);
   // templates published from Create, ahead of the built-in ones
   const [dbTemplates, setDbTemplates] = useState([]);
+  // elements and backgrounds uploaded on /admin
+  const [dbParts, setDbParts] = useState([]);
+  const dbElements = useMemo(() => dbParts.filter((p) => p.kind === "element"), [dbParts]);
+  const dbBackgrounds = useMemo(() => dbParts.filter((p) => p.kind === "background"), [dbParts]);
 
   useEffect(() => {
     let alive = true;
@@ -221,6 +231,11 @@ function Create({ draft, clearDraft, user = null }) {
       .then((list) => alive && setDbTemplates(list))
       .catch(() => {
         /* the built-in templates still show */
+      });
+    fetchPublished("element")
+      .then((rows) => alive && setDbParts(rows.map(toCreatePart)))
+      .catch(() => {
+        /* the built-in elements still show */
       });
     return () => {
       alive = false;
@@ -320,7 +335,8 @@ function Create({ draft, clearDraft, user = null }) {
     const c = fc.current;
     const pages = pagesRef.current;
     if (!projectRef.current) {
-      if (pages.list.length === 1 && c && !c.getObjects().length) return true;
+      // a page with only a background is a design too
+      if (pages.list.length === 1 && c && !c.getObjects().length && !c.backgroundImage && toHex(c.backgroundColor) === "#ffffff") return true;
       switchProject(newProjectId());
     }
     const b = boardRef.current;
@@ -362,6 +378,12 @@ function Create({ draft, clearDraft, user = null }) {
     }, 250);
   };
 
+  const syncBackground = () => {
+    const c = fc.current;
+    setBg(c.backgroundColor || "#ffffff");
+    setBgPhoto(c.backgroundImage?.getSrc() ?? null);
+  };
+
   const setBoardSize = (size) => {
     boardRef.current = size;
     setBoard(size);
@@ -378,7 +400,7 @@ function Create({ draft, clearDraft, user = null }) {
     await c.loadFromJSON(list[i]);
     c.discardActiveObject();
     c.requestRenderAll();
-    setBg(c.backgroundColor || "#ffffff");
+    syncBackground();
     setActive(null);
     syncPages();
     history.current.busy = false;
@@ -396,7 +418,7 @@ function Create({ draft, clearDraft, user = null }) {
     await c.loadFromJSON(p.list[i]);
     c.discardActiveObject();
     c.requestRenderAll();
-    setBg(c.backgroundColor || "#ffffff");
+    syncBackground();
     setActive(null);
     history.current.busy = false;
     syncPages();
@@ -472,7 +494,7 @@ function Create({ draft, clearDraft, user = null }) {
     const c = fc.current;
     c.clear();
     c.backgroundColor = "#ffffff";
-    setBg("#ffffff");
+    syncBackground();
     setActive(null);
     resetPages();
   };
@@ -573,6 +595,7 @@ function Create({ draft, clearDraft, user = null }) {
     renameDesign(t.title[0].toUpperCase() + t.title.slice(1));
     c.clear();
     c.backgroundColor = t.scene.bg;
+    setBgPhoto(null);
     setBg(t.scene.bg);
     setBoardSize({ w: t.scene.w, h: t.scene.h });
     objects.forEach((o) => c.add(o));
@@ -634,7 +657,7 @@ function Create({ draft, clearDraft, user = null }) {
   };
 
   const addImage = async (src, point) => {
-    const img = await FabricImage.fromURL(src);
+    const img = await FabricImage.fromURL(src, { crossOrigin: "anonymous" });
     const b = boardRef.current;
     img.scale(Math.min((b.w * 0.5) / img.width, (b.h * 0.5) / img.height));
     place(img, point);
@@ -651,10 +674,11 @@ function Create({ draft, clearDraft, user = null }) {
     }
     // element files: SVG stays editable vector, PNG goes in as an image
     if (kind === "element") {
-      const el = libraryElements.find((e) => e.id === id);
-      if (el.type === "png") return addImage(el.url, point);
+      const el = dbElements.find((e) => e.id === id) ?? libraryElements.find((e) => e.id === id);
+      if (el.type !== "svg") return addImage(el.url, point);
       return fetch(el.url).then((r) => r.text()).then((markup) => addSvg(markup, point));
     }
+    if (kind === "background") return setBackgroundPhoto(dbBackgrounds.find((p) => p.id === id).url);
     if (kind === "upload") {
       const u = uploads.find((x) => x.id === id);
       return u.type === "svg" ? addSvg(u.data, point) : addImage(u.data, point);
@@ -847,9 +871,25 @@ function Create({ draft, clearDraft, user = null }) {
     render();
   };
 
+  // a color replaces the photo; otherwise the choice wouldn't show
   const setBackground = (color) => {
+    bgRequest.current += 1;
+    fc.current.backgroundImage = undefined;
     fc.current.backgroundColor = color;
     setBg(color);
+    setBgPhoto(null);
+    fc.current.requestRenderAll();
+    commit();
+  };
+
+  // a canvas background: it fills the page, stays behind every element, and
+  // saves, undoes and exports with the design
+  const setBackgroundPhoto = async (src) => {
+    const request = ++bgRequest.current;
+    const img = await imageCover(src, boardRef.current.w, boardRef.current.h);
+    if (request !== bgRequest.current) return;
+    fc.current.backgroundImage = img;
+    setBgPhoto(src);
     fc.current.requestRenderAll();
     commit();
   };
@@ -1153,7 +1193,16 @@ function Create({ draft, clearDraft, user = null }) {
               </div>
             )}
 
-            {tab === "elements" && <ElementsPanel dragItem={dragItem} />}
+            {tab === "elements" && <ElementsPanel dragItem={dragItem} uploaded={dbElements} />}
+            {tab === "background" && (
+              <BackgroundPanel
+                color={toHex(bg)}
+                photo={bgPhoto}
+                photos={dbBackgrounds}
+                onColor={setBackground}
+                dragItem={dragItem}
+              />
+            )}
 
             {tab === "ai" && <AiPanel />}
 
@@ -1292,7 +1341,7 @@ function Create({ draft, clearDraft, user = null }) {
                 </div>
               )}
 
-              {isEmpty && !showNew && (
+              {isEmpty && !bgPhoto && toHex(bg) === "#ffffff" && !showNew && (
                 <div className="ct-empty">
                   <p>Start with a template, or add text, shapes and icons from the left panel.</p>
                   <div>

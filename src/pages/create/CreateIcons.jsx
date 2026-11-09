@@ -3,6 +3,7 @@
 const paths = {
   templates: <><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" /></>,
   elements: <><circle cx="7.5" cy="7.5" r="4" /><rect x="13" y="13" width="8" height="8" rx="1" /><path d="M17 3l4 7h-8z" /></>,
+  background: <><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 15L15 3M3 21L21 3M9 21L21 9" /></>,
   text: <path d="M5 7V4h14v3M12 4v16M9 20h6" />,
   icons: <path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3l-5.5 2.9 1-6.2L3 9.6l6.2-.9z" />,
   vectors: <><path d="M12 19l7-7 3 3-7 7z" /><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z" /><path d="M2 2l7.6 7.6" /><circle cx="11" cy="11" r="2" /></>,
