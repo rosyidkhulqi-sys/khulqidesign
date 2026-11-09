@@ -56,6 +56,15 @@ export function rememberReturn(page) {
   }
 }
 
+// clear it: the visitor went somewhere else instead of logging in
+export function forgetReturn() {
+  try {
+    sessionStorage.removeItem(RETURN_KEY);
+  } catch {
+    /* storage unavailable: nothing was kept */
+  }
+}
+
 // the remembered page, or null; take = also forget it
 export function returnPage(take = false) {
   try {

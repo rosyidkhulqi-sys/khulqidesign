@@ -2,7 +2,7 @@ import Footer from "./components/Footer";
 import PageHeader from "./components/PageHeader";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "./lib/supabaseClient";
-import { pathFor, readLocation, rememberReturn, titleFor, updateHeadFor } from "./lib/router";
+import { forgetReturn, pathFor, readLocation, rememberReturn, titleFor, updateHeadFor } from "./lib/router";
 import { ASK_LOGIN } from "./lib/authGate";
 import LoginDialog from "./components/LoginDialog";
 import "./styles/App.css";
@@ -30,6 +30,11 @@ const Admin = lazy(() => import("./pages/admin/Admin"));
 const Templates = lazy(() => import("./pages/templates/Templates"));
 const Footage = lazy(() => import("./pages/footage/Footage"));
 
+
+// pages on the way to an account keep the page to come back to after
+// logging in; going anywhere else drops it, so a later "Log in" from the
+// header lands on Home
+const AUTH_PAGES = ["login", "register", "pricing"];
 
 // the address the visitor arrived on decides the first page
 const start = readLocation();
@@ -68,6 +73,7 @@ function App() {
   useEffect(() => {
     const onPop = () => {
       const { page: nextPage, query } = readLocation();
+      if (!AUTH_PAGES.includes(nextPage)) forgetReturn();
       setSearchQuery(query);
       setAnimateIcon(null);
       setPage(nextPage);
@@ -83,6 +89,7 @@ function App() {
   }, [page]);
 
   const go = (nextPage, query = "") => {
+    if (!AUTH_PAGES.includes(nextPage)) forgetReturn();
     setSearchQuery(query);
     setAnimateIcon(null);
     setPage(nextPage);
