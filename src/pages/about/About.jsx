@@ -7,7 +7,8 @@ import Breadcrumb from "../../components/Breadcrumb";
 
 // [final value, what it counts up from, what follows the number, label]
 const facts = [
-  [2018, 2010, "", "Creating digital assets since"],
+  // a year stays still: starting from itself, it has nothing to count
+  [2018, 2018, "", "Creating digital assets since"],
   // placeholder until the real count comes from the database
   [34, 0, "K+", "Design assets"],
   [5, 0, "", "Asset types in one library"],
