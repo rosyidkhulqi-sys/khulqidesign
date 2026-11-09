@@ -1,14 +1,57 @@
 // About us: the company behind the site, the problem it solves and who it's
 // for. Only things that are true today; the numbers are real ones.
+import { useEffect, useRef, useState } from "react";
 import "../vectors/Vectors.css";
 import "./About.css";
 import Breadcrumb from "../../components/Breadcrumb";
 
+// [final value, what it counts up from, what follows the number, label]
 const facts = [
-  ["2018", "Creating digital assets since"],
-  ["5", "Asset types in one library"],
-  ["100%", "Of our assets made in-house"],
+  [2018, 2010, "", "Creating digital assets since"],
+  [5, 0, "", "Asset types in one library"],
+  [100, 0, "%", "Of our assets made in-house"],
 ];
+
+const COUNT_MS = 1400;
+const canCount = () =>
+  "IntersectionObserver" in window && !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+// counts up once, the first time the number comes into view
+function CountUp({ to, from, suffix }) {
+  const [value, setValue] = useState(() => (canCount() ? from : to));
+  const box = useRef(null);
+
+  useEffect(() => {
+    if (!canCount()) return;
+    let frame;
+    const seen = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      seen.disconnect();
+      const start = performance.now();
+      const tick = (now) => {
+        const t = Math.min(1, (now - start) / COUNT_MS);
+        // fast at first, settling onto the final number
+        const eased = 1 - (1 - t) ** 3;
+        setValue(Math.round(from + (to - from) * eased));
+        if (t < 1) frame = requestAnimationFrame(tick);
+      };
+      frame = requestAnimationFrame(tick);
+    }, { threshold: 0.4 });
+    seen.observe(box.current);
+    return () => {
+      seen.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [to, from]);
+
+  return (
+    <>
+      {/* screen readers get the final number, not every step */}
+      <span className="home-sr-only">{to}{suffix}</span>
+      <span ref={box} aria-hidden="true">{value}{suffix}</span>
+    </>
+  );
+}
 
 const usual = [
   "Buy the asset on a stock site",
@@ -91,9 +134,9 @@ function About({ setPage }) {
 
       <div className="ab-facts">
         <dl>
-          {facts.map(([value, label]) => (
+          {facts.map(([to, from, suffix, label]) => (
             <div key={label}>
-              <dd>{value}</dd>
+              <dd><CountUp to={to} from={from} suffix={suffix} /></dd>
               <dt>{label}</dt>
             </div>
           ))}

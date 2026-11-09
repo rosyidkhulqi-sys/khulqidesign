@@ -33,7 +33,8 @@
 .ab-facts { padding: clamp(28px, 4vw, 44px); border-radius: 10px; background: var(--paper); color: #101112; }
 .ab-facts dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin: 0; }
 .ab-facts dl > div { display: flex; flex-direction: column; }
-.ab-facts dd { margin: 0; font-size: clamp(44px, 6vw, 72px); font-weight: 600; letter-spacing: -0.05em; line-height: 1; }
+/* tabular digits, so the number doesn't jitter while counting */
+.ab-facts dd { margin: 0; font-size: clamp(44px, 6vw, 72px); font-variant-numeric: tabular-nums; font-weight: 600; letter-spacing: -0.05em; line-height: 1; }
 .ab-facts dt { margin-top: 10px; color: #555; font-size: 15px; line-height: 1.4; }
 
 /* the problem and the answer */
