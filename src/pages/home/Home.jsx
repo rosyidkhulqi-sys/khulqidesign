@@ -345,7 +345,12 @@ function Home({ setPage, user = null }) {
               Email
             </a>
             <a className="home-chip" href="https://wa.me/6285236752860">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4A8 8 0 1 1 20 12z" /><path d="M9 10c.5 2 2 3.5 4 4" /></svg>
+              {/* WhatsApp in the same line style as the mail icon: a chat bubble
+                  with a phone handset */}
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+                <path d="M9 8.5c.2 3.2 3.3 6.3 6.5 6.5l1-1.6-2.1-1-1 .9a5 5 0 0 1-2.6-2.6l.9-1-1-2.1Z" />
+              </svg>
               WhatsApp
             </a>
           </div>
