@@ -1,7 +1,7 @@
 // Animate an icon: pick an icon from the library and a motion preset, and
 // watch it play. Presets are plain CSS, so this works without AI or a server.
-// Anyone can try it; exporting asks for an account. Animated SVG, GIF and MP4
-// are built here in the browser (lib/animateExport.js); Lottie isn't yet.
+// Anyone can try it; exporting asks for an account. Every export is built here
+// in the browser (lib/animateExport.js, lib/animateLottie.js).
 import { useEffect, useRef, useState } from "react";
 import "./AnimateIcon.css";
 import { iconSets, membersOf } from "../../data/iconsData";
@@ -152,6 +152,18 @@ function AnimateIcon({ initialIcon = null, user = null }) {
       return;
     }
 
+    if (kind === "json") {
+      try {
+        // the converter loads only when someone asks for a Lottie file
+        const { buildLottie } = await import("../../lib/animateLottie");
+        const file = buildLottie(svg, { preset, duration, name: icon.name });
+        saveBlob(new Blob([file], { type: "application/json" }), `${name}.json`);
+      } catch (e) {
+        setExportError(e.message || "This export didn't work. Try again.");
+      }
+      return;
+    }
+
     setMaking({ kind, progress: 0 });
     try {
       const build = kind === "gif" ? buildGif : buildMp4;
@@ -289,12 +301,13 @@ function AnimateIcon({ initialIcon = null, user = null }) {
           <button className="is-ready" onClick={() => exportAs("svg")} disabled={!svg || Boolean(making)}>
             Animated SVG<PremiumTag />
           </button>
-          <button disabled>Lottie JSON</button>
+          <button className="is-ready" onClick={() => exportAs("json")} disabled={!svg || Boolean(making)}>
+            Lottie JSON<PremiumTag />
+          </button>
         </div>
         {exportError && <p className="animate-error" role="alert">{exportError}</p>}
         <p className="animate-note">
           GIF and MP4 have a white background.
-          <span className="ai-soon">Lottie coming soon</span>
         </p>
       </div>
     </div>

@@ -6,8 +6,8 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 
 // the file's size, and the share of it the icon fills, as on the artboard;
 // the margin leaves room for the motion
-const FILE_PX = 512;
-const ICON_SHARE = 0.6;
+export const FILE_PX = 512;
+export const ICON_SHARE = 0.6;
 
 const round = (n) => Number(n.toFixed(2));
 
