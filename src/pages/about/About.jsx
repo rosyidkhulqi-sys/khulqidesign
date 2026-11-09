@@ -1,5 +1,5 @@
-// About: who is behind the site and what it stands for. Only things that are
-// true today; no big numbers until there are real ones to show.
+// About us: the company behind the site and what it stands for. Only things
+// that are true today; no big numbers until there are real ones to show.
 import "../vectors/Vectors.css";
 import "./About.css";
 import Breadcrumb from "../../components/Breadcrumb";
@@ -26,23 +26,26 @@ function About({ setPage }) {
   return (
     <section className="vectors-page about-page">
       <div className="library-head">
-        <Breadcrumb setPage={setPage} current="About" />
+        <Breadcrumb setPage={setPage} current="About us" />
         <h1>
-          About <span className="library-count">Who makes Khulqidesign</span>
+          About us <span className="library-count">Who we are</span>
         </h1>
       </div>
 
       <div className="ab-story">
-        <h2>Made by a designer, for people who need design done.</h2>
+        <h2>We make design easier to find, change and use.</h2>
         <p>
-          Khulqidesign began with one graphic designer drawing logos, illustrations and icons,
-          and selling them as digital assets since 2018. After years of making files for other
-          people's projects, the same questions kept coming up: where do I find it, can I change
-          it, and am I allowed to use it?
+          Khulqidesign is a design asset platform from Indonesia, built for designers and
+          businesses around the world. We bring icons, vectors, logos, templates and footage
+          together with the tools to make them your own.
         </p>
         <p>
-          So this site puts the whole job in one place. Find an asset, make it yours in the
-          browser, and download it with a license you can actually read.
+          The whole job happens in one place: find an asset, change it in your browser, and
+          download it with a license you can actually read.
+        </p>
+        <p>
+          Khulqidesign was founded by Khulqi Rosyid, a graphic designer who has been creating
+          digital assets since 2018.
         </p>
       </div>
 
@@ -70,7 +73,7 @@ function About({ setPage }) {
       <div className="ab-contact">
         <div>
           <h2>Questions or licensing?</h2>
-          <p>Write to us and you'll hear back from the designer.</p>
+          <p>Write to us and we'll get back to you.</p>
         </div>
         <div className="ab-contact-links">
           <a href="mailto:khulqidesign@mail.com">Email</a>

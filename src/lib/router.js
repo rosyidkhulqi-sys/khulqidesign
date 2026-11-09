@@ -20,7 +20,7 @@ export const pageTitles = {
   account: "Account",
   pricing: "Pricing",
   license: "License",
-  about: "About",
+  about: "About us",
   terms: "Terms of Service",
   privacy: "Privacy Policy",
   login: "Log in",

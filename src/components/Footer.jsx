@@ -16,7 +16,7 @@ const products = [
 ];
 
 const company = [
-  ["about", "About"],
+  ["about", "About us"],
   ["pricing", "Pricing"],
   ["license", "License"],
   ["terms", "Terms of Service"],
