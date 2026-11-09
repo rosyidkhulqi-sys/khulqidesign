@@ -22,10 +22,11 @@ const company = [
   ["privacy", "Privacy Policy"],
 ];
 
-// social profiles join this list once they have real addresses
 const contact = [
   ["mailto:khulqidesign@mail.com", "Email"],
   ["https://wa.me/6285236752860", "WhatsApp"],
+  ["https://www.instagram.com/khulqidesign/", "Instagram"],
+  ["https://www.pinterest.com/khulqidesign/", "Pinterest"],
 ];
 
 function Footer({ language, setLanguage, setPage }) {
@@ -79,7 +80,9 @@ function Footer({ language, setLanguage, setPage }) {
         <div>
           <h3>Get in touch</h3>
           {contact.map(([href, label]) => (
-            <a key={label} href={href}>{label}</a>
+            <a key={label} href={href} {...(href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
+              {label}
+            </a>
           ))}
         </div>
 
