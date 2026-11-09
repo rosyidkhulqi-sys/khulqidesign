@@ -3,6 +3,7 @@ import { pathFor } from "../lib/router";
 import { Sparkle } from "./AiSearchButton";
 import SideMenu from "./SideMenu";
 import { accountInfo } from "../lib/account";
+import { supabase } from "../lib/supabaseClient";
 import "./PageHeader.css";
 
 function Avatar({ info }) {
@@ -28,7 +29,19 @@ const navItems = [
 function PageHeader({ page, setPage, user, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  // the owner's accounts get an Admin link in the menus
+  const [isAdmin, setIsAdmin] = useState(false);
   const accountRef = useRef(null);
+
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    supabase.rpc("is_admin").then(({ data }) => alive && setIsAdmin(data === true));
+    return () => {
+      alive = false;
+    };
+  }, [user]);
+  const admin = Boolean(user) && isAdmin;
 
   const go = (target) => (e) => {
     // Cmd/Ctrl-click opens the real address in a new tab
@@ -122,6 +135,7 @@ function PageHeader({ page, setPage, user, onLogout }) {
                   <a href={pathFor("account")} role="menuitem" onClick={go("account")}>Account</a>
                   <a href={pathFor("downloads")} role="menuitem" onClick={go("downloads")}>Your downloads</a>
                   <a href={pathFor("create")} role="menuitem" onClick={go("create")}>Your designs</a>
+                  {admin && <a href={pathFor("admin")} role="menuitem" onClick={go("admin")}>Admin</a>}
                   <hr />
                   <button
                     role="menuitem"
@@ -157,6 +171,7 @@ function PageHeader({ page, setPage, user, onLogout }) {
         page={page}
         setPage={setPage}
         user={user}
+        isAdmin={admin}
         onLogout={onLogout}
       />
     </>

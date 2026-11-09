@@ -12,7 +12,7 @@ const menuItems = [
   { key: "create", label: "Create" },
 ];
 
-function SideMenu({ open, onClose, page, setPage, user, onLogout }) {
+function SideMenu({ open, onClose, page, setPage, user, isAdmin = false, onLogout }) {
   const go = (p) => (e) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey) return;
     e.preventDefault();
@@ -71,6 +71,11 @@ function SideMenu({ open, onClose, page, setPage, user, onLogout }) {
         {user && (
           <a href={pathFor("account")} className={`sidemenu-link ${page === "account" ? "active" : ""}`} onClick={go("account")}>
             Account
+          </a>
+        )}
+        {isAdmin && (
+          <a href={pathFor("admin")} className={`sidemenu-link ${page === "admin" ? "active" : ""}`} onClick={go("admin")}>
+            Admin
           </a>
         )}
         <a href={pathFor("pricing")} className={`sidemenu-link ${page === "pricing" ? "active" : ""}`} onClick={go("pricing")}>
