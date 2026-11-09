@@ -30,6 +30,21 @@
 }
 .downloads-clear:hover { border-color: #4a4d51; color: white; }
 
+.downloads-note { margin: -8px 0 20px; color: var(--muted); font-size: 14px; }
+.downloads-note.is-error { color: #ff8b92; }
+.downloads-note button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--white);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.downloads-thumb { width: 64px; height: 48px; border-radius: 6px; background: var(--surface-2); }
+.downloads-info .downloads-row-error { color: #ff8b92; }
+.downloads-again:disabled { opacity: 0.45; cursor: default; }
+
 .downloads-tabs {
   display: flex;
   gap: 4px;

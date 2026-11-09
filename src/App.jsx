@@ -141,7 +141,7 @@ function App() {
     ),
     downloads: (
       <Suspense fallback={null}>
-        <Downloads setPage={go} />
+        <Downloads setPage={go} user={user} />
       </Suspense>
     ),
     account: (
