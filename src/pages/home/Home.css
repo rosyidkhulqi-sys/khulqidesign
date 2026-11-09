@@ -71,7 +71,7 @@
   justify-content: center;
   gap: 10px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
 }
@@ -99,7 +99,7 @@
   max-width: 660px;
   margin: 0 auto 32px;
   color: #b2b3b4;
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.6;
 }
 
@@ -194,13 +194,13 @@
 
 .home-counter { display: flex; flex-direction: column; }
 .home-counter strong { font-size: 26px; }
-.home-counter span { color: var(--muted); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+.home-counter span { color: var(--muted); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
 
 .home-scroll-cue {
   display: flex;
   align-items: center;
   gap: 16px;
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -214,12 +214,12 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 30px;
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 }
 
 .home-label {
   color: var(--red);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -247,7 +247,7 @@
 
 /* HOW IT WORKS */
 
-.home-how { padding: clamp(64px, 7vw, 110px) var(--page-x); border-top: 1px solid var(--line); }
+.home-how { padding: clamp(48px, 6vw, 88px) var(--page-x); border-top: 1px solid var(--line); }
 .home-how-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -263,9 +263,9 @@
   transition: border-color 0.2s;
 }
 .home-way:hover { border-color: #3a3a3a; }
-.home-way-n { color: var(--red); font-size: 13px; font-weight: 700; letter-spacing: 0.1em; }
+.home-way-n { color: var(--red); font-size: 14px; font-weight: 700; letter-spacing: 0.1em; }
 .home-way h3 { margin-top: 18px; font-size: 26px; font-weight: 600; letter-spacing: -0.03em; }
-.home-way > p { margin-top: 10px; color: #aeb0b2; font-size: 15px; line-height: 1.6; }
+.home-way > p { margin-top: 10px; color: #aeb0b2; font-size: 16px; line-height: 1.6; }
 
 /* the path as small steps joined by arrows */
 .home-way-flow {
@@ -281,7 +281,7 @@
   align-items: center;
   gap: 6px;
   color: #d6d7d8;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
 }
 .home-way-flow li:not(:last-child)::after { content: "→"; color: #666; }
@@ -315,7 +315,7 @@
 
 /* BROWSE ASSETS (light section) */
 
-.home-assets { padding: clamp(64px, 7vw, 110px) var(--page-x); background: var(--paper); color: #101112; }
+.home-assets { padding: clamp(48px, 6vw, 88px) var(--page-x); background: var(--paper); color: #101112; }
 
 .home-asset-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 38px 18px; }
 .home-asset-card { min-width: 0; }
@@ -360,7 +360,7 @@
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.7);
   color: white;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -371,7 +371,7 @@
   padding: 12px 15px;
   background: var(--red);
   color: white;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -382,12 +382,12 @@
 
 .home-asset-details { padding-top: 14px; }
 .home-asset-details h3 { font-size: 18px; font-weight: 600; }
-.home-asset-details p { margin-top: 6px; color: #555; font-size: 14px; line-height: 1.45; }
+.home-asset-details p { margin-top: 6px; color: #555; font-size: 15px; line-height: 1.45; }
 .home-asset-details span {
   display: block;
   margin-top: 8px;
   color: #888;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -424,7 +424,7 @@
 
 /* SERVICES */
 
-.home-services { padding: clamp(64px, 7vw, 110px) var(--page-x); }
+.home-services { padding: clamp(48px, 6vw, 88px) var(--page-x); }
 .home-service-list { border-top: 1px solid var(--line); }
 .home-service {
   display: grid;
@@ -449,9 +449,9 @@
   font-style: normal;
   white-space: nowrap;
 }
-.home-service > span { color: var(--muted); font-size: 13px; }
+.home-service > span { color: var(--muted); font-size: 14px; }
 .home-service h3 { font-size: clamp(22px, 2.2vw, 30px); font-weight: 500; letter-spacing: -0.045em; }
-.home-service p { margin-top: 7px; color: var(--muted); font-size: 15px; }
+.home-service p { margin-top: 7px; color: var(--muted); font-size: 16px; }
 .home-service:hover p,
 .home-service:hover > span { color: white; }
 
@@ -496,7 +496,7 @@
   margin-top: 32px;
   padding-bottom: 14px;
   border-bottom: 1px solid #111;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -506,7 +506,7 @@
 
 /* CONTACT */
 
-.home-contact { padding: clamp(64px, 7vw, 110px) var(--page-x); }
+.home-contact { padding: clamp(48px, 6vw, 88px) var(--page-x); }
 .home-contact h2 { margin: 14px 0 36px; }
 .home-contact > div { display: flex; gap: 15px; }
 .home-contact > div a {
@@ -542,7 +542,7 @@
 
 /* FREE AI TOOLS — continues the light library section */
 .home-ai {
-  padding: clamp(64px, 7vw, 110px) var(--page-x);
+  padding: clamp(48px, 6vw, 88px) var(--page-x);
   border-top: 1px solid #d9d9d6;
   background: var(--paper);
   color: #101112;
@@ -564,13 +564,13 @@
 }
 .home-ai-card:hover { border-color: #101112; transform: translateY(-2px); }
 .home-ai-card h3 { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.03em; }
-.home-ai-card p { margin: 10px 0 24px; color: #555; font-size: 15px; line-height: 1.6; }
+.home-ai-card p { margin: 10px 0 24px; color: #555; font-size: 16px; line-height: 1.6; }
 .home-ai-card span { display: inline-flex; align-items: center; gap: 8px; margin-top: auto; font-size: 14px; font-weight: 600; }
 .home-ai-card .home-icon { width: 16px; height: 16px; color: var(--red); }
 
 
 /* PLANS — Free and Premium at a glance; no colored frame on Premium */
-.home-plans { padding: clamp(64px, 7vw, 110px) var(--page-x); border-top: 1px solid var(--line); }
+.home-plans { padding: clamp(48px, 6vw, 88px) var(--page-x); border-top: 1px solid var(--line); }
 .home-plan-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
 .home-plan {
   padding: 28px;
@@ -584,7 +584,7 @@
 .home-plan-price strong { font-size: 44px; font-weight: 600; letter-spacing: -0.04em; }
 .home-plan-price span { color: var(--muted); font-size: 14px; }
 .home-plan ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
-.home-plan li { position: relative; padding-left: 24px; color: #d4d6d9; font-size: 15px; }
+.home-plan li { position: relative; padding-left: 24px; color: #d4d6d9; font-size: 16px; }
 .home-plan li::before { content: "✓"; position: absolute; left: 0; color: var(--red); font-weight: 700; }
 .home-plan-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-top: 32px; }
 .home-plan-actions button {
@@ -605,7 +605,7 @@
 
 /* LAST CALL */
 .home-cta {
-  padding: clamp(72px, 9vw, 130px) var(--page-x);
+  padding: clamp(56px, 7vw, 104px) var(--page-x);
   border-top: 1px solid var(--line);
   text-align: center;
 }
@@ -658,7 +658,7 @@
   .home-search { grid-template-columns: auto 1fr; padding-left: 15px; }
   .home-search input { padding: 18px 12px; }
   .home-search button { grid-column: 1 / -1; min-height: 50px; }
-  .home-hero-copy { font-size: 15px; }
+  .home-hero-copy { font-size: 16px; }
   .home-hero-bottom { padding: 0 22px 22px; }
   .home-section-title { flex-direction: column; align-items: flex-start; }
   .home-how,
@@ -666,16 +666,16 @@
   .home-services,
   .home-ai,
   .home-plans,
-  .home-cta { padding: 64px 20px; }
+  .home-cta { padding: 48px 20px; }
   .home-way { padding: 22px; }
   .home-asset-grid { gap: 32px 10px; }
-  .home-asset-details p { font-size: 13px; }
+  .home-asset-details p { font-size: 14px; }
   .home-asset-more { flex-direction: column; align-items: flex-start; }
   .home-service { grid-template-columns: 30px 1fr auto; min-height: 88px; }
   .home-service p { display: none; }
   .home-creator-art { min-height: 260px; padding: 30px; }
-  .home-creator-copy { padding: 64px 22px; }
-  .home-contact { padding: 64px 22px; }
+  .home-creator-copy { padding: 48px 22px; }
+  .home-contact { padding: 48px 22px; }
   .home-contact > div { flex-direction: column; align-items: stretch; }
   .home-contact > div a { justify-content: space-between; }
 }

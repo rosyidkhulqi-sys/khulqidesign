@@ -73,6 +73,12 @@
 
 .site-login,
 .site-register { padding: 10px 18px; font-size: 15px; font-weight: 600; }
+/* header labels stay on one line ("Log in" used to break in two) */
+.site-nav a,
+.site-downloads,
+.site-header .site-pricing,
+.site-login,
+.site-register { white-space: nowrap; }
 .site-header .site-login:hover { color: #c9ccd0; }
 .site-header .site-register { background: var(--red); border-radius: 999px; color: white; transition: background 0.2s; }
 .site-register:hover { background: var(--red-dark); }
@@ -188,7 +194,7 @@
 }
 
 /* when space runs out, drop the Downloads label and tighten gaps before shrinking text */
-@media (max-width: 1360px) {
+@media (max-width: 1520px) {
   .site-nav { gap: 24px; }
   .site-downloads span { display: none; }
   .site-login,
