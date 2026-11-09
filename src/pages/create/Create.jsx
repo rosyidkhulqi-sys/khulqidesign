@@ -21,6 +21,7 @@ import { icons as libraryIcons } from "../../data/iconsData";
 import { elements as libraryElements } from "../../data/elementsData";
 import { basicIcons } from "./basicIcons";
 import { artboardPresets, fonts, svgDataUrl, textPresets } from "./createLibrary";
+import { attachGuides } from "./createGuides";
 import ProjectsPanel from "./CreateProjects";
 import AiPanel from "./CreateAi";
 import {
@@ -913,10 +914,12 @@ function Create({ draft, clearDraft, user = null }) {
     c.on("mouse:up", onMouseUp);
     c.on("text:editing:entered", syncSelection);
     c.on("text:editing:exited", syncSelection);
+    const detachGuides = attachGuides(c, () => boardRef.current);
     Promise.resolve().then(start);
 
     return () => {
       clearTimeout(commitTimer.current);
+      detachGuides();
       c.dispose();
       fc.current = null;
     };
