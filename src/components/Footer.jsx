@@ -1,20 +1,32 @@
+// A simple footer: the brand and language on the left, then three short
+// columns. Every link appears once; the bottom line is only the copyright.
 import "./Footer.css";
 import { pathFor } from "../lib/router";
+import { SERVICES_OPEN, services } from "../data/services";
 import LanguageSwitcher from "./LanguageSwitcher";
 
 const products = [
-  ["ai", "AI"],
+  ["ai", "AI tools"],
   ["icons", "Icons"],
   ["vectors", "Vectors"],
   ["logos", "Logos"],
   ["templates", "Templates"],
   ["footage", "Footage"],
   ["create", "Create"],
-  ["pricing", "Pricing"],
-  ["license", "License"],
 ];
 
-const services = ["Brand identity", "UI design", "Motion design", "Client projects"];
+const company = [
+  ["pricing", "Pricing"],
+  ["license", "License"],
+  ["terms", "Terms of Service"],
+  ["privacy", "Privacy Policy"],
+];
+
+// social profiles join this list once they have real addresses
+const contact = [
+  ["mailto:khulqidesign@mail.com", "Email"],
+  ["https://wa.me/6285236752860", "WhatsApp"],
+];
 
 function Footer({ language, setLanguage, setPage }) {
   const go = (page) => (e) => {
@@ -31,52 +43,56 @@ function Footer({ language, setLanguage, setPage }) {
     setTimeout(() => document.getElementById("services")?.scrollIntoView(), 50);
   };
 
-  const backToTop = (e) => {
-    e.preventDefault();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
   return (
     <footer className="footer">
-      <div className="footer-columns">
-        <div>
-          <h3>Products</h3>
-          {products.map(([page, label]) => (
-            <a key={page} href={pathFor(page)} onClick={go(page)}>{label}</a>
-          ))}
-        </div>
-
-        <div>
-          {/* the studio opens later; the list says so */}
-          <h3>Services <span className="footer-soon">Soon</span></h3>
-          {services.map((s) => (
-            <a key={s} href="#services" onClick={toServices}>{s}</a>
-          ))}
-        </div>
-
-        <div>
-          <h3>Social</h3>
-          <a href="#">Instagram</a>
-          <a href="#">Facebook</a>
-          <a href="#">X / Twitter</a>
-          <a href="https://wa.me/6285236752860">WhatsApp</a>
-        </div>
-
-        <div className="footer-back">
-          <h3>Navigation</h3>
-          <a href="#top" onClick={backToTop}>Back to top <span>↑</span></a>
+      <div className="footer-main">
+        <div className="footer-brand">
+          <a href="/" onClick={go("home")} className="footer-logo" aria-label="Khulqidesign home">
+            <img src="/logo.png" alt="" />
+            <img src="/KD Logogram.png" alt="Khulqidesign" />
+          </a>
+          <p>
+            Icons, vectors, logos, templates and footage, with Create and free AI tools
+            to make them yours.
+          </p>
           <LanguageSwitcher language={language} setLanguage={setLanguage} />
         </div>
+
+        <nav className="footer-columns" aria-label="Footer">
+          <div>
+            <h3>Products</h3>
+            {products.map(([page, label]) => (
+              <a key={page} href={pathFor(page)} onClick={go(page)}>{label}</a>
+            ))}
+          </div>
+
+          <div>
+            <h3>Company</h3>
+            {company.map(([page, label]) => (
+              <a key={page} href={pathFor(page)} onClick={go(page)}>{label}</a>
+            ))}
+          </div>
+
+          {/* shown once the studio takes projects (data/services.js) */}
+          {SERVICES_OPEN && (
+            <div>
+              <h3>Services</h3>
+              {services.map(([, title]) => (
+                <a key={title} href="#services" onClick={toServices}>{title}</a>
+              ))}
+            </div>
+          )}
+
+          <div>
+            <h3>Get in touch</h3>
+            {contact.map(([href, label]) => (
+              <a key={label} href={href}>{label}</a>
+            ))}
+          </div>
+        </nav>
       </div>
 
-      <div className="footer-bottom">
-        <span>© {new Date().getFullYear()} Khulqi Design</span>
-        <span className="footer-legal">
-          <a href={pathFor("terms")} onClick={go("terms")}>Terms</a>
-          <a href={pathFor("privacy")} onClick={go("privacy")}>Privacy</a>
-          <a href={pathFor("license")} onClick={go("license")}>License</a>
-        </span>
-      </div>
+      <p className="footer-bottom">© {new Date().getFullYear()} Khulqidesign. All rights reserved.</p>
     </footer>
   );
 }
