@@ -5,6 +5,7 @@ import { industries, logoStyles } from "../../data/logosData";
 import { CATEGORIES } from "./adminCategories";
 import { MAX_KEYWORDS, categoriesOf } from "./elementPublish";
 import { parseKeywords } from "./vectorUpload";
+import { vectorCategoryLabel } from "../../data/vectorCategories";
 
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -100,7 +101,7 @@ function EditAsset({ row, type, onSaved, onCancel }) {
         <label>
           Category
           <select value={form.category} onChange={set("category")}>
-            {categoryOptions.map((c) => <option key={c} value={c}>{capitalize(c)}</option>)}
+            {categoryOptions.map((c) => <option key={c} value={c}>{type === "vector" ? vectorCategoryLabel(c) : capitalize(c)}</option>)}
           </select>
         </label>
       )}

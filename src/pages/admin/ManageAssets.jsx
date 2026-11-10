@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { deleteFromR2, publicUrl } from "../../lib/r2";
 import { industries } from "../../data/logosData";
+import { VECTOR_CATEGORY_OPTIONS } from "../../data/vectorCategories";
 import { CATEGORIES } from "./adminCategories";
 import { BACKGROUND_CATEGORIES, ELEMENT_CATEGORIES } from "./elementPublish";
 import EditAsset from "./EditAsset";
@@ -20,6 +21,7 @@ const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 // [value, label] pairs for the category filter
 function categoryOptions(type) {
   if (type === "logo") return industries;
+  if (type === "vector") return VECTOR_CATEGORY_OPTIONS;
   const list = type === "element"
     ? [...new Set([...ELEMENT_CATEGORIES, ...BACKGROUND_CATEGORIES])].sort()
     : CATEGORIES[type] ?? [];

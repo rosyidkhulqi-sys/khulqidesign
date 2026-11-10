@@ -7,6 +7,7 @@ import { ToolGlyph } from "../../components/IconControls";
 import { vectors as trialVectors } from "../../data/vectorsData";
 import { fetchPublished, toVector } from "../../lib/catalog";
 import { matchesSearch } from "../../lib/search";
+import { VECTOR_CATEGORY_OPTIONS, vectorCategoryLabel } from "../../data/vectorCategories";
 
 const formats = ["EPS", "AI", "SVG", "PNG", "JPG"];
 
@@ -46,7 +47,7 @@ function vectorSpecs(v) {
     ["JPG size", `${px(v.preview)} px`],
     ["Editable", "Yes, layered vector"],
     ["Orientation", capitalize(v.orientation)],
-    ["Category", capitalize(v.category)],
+    ["Category", vectorCategoryLabel(v.category)],
     ["Release", "Not required"],
   ];
 }
@@ -56,6 +57,7 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
   const [format, setFormat] = useState("all");
   const [license, setLicense] = useState("all");
   const [orientation, setOrientation] = useState("all");
+  const [category, setCategory] = useState("all");
   const [sort, setSort] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState(null);
@@ -96,6 +98,7 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
     .filter((v) => format === "all" || v.files.includes(format))
     .filter((v) => license === "all" || v.license === license)
     .filter((v) => orientation === "all" || v.orientation === orientation)
+    .filter((v) => category === "all" || v.category === category)
     .sort((a, b) =>
       sort === "popular" ? b.downloads - a.downloads : b.id - a.id
     );
@@ -107,13 +110,14 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
     setFormat("all");
     setLicense("all");
     setOrientation("all");
+    setCategory("all");
     setSort("popular");
     setSearch("");
     setCurrentPage(1);
   };
 
   const hasFilter =
-    format !== "all" || license !== "all" || orientation !== "all" || search;
+    format !== "all" || license !== "all" || orientation !== "all" || category !== "all" || search;
 
   const searchTag = (tag) => {
     setSelected(null);
@@ -172,6 +176,13 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
           <option value="landscape">Landscape</option>
           <option value="portrait">Portrait</option>
           <option value="square">Square</option>
+        </select>
+
+        <select value={category} onChange={reset(setCategory)} aria-label="Category">
+          <option value="all">Category</option>
+          {VECTOR_CATEGORY_OPTIONS.map(([id, label]) => (
+            <option key={id} value={id}>{label}</option>
+          ))}
         </select>
 
         {hasFilter && (

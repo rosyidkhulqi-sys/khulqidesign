@@ -7,11 +7,6 @@ import exifr from "exifr";
 import { supabase } from "../../lib/supabaseClient";
 import { uploadToR2 } from "../../lib/r2";
 
-export const VECTOR_CATEGORIES = [
-  "abstract", "background", "business", "education", "food", "holiday",
-  "nature", "people", "technology", "texture", "other",
-];
-
 const baseName = (name) => name.replace(/\.[^.]+$/, "");
 const extOf = (name) => name.split(".").pop().toLowerCase();
 

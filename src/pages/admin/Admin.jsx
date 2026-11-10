@@ -7,6 +7,7 @@ import "../vectors/Vectors.css";
 import "./Admin.css";
 import Breadcrumb from "../../components/Breadcrumb";
 import { supabase } from "../../lib/supabaseClient";
+import { VECTOR_CATEGORY_OPTIONS } from "../../data/vectorCategories";
 import ManageAssets from "./ManageAssets";
 import IconUpload from "./IconUpload.jsx";
 import FootageUpload from "./FootageUpload.jsx";
@@ -22,14 +23,11 @@ const TABS = [
   ["element", "Elements", "SVG, PNG and JPG for Create"],
 ];
 import {
-  VECTOR_CATEGORIES,
   pairFiles,
   publishVector,
   readMetadata,
   shortTitle,
 } from "./vectorUpload";
-
-const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 function Admin({ user, setPage }) {
   // "checking" | "admin" | "denied"
@@ -248,7 +246,7 @@ function Admin({ user, setPage }) {
                         onChange={(e) => update(it.base, { category: e.target.value })}
                         aria-label="Category"
                       >
-                        {VECTOR_CATEGORIES.map((c) => <option key={c} value={c}>{capitalize(c)}</option>)}
+                        {VECTOR_CATEGORY_OPTIONS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
                       </select>
                       <select
                         value={it.license}
