@@ -44,7 +44,7 @@
   overflow: hidden;
 }
 
-.home-grid-room { position: absolute; inset: 0; opacity: 0.85; perspective: 650px; }
+.home-grid-room { position: absolute; inset: 0; opacity: 0.7; perspective: 650px; }
 .home-grid-room::before,
 .home-grid-room::after,
 .home-grid-room div {
@@ -62,7 +62,8 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center, rgba(10, 11, 13, 0.55) 0, rgba(10, 11, 13, 0.15) 50%, var(--black) 95%);
+  /* fades only the edges: a soft dark tint across the middle shows as rings */
+  background: radial-gradient(ellipse at center, transparent 50%, var(--black) 95%);
 }
 
 .home-hero-content {
