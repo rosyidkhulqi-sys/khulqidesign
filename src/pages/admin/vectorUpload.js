@@ -1,7 +1,7 @@
 // Everything the admin page does to turn an EPS + JPG pair into a published
 // vector: pair files by name, read the JPG's IPTC/XMP metadata (the same the
 // owner writes for Adobe Stock and Shutterstock), read the EPS artboard, make
-// a 800 px thumbnail and a 3000 px watermarked preview in the browser, upload
+// a 1600 px thumbnail and a 3000 px watermarked preview in the browser, upload 
 // all four files to R2 and write the catalogue row.
 import exifr from "exifr";
 import { supabase } from "../../lib/supabaseClient";
@@ -139,7 +139,7 @@ export async function makeImages(jpg, watermark) {
     return {
       width: bitmap.width,
       height: bitmap.height,
-      thumb: await renderJpeg(bitmap, 800, false),
+      thumb: await renderJpeg(bitmap, 1600, false),
       preview: await renderJpeg(bitmap, 3000, watermark),
     };
   } finally {
