@@ -13,6 +13,13 @@ export const COUNTRY = "Indonesia";
 export const CONTACT = "khulqidesign@mail.com";
 export const UPDATED = "November 2026";
 
+// shared by the Terms and the Refund page, so the two can't disagree
+const REFUND_RULES = [
+  "If you haven't downloaded anything and haven't used AI credits, you can ask for a refund within 14 days of your first payment or renewal. We return what you paid minus the payment provider's processing fees, which are not returned to us.",
+  "Once files have been downloaded or credits used, that period isn't refundable, because the files can't be returned.",
+  "Exclusive logos can't be refunded once the files have been delivered, since the logo is taken off sale for everyone else.",
+];
+
 export const terms = [
   ["about", "About these terms", [
     `These terms are an agreement between you and ${OWNER}, based in ${COUNTRY}, the owner of Khulqidesign. By creating an account, downloading or buying anything here, you accept them.`,
@@ -30,9 +37,7 @@ export const terms = [
   ]],
   ["refunds", "Refunds", [
     "Cancelling stops future renewals; it isn't a refund. Premium stays active until the end of the period you've paid for.",
-    "If you haven't downloaded anything and haven't used AI credits, you can ask for a refund within 14 days of your first payment or renewal. We return what you paid minus the payment provider's processing fees, which are not returned to us.",
-    "Once files have been downloaded or credits used, that period isn't refundable, because the files can't be returned.",
-    "Exclusive logos can't be refunded once the files have been delivered, since the logo is taken off sale for everyone else.",
+    ...REFUND_RULES,
   ]],
   ["downloads", "Downloads and fair use", [
     "Free accounts can download 10 files a day. Premium downloads are unlimited under fair use: what one person needs for their own projects.",
@@ -68,6 +73,32 @@ export const terms = [
   ["changes", "Changes and governing law", [
     "We may update these terms. If a change matters, we'll tell you by email or on the site before it takes effect.",
     `These terms are governed by the laws of ${COUNTRY}.`,
+  ]],
+];
+
+export const refund = [
+  ["cancel", "How to cancel", [
+    "Log in, open your Account page and choose Manage billing, then cancel your subscription. You don't need to contact us.",
+    `If you can't reach your account, email ${CONTACT} from the address you signed up with and we'll cancel it for you.`,
+  ]],
+  ["after", "What happens after you cancel", [
+    "We don't charge you again. Premium stays active until the end of the period you've already paid for, and then your account moves to the Free plan.",
+    "Everything you downloaded while subscribed stays licensed for the projects you used it in.",
+    "Founding members who cancel lose their founding price and can't get it back later.",
+  ]],
+  ["refunds", "Refunds", [
+    "Cancelling stops future renewals; it isn't a refund.",
+    ...REFUND_RULES,
+  ]],
+  ["ask", "How to ask for a refund", [
+    `Email ${CONTACT} from the address on your account, with the date of the payment. We check it against your download history and reply by email.`,
+    "An approved refund goes back to the card you paid with. Your bank decides how long it takes to appear.",
+  ]],
+  ["failed", "If a renewal payment fails", [
+    "If we can't take a renewal payment, Premium is paused and your account moves to the Free plan. Update your card under Manage billing to continue.",
+  ]],
+  ["payments", "Who takes your payment", [
+    "Payments are processed by Dodo Payments, our merchant of record, which also handles sales tax and VAT. We never see or store your full card number.",
   ]],
 ];
 

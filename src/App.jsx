@@ -188,6 +188,11 @@ function App() {
         <Legal key="privacy" doc="privacy" setPage={go} />
       </Suspense>
     ),
+    refund: (
+      <Suspense fallback={null}>
+        <Legal key="refund" doc="refund" setPage={go} />
+      </Suspense>
+    ),
     about: (
       <Suspense fallback={null}>
         <About setPage={go} />

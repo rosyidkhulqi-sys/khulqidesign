@@ -1,11 +1,12 @@
-// Terms of Service and Privacy Policy share this page: a contents list on
+// Terms of Service, Privacy Policy and the Refund policy share this page: a contents list on
 // the left, the sections on the right. The text lives in data/legal.js.
 import "../vectors/Vectors.css";
 import "./Legal.css";
 import Breadcrumb from "../../components/Breadcrumb";
-import { UPDATED, privacy, terms } from "../../data/legal";
+import { UPDATED, privacy, refund, terms } from "../../data/legal";
 
 const docs = {
+  refund: { title: "Refund and Cancellation", lead: "How to cancel, what you keep, and when you can get your money back.", sections: refund },
   terms: { title: "Terms of Service", lead: "The rules for using Khulqidesign, in plain words.", sections: terms },
   privacy: { title: "Privacy Policy", lead: "What we collect, why, and what you can ask us to do with it.", sections: privacy },
 };

@@ -19,6 +19,7 @@ const company = [
   ["about", "About us"],
   ["pricing", "Pricing"],
   ["license", "License"],
+  ["refund", "Refund Policy"],
   ["terms", "Terms of Service"],
   ["privacy", "Privacy Policy"],
 ];

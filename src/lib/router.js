@@ -22,6 +22,7 @@ export const pageTitles = {
   license: "License",
   about: "About us",
   terms: "Terms of Service",
+  refund: "Refund and Cancellation",
   privacy: "Privacy Policy",
   login: "Log in",
   register: "Create account",
