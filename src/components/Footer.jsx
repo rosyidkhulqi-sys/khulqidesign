@@ -77,6 +77,7 @@ function Footer({ language, setLanguage, setPage }) {
               ? <a key={title} href="#services" onClick={toServices}>{title}</a>
               : <span key={title}>{title}</span>
           )}
+          <small className="footer-note">Invoiced separately, not through our checkout.</small>
         </div>
 
         <div>

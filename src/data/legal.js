@@ -5,7 +5,7 @@
 // Placeholders the owner should confirm:
 //   OWNER    the business name in the documents
 //   refunds  14 days if nothing was downloaded and no AI credits were used,
-//            minus the payment provider's fees; cancelling is not a refund
+//            in full; cancelling is not a refund
 // Each section is [id, heading, [paragraphs...]].
 
 export const OWNER = "Khulqi Design";
@@ -15,7 +15,7 @@ export const UPDATED = "November 2026";
 
 // shared by the Terms and the Refund page, so the two can't disagree
 const REFUND_RULES = [
-  "If you haven't downloaded anything and haven't used AI credits, you can ask for a refund within 14 days of your first payment or renewal. We return what you paid minus the payment provider's processing fees, which are not returned to us.",
+  "If you haven't downloaded anything and haven't used AI credits, you can ask for a full refund within 14 days of your first payment or renewal.",
   "Once files have been downloaded or credits used, that period isn't refundable, because the files can't be returned.",
   "Exclusive logos can't be refunded once the files have been delivered, since the logo is taken off sale for everyone else.",
 ];
@@ -99,6 +99,7 @@ export const refund = [
   ]],
   ["payments", "Who takes your payment", [
     "Payments are processed by Dodo Payments, our merchant of record, which also handles sales tax and VAT. We never see or store your full card number.",
+    "Custom design services are not sold through this checkout. When they open, they will be invoiced separately.",
   ]],
 ];
 

@@ -13,7 +13,7 @@ function HomeServices() {
           <p className="home-label">Services</p>
           <h2>Creative<br /><em>solutions.</em></h2>
         </div>
-        <p>Custom design work,<br />made for your brand.</p>
+        <p>Custom design work, made for your brand.<br />Invoiced separately, not through our checkout.</p>
       </div>
 
       <div className="home-service-list">

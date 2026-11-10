@@ -68,3 +68,5 @@
   .footer-back { align-items: flex-start; }
   .footer-back h3 { text-align: left; }
 }
+
+.footer-note { display: block; max-width: 190px; margin-top: 8px; color: var(--muted); font-size: 12px; line-height: 1.4; }
