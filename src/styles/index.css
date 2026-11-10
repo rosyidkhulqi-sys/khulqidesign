@@ -1,12 +1,14 @@
 /* Design tokens — shared by every page. Change brand colors and fonts here. */
 :root {
-  --black: #050505;
-  --surface: #0e0f10;
-  --surface-2: #17191b;
+  /* charcoal, as AI products use (Higgsfield, Gemini, Suno): softer than pure
+     black for long reading, and cards can stand apart from the page */
+  --black: #101114;
+  --surface: #1c1e21;
+  --surface-2: #23262a;
   --white: #f5f5f3;
   --paper: #f2f1ed;
   --muted: #929497;
-  --line: #26282a;
+  --line: #2e3135;
   --red: #f0202d;
   --red-dark: #c81d28;
 

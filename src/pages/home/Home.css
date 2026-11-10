@@ -62,7 +62,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center, rgba(5, 5, 5, 0.55) 0, rgba(5, 5, 5, 0.15) 50%, var(--black) 95%);
+  background: radial-gradient(ellipse at center, rgba(16, 17, 20, 0.55) 0, rgba(16, 17, 20, 0.15) 50%, var(--black) 95%);
 }
 
 .home-hero-content {

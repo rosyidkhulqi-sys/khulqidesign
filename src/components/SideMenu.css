@@ -16,7 +16,7 @@
   height: 100%;
   width: 300px;
   max-width: 85vw;
-  background: #0b0b0b;
+  background: var(--surface);
   border-right: 1px solid #1a1a1a;
   padding: 24px;
   transform: translateX(-100%);
