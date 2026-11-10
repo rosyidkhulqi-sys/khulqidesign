@@ -42,6 +42,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors(origin) });
   if (req.method !== "POST") return reply({ error: "method not allowed" }, 405, origin);
 
+  // the owner sees why something failed; visitors only a plain message
+  let isAdmin = false;
+
   try {
     const auth = req.headers.get("Authorization") ?? "";
     const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
@@ -58,7 +61,7 @@ Deno.serve(async (req) => {
       headers: { ...asUser, "Content-Type": "application/json" },
       body: "{}",
     });
-    const isAdmin = adminRes.ok && (await adminRes.json()) === true;
+    isAdmin = adminRes.ok && (await adminRes.json()) === true;
     if (isTestMode() && !isAdmin) return reply({ error: "not_open" }, 403, origin);
 
     const { action, plan } = await req.json();
@@ -78,7 +81,9 @@ Deno.serve(async (req) => {
 
     if (action !== "checkout") return reply({ error: "unknown action" }, 400, origin);
     const productId = productFor(plan);
-    if (!productId) return reply({ error: "unknown_plan" }, 400, origin);
+    if (!productId) {
+      return reply({ error: isTestMode() ? "unknown_plan" : "live_products_missing" }, 400, origin);
+    }
 
     // no second subscription on top of one still running (tests may repeat)
     const profiles = await (await db(`profiles?id=eq.${user.id}&select=plan,plan_renews_at`)).json();
@@ -120,6 +125,6 @@ Deno.serve(async (req) => {
     return reply({ url: (await res.json()).checkout_url }, 200, origin);
   } catch (e) {
     console.error(e);
-    return reply({ error: "billing_failed" }, 500, origin);
+    return reply({ error: "billing_failed", ...(isAdmin ? { detail: String(e) } : {}) }, 500, origin);
   }
 });

@@ -11,18 +11,20 @@ const MESSAGES = {
   already_subscribed: "You already have a plan. Manage it from your account.",
   founding_sold_out: "All founding member places have been taken.",
   no_subscription: "We couldn't find a subscription on this account.",
+  live_products_missing: "This API key is a live key, but only test products are set up.",
 };
 
 async function call(body) {
   const { data, error } = await supabase.functions.invoke("dodo-billing", { body });
   if (error) {
-    let code;
+    let code, detail;
     try {
-      code = (await error.context.json()).error;
+      ({ error: code, detail } = await error.context.json());
     } catch {
       /* not a JSON body */
     }
-    throw new Error(MESSAGES[code] ?? "Something went wrong. Please try again.");
+    // detail only ever reaches admins
+    throw new Error(MESSAGES[code] ?? detail ?? "Something went wrong. Please try again.");
   }
   return data.url;
 }
