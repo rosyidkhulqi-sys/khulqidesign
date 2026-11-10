@@ -294,3 +294,42 @@
   .ad-row-item { grid-template-columns: 56px minmax(0, 1fr); }
   .ad-actions { grid-column: 1 / -1; }
 }
+
+/* finding an uploaded asset */
+.ad-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.ad-filters input,
+.ad-filters select {
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: #0b0b0c;
+  color: var(--white);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+.ad-filters input:focus,
+.ad-filters select:focus { border-color: #555; }
+.ad-find { flex: 1 1 100%; box-sizing: border-box; }
+.ad-clear {
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid #3a3c3f;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--white);
+  font-size: 14px;
+}
+.ad-ref { margin-right: 8px; color: var(--white); font-weight: 600; }
+.ad-pager { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 18px; color: #aeb0b2; font-size: 14px; }
+.ad-pager button {
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid #3a3c3f;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--white);
+  font-size: 14px;
+}
+.ad-pager button:disabled { opacity: 0.4; }

@@ -274,6 +274,7 @@ export async function publishClip(item, onStep) {
     const { width, height, duration } = item.playable;
     const { error } = await supabase.from("assets").insert({
       code,
+      source_name: item.base,
       type: "footage",
       status: "published",
       title: item.title,

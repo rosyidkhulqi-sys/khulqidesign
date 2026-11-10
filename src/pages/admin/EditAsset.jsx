@@ -2,19 +2,9 @@
 import { useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { industries, logoStyles } from "../../data/logosData";
-import { TEMPLATE_CATEGORIES } from "../../data/templateCategories";
-import { VECTOR_CATEGORIES } from "./vectorUpload";
-import { ICON_CATEGORIES } from "./iconPublish";
-import { FOOTAGE_CATEGORIES } from "./footagePublish";
+import { CATEGORIES } from "./adminCategories";
 import { MAX_KEYWORDS, categoriesOf } from "./elementPublish";
 import { parseKeywords } from "./vectorUpload";
-
-const CATEGORIES = {
-  vector: VECTOR_CATEGORIES,
-  icon: ICON_CATEGORIES,
-  footage: FOOTAGE_CATEGORIES,
-  template: TEMPLATE_CATEGORIES,
-};
 
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 

@@ -138,6 +138,7 @@ export async function publishElement(item, onStep) {
     onStep("Saving", 1);
     const { error } = await supabase.from("assets").insert({
       code,
+      source_name: baseName(item.base),
       type: "element",
       status: "published",
       title: item.title.trim(),

@@ -289,7 +289,7 @@ function Admin({ user, setPage }) {
       </>
       )}
 
-      <ManageAssets type={tab} refreshKey={published} />
+      <ManageAssets key={tab} type={tab} refreshKey={published} />
     </section>
   );
 }

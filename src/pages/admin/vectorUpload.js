@@ -182,6 +182,7 @@ export async function publishVector(item, onStep) {
     onStep("Saving", 1);
     const { error } = await supabase.from("assets").insert({
       code,
+      source_name: item.base,
       type: "vector",
       status: "published",
       title: item.title,
