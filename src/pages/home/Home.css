@@ -44,7 +44,16 @@
   overflow: hidden;
 }
 
-.home-grid-room { position: absolute; inset: 0; opacity: 0.7; perspective: 650px; }
+.home-grid-room {
+  position: absolute;
+  inset: 0;
+  opacity: 0.7;
+  perspective: 650px;
+  /* the lines fade towards the edges; a mask leaves the page behind them one
+     flat color, where a dark gradient on top showed as faint rings */
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 50%, transparent 95%);
+  mask-image: radial-gradient(ellipse at center, #000 50%, transparent 95%);
+}
 .home-grid-room::before,
 .home-grid-room::after,
 .home-grid-room div {
@@ -58,13 +67,6 @@
 .home-grid-room div { inset: 7% 10% 0; transform: rotateX(61deg) translateY(-16%); transform-origin: center top; }
 .home-grid-room::before { top: 0; left: -25%; width: 62%; height: 100%; transform: rotateY(64deg); }
 .home-grid-room::after { top: 0; right: -25%; width: 62%; height: 100%; transform: rotateY(-64deg); }
-.home-hero::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  /* fades only the edges: a soft dark tint across the middle shows as rings */
-  background: radial-gradient(ellipse at center, transparent 50%, var(--black) 95%);
-}
 
 .home-hero-content {
   position: relative;
