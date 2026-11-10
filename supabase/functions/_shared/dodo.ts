@@ -1,5 +1,5 @@
 // What the Dodo Payments functions share. Secrets, set in Supabase:
-//   DODO_API_KEY         test keys start with dodo_test_
+//   DODO_API_KEY         from the mode in use, test or live
 //   DODO_WEBHOOK_SECRET  from the webhook endpoint in the Dodo dashboard
 
 export const env = (name: string) => {
@@ -8,10 +8,25 @@ export const env = (name: string) => {
   return value;
 };
 
-export const isTestMode = () => env("DODO_API_KEY").startsWith("dodo_test_");
+const TEST_BASE = "https://test.dodopayments.com";
+const LIVE_BASE = "https://live.dodopayments.com";
 
-export const dodoBase = () =>
-  isTestMode() ? "https://test.dodopayments.com" : "https://live.dodopayments.com";
+// A key only works on its own mode's address, so asking the test address tells
+// which kind of key this is. Remembered until the key changes.
+let checked: { key: string; test: Promise<boolean> } | null = null;
+
+export function isTestMode() {
+  const key = env("DODO_API_KEY");
+  if (checked?.key !== key) {
+    const test = fetch(`${TEST_BASE}/products?page_size=1`, { headers: { Authorization: `Bearer ${key}` } })
+      .then((res) => res.status !== 401 && res.status !== 403)
+      .catch(() => false);
+    checked = { key, test };
+  }
+  return checked.test;
+}
+
+export const dodoBase = async () => ((await isTestMode()) ? TEST_BASE : LIVE_BASE);
 
 // Test and live mode each have their own products. Add the live ids when the
 // account is verified.
@@ -24,13 +39,14 @@ const PRODUCTS: Record<"test" | "live", Record<string, string>> = {
   live: {},
 };
 
-export const productFor = (plan: string) => PRODUCTS[isTestMode() ? "test" : "live"][plan];
+export const productFor = async (plan: string) => PRODUCTS[(await isTestMode()) ? "test" : "live"][plan];
 
 // the value for profiles.plan, or null for a product that isn't a plan
 export function memberPlanOf(productId: string) {
-  const products = PRODUCTS[isTestMode() ? "test" : "live"];
-  if (productId === products.founding) return "founding";
-  if (productId === products.monthly || productId === products.yearly) return "premium";
+  for (const products of [PRODUCTS.test, PRODUCTS.live]) {
+    if (productId === products.founding) return "founding";
+    if (productId === products.monthly || productId === products.yearly) return "premium";
+  }
   return null;
 }
 

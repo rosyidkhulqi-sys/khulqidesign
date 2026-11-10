@@ -31,8 +31,8 @@ function reply(body: unknown, status: number, origin: string | null) {
   });
 }
 
-const dodo = (path: string, init: RequestInit = {}) =>
-  fetch(`${dodoBase()}${path}`, {
+const dodo = async (path: string, init: RequestInit = {}) =>
+  fetch(`${await dodoBase()}${path}`, {
     ...init,
     headers: { Authorization: `Bearer ${env("DODO_API_KEY")}`, "Content-Type": "application/json" },
   });
@@ -62,7 +62,8 @@ Deno.serve(async (req) => {
       body: "{}",
     });
     isAdmin = adminRes.ok && (await adminRes.json()) === true;
-    if (isTestMode() && !isAdmin) return reply({ error: "not_open" }, 403, origin);
+    const testMode = await isTestMode();
+    if (testMode && !isAdmin) return reply({ error: "not_open" }, 403, origin);
 
     const { action, plan } = await req.json();
     const site = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
@@ -80,9 +81,9 @@ Deno.serve(async (req) => {
     }
 
     if (action !== "checkout") return reply({ error: "unknown action" }, 400, origin);
-    const productId = productFor(plan);
+    const productId = await productFor(plan);
     if (!productId) {
-      return reply({ error: isTestMode() ? "unknown_plan" : "live_products_missing" }, 400, origin);
+      return reply({ error: testMode ? "unknown_plan" : "live_products_missing" }, 400, origin);
     }
 
     // no second subscription on top of one still running (tests may repeat)
@@ -90,7 +91,7 @@ Deno.serve(async (req) => {
     const profile = profiles[0];
     const running = profile && profile.plan !== "free" &&
       (!profile.plan_renews_at || new Date(profile.plan_renews_at) > new Date());
-    if (running && !isTestMode()) return reply({ error: "already_subscribed" }, 409, origin);
+    if (running && !testMode) return reply({ error: "already_subscribed" }, 409, origin);
 
     if (plan === "founding") {
       const count = await db("profiles?plan=eq.founding&select=id", {
