@@ -4,7 +4,7 @@
 export const ASK_LOGIN = "kd:ask-login";
 
 // reason: what the visitor tried, picks the dialog's wording
-// ("download" | "edit" | "create" | "ai")
+// ("download" | "edit" | "create" | "ai" | "premium")
 export function askLogin(reason = "download") {
   window.dispatchEvent(new CustomEvent(ASK_LOGIN, { detail: reason }));
 }

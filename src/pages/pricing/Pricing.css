@@ -256,3 +256,5 @@
   .pr-exclusive,
   .pr-founding { flex-direction: column; align-items: flex-start; padding: 22px; }
 }
+
+.pr-error { margin: 10px 0 0; color: #ff9b9b; font-size: 14px; text-align: center; }

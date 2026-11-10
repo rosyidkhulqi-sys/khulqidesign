@@ -8,6 +8,7 @@ const copy = {
   download: ["Log in to download", "A free account is all you need. It takes a few seconds with Google."],
   edit: ["Log in to download and copy", "A free account is all you need. It takes a few seconds with Google."],
   result: ["Your result is ready", "Log in or create a free account to download it. It stays here while you do."],
+  premium: ["Log in to go Premium", "Create a free account or log in, then finish your checkout."],
   design: ["Log in to download your design", "Your design is saved on this device. Log in or create a free account to download it."],
 };
 

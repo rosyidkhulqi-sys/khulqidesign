@@ -1,18 +1,20 @@
 // Pricing: Free and Premium, billed in USD, a Founding member offer for
 // launch, and Exclusive logos as a one-time purchase outside any plan.
-// Prices live in PLANS (data/plans.js) so they change in one place. Checkout comes
-// with the backend; until then the paid buttons are marked Coming soon.
+// Prices live in PLANS (data/plans.js) so they change in one place. Until
+// CHECKOUT_OPEN (lib/billing.js), the paid buttons are marked Coming soon.
 //
 // Set from competitor research (Nov 2026): Envato Core from $8.99/mo,
 // Flaticon €7.50/mo, Kerismaker Pro $8.25/mo, Craftwork $12.42/mo, all
 // billed yearly. $6/mo yearly is the lowest of them without looking cheap
 // to US and EU buyers. Download limits, browser-side tools and AI credits
 // keep the plans from losing money on bulk downloads or AI tokens.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "../vectors/Vectors.css";
 import "./Pricing.css";
 import Breadcrumb from "../../components/Breadcrumb";
 import { PLANS } from "../../data/plans";
+import { askLogin } from "../../lib/authGate";
+import { CHECKOUT_OPEN, fetchMembership, startCheckout } from "../../lib/billing";
 
 
 const yearlyTotal = PLANS.yearly * 12;
@@ -96,6 +98,36 @@ function Check() {
 
 function Pricing({ setPage, user = null }) {
   const [billing, setBilling] = useState("yearly");
+  const [membership, setMembership] = useState(null);
+  // the plan whose checkout is opening
+  const [starting, setStarting] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    fetchMembership(user.id).then((m) => alive && setMembership(m));
+    return () => {
+      alive = false;
+    };
+  }, [user]);
+
+  const paid = user && membership?.paid;
+
+  const checkout = async (plan) => {
+    if (!user) {
+      askLogin("premium");
+      return;
+    }
+    setStarting(plan);
+    setError(null);
+    try {
+      await startCheckout(plan);
+    } catch (e) {
+      setError(e.message);
+      setStarting(null);
+    }
+  };
 
   const go = (page) => () => {
     setPage(page);
@@ -140,7 +172,7 @@ function Pricing({ setPage, user = null }) {
           <p className="pr-for">To try things out and for personal projects.</p>
           <p className="pr-price"><strong>$0</strong><span>forever</span></p>
           {user ? (
-            <button className="pr-button" disabled>You're on Free</button>
+            <button className="pr-button" disabled>{paid ? "Included in your plan" : "You're on Free"}</button>
           ) : (
             <button className="pr-button" onClick={go("register")}>Create free account</button>
           )}
@@ -162,14 +194,24 @@ function Pricing({ setPage, user = null }) {
           <p className="pr-billed">
             {yearly ? `$${yearlyTotal} billed once a year` : "Billed every month"}
           </p>
-          <button className="pr-button is-main" disabled>
-            Get Premium <span className="ai-soon">Checkout coming soon</span>
-          </button>
+          {paid ? (
+            <button className="pr-button is-main" onClick={go("account")}>Manage your plan</button>
+          ) : CHECKOUT_OPEN ? (
+            <button className="pr-button is-main" disabled={starting !== null}
+                    onClick={() => checkout(yearly ? "yearly" : "monthly")}>
+              {starting === "yearly" || starting === "monthly" ? "Opening checkout…" : "Get Premium"}
+            </button>
+          ) : (
+            <button className="pr-button is-main" disabled>
+              Get Premium <span className="ai-soon">Checkout coming soon</span>
+            </button>
+          )}
+          {error && <p className="pr-error" role="alert">{error}</p>}
           {/* what buyers in the US and Europe look for before paying */}
           <p className="pr-trust">
             <span>Cancel anytime</span>
             <span>Secure checkout</span>
-            <span>Visa · Mastercard · PayPal</span>
+            <span>Visa · Mastercard</span>
             <span>Prices in USD, taxes may apply</span>
           </p>
           <p className="pr-group">Everything in Free, plus</p>
@@ -194,9 +236,15 @@ function Pricing({ setPage, user = null }) {
             for as long as you stay subscribed. Join early and grow with the library.
           </p>
         </div>
-        <button disabled>
-          Become a founding member <span className="ai-soon">Coming soon</span>
-        </button>
+        {CHECKOUT_OPEN && !paid ? (
+          <button disabled={starting !== null} onClick={() => checkout("founding")}>
+            {starting === "founding" ? "Opening checkout…" : "Become a founding member"}
+          </button>
+        ) : (
+          <button disabled>
+            {paid ? "You're already a member" : <>Become a founding member <span className="ai-soon">Coming soon</span></>}
+          </button>
+        )}
       </div>
 
       {/* EXCLUSIVE LOGOS — outside the plans */}

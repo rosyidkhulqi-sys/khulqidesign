@@ -419,3 +419,9 @@ enabled = true
 # so the gateway check with the legacy JWT secret stays off
 [functions.r2-sign]
 verify_jwt = false
+
+[functions.dodo-billing]
+verify_jwt = false
+
+[functions.dodo-webhook]
+verify_jwt = false

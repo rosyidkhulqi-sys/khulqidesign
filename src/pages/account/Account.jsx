@@ -9,6 +9,7 @@ import "./Account.css";
 import Breadcrumb from "../../components/Breadcrumb";
 import { supabase } from "../../lib/supabaseClient";
 import { accountInfo } from "../../lib/account";
+import { fetchMembership, openBillingPortal } from "../../lib/billing";
 import { listProjects } from "../create/projectsStore";
 
 // the Free plan's daily limit, as on Pricing; the server enforces it later
@@ -35,6 +36,45 @@ function Account({ user, setPage, onLogout }) {
   const [busy, setBusy] = useState(null);
   // today's downloads as the server counts them (the limit it applies)
   const [today, setToday] = useState(null);
+
+  const [membership, setMembership] = useState(null);
+  // back from a payment: the webhook may land a few seconds after the visitor
+  const [activating, setActivating] = useState(
+    () => new URLSearchParams(window.location.search).get("checkout") === "done"
+  );
+  const [portalError, setPortalError] = useState(null);
+
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    let tries = 0;
+    let timer;
+    const check = async () => {
+      const m = await fetchMembership(user.id);
+      if (!alive) return;
+      setMembership(m);
+      if (activating && !m.paid && tries < 15) {
+        tries += 1;
+        timer = setTimeout(check, 2000);
+      } else {
+        setActivating(false);
+      }
+    };
+    check();
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [user, activating]);
+
+  const manageBilling = async () => {
+    setPortalError(null);
+    try {
+      await openBillingPortal();
+    } catch (e) {
+      setPortalError(e.message);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -139,15 +179,28 @@ function Account({ user, setPage, onLogout }) {
         {/* PLAN */}
         <div className="ac-card ac-plan">
           <p className="ac-label">Your plan</p>
-          <h3>Free</h3>
+          <h3>{membership?.plan === "founding" ? "Founding member" : membership?.plan === "premium" ? "Premium" : "Free"}</h3>
+          {activating && <p className="ac-small">Payment received. Activating your plan…</p>}
+          {membership?.paid && membership.periodEnd && (
+            <p className="ac-small">
+              {membership.cancelling ? "Ends" : "Renews"} on {formatDate(membership.periodEnd)}
+            </p>
+          )}
           <div className="ac-meter" aria-label={`${usedToday} of ${dailyLimit} downloads today`}>
             <span style={{ width: `${Math.min(100, (usedToday / dailyLimit) * 100)}%` }} />
           </div>
           <p className="ac-small">
             {Math.min(usedToday, dailyLimit)} of {dailyLimit} downloads today · resets at midnight UTC
           </p>
-          <button className="ac-main" onClick={go("pricing")}>Go Premium</button>
-          <p className="ac-small">Unlimited downloads, no credit line, every format.</p>
+          {membership?.paid ? (
+            membership.canManage && <button className="ac-main" onClick={manageBilling}>Manage billing</button>
+          ) : (
+            <>
+              <button className="ac-main" onClick={go("pricing")}>Go Premium</button>
+              <p className="ac-small">Unlimited downloads, no credit line, every format.</p>
+            </>
+          )}
+          {portalError && <p className="ac-small" role="alert">{portalError}</p>}
         </div>
 
         {/* WHAT YOU HAVE */}
