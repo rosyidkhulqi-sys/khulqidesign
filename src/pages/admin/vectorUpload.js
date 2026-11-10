@@ -139,7 +139,7 @@ export async function makeImages(jpg, watermark) {
     return {
       width: bitmap.width,
       height: bitmap.height,
-      thumb: await renderJpeg(bitmap, 1600, false),
+      thumb: await renderJpeg(bitmap, 2000, false),
       preview: await renderJpeg(bitmap, 3000, watermark),
     };
   } finally {
