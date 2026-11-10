@@ -1,7 +1,7 @@
 // Everything the admin page does to turn an EPS + JPG pair into a published
 // vector: pair files by name, read the JPG's IPTC/XMP metadata (the same the
 // owner writes for Adobe Stock and Shutterstock), read the EPS artboard, make
-// a 600 px thumbnail and a 1500 px watermarked preview in the browser, upload
+// a 800 px thumbnail and a 3000 px watermarked preview in the browser, upload
 // all four files to R2 and write the catalogue row.
 import exifr from "exifr";
 import { supabase } from "../../lib/supabaseClient";
@@ -127,7 +127,7 @@ async function renderJpeg(bitmap, max, watermark) {
   ctx.fillRect(0, 0, w, h);
   ctx.drawImage(bitmap, 0, 0, w, h);
   if (watermark) drawWatermark(ctx, w, h);
-  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.82));
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.90));
   if (!blob) throw new Error("This browser couldn't make the preview");
   return blob;
 }
@@ -139,8 +139,8 @@ export async function makeImages(jpg, watermark) {
     return {
       width: bitmap.width,
       height: bitmap.height,
-      thumb: await renderJpeg(bitmap, 600, false),
-      preview: await renderJpeg(bitmap, 1500, watermark),
+      thumb: await renderJpeg(bitmap, 800, false),
+      preview: await renderJpeg(bitmap, 3000, watermark),
     };
   } finally {
     bitmap.close();
