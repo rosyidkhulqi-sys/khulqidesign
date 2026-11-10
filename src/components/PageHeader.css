@@ -9,7 +9,7 @@
   align-items: center;
   height: var(--header-h);
   padding: 0 var(--page-x);
-  background: rgba(16, 17, 20, 0.92);
+  background: rgba(10, 11, 13, 0.92);
   border-bottom: 1px solid var(--line);
   backdrop-filter: blur(18px);
   font-family: var(--font-sans);
