@@ -38,8 +38,8 @@ html {
 }
 
 ::selection {
-  background: var(--red);
-  color: white;
+  background: rgba(255, 255, 255, 0.22);
+  color: inherit;
 }
 
 @media (prefers-reduced-motion: reduce) {
