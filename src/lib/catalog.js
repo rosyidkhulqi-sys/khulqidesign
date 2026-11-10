@@ -3,6 +3,7 @@
 // files are phased out. Visitors only ever receive published rows (RLS).
 import { supabase } from "./supabaseClient";
 import { publicUrl } from "./r2";
+import { normalizeVectorCategory } from "../data/vectorCategories";
 
 const orientationOf = (w, h) => (w === h ? "square" : w > h ? "landscape" : "portrait");
 const mb = (bytes) => (bytes ? `${(bytes / 1_000_000).toFixed(1)} MB` : "");
@@ -47,7 +48,7 @@ export function toVector(row) {
     code: row.code,
     title: row.title,
     searchText: `${row.long_title ?? ""} ${row.description ?? ""}`.toLowerCase(),
-    category: row.category || "other",
+    category: normalizeVectorCategory(row.category),
     license: row.license,
     image: publicUrl(row.thumb_key),
     preview: [jpg?.width || artboard[0], jpg?.height || artboard[1]],

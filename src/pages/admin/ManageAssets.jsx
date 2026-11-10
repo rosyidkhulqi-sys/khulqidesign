@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { deleteFromR2, publicUrl } from "../../lib/r2";
 import { industries } from "../../data/logosData";
-import { VECTOR_CATEGORY_OPTIONS } from "../../data/vectorCategories";
+import { VECTOR_CATEGORY_OPTIONS, vectorCategoryStorageValues } from "../../data/vectorCategories";
 import { CATEGORIES } from "./adminCategories";
 import { BACKGROUND_CATEGORIES, ELEMENT_CATEGORIES } from "./elementPublish";
 import EditAsset from "./EditAsset";
@@ -53,7 +53,11 @@ function loadAssets(type, filters, page) {
       );
     });
 
-  if (filters.category) query = query.eq(type === "logo" ? "industry" : "category", filters.category);
+  if (filters.category) {
+    if (type === "logo") query = query.eq("industry", filters.category);
+    else if (type === "vector") query = query.in("category", vectorCategoryStorageValues(filters.category));
+    else query = query.eq("category", filters.category);
+  }
   if (filters.kind === "background") query = query.eq("style", "background");
   if (filters.kind === "element") query = query.neq("style", "background");
   if (filters.license) query = query.eq("license", filters.license);

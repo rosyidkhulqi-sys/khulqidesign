@@ -5,7 +5,7 @@ import { industries, logoStyles } from "../../data/logosData";
 import { CATEGORIES } from "./adminCategories";
 import { MAX_KEYWORDS, categoriesOf } from "./elementPublish";
 import { parseKeywords } from "./vectorUpload";
-import { vectorCategoryLabel } from "../../data/vectorCategories";
+import { normalizeVectorCategory, vectorCategoryLabel } from "../../data/vectorCategories";
 
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -18,7 +18,7 @@ function EditAsset({ row, type, onSaved, onCancel }) {
     title: row.title ?? "",
     description: row.description ?? "",
     keywords: (row.keywords ?? []).join(", "),
-    category: row.category ?? "other",
+    category: type === "vector" ? normalizeVectorCategory(row.category) : row.category ?? "other",
     industry: row.industry ?? industries[0][0],
     style: row.style ?? logoStyles[0][0],
     license: row.license,

@@ -7,7 +7,7 @@ import { ToolGlyph } from "../../components/IconControls";
 import { vectors as trialVectors } from "../../data/vectorsData";
 import { fetchPublished, toVector } from "../../lib/catalog";
 import { matchesSearch } from "../../lib/search";
-import { VECTOR_CATEGORY_OPTIONS, vectorCategoryLabel } from "../../data/vectorCategories";
+import { VECTOR_CATEGORY_OPTIONS, normalizeVectorCategory, vectorCategoryLabel } from "../../data/vectorCategories";
 
 const formats = ["EPS", "AI", "SVG", "PNG", "JPG"];
 
@@ -76,7 +76,10 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
     };
   }, []);
 
-  const allVectors = [...uploaded, ...trialVectors];
+  const allVectors = [
+    ...uploaded,
+    ...trialVectors.map((vector) => ({ ...vector, category: normalizeVectorCategory(vector.category) })),
+  ];
 
   const perPage = 24;
 
