@@ -139,8 +139,8 @@ export async function makeImages(jpg, watermark) {
     return {
       width: bitmap.width,
       height: bitmap.height,
-      thumb: await renderJpeg(bitmap, 2000, false),
-      preview: await renderJpeg(bitmap, 3000, watermark),
+      thumb: await renderJpeg(bitmap, 1700, false),
+      preview: await renderJpeg(bitmap, 2800, watermark),
     };
   } finally {
     bitmap.close();
