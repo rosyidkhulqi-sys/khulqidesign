@@ -10,6 +10,7 @@ import { VECTOR_CATEGORY_OPTIONS, vectorCategoryStorageValues } from "../../data
 import { CATEGORIES } from "./adminCategories";
 import { BACKGROUND_CATEGORIES, ELEMENT_CATEGORIES } from "./elementPublish";
 import EditAsset from "./EditAsset";
+import ManageIconSets from "./ManageIconSets";
 
 const LABEL = { vector: "vectors", icon: "icons", logo: "logos", footage: "clips", template: "templates", element: "elements" };
 const FIELDS = "id, code, ref_code, source_name, title, description, keywords, category, industry, style, license, price_cents, sold_at, status, thumb_key, preview_key, preview_video_key, files, created_at";
@@ -76,7 +77,7 @@ function loadAssets(type, filters, page) {
   return query.range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 }
 
-function ManageAssets({ type = "vector", refreshKey }) {
+function ManageAssetRows({ type = "vector", refreshKey }) {
   const [rows, setRows] = useState(null);
   const [total, setTotal] = useState(0);
   const [filters, setFilters] = useState(NO_FILTERS);
@@ -257,6 +258,11 @@ function ManageAssets({ type = "vector", refreshKey }) {
       )}
     </div>
   );
+}
+
+function ManageAssets({ type = "vector", refreshKey }) {
+  if (type === "icon") return <ManageIconSets refreshKey={refreshKey} />;
+  return <ManageAssetRows type={type} refreshKey={refreshKey} />;
 }
 
 export default ManageAssets;

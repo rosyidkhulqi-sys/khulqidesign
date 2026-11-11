@@ -266,6 +266,78 @@
 .ad-row-item { grid-template-columns: 72px minmax(0, 1fr) auto; align-items: center; }
 .ad-row-item.is-hidden .ad-thumb { opacity: 0.45; }
 .ad-row-item strong { font-size: 15px; font-weight: 600; }
+.ad-icon-set .ad-thumb span {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: #242628;
+  font-size: 42px;
+}
+.ad-icon-set-members {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.ad-icon-set-edit {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.ad-icon-set-edit input,
+.ad-icon-set-edit textarea,
+.ad-icon-set-edit select {
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 0 10px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: #0b0b0c;
+  color: var(--white);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+.ad-icon-set-edit input,
+.ad-icon-set-edit select { height: 36px; }
+.ad-icon-set-edit .ad-row select { width: auto; flex: 0 1 100px; }
+.ad-icon-set-edit textarea { min-height: 72px; padding: 10px 12px; resize: vertical; }
+.ad-icon-set-edit input:focus,
+.ad-icon-set-edit textarea:focus,
+.ad-icon-set-edit select:focus { border-color: #555; }
+.ad-icon-set-edit-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.ad-icon-set-edit-actions button {
+  height: 40px;
+  padding: 0 18px;
+  border: 1px solid #3a3c3f;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--white);
+  font: inherit;
+  font-size: 14px;
+}
+.ad-icon-set-edit-actions .ad-primary { border-color: transparent; background: var(--red); font-weight: 700; }
+.ad-icon-set-member {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.16);
+}
+.ad-icon-set-member.is-hidden { opacity: 0.65; }
+.ad-icon-set-member .ad-thumb { width: 52px; }
+.ad-icon-set-member .ad-edit { grid-column: 1 / -1; }
 .ad-actions { display: flex; align-items: center; gap: 8px; }
 .ad-actions button {
   height: 34px;
@@ -293,6 +365,9 @@
   .ad-status { grid-column: 1 / -1; }
   .ad-row-item { grid-template-columns: 56px minmax(0, 1fr); }
   .ad-actions { grid-column: 1 / -1; }
+  .ad-icon-set-member { grid-template-columns: 44px minmax(0, 1fr); }
+  .ad-icon-set-member .ad-thumb { width: 44px; }
+  .ad-icon-set-edit { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* finding an uploaded asset */
