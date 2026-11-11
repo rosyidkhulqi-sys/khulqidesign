@@ -48,6 +48,8 @@ import PublishTemplate from "./PublishTemplate";
 import { fetchTemplates } from "./templatePublish";
 import { fetchIconCatalog, fetchPublished, toCreatePart, toVector } from "../../lib/catalog";
 import { askLogin } from "../../lib/authGate";
+import { aiReady } from "../../lib/ai";
+import { MODELS, removeBackground, upscale } from "../../lib/aiLocal";
 
 const PANEL_KEY = "kd-create-panel";
 const PAGE_KEY = "kd-create-page";
@@ -195,6 +197,8 @@ function Create({ draft, clearDraft, user = null }) {
   // admins can publish the open design as a template
   const [isAdmin, setIsAdmin] = useState(false);
   const [showPublish, setShowPublish] = useState(false);
+  const [aiOperation, setAiOperation] = useState(null);
+  const aiBusy = Boolean(aiOperation && !aiOperation.error);
   // templates published from Create, ahead of the built-in ones
   const [dbTemplates, setDbTemplates] = useState([]);
   // elements and backgrounds uploaded on /admin
@@ -680,6 +684,75 @@ function Create({ draft, clearDraft, user = null }) {
     }
   };
 
+  const runImageAi = async (operation, scale = 2) => {
+    const c = fc.current;
+    const image = c?.getActiveObject();
+    if (!(image instanceof FabricImage) || (aiOperation && !aiOperation.error)) return;
+    const index = c.getObjects().indexOf(image);
+    const original = {
+      left: image.left,
+      top: image.top,
+      originX: image.originX,
+      originY: image.originY,
+      width: image.getScaledWidth(),
+      height: image.getScaledHeight(),
+      angle: image.angle,
+      opacity: image.opacity,
+      flipX: image.flipX,
+      flipY: image.flipY,
+      skewX: image.skewX,
+      skewY: image.skewY,
+    };
+
+    setAiOperation({ operation, step: "Preparing image", progress: 0 });
+    try {
+      const response = await fetch(image.getSrc());
+      if (!response.ok) throw new Error("Could not read this image. Try uploading it again.");
+      const source = await response.blob();
+      const input = new File([source], "create-image", { type: source.type || "image/png" });
+      const onStep = (step, progress) => setAiOperation({ operation, step, progress });
+      const result = operation === "cutout"
+        ? await removeBackground(input, onStep)
+        : await upscale(input, onStep, scale);
+
+      // Store the processed result as a data URL so it remains part of the
+      // saved design after the temporary object URL has been released.
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error("Could not prepare the processed image."));
+        reader.readAsDataURL(result);
+      });
+      const replacement = await FabricImage.fromURL(dataUrl);
+      if (!c.getObjects().includes(image)) throw new Error("The selected image changed before processing finished. Please try again.");
+      replacement.set({
+        left: original.left,
+        top: original.top,
+        originX: original.originX,
+        originY: original.originY,
+        scaleX: original.width / replacement.width,
+        scaleY: original.height / replacement.height,
+        angle: original.angle,
+        opacity: original.opacity,
+        flipX: original.flipX,
+        flipY: original.flipY,
+        skewX: original.skewX,
+        skewY: original.skewY,
+      });
+      replacement.setCoords();
+      c.remove(image);
+      c.insertAt(Math.max(0, index), replacement);
+      c.setActiveObject(replacement);
+      c.requestRenderAll();
+      setActive(replacement);
+      refresh();
+      commit();
+      setAiOperation(null);
+    } catch (error) {
+      setAiOperation({ operation, error: error.message || "The image couldn't be processed. Try again." });
+    }
+  };
+
   const readFile = (file) =>
     new Promise((resolve) => {
       const isSvg = file.type === "image/svg+xml" || file.name.toLowerCase().endsWith(".svg");
@@ -984,6 +1057,7 @@ function Create({ draft, clearDraft, user = null }) {
   });
 
   const onKey = useEffectEvent((e) => {
+    if (aiBusy) return;
     const tag = e.target.tagName;
     if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
     const obj = fc.current?.getActiveObject();
@@ -1097,7 +1171,7 @@ function Create({ draft, clearDraft, user = null }) {
 
       <div className="create-editor" ref={editorRef}>
         {/* TOP BAR */}
-        <div className="create-topbar" inert={cropping}>
+        <div className="create-topbar" inert={cropping || aiBusy}>
           <div className="ct-menu">
             <button className="ct-btn" onClick={() => setMenu(menu === "file" ? null : "file")}>
               <Icon name="menu" /> File
@@ -1174,7 +1248,7 @@ function Create({ draft, clearDraft, user = null }) {
 
         <div className={`create-body ${panelOpen ? "" : "panel-closed"}`}>
           {/* TAB RAIL — the open tab's button hides and shows the panel, as in Canva */}
-          <nav className="create-rail" inert={cropping}>
+          <nav className="create-rail" inert={cropping || aiBusy}>
             {tabs.map((t) => (
               <button
                 key={t}
@@ -1220,7 +1294,15 @@ function Create({ draft, clearDraft, user = null }) {
               />
             )}
 
-            {tab === "ai" && <AiPanel />}
+            {tab === "ai" && (
+              <AiPanel
+                aiReady={aiReady}
+                hasSelectedImage={active instanceof FabricImage}
+                operation={aiOperation}
+                models={MODELS}
+                onRun={runImageAi}
+              />
+            )}
 
             {tab === "layers" && (
               <LayersPanel
@@ -1300,7 +1382,7 @@ function Create({ draft, clearDraft, user = null }) {
           </button>
 
           {/* STAGE + BOTTOM BAR */}
-          <div className="create-center">
+          <div className="create-center" inert={aiBusy}>
           <div
             className="create-stage"
             ref={stageRef}
@@ -1438,7 +1520,7 @@ function Create({ draft, clearDraft, user = null }) {
           </div>
 
           {/* PROPERTIES */}
-          <aside className="create-props" inert={cropping}>
+          <aside className="create-props" inert={cropping || aiBusy}>
             {!active ? (
               <>
                 <p className="cp-label">Artboard</p>

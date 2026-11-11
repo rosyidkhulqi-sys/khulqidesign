@@ -563,7 +563,7 @@
 .cp-project-delete:hover { background: var(--red); }
 @media (hover: none) { .cp-project-delete { opacity: 1; } }
 
-/* AI TAB: the coming AI tools */
+/* AI TAB */
 .cp-ai-intro {
   display: flex;
   gap: 10px;
@@ -589,6 +589,27 @@
 .cp-ai-tool > span { color: #8d939b; font-size: 12px; line-height: 1.45; }
 .cp-ai-tool:hover:not(:disabled) { border-color: rgba(255, 255, 255, 0.4); }
 .cp-ai-tool:disabled { cursor: default; opacity: 0.85; }
+.cp-ai-local { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+.cp-ai-local .cp-hint { margin: 0; }
+.cp-ai-upscale { cursor: default; }
+.cp-ai-scales { display: flex; gap: 8px; margin-top: 8px; }
+.cp-ai-scales button {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #e7e9ec;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.cp-ai-scales button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.12); }
+.cp-ai-scales button:disabled { opacity: 0.45; cursor: default; }
+.cp-ai-progress { display: flex; flex-direction: column; gap: 6px; color: #aeb3ba; font-size: 12px; }
+.cp-ai-progress > div { height: 4px; overflow: hidden; border-radius: 9px; background: rgba(255, 255, 255, 0.1); }
+.cp-ai-progress i { display: block; height: 100%; border-radius: inherit; background: #e7e9ec; transition: width 0.2s ease; }
+.cp-ai-error { margin: 0; color: #ff8a8f; font-size: 12px; line-height: 1.45; }
 
 /* BROWSE CATEGORIES: a picture tile and the name under it */
 .cp-cat {

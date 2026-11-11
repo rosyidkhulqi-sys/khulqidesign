@@ -1,6 +1,4 @@
-// The asset catalogue in Supabase, shaped like the trial data the library
-// pages already use, so a page can show both side by side while the trial
-// files are phased out. Visitors only ever receive published rows (RLS).
+// Published assets from Supabase, shaped for use by the library pages.
 import { supabase } from "./supabaseClient";
 import { publicUrl } from "./r2";
 import { normalizeVectorCategory } from "../data/vectorCategories";

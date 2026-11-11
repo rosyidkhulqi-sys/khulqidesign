@@ -5,7 +5,6 @@ import "./Footage.css";
 import Breadcrumb from "../../components/Breadcrumb";
 import AiSearchButton from "../../components/AiSearchButton";
 import { ToolGlyph } from "../../components/IconControls";
-import { clips as trialClips } from "../../data/footageData";
 import { fetchPublished, toClip } from "../../lib/catalog";
 import { matchesSearch } from "../../lib/search";
 
@@ -150,20 +149,25 @@ function Footage({ setPage, initialSearch = "", user = null }) {
   const [sort, setSort] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState(null);
-  // clips uploaded through /admin, newest first, ahead of the trial clips
+  // clips uploaded through /admin
   const [uploaded, setUploaded] = useState([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState(null);
   useEffect(() => {
     let alive = true;
     fetchPublished("footage")
-      .then((rows) => alive && setUploaded(rows.map(toClip)))
-      .catch(() => {
-        /* the trial clips still show if the catalogue can't be reached */
-      });
+      .then((rows) => {
+        if (!alive) return;
+        setUploaded(rows.map(toClip));
+        setCatalogError(null);
+      })
+      .catch((error) => alive && setCatalogError(error.message || "Footage could not be loaded."))
+      .finally(() => alive && setCatalogLoading(false));
     return () => {
       alive = false;
     };
   }, []);
-  const allClips = [...uploaded, ...trialClips];
+  const allClips = uploaded;
 
   const perPage = 24;
 
@@ -299,9 +303,12 @@ function Footage({ setPage, initialSearch = "", user = null }) {
         </div>
       </div>
 
+      {catalogError && <p className="no-results" role="alert">{catalogError}</p>}
+      {catalogLoading && <p className="no-results" role="status">Loading footage…</p>}
+
       {/* GRID */}
       <div className="footage-grid">
-        {items.length > 0 ? (
+        {catalogLoading ? null : items.length > 0 ? (
           items.map((c) => (
             <FootageCard key={c.id} clip={c} onOpen={() => setSelected(c)} />
           ))
