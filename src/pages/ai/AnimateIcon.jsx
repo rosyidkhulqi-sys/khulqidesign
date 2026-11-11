@@ -4,16 +4,13 @@
 // in the browser (lib/animateExport.js, lib/animateLottie.js).
 import { useEffect, useRef, useState } from "react";
 import "./AnimateIcon.css";
-import { iconSets, membersOf } from "../../data/iconsData";
 import { fileSlug, loadIconSvg } from "../../lib/iconEditor";
+import { fetchIconCatalog } from "../../lib/catalog";
 import { buildAnimatedSvg, buildGif, buildMp4 } from "../../lib/animateExport";
 import { saveBlob } from "../../lib/downloads";
 import { askLogin } from "../../lib/authGate";
 import { keepAnimate, takeAnimate } from "../../lib/aiKeep";
 import { PremiumTag } from "../../components/IconControls";
-
-// one entry per real icon file, in set order
-const icons = iconSets.flatMap((set) => membersOf(set));
 
 const presets = [
   ["bounce", "Bounce"],
@@ -31,7 +28,7 @@ const presets = [
 
 // Draw suits one-color line and solid icons; on flat and gradient icons the
 // traced edges of many colored parts look messy, so it isn't offered there
-const canDraw = (icon) => icon.style === "outline" || icon.style === "glyph";
+const canDraw = (icon) => icon?.style === "outline" || icon?.style === "glyph";
 
 const DRAWABLE ="path, circle, rect, ellipse, line, polyline, polygon";
 
@@ -44,21 +41,14 @@ const speeds = [
 // seconds for one play at 1×
 const BASE = 1.2;
 
-// opened from an icon's detail view: that icon is selected, and if it isn't
-// in a set it goes first in the picker
-function startList(initial) {
-  if (!initial || icons.some((i) => i.image === initial.image)) return icons;
-  return [initial, ...icons];
-}
-
 function AnimateIcon({ initialIcon = null, user = null }) {
   // back from logging in to export: what the visitor had chosen
   const [kept] = useState(takeAnimate);
   const opening = initialIcon ?? kept?.icon ?? null;
-  const [list] = useState(() => startList(opening));
-  const [icon, setIcon] = useState(
-    () => list.find((i) => i.image === opening?.image) ?? list[0]
-  );
+  const [list, setList] = useState(() => opening ? [opening] : []);
+  const [icon, setIcon] = useState(opening);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState(null);
   const [preset, setPreset] = useState(kept?.preset ?? "bounce");
   const [speed, setSpeed] = useState(kept?.speed ?? 1);
   const [loop, setLoop] = useState(kept?.loop ?? true);
@@ -71,8 +61,26 @@ function AnimateIcon({ initialIcon = null, user = null }) {
   const [making, setMaking] = useState(null);
   const [exportError, setExportError] = useState(null);
 
+  useEffect(() => {
+    let alive = true;
+    fetchIconCatalog()
+      .then(({ icons: uploaded }) => {
+        if (!alive) return;
+        const nextList = opening && !uploaded.some((item) => item.image === opening.image)
+          ? [opening, ...uploaded]
+          : uploaded;
+        setList(nextList);
+        setIcon((current) => nextList.find((item) => item.image === current?.image) ?? nextList[0] ?? null);
+        setCatalogError(null);
+      })
+      .catch((error) => alive && setCatalogError(error.message || "Icons could not be loaded."))
+      .finally(() => alive && setCatalogLoading(false));
+    return () => { alive = false; };
+  }, [opening]);
+
   // the icon's SVG, cleaned, so its parts can move one by one
   useEffect(() => {
+    if (!icon?.image) return;
     let alive = true;
     loadIconSvg(icon.image)
       .then((s) => alive && setSvg(s))
@@ -80,7 +88,7 @@ function AnimateIcon({ initialIcon = null, user = null }) {
     return () => {
       alive = false;
     };
-  }, [icon.image]);
+  }, [icon?.image]);
 
   const duration = BASE / speed;
 
@@ -135,6 +143,7 @@ function AnimateIcon({ initialIcon = null, user = null }) {
   }, [svg, preset, duration, run]);
 
   const exportAs = async (kind) => {
+    if (!icon) return;
     if (!user) {
       keepAnimate({ icon, preset, speed, loop });
       askLogin("download");
@@ -194,7 +203,7 @@ function AnimateIcon({ initialIcon = null, user = null }) {
           ref={stage}
           className={`animate-stage is-${preset} ${loop ? "loop" : "once"}${playing ? "" : " paused"}`}
           style={{ "--dur": `${duration}s` }}
-          aria-label={`${icon.name} icon, ${preset} animation`}
+          aria-label={icon ? `${icon.name} icon, ${preset} animation` : "Icon animation preview"}
           role="img"
         >
           {svg ? (
@@ -204,9 +213,9 @@ function AnimateIcon({ initialIcon = null, user = null }) {
               viewBox={svg.viewBox}
               dangerouslySetInnerHTML={{ __html: svg.inner }}
             />
-          ) : (
+          ) : icon ? (
             <img className="animate-icon" src={icon.image} alt="" />
-          )}
+          ) : <span className="animate-empty">{catalogLoading ? "Loading icons…" : "No published icons yet."}</span>}
         </div>
         <div className="animate-bar">
           <button
@@ -243,7 +252,7 @@ function AnimateIcon({ initialIcon = null, user = null }) {
           {list.map((i) => (
             <button
               key={i.image}
-              className={i.image === icon.image ? "active" : ""}
+              className={i.image === icon?.image ? "active" : ""}
               onClick={() => {
                 // Draw isn't offered for flat and gradient icons
                 if (preset === "draw" && !canDraw(i)) setPreset("bounce");
@@ -251,12 +260,13 @@ function AnimateIcon({ initialIcon = null, user = null }) {
               }}
               title={i.name}
               aria-label={i.name}
-              aria-pressed={i.image === icon.image}
+              aria-pressed={i.image === icon?.image}
             >
               <img src={i.image} alt="" />
             </button>
           ))}
         </div>
+        {catalogError && <p className="animate-error" role="alert">{catalogError}</p>}
 
         <p className="animate-label">Motion</p>
         <div className="animate-chips">

@@ -67,7 +67,7 @@ export function toVector(row) {
   };
 }
 
-// Published icons and the sets they belong to, shaped like data/iconsData.js
+// Published icons and the sets they belong to, ready for the library pages.
 export async function fetchIconCatalog() {
   const [iconRes, setRes] = await Promise.all([
     supabase

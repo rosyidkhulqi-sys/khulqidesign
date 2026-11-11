@@ -10,11 +10,8 @@ import { BasicTile, ElementTile, PagedGrid, SetIconTile, ShapeTile } from "./Cre
 import { saveRecent, withRecent } from "./createRecent";
 import { PhotoTile } from "./CreateBackground";
 import { elements as trialElements } from "../../data/elementsData";
-import { iconSets, membersOf } from "../../data/iconsData";
 import { matchesSearch } from "../../lib/search";
 import { pathFor } from "../../lib/router";
-
-const setIcons = iconSets.flatMap(membersOf);
 
 // words that only name a kind of asset ("home icon" means home)
 const KIND_WORDS = [
@@ -61,7 +58,7 @@ function CreateSearch({ query, tab, templates, uploaded, backgrounds, photo, lib
     () => ({
       templates: indexed(templates),
       elements: indexed([...shapes, ...uploaded, ...trialElements]),
-      icons: indexed([...basicIcons, ...library.icons, ...setIcons]),
+      icons: indexed([...basicIcons, ...library.icons]),
       vectors: indexed(library.vectors),
       backgrounds: indexed(backgrounds),
     }),

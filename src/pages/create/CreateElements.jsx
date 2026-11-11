@@ -11,11 +11,7 @@ import { basicIcons } from "./basicIcons";
 import { shapes, svgDataUrl } from "./createLibrary";
 import { clearRecent as forgetRecent, loadRecent, saveRecent, withRecent } from "./createRecent";
 import { elementCategories, elements as trialElements } from "../../data/elementsData";
-import { iconSets, membersOf } from "../../data/iconsData";
-
-const setGroups = iconSets.map((set) => ({ set, icons: membersOf(set) }));
-const setIcons = setGroups.flatMap((g) => g.icons);
-const iconCount = basicIcons.length + setIcons.length;
+import { fetchIconCatalog } from "../../lib/catalog";
 
 // how many tiles a "See all" grid adds each time the list scrolls to its end
 const PAGE = 60;
@@ -132,7 +128,7 @@ export function PagedGrid({ items, renderTile, columns = "three" }) {
 
 // a stored { kind, id } back as its tile, or null if the item is gone
 // (an element file removed from the folder, for example)
-function recentTile({ kind, id }, dragItem, elements) {
+function recentTile({ kind, id }, dragItem, elements, icons) {
   const key = `${kind}:${id}`;
   if (kind === "shape") {
     const s = shapes.find((x) => x.id === id);
@@ -151,7 +147,7 @@ function recentTile({ kind, id }, dragItem, elements) {
     return icon && <BasicTile key={key} icon={icon} dragItem={dragItem} />;
   }
   if (kind === "icon") {
-    const icon = setIcons.find((x) => x.id === id);
+    const icon = icons.find((x) => x.id === id);
     return icon && <SetIconTile key={key} icon={icon} dragItem={dragItem} />;
   }
   return null;
@@ -162,6 +158,23 @@ function recentTile({ kind, id }, dragItem, elements) {
 function ElementsPanel({ dragItem: placeItem, uploaded = [] }) {
   const elements = useMemo(() => [...uploaded, ...trialElements], [uploaded]);
   const categories = useMemo(() => mergeCategories(uploaded), [uploaded]);
+  const [iconCatalog, setIconCatalog] = useState({ icons: [], sets: [] });
+  useEffect(() => {
+    let alive = true;
+    fetchIconCatalog()
+      .then((catalog) => alive && setIconCatalog({
+        icons: catalog.icons.map((icon) => ({ ...icon, id: icon.code })),
+        sets: catalog.sets,
+      }))
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  const setIcons = iconCatalog.icons;
+  const setGroups = useMemo(() => iconCatalog.sets.map((set) => ({
+    set,
+    icons: setIcons.filter((icon) => icon.setId === set.id),
+  })).filter((group) => group.icons.length > 0), [iconCatalog.sets, setIcons]);
+  const iconCount = basicIcons.length + setIcons.length;
   const browse = categories.length >= BROWSE_FROM;
   // the section open in full ("See all"): a category id, "icons", "recent" or null
   const [view, setView] = useState(null);
@@ -179,7 +192,7 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [] }) {
 
   const dragItem = withRecent(placeItem, remember);
 
-  const recentTiles = recent.map((r) => recentTile(r, dragItem, elements)).filter(Boolean);
+  const recentTiles = recent.map((r) => recentTile(r, dragItem, elements, setIcons)).filter(Boolean);
 
   const elementTile = (el) => <ElementTile key={el.id} el={el} dragItem={dragItem} />;
 

@@ -43,6 +43,7 @@
   background-size: 24px 24px;
   background-position: 0 0, 0 12px, 12px -12px, -12px 0;
 }
+.animate-empty { color: #62666d; font-size: 14px; }
 
 .animate-icon {
   display: block;

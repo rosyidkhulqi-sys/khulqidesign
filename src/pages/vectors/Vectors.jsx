@@ -4,10 +4,9 @@ import AssetModal from "../../components/AssetModal";
 import Breadcrumb from "../../components/Breadcrumb";
 import AiSearchButton from "../../components/AiSearchButton";
 import { ToolGlyph } from "../../components/IconControls";
-import { vectors as trialVectors } from "../../data/vectorsData";
 import { fetchPublished, toVector } from "../../lib/catalog";
 import { matchesSearch } from "../../lib/search";
-import { VECTOR_CATEGORY_OPTIONS, normalizeVectorCategory, vectorCategoryLabel } from "../../data/vectorCategories";
+import { VECTOR_CATEGORY_OPTIONS, vectorCategoryLabel } from "../../data/vectorCategories";
 
 const formats = ["EPS", "AI", "SVG", "PNG", "JPG"];
 
@@ -61,25 +60,27 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
   const [sort, setSort] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState(null);
-  // vectors uploaded through /admin, newest first, ahead of the trial files
+  // vectors uploaded through /admin
   const [uploaded, setUploaded] = useState([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState(null);
 
   useEffect(() => {
     let alive = true;
     fetchPublished("vector")
-      .then((rows) => alive && setUploaded(rows.map(toVector)))
-      .catch(() => {
-        /* the trial files still show if the catalogue can't be reached */
-      });
+      .then((rows) => {
+        if (!alive) return;
+        setUploaded(rows.map(toVector));
+        setCatalogError(null);
+      })
+      .catch((error) => alive && setCatalogError(error.message || "Vectors could not be loaded."))
+      .finally(() => alive && setCatalogLoading(false));
     return () => {
       alive = false;
     };
   }, []);
 
-  const allVectors = [
-    ...uploaded,
-    ...trialVectors.map((vector) => ({ ...vector, category: normalizeVectorCategory(vector.category) })),
-  ];
+  const allVectors = uploaded;
 
   const perPage = 24;
 
@@ -202,9 +203,12 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
         </div>
       </div>
 
+      {catalogError && <p className="no-results" role="alert">{catalogError}</p>}
+      {catalogLoading && <p className="no-results" role="status">Loading vectors…</p>}
+
       {/* GRID */}
       <div className="vector-grid">
-        {items.length > 0 ? (
+        {catalogLoading ? null : items.length > 0 ? (
           items.map((v) => (
             <div
               className="vector-card"

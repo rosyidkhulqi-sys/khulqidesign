@@ -7,11 +7,6 @@ import Breadcrumb from "../../components/Breadcrumb";
 import AiSearchButton from "../../components/AiSearchButton";
 import IconModal from "../../components/IconModal";
 import IconSetView, { SetCard } from "./IconSets";
-import {
-  icons as trialIcons,
-  iconSets as trialSets,
-  membersOf as trialMembersOf,
-} from "../../data/iconsData";
 import { fetchIconCatalog } from "../../lib/catalog";
 import { matchesSearch } from "../../lib/search";
 
@@ -39,29 +34,34 @@ function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
   // the icon set page shown in place of the library, or null
   const [openSet, setOpenSet] = useState(null);
 
-  // icons and sets uploaded through /admin, ahead of the trial files
+  // icons and sets uploaded through /admin
   const [uploaded, setUploaded] = useState({ icons: [], sets: [] });
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState(null);
   useEffect(() => {
     let alive = true;
     fetchIconCatalog()
-      .then((catalog) => alive && setUploaded(catalog))
-      .catch(() => {
-        /* the trial icons still show if the catalogue can't be reached */
-      });
+      .then((catalog) => {
+        if (!alive) return;
+        setUploaded(catalog);
+        setCatalogError(null);
+      })
+      .catch((error) => alive && setCatalogError(error.message || "Icons could not be loaded."))
+      .finally(() => alive && setCatalogLoading(false));
     return () => {
       alive = false;
     };
   }, []);
 
   const { icons, iconSets, membersOf, setOf } = useMemo(() => {
-    const allIcons = [...uploaded.icons, ...trialIcons];
-    const allSets = [...uploaded.sets, ...trialSets];
+    const allIcons = uploaded.icons;
+    const allSets = uploaded.sets;
     const byId = Object.fromEntries(allSets.map((s) => [s.id, s]));
     const uploadedMembers = (set) => uploaded.icons.filter((i) => i.setId === set.id);
     return {
       icons: allIcons,
       iconSets: allSets,
-      membersOf: (set) => (set ? (trialSets.includes(set) ? trialMembersOf(set) : uploadedMembers(set)) : []),
+      membersOf: (set) => (set ? uploadedMembers(set) : []),
       setOf: (icon) => byId[icon.setId] ?? null,
     };
   }, [uploaded]);
@@ -218,6 +218,9 @@ function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
         </h1>
       </div>
 
+      {catalogError && <p className="no-results" role="alert">{catalogError}</p>}
+      {catalogLoading && <p className="no-results" role="status">Loading icons…</p>}
+
       {/* SEARCH */}
       <div className="icon-search">
         {/* what to search: single icons or icon sets */}
@@ -291,7 +294,7 @@ function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
 
       {showSets ? (
         <div className="set-grid">
-          {filteredSets.length > 0 ? (
+          {catalogLoading ? null : filteredSets.length > 0 ? (
             filteredSets.map((set) => (
               <SetCard
                 key={set.id}
@@ -316,7 +319,7 @@ function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
         <>
           {/* ICON GRID */}
           <div className="results-grid">
-            {currentIcons.length > 0 ? (
+            {catalogLoading ? null : currentIcons.length > 0 ? (
               currentIcons.map((icon) => (
                 <div
                   className="icon-card"

@@ -19,7 +19,6 @@ import CreateSearch from "./CreateSearch";
 import { SearchBox } from "./CreateElements";
 import TemplateThumb from "../../components/TemplateThumb";
 import { allTemplates } from "../../data/templatesData";
-import { icons as libraryIcons } from "../../data/iconsData";
 import { elements as libraryElements } from "../../data/elementsData";
 import { basicIcons } from "./basicIcons";
 import { artboardPresets, svgDataUrl, textPresets } from "./createLibrary";
@@ -660,7 +659,8 @@ function Create({ draft, clearDraft, user = null }) {
     if (kind === "basic") return addSvg(basicIcons.find((i) => i.id === id).svg, point);
     // the same SVG files as the Icons page, so their colors stay editable
     if (kind === "icon") {
-      const icon = library.icons.find((i) => i.id === id) ?? libraryIcons.find((i) => i.id === id);
+      const icon = library.icons.find((i) => i.id === id);
+      if (!icon) return;
       return fetch(icon.image).then((r) => r.text()).then((markup) => addSvg(markup, point));
     }
     // element files: SVG stays editable vector, PNG goes in as an image
@@ -884,15 +884,12 @@ function Create({ draft, clearDraft, user = null }) {
     setQuery(text);
     if (libraryAsked.current) return;
     libraryAsked.current = true;
-    Promise.allSettled([fetchIconCatalog(), fetchPublished("vector"), import("../../data/vectorsData")]).then(
-      ([icons, vectors, trial]) => {
+    Promise.allSettled([fetchIconCatalog(), fetchPublished("vector")]).then(
+      ([icons, vectors]) => {
         // codes as ids: rows published together can share a timestamp
         setLibrary({
           icons: (icons.value?.icons ?? []).map((i) => ({ ...i, id: i.code })),
-          vectors: [
-            ...(vectors.value ?? []).map((row) => ({ ...toVector(row), id: row.code })),
-            ...(trial.value?.vectors ?? []),
-          ],
+          vectors: (vectors.value ?? []).map((row) => ({ ...toVector(row), id: row.code })),
         });
       }
     );
