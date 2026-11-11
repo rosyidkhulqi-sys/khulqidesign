@@ -22,6 +22,8 @@ export const MODELS = {
 let worker = null;
 let nextId = 0;
 const waiting = new Map();
+const sessions = {};
+const MODEL_NOT_LOADED = "The AI model hasn't been loaded.";
 
 function call(message, transfer = []) {
   if (!worker) {
@@ -29,7 +31,10 @@ function call(message, transfer = []) {
     worker.onmessage = ({ data }) => {
       const p = waiting.get(data.id);
       waiting.delete(data.id);
-      if (data.error) p?.reject(new Error(data.error));
+      if (data.error) {
+        if (data.error === MODEL_NOT_LOADED && p?.name) delete sessions[p.name];
+        p?.reject(new Error(data.error));
+      }
       else p?.resolve(data);
     };
     // the worker itself couldn't start: fail every call and start fresh next time
@@ -38,11 +43,12 @@ function call(message, transfer = []) {
       waiting.clear();
       worker.terminate();
       worker = null;
+      for (const name of Object.keys(sessions)) delete sessions[name];
     };
   }
   return new Promise((resolve, reject) => {
     const id = ++nextId;
-    waiting.set(id, { resolve, reject });
+    waiting.set(id, { resolve, reject, name: message.name });
     worker.postMessage({ ...message, id }, transfer);
   });
 }
@@ -94,20 +100,25 @@ async function modelBytes(url, onProgress) {
 }
 
 // loads a model into the worker once; resolves run(input, dims) -> { data, dims }
-const sessions = {};
 async function session(name, onProgress) {
   if (!sessions[name]) {
     sessions[name] = (async () => {
       const bytes = await modelBytes(MODELS[name].url, onProgress);
-      const loaded = await call({ type: "load", name, bytes }, [bytes.buffer]);
+      await call({ type: "load", name, bytes }, [bytes.buffer]);
       // the input buffer moves to the worker, so callers make a new one each run
-      const run = async (input, dims) => {
-        const result = await call({ type: "run", name, input, dims }, [input.buffer]);
-        run.backend = result.backend || run.backend;
-        return result;
+      return async (input, dims, retried = false) => {
+        // Keep a small copy so a newly restarted worker can load the model and
+        // retry the current tile without making the user restart the operation.
+        const retryInput = input.slice();
+        try {
+          return await call({ type: "run", name, input, dims }, [input.buffer]);
+        } catch (error) {
+          if (retried || error.message !== MODEL_NOT_LOADED) throw error;
+          delete sessions[name];
+          const retry = await session(name, onProgress);
+          return retry(retryInput, dims, true);
+        }
       };
-      run.backend = loaded.backend || "wasm";
-      return run;
     })();
     // a failed load can be retried
     sessions[name].catch(() => delete sessions[name]);
