@@ -702,7 +702,15 @@ function Create({ draft, clearDraft, user = null }) {
       flipY: image.flipY,
       skewX: image.skewX,
       skewY: image.skewY,
+      scaleX: image.scaleX,
+      scaleY: image.scaleY,
+      cropX: image.cropX || 0,
+      cropY: image.cropY || 0,
+      imageWidth: image.width,
+      imageHeight: image.height,
     };
+    const originalMatrix = image.calcTransformMatrix();
+    const sourceSize = image.getOriginalSize();
 
     setAiOperation({ operation, step: "Preparing image", progress: 0 });
     try {
@@ -711,9 +719,12 @@ function Create({ draft, clearDraft, user = null }) {
       const source = await response.blob();
       const input = new File([source], "create-image", { type: source.type || "image/png" });
       const onStep = (step, progress) => setAiOperation({ operation, step, progress });
-      const result = operation === "cutout"
-        ? await removeBackground(input, onStep)
+      const processed = operation === "cutout"
+        ? await removeBackground(input, onStep, { cropToSubject: true })
         : await upscale(input, onStep, scale);
+      const cropBounds = operation === "cutout" ? processed.bounds : null;
+      const result = cropBounds ? processed.blob : processed;
+      if (cropBounds) setAiOperation({ operation, step: "Cropping artboard", progress: 1 });
 
       // Store the processed result as a data URL so it remains part of the
       // saved design after the temporary object URL has been released.
@@ -725,13 +736,33 @@ function Create({ draft, clearDraft, user = null }) {
       });
       const replacement = await FabricImage.fromURL(dataUrl);
       if (!c.getObjects().includes(image)) throw new Error("The selected image changed before processing finished. Please try again.");
+      let replacementLeft = original.left;
+      let replacementTop = original.top;
+      let replacementOriginX = original.originX;
+      let replacementOriginY = original.originY;
+      let replacementScaleX = original.width / replacement.width;
+      let replacementScaleY = original.height / replacement.height;
+      if (cropBounds) {
+        const scaleToSourceX = sourceSize.width / cropBounds.sourceWidth;
+        const scaleToSourceY = sourceSize.height / cropBounds.sourceHeight;
+        const cropCenterX = (cropBounds.left + cropBounds.width / 2) * scaleToSourceX;
+        const cropCenterY = (cropBounds.top + cropBounds.height / 2) * scaleToSourceY;
+        const dx = cropCenterX - (original.cropX + original.imageWidth / 2);
+        const dy = cropCenterY - (original.cropY + original.imageHeight / 2);
+        replacementLeft = originalMatrix[4] + originalMatrix[0] * dx + originalMatrix[2] * dy;
+        replacementTop = originalMatrix[5] + originalMatrix[1] * dx + originalMatrix[3] * dy;
+        replacementOriginX = "center";
+        replacementOriginY = "center";
+        replacementScaleX = original.scaleX * scaleToSourceX;
+        replacementScaleY = original.scaleY * scaleToSourceY;
+      }
       replacement.set({
-        left: original.left,
-        top: original.top,
-        originX: original.originX,
-        originY: original.originY,
-        scaleX: original.width / replacement.width,
-        scaleY: original.height / replacement.height,
+        left: replacementLeft,
+        top: replacementTop,
+        originX: replacementOriginX,
+        originY: replacementOriginY,
+        scaleX: replacementScaleX,
+        scaleY: replacementScaleY,
         angle: original.angle,
         opacity: original.opacity,
         flipX: original.flipX,
@@ -1301,6 +1332,7 @@ function Create({ draft, clearDraft, user = null }) {
                 operation={aiOperation}
                 models={MODELS}
                 onRun={runImageAi}
+                onUpload={handleFiles}
               />
             )}
 

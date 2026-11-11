@@ -99,9 +99,15 @@ async function session(name, onProgress) {
   if (!sessions[name]) {
     sessions[name] = (async () => {
       const bytes = await modelBytes(MODELS[name].url, onProgress);
-      await call({ type: "load", name, bytes }, [bytes.buffer]);
+      const loaded = await call({ type: "load", name, bytes }, [bytes.buffer]);
       // the input buffer moves to the worker, so callers make a new one each run
-      return (input, dims) => call({ type: "run", name, input, dims }, [input.buffer]);
+      const run = async (input, dims) => {
+        const result = await call({ type: "run", name, input, dims }, [input.buffer]);
+        run.backend = result.backend || run.backend;
+        return result;
+      };
+      run.backend = loaded.backend || "wasm";
+      return run;
     })();
     // a failed load can be retried
     sessions[name].catch(() => delete sessions[name]);
@@ -120,6 +126,59 @@ const toBlob = (canvas, type = "image/png", quality) =>
   new Promise((resolve, reject) =>
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("The browser couldn't save the image"))), type, quality)
   );
+
+// Fill every pixel with the closest confident background color from the
+// model-sized image. The map is only 320 × 320, so this stays inexpensive.
+function nearestBackgroundCanvas(pixels, alpha, size) {
+  const count = size * size;
+  const nearest = new Int32Array(count).fill(-1);
+  const queue = new Uint32Array(count);
+  let tail = 0;
+
+  for (let i = 0; i < count; i++) {
+    if (alpha[i] <= 8) {
+      nearest[i] = i;
+      queue[tail++] = i;
+    }
+  }
+  if (!tail) return null;
+
+  for (let head = 0; head < tail; head++) {
+    const i = queue[head];
+    const x = i % size;
+    const y = (i / size) | 0;
+    const colorAt = nearest[i];
+    for (let dy = -1; dy <= 1; dy++) {
+      const ny = y + dy;
+      if (ny < 0 || ny >= size) continue;
+      for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy) continue;
+        const nx = x + dx;
+        if (nx < 0 || nx >= size) continue;
+        const next = ny * size + nx;
+        if (nearest[next] !== -1) continue;
+        nearest[next] = colorAt;
+        queue[tail++] = next;
+      }
+    }
+  }
+
+  const canvas = canvasOf(size, size);
+  const context = canvas.getContext("2d");
+  const data = context.createImageData(size, size);
+  for (let i = 0; i < count; i++) {
+    const source = nearest[i] * 4;
+    const target = i * 4;
+    data.data[target] = pixels[source];
+    data.data[target + 1] = pixels[source + 1];
+    data.data[target + 2] = pixels[source + 2];
+    data.data[target + 3] = 255;
+  }
+  context.putImageData(data, 0, 0);
+  return canvas;
+}
+
+const clampByte = (value) => Math.max(0, Math.min(255, value));
 
 // big photos are scaled down first, so the browser doesn't run out of memory
 async function bitmapOf(file, maxSide) {
@@ -140,8 +199,9 @@ const SIZE = 320;
 const MEAN = [0.485, 0.456, 0.406];
 const STD = [0.229, 0.224, 0.225];
 
-// onStep(label, 0..1). Resolves a PNG with a transparent background.
-export async function removeBackground(file, onStep) {
+// onStep(label, 0..1). Resolves a PNG with a transparent background. When
+// cropToSubject is set, also returns the visible subject bounds for the editor.
+export async function removeBackground(file, onStep, { cropToSubject = false } = {}) {
   onStep?.("Loading the AI model", 0);
   const run = await session("cutout", (p) => onStep?.("Loading the AI model", p));
   onStep?.("Finding the subject", 0);
@@ -159,47 +219,126 @@ export async function removeBackground(file, onStep) {
   }
   const { data: mask } = await run(input, [1, 3, SIZE, SIZE]);
 
-  // stretch the mask to 0..1, then to full size
+  // Normalize the model mask and keep the 320px alpha values for estimating
+  // background colors along the subject edge.
   let lo = Infinity;
   let hi = -Infinity;
   for (const v of mask) {
     if (v < lo) lo = v;
     if (v > hi) hi = v;
   }
+  const alpha = new Uint8ClampedArray(SIZE * SIZE);
   const maskCanvas = canvasOf(SIZE, SIZE);
   const mctx = maskCanvas.getContext("2d");
   const mdata = mctx.createImageData(SIZE, SIZE);
   for (let i = 0; i < SIZE * SIZE; i++) {
-    const a = Math.round(((mask[i] - lo) / (hi - lo || 1)) * 255);
+    const a = Math.round(Math.max(0, Math.min(1, (mask[i] - lo) / (hi - lo || 1))) * 255);
+    alpha[i] = a;
     mdata.data[i * 4 + 3] = a;
   }
   mctx.putImageData(mdata, 0, 0);
 
+  const background = nearestBackgroundCanvas(px, alpha, SIZE);
   const full = canvasOf(w, h);
-  const ctx = full.getContext("2d");
-  ctx.drawImage(bitmap, 0, 0);
-  // keep the photo only where the mask is
-  ctx.globalCompositeOperation = "destination-in";
-  ctx.imageSmoothingQuality = "high";
-  ctx.drawImage(maskCanvas, 0, 0, w, h);
+  const output = full.getContext("2d", { willReadFrequently: true });
+  const stripHeight = 64;
+  const sourceStrip = canvasOf(w, stripHeight);
+  const sourceStripContext = sourceStrip.getContext("2d", { willReadFrequently: true });
+  const maskStrip = canvasOf(w, stripHeight);
+  const maskStripContext = maskStrip.getContext("2d", { willReadFrequently: true });
+  maskStripContext.imageSmoothingEnabled = true;
+  maskStripContext.imageSmoothingQuality = "high";
+  const backgroundStrip = background ? canvasOf(w, stripHeight) : null;
+  const backgroundStripContext = backgroundStrip?.getContext("2d", { willReadFrequently: true });
+  if (backgroundStripContext) {
+    backgroundStripContext.imageSmoothingEnabled = true;
+    backgroundStripContext.imageSmoothingQuality = "high";
+  }
+  let minX = w;
+  let minY = h;
+  let maxX = -1;
+  let maxY = -1;
+
+  for (let y = 0; y < h; y += stripHeight) {
+    const rows = Math.min(stripHeight, h - y);
+    sourceStripContext.clearRect(0, 0, w, stripHeight);
+    sourceStripContext.drawImage(bitmap, 0, y, w, rows, 0, 0, w, rows);
+    maskStripContext.clearRect(0, 0, w, stripHeight);
+    maskStripContext.drawImage(maskCanvas, 0, 0, SIZE, SIZE, 0, -y, w, h);
+    if (backgroundStripContext) {
+      backgroundStripContext.clearRect(0, 0, w, stripHeight);
+      backgroundStripContext.drawImage(background, 0, 0, SIZE, SIZE, 0, -y, w, h);
+    }
+
+    const source = sourceStripContext.getImageData(0, 0, w, rows);
+    const matte = maskStripContext.getImageData(0, 0, w, rows);
+    const bg = backgroundStripContext?.getImageData(0, 0, w, rows);
+
+    for (let i = 0; i < source.data.length; i += 4) {
+      const inputAlpha = source.data[i + 3] / 255;
+      const maskAlpha = matte.data[i + 3] / 255;
+      const outputAlpha = maskAlpha * inputAlpha;
+
+      // A soft edge pixel is a mix of the foreground and old background.
+      // Estimate the clean foreground color so that old background color
+      // doesn't remain as a white or colored fringe on transparency.
+      if (bg && maskAlpha > 0.03 && maskAlpha < 0.98 && inputAlpha > 0) {
+        const strength = Math.min(1, (0.98 - maskAlpha) / 0.62);
+        const denominator = Math.max(maskAlpha, 0.08);
+        const backgroundWeight = 1 - maskAlpha;
+        for (let channel = 0; channel < 3; channel++) {
+          const color = source.data[i + channel];
+          const clean = clampByte((color - backgroundWeight * bg.data[i + channel]) / denominator);
+          source.data[i + channel] = clampByte(color + (clean - color) * strength);
+        }
+      }
+      source.data[i + 3] = Math.round(outputAlpha * 255);
+      if (cropToSubject && source.data[i + 3] > 8) {
+        const pixel = i >> 2;
+        const x = pixel % w;
+        const py = y + ((pixel / w) | 0);
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, py);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, py);
+      }
+    }
+
+    output.putImageData(source, 0, y);
+    onStep?.("Cleaning image edges", (y + rows) / h);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
   bitmap.close();
   onStep?.("Done", 1);
+  if (cropToSubject) {
+    if (maxX < minX || maxY < minY) {
+      throw new Error("No visible subject was found. Try another image.");
+    }
+    const bounds = { left: minX, top: minY, width: maxX - minX + 1, height: maxY - minY + 1, sourceWidth: w, sourceHeight: h };
+    const cropped = canvasOf(bounds.width, bounds.height);
+    cropped.getContext("2d").drawImage(full, minX, minY, bounds.width, bounds.height, 0, 0, bounds.width, bounds.height);
+    return { blob: await toBlob(cropped), bounds };
+  }
   return toBlob(full);
 }
 
 // ---------------------------------------------------------------- upscale
 
-const TILE = 128;
 const OVERLAP = 8;
 const MODEL_SCALE = 4;
 export const UPSCALE_MAX_SIDE = 1024;
 
-// Real-ESRGAN works on 128 px tiles that overlap a little, so no seams show.
+// Real-ESRGAN works on overlapping tiles, so no seams show.
 // scale 2 or 4; onStep(label, 0..1). Resolves a PNG.
 export async function upscale(file, onStep, scale = 2) {
   onStep?.("Loading the AI model", 0);
   const run = await session("upscale", (p) => onStep?.("Loading the AI model", p));
 
+  // Larger tiles reduce worker round trips. The model, overlap context and
+  // 4x inference stay the same; evenly spaced starts avoid a tiny final tile.
+  const TILE = 192;
+  const MODEL_OVERLAP = OVERLAP * 2;
   const bitmap = await bitmapOf(file, UPSCALE_MAX_SIDE);
   const { width: w, height: h } = bitmap;
   // pad small images up to one tile by repeating the edge
@@ -210,25 +349,33 @@ export async function upscale(file, onStep, scale = 2) {
   if (pw > w) src.drawImage(src.canvas, w - 1, 0, 1, h, w, 0, pw - w, h);
   if (ph > h) src.drawImage(src.canvas, 0, h - 1, pw, 1, 0, h, pw, ph - h);
   const pixels = src.getImageData(0, 0, pw, ph).data;
+  const alpha = new Uint8ClampedArray(pw * ph);
+  let hasAlpha = false;
+  for (let i = 0; i < alpha.length; i++) {
+    alpha[i] = pixels[i * 4 + 3];
+    if (alpha[i] < 255) hasAlpha = true;
+  }
   bitmap.close();
 
   const S = MODEL_SCALE;
   const big = canvasOf(w * S, h * S);
   const bctx = big.getContext("2d");
-  const step = TILE - OVERLAP * 2;
+  const step = TILE - MODEL_OVERLAP;
   const starts = (len) => {
-    const list = [];
-    for (let p = 0; p < len - TILE; p += step) list.push(p);
-    list.push(len - TILE);
-    return [...new Set(list)];
+    const span = len - TILE;
+    if (span <= 0) return [0];
+    const intervals = Math.ceil(span / step);
+    return [...new Set(Array.from({ length: intervals + 1 }, (_, i) => Math.round((span * i) / intervals)))];
   };
   const xs = starts(pw);
   const ys = starts(ph);
   const total = xs.length * ys.length;
   let done = 0;
 
-  for (const y of ys) {
-    for (const x of xs) {
+  for (let row = 0; row < ys.length; row++) {
+    const y = ys[row];
+    for (let col = 0; col < xs.length; col++) {
+      const x = xs[col];
       // a fresh buffer per tile: the worker takes ownership of the last one
       const input = new Float32Array(3 * TILE * TILE);
       for (let ty = 0; ty < TILE; ty++) {
@@ -249,15 +396,46 @@ export async function upscale(file, onStep, scale = 2) {
         tile.data[i * 4 + 2] = Math.max(0, Math.min(255, rec[2 * TS * TS + i] * 255));
         tile.data[i * 4 + 3] = 255;
       }
-      // keep the middle of each tile; the image edges keep their border
-      const cx = x === 0 ? 0 : OVERLAP;
-      const cy = y === 0 ? 0 : OVERLAP;
-      const cw = (x + TILE >= pw ? TILE : TILE - OVERLAP) - cx;
-      const ch = (y + TILE >= ph ? TILE : TILE - OVERLAP) - cy;
+      // Keep the image borders and join tiles halfway through their shared
+      // context so seam pixels are never taken from right at a tile edge.
+      const left = col === 0 ? 0 : Math.floor((xs[col - 1] + TILE + x) / 2);
+      const right = col === xs.length - 1 ? pw : Math.floor((x + TILE + xs[col + 1]) / 2);
+      const top = row === 0 ? 0 : Math.floor((ys[row - 1] + TILE + y) / 2);
+      const bottom = row === ys.length - 1 ? ph : Math.floor((y + TILE + ys[row + 1]) / 2);
+      const cx = left - x;
+      const cy = top - y;
+      const cw = right - left;
+      const ch = bottom - top;
       bctx.putImageData(tile, x * S, y * S, cx * S, cy * S, cw * S, ch * S);
       done++;
       onStep?.("Upscaling", done / total);
     }
+  }
+
+  // Real-ESRGAN enhances RGB only. Preserve transparent PNG/WebP input by
+  // resizing its alpha mask separately, then applying that mask to the result.
+  if (hasAlpha) {
+    const mask = canvasOf(pw, ph);
+    const maskContext = mask.getContext("2d");
+    const maskData = maskContext.createImageData(pw, ph);
+    for (let i = 0; i < alpha.length; i++) {
+      const at = i * 4;
+      maskData.data[at] = 255;
+      maskData.data[at + 1] = 255;
+      maskData.data[at + 2] = 255;
+      maskData.data[at + 3] = alpha[i];
+    }
+    maskContext.putImageData(maskData, 0, 0);
+
+    const scaledMask = canvasOf(w * S, h * S);
+    const scaledMaskContext = scaledMask.getContext("2d");
+    scaledMaskContext.imageSmoothingEnabled = true;
+    scaledMaskContext.imageSmoothingQuality = "high";
+    scaledMaskContext.drawImage(mask, 0, 0, pw * S, ph * S);
+
+    bctx.globalCompositeOperation = "destination-in";
+    bctx.drawImage(scaledMask, 0, 0);
+    bctx.globalCompositeOperation = "source-over";
   }
 
   if (scale === MODEL_SCALE) {

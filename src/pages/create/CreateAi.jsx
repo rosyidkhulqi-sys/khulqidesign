@@ -1,27 +1,33 @@
 // The AI tab of Create. Image cleanup and upscaling run locally; the other
 // tools need the site's AI backend before they can be used.
+import { useRef } from "react";
 import { Sparkle } from "../../components/AiSearchButton";
 
 const tools = [
   ["Generate an image", "Describe a picture or an element and place it on the page."],
   ["Write text", "Headlines and captions in the tone you choose."],
-  ["Remove background", "Cut the subject out of a photo you uploaded."],
   ["Color ideas", "Palettes that suit the colors already in your design."],
 ];
 
-function AiPanel({ aiReady, hasSelectedImage, operation, models, onRun }) {
+function AiPanel({ aiReady, hasSelectedImage, operation, models, onRun, onUpload }) {
+  const fileInput = useRef(null);
   const busy = Boolean(operation && !operation.error);
   return (
     <>
       <div className="cp-ai-intro">
         <Sparkle size={20} />
-        <p>Improve images in your design. Local tools run in this browser.</p>
+        <p>Remove backgrounds and upscale images. These AI tools run in this browser.</p>
       </div>
 
-      <p className="cp-label">Selected image</p>
+      <p className="cp-label">Image tools · On this device</p>
       <div className="cp-ai-local">
         {!hasSelectedImage ? (
-          <p className="cp-hint">Select a photo or image on the canvas to use these tools.</p>
+          <>
+            <p className="cp-hint">Select an image on the canvas, or upload one to try the AI tools.</p>
+            <button className="cp-upload" onClick={() => fileInput.current?.click()}>
+              ↑ Upload an image to start
+            </button>
+          </>
         ) : (
           <>
             <button className="cp-ai-tool" disabled={busy} onClick={() => onRun("cutout")}>
@@ -41,6 +47,16 @@ function AiPanel({ aiReady, hasSelectedImage, operation, models, onRun }) {
             </div>
           </>
         )}
+        <input
+          ref={fileInput}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          hidden
+          onChange={(e) => {
+            if (e.target.files?.length) onUpload(e.target.files);
+            e.target.value = "";
+          }}
+        />
         {busy && (
           <div className="cp-ai-progress" role="status">
             <span>{operation.step}{operation.progress > 0 && operation.progress < 1 ? ` · ${Math.round(operation.progress * 100)}%` : "…"}</span>
