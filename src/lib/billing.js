@@ -50,7 +50,7 @@ export async function openBillingPortal() {
 // the signed-in member's plan as it stands right now
 export async function fetchMembership(userId) {
   const [{ data: profile }, { data: billing }] = await Promise.all([
-    supabase.from("profiles").select("plan, plan_renews_at").eq("id", userId).maybeSingle(),
+    supabase.from("profiles").select("plan, plan_renews_at, role").eq("id", userId).maybeSingle(),
     supabase.from("billing").select("customer_id, cancel_at_period_end, current_period_end").eq("user_id", userId).maybeSingle(),
   ]);
   const lapsed = profile?.plan_renews_at && new Date(profile.plan_renews_at) < new Date();
@@ -61,5 +61,7 @@ export async function fetchMembership(userId) {
     periodEnd: billing?.current_period_end ?? null,
     cancelling: billing?.cancel_at_period_end ?? false,
     canManage: Boolean(billing?.customer_id),
+    // Premium tools: paid members, and the owner to check them
+    canUsePremium: plan !== "free" || profile?.role === "admin",
   };
 }

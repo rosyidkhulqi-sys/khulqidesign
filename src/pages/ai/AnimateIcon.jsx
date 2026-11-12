@@ -10,7 +10,8 @@ import { buildAnimatedSvg, buildGif, buildMp4 } from "../../lib/animateExport";
 import { saveBlob } from "../../lib/downloads";
 import { askLogin } from "../../lib/authGate";
 import { keepAnimate, takeAnimate } from "../../lib/aiKeep";
-import { PremiumTag } from "../../components/IconControls";
+import { PremiumPrompt, PremiumTag } from "../../components/IconControls";
+import { fetchMembership } from "../../lib/billing";
 
 const presets = [
   ["bounce", "Bounce"],
@@ -41,7 +42,10 @@ const speeds = [
 // seconds for one play at 1×
 const BASE = 1.2;
 
-function AnimateIcon({ initialIcon = null, user = null }) {
+// formats only Premium members can export; GIF and MP4 stay free
+const PREMIUM_EXPORTS = ["svg", "json"];
+
+function AnimateIcon({ initialIcon = null, user = null, setPage }) {
   // back from logging in to export: what the visitor had chosen
   const [kept] = useState(takeAnimate);
   const opening = initialIcon ?? kept?.icon ?? null;
@@ -56,6 +60,9 @@ function AnimateIcon({ initialIcon = null, user = null }) {
   const [run, setRun] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [svg, setSvg] = useState(null);
+  const [membership, setMembership] = useState(null);
+  // the "this export is Premium" note is open
+  const [upsell, setUpsell] = useState(false);
   const stage = useRef(null);
   // the export being made: { kind, progress }, or null
   const [making, setMaking] = useState(null);
@@ -142,11 +149,24 @@ function AnimateIcon({ initialIcon = null, user = null }) {
     });
   }, [svg, preset, duration, run]);
 
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    fetchMembership(user.id).then((m) => alive && setMembership(m));
+    return () => {
+      alive = false;
+    };
+  }, [user]);
+
   const exportAs = async (kind) => {
     if (!icon) return;
     if (!user) {
       keepAnimate({ icon, preset, speed, loop });
       askLogin("download");
+      return;
+    }
+    if (PREMIUM_EXPORTS.includes(kind) && !membership?.canUsePremium) {
+      setUpsell(true);
       return;
     }
     const iconEl = stage.current?.querySelector("svg.animate-icon");
@@ -316,6 +336,15 @@ function AnimateIcon({ initialIcon = null, user = null }) {
           </button>
         </div>
         {exportError && <p className="animate-error" role="alert">{exportError}</p>}
+        {upsell && (
+          <PremiumPrompt
+            signedIn
+            title="Animated SVG and Lottie are Premium"
+            text="GIF and MP4 stay free. Go Premium to export animated SVG and Lottie files for websites and apps."
+            onAuth={(page) => setPage?.(page)}
+            onDismiss={() => setUpsell(false)}
+          />
+        )}
         <p className="animate-note">
           GIF and MP4 have a white background.
         </p>

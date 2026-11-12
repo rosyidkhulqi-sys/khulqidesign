@@ -108,7 +108,7 @@ function Ai({ setPage, user = null, animateIcon = null }) {
             Animate an icon <span className="library-count">Motion presets, live preview</span>
           </h1>
         </div>
-        <AnimateIcon initialIcon={animateIcon} user={user} />
+        <AnimateIcon initialIcon={animateIcon} user={user} setPage={setPage} />
       </section>
     );
   }

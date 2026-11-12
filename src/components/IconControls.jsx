@@ -114,8 +114,23 @@ export function PremiumTag() {
   return <span className="ie-tag">Premium</span>;
 }
 
-// shown when a signed-out visitor clicks a Premium button
-export function PremiumPrompt({ title, text, onAuth, onDismiss }) {
+// shown when a signed-out visitor clicks a Premium button; signedIn: a
+// member on the Free plan, who only needs the way to Premium
+export function PremiumPrompt({ title, text, onAuth, onDismiss, signedIn = false }) {
+  if (signedIn) {
+    return (
+      <div className="ie-upsell" role="status">
+        <button className="ie-upsell-close" onClick={onDismiss} aria-label="Dismiss">
+          ✕
+        </button>
+        <strong>{title}</strong>
+        <p>{text}</p>
+        <div>
+          <button className="ie-upsell-main" onClick={() => onAuth("pricing")}>See plans</button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="ie-upsell" role="status">
       <button className="ie-upsell-close" onClick={onDismiss} aria-label="Dismiss">
