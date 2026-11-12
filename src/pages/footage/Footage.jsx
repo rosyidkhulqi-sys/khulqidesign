@@ -64,6 +64,12 @@ function clipSpecs(clip) {
   ];
 }
 
+// data saver on, or a 2G-class connection (Chrome and Android report it)
+function slowConnection() {
+  const c = navigator.connection;
+  return Boolean(c && (c.saveData || ["slow-2g", "2g"].includes(c.effectiveType)));
+}
+
 function FootageCard({ clip, onOpen }) {
   const ref = useRef(null);
   const bar = useRef(null);
@@ -86,7 +92,8 @@ function FootageCard({ clip, onOpen }) {
 
   const play = () => {
     const v = ref.current;
-    if (!v) return;
+    // on data saver or a very slow connection, the still picture is enough
+    if (!v || slowConnection()) return;
     // HAVE_FUTURE_DATA: enough is loaded to start without waiting
     if (v.readyState < 3) setLoading(true);
     v.play().catch(() => setLoading(false));

@@ -16,7 +16,9 @@ export const FOOTAGE_CATEGORIES = [
 ];
 
 const PREVIEW_SECONDS = 15;
-const PREVIEW_LONG_SIDE = 1280;
+// small enough to start fast on a slow connection; the watermark stays sharp
+const PREVIEW_LONG_SIDE = 960;
+const PREVIEW_BITRATE = 900_000;
 
 const baseName = (name) => name.replace(/\.[^.]+$/, "");
 const extOf = (name) => name.split(".").pop().toLowerCase();
@@ -142,9 +144,9 @@ const seek = (video, time) =>
     video.currentTime = time;
   });
 
-const toJpeg = (canvas) =>
+const toJpeg = (canvas, quality) =>
   new Promise((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Couldn't make the poster"))), "image/jpeg", 0.84)
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Couldn't make the poster"))), "image/jpeg", quality)
   );
 
 function fit(w, h, longSide) {
@@ -157,15 +159,16 @@ export async function makePosters(file) {
   const video = await loadVideo(file);
   try {
     await seek(video, Math.min(2, video.duration / 3 || 0));
-    const make = async (longSide) => {
+    const make = async (longSide, quality) => {
       const [w, h] = fit(video.videoWidth, video.videoHeight, longSide);
       const canvas = document.createElement("canvas");
       canvas.width = w;
       canvas.height = h;
       canvas.getContext("2d").drawImage(video, 0, 0, w, h);
-      return toJpeg(canvas);
+      return toJpeg(canvas, quality);
     };
-    return { thumb: await make(960), poster: await make(1600) };
+    // the grid shows thumbs at about 400 px wide, the detail view the poster
+    return { thumb: await make(640, 0.7), poster: await make(1280, 0.75) };
   } finally {
     release(video);
   }
@@ -191,7 +194,7 @@ export async function makePreview(file, watermark, onProgress) {
     const limit = Math.min(PREVIEW_SECONDS, video.duration || PREVIEW_SECONDS);
 
     const stream = canvas.captureStream(30);
-    const recorder = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: 2_500_000 });
+    const recorder = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: PREVIEW_BITRATE });
     const chunks = [];
     recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
     const stopped = new Promise((resolve) => (recorder.onstop = resolve));
@@ -200,9 +203,10 @@ export async function makePreview(file, watermark, onProgress) {
       ctx.drawImage(video, 0, 0, w, h);
       if (watermark) drawWatermark(ctx, w, h);
     };
+    // record from the first decoded frame, so the preview doesn't open on black
+    await video.play();
     draw();
     recorder.start(1000);
-    await video.play();
 
     await new Promise((resolve, reject) => {
       // a stalled decoder must not hold the page forever
