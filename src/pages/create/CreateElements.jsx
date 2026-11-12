@@ -1,35 +1,36 @@
-// The Elements tab of the Create editor, laid out like Canva and MiriCanvas:
-// a search box, then sections that scroll down, each with "See all".
-//   Shapes   drawn by the editor
-//   <folder> single SVG/PNG elements from public/trial-elements/<folder>/
-//            and the ones uploaded on /admin, by category
-//   Icons    basic everyday icons first, then the Khulqidesign icon sets
+// Create's Elements tab groups insertable assets into browsable categories.
+// Shapes and basic icons stay built in; uploaded graphics, grids, frames and
+// photos come from the same published asset catalog used by Admin.
+// The existing Icons catalog is reused here, without copying its records.
 // Searching happens in CreateSearch, one box for the whole library.
 import { useEffect, useMemo, useRef, useState } from "react";
 import Icon from "./CreateIcons";
 import { basicIcons } from "./basicIcons";
-import { shapes, svgDataUrl } from "./createLibrary";
+import { shapeGroups, shapes, svgDataUrl } from "./createLibrary";
 import { clearRecent as forgetRecent, loadRecent, saveRecent, withRecent } from "./createRecent";
 import { elementCategories, elements as trialElements } from "../../data/elementsData";
+import { elementCategoryLabel, normalizeElementCategory } from "../../data/elementCategories";
 import { fetchIconCatalog } from "../../lib/catalog";
 
-// how many tiles a "See all" grid adds each time the list scrolls to its end
+// how many tiles a category grid adds each time the list scrolls to its end
 const PAGE = 60;
+const SHAPES_PREVIEW = svgDataUrl(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect x="12" y="18" width="28" height="28" fill="#000000"/><circle cx="67" cy="32" r="15" fill="#000000"/><path d="M28 78l18-28 18 28z" fill="#000000"/></svg>'
+);
 
-// from this many element categories, the overview shows Browse categories
-const BROWSE_FROM = 6;
-
-const label = (id) => id.charAt(0).toUpperCase() + id.slice(1);
-
-// the trial folders plus the uploaded parts, newest uploads first
+// the trial assets plus the uploaded parts, newest uploads first
 function mergeCategories(uploaded) {
   const merged = new Map(elementCategories.map((c) => [c.id, { ...c, items: [...c.items] }]));
   [...uploaded].reverse().forEach((el) => {
-    const category = merged.get(el.category);
+    const id = normalizeElementCategory(el.category);
+    const category = merged.get(id);
     if (category) category.items.unshift(el);
-    else merged.set(el.category, { id: el.category, name: label(el.category), items: [el], cover: el.thumb });
+    else merged.set(id, { id, name: elementCategoryLabel(id), items: [el], cover: el.thumb });
   });
-  return [...merged.values()].sort((a, b) => a.name.localeCompare(b.name));
+  return [...merged.values()].map((category) => ({
+    ...category,
+    name: elementCategoryLabel(category.id),
+  }));
 }
 
 function SectionHead({ title, count, onAll }) {
@@ -48,18 +49,32 @@ function SectionHead({ title, count, onAll }) {
 /* ---------- tiles ---------- */
 
 export function ShapeTile({ shape, dragItem }) {
+  const preview = svgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${shape.preview}</svg>`);
   return (
     <button className="cp-tile" {...dragItem("shape", shape.id)} title={shape.label}>
-      <span className={`shape-${shape.id}`} />
+      <img src={preview} alt="" draggable={false} />
     </button>
   );
 }
 
 function ShapeTiles({ list, dragItem }) {
   return (
-    <div className="cp-grid three">
-      {list.map((s) => <ShapeTile key={s.id} shape={s} dragItem={dragItem} />)}
-    </div>
+    <>
+      {shapeGroups.map((group) => (
+        <section className="cp-shape-set" key={group.id}>
+          <SectionHead title={group.name} count={group.items.length} />
+          <div className="cp-grid three">
+            {group.items.map((shape) => <ShapeTile key={shape.id} shape={shape} dragItem={dragItem} />)}
+          </div>
+        </section>
+      ))}
+      {list.length > 0 && (
+        <section className="cp-shape-set">
+          <SectionHead title="Uploaded shapes" count={list.length} />
+          <PagedGrid items={list} renderTile={(el) => <ElementTile key={el.id} el={el} dragItem={dragItem} />} />
+        </section>
+      )}
+    </>
   );
 }
 
@@ -132,11 +147,7 @@ function recentTile({ kind, id }, dragItem, elements, icons) {
   const key = `${kind}:${id}`;
   if (kind === "shape") {
     const s = shapes.find((x) => x.id === id);
-    return s && (
-      <button key={key} className="cp-tile" {...dragItem("shape", id)} title={s.label}>
-        <span className={`shape-${id}`} />
-      </button>
-    );
+    return s && <ShapeTile key={key} shape={s} dragItem={dragItem} />;
   }
   if (kind === "element") {
     const el = elements.find((x) => x.id === id);
@@ -175,9 +186,39 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [] }) {
     icons: setIcons.filter((icon) => icon.setId === set.id),
   })).filter((group) => group.icons.length > 0), [iconCatalog.sets, setIcons]);
   const iconCount = basicIcons.length + setIcons.length;
-  const browse = categories.length >= BROWSE_FROM;
-  // the section open in full ("See all"): a category id, "icons", "recent" or null
+  const shapeCategory = categories.find((c) => c.id === "shapes");
+  const browsableCategories = categories.filter((c) => c.id !== "shapes" && c.items.length > 0);
+  // the open category, the existing icon catalog, built-in shapes, or recent items
   const [view, setView] = useState(null);
+  const browseTiles = [
+    ...browsableCategories.filter((c) => c.id === "graphics" || c.id === "grids").map((c) => ({
+      ...c,
+      picture: c.cover,
+      onOpen: () => setView(c.id),
+    })),
+    {
+      id: "icons",
+      name: "Icons",
+      count: iconCount,
+      picture: svgDataUrl(basicIcons.find((i) => i.id === "star").svg),
+      onOpen: () => setView("icons"),
+    },
+    {
+      id: "shapes",
+      name: "Shapes",
+      count: shapes.length + (shapeCategory?.items.length ?? 0),
+      picture: shapeCategory?.cover ?? SHAPES_PREVIEW,
+      onOpen: () => setView("shapes"),
+    },
+    ...browsableCategories.filter((c) => c.id === "frames" || c.id === "photos").map((c) => ({
+      ...c,
+      picture: c.cover,
+      onOpen: () => setView(c.id),
+    })),
+    ...browsableCategories
+      .filter((c) => !["graphics", "grids", "frames", "photos"].includes(c.id))
+      .map((c) => ({ ...c, picture: c.cover, onOpen: () => setView(c.id) })),
+  ];
   const [recent, setRecent] = useState(loadRecent);
 
   const remember = (kind, id) => setRecent(saveRecent(kind, id));
@@ -203,10 +244,12 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [] }) {
       <>
         <button className="cp-back" onClick={() => setView(null)}>
           <Icon name="arrowLeft" size={16} />
-          {category ? category.name : view === "recent" ? "Recently used" : "Icons"}
+          {category?.name ?? (view === "recent" ? "Recently used" : view === "shapes" ? "Shapes" : "Icons")}
         </button>
 
-        {category && <PagedGrid items={category.items} renderTile={elementTile} />}
+        {category && view !== "shapes" && <PagedGrid items={category.items} renderTile={elementTile} />}
+
+        {view === "shapes" && <ShapeTiles list={shapeCategory?.items ?? []} dragItem={dragItem} />}
 
         {view === "recent" && (
           <>
@@ -248,7 +291,7 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [] }) {
     );
   }
 
-  /* overview: sections that scroll down, a short row each */
+  /* overview: recent items and the categories available in this account */
   return (
     <>
       {/* the last things used, newest first; hidden until there are some */}
@@ -264,57 +307,18 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [] }) {
         </>
       )}
 
-      <SectionHead title="Shapes" />
-      <ShapeTiles list={shapes} dragItem={dragItem} />
-
-      {/* many categories: one grid of picture tiles, as Canva's Browse
-          categories; few: a short row for each */}
-      {browse ? (
-        <>
-          <SectionHead title="Browse categories" />
-          <div className="cp-grid three">
-            {categories.map((c) => (
-              <CategoryTile
-                key={c.id}
-                name={c.name}
-                count={c.items.length}
-                picture={c.cover}
-                onOpen={() => setView(c.id)}
-              />
-            ))}
-            <CategoryTile
-              name="Icons"
-              count={iconCount}
-              picture={svgDataUrl(basicIcons.find((i) => i.id === "star").svg)}
-              onOpen={() => setView("icons")}
-            />
-          </div>
-        </>
-      ) : (
-        categories.map((c) => (
-          <div key={c.id}>
-            <SectionHead title={c.name} count={c.items.length} onAll={() => setView(c.id)} />
-            <div className="cp-grid three">{c.items.slice(0, 6).map(elementTile)}</div>
-          </div>
-        ))
-      )}
-
-      {/* a note for the developer only, while the folder is empty */}
-      {import.meta.env.DEV && elements.length === 0 && (
-        <p className="cp-hint">
-          Add SVG or PNG files to public/trial-elements/&lt;category&gt;/ and they appear here.
-        </p>
-      )}
-
-      {/* with the category grid, Icons is one of its tiles */}
-      {!browse && (
-        <>
-          <SectionHead title="Icons" count={iconCount} onAll={() => setView("icons")} />
-          <div className="cp-grid three">
-            {basicIcons.slice(0, 6).map((i) => <BasicTile key={i.id} icon={i} dragItem={dragItem} />)}
-          </div>
-        </>
-      )}
+      <SectionHead title="Browse categories" />
+      <div className="cp-grid three">
+        {browseTiles.map((category) => (
+          <CategoryTile
+            key={category.id}
+            name={category.name}
+            count={category.count}
+            picture={category.picture}
+            onOpen={category.onOpen}
+          />
+        ))}
+      </div>
 
       <p className="cp-hint">Click or drag onto the page. SVG elements and icons can be recolored.</p>
     </>

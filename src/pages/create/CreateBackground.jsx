@@ -17,7 +17,7 @@ export function PhotoTile({ photo, on, dragItem }) {
   );
 }
 
-function BackgroundPanel({ color, photo, photos, onColor, dragItem }) {
+function BackgroundPanel({ color, photo, photos, onColor, onEditColor, dragItem }) {
   return (
     <>
           <p className="cp-label">Color</p>
@@ -34,11 +34,11 @@ function BackgroundPanel({ color, photo, photos, onColor, dragItem }) {
               />
             ))}
           </div>
-          <label className="cp-custom">
-            <input type="color" value={color} onChange={(e) => onColor(e.target.value)} />
+          <button className="cp-custom" onClick={onEditColor}>
+            <i style={{ backgroundColor: color }} />
             <span>Custom color</span>
             <strong>{color.toUpperCase()}</strong>
-          </label>
+          </button>
 
       {photos.length > 0 && (
         <>

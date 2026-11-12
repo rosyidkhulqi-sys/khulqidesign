@@ -7,6 +7,11 @@ import { supabase } from "../../lib/supabaseClient";
 import { deleteFromR2, publicUrl } from "../../lib/r2";
 import { industries } from "../../data/logosData";
 import { VECTOR_CATEGORY_OPTIONS, vectorCategoryStorageValues } from "../../data/vectorCategories";
+import {
+  backgroundCategoryLabel,
+  elementCategoryLabel,
+  elementCategoryStorageValues,
+} from "../../data/elementCategories";
 import { CATEGORIES } from "./adminCategories";
 import { BACKGROUND_CATEGORIES, ELEMENT_CATEGORIES } from "./elementPublish";
 import EditAsset from "./EditAsset";
@@ -20,12 +25,19 @@ const NO_FILTERS = { search: "", category: "", kind: "", month: "", license: "",
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 // [value, label] pairs for the category filter
-function categoryOptions(type) {
+function categoryOptions(type, kind = "") {
   if (type === "logo") return industries;
   if (type === "vector") return VECTOR_CATEGORY_OPTIONS;
   const list = type === "element"
-    ? [...new Set([...ELEMENT_CATEGORIES, ...BACKGROUND_CATEGORIES])].sort()
+    ? kind === "background"
+      ? BACKGROUND_CATEGORIES
+      : kind === "element"
+        ? ELEMENT_CATEGORIES
+        : [...new Set([...ELEMENT_CATEGORIES, ...BACKGROUND_CATEGORIES])]
     : CATEGORIES[type] ?? [];
+  if (type === "element") {
+    return list.map((c) => [c, BACKGROUND_CATEGORIES.includes(c) ? backgroundCategoryLabel(c) : elementCategoryLabel(c)]);
+  }
   return list.map((c) => [c, capitalize(c)]);
 }
 
@@ -57,6 +69,9 @@ function loadAssets(type, filters, page) {
   if (filters.category) {
     if (type === "logo") query = query.eq("industry", filters.category);
     else if (type === "vector") query = query.in("category", vectorCategoryStorageValues(filters.category));
+    else if (type === "element" && filters.category === "graphics" && filters.kind !== "background") {
+      query = query.in("category", elementCategoryStorageValues(filters.category));
+    }
     else query = query.eq("category", filters.category);
   }
   if (filters.kind === "background") query = query.eq("style", "background");
@@ -112,7 +127,8 @@ function ManageAssetRows({ type = "vector", refreshKey }) {
   }, [type, refreshKey, filters, page, reload]);
 
   const setFilter = (key) => (e) => {
-    setFilters((f) => ({ ...f, [key]: e.target.value }));
+    const value = e.target.value;
+    setFilters((f) => ({ ...f, [key]: value, ...(key === "kind" ? { category: "" } : {}) }));
     setPage(0);
   };
 
@@ -181,7 +197,7 @@ function ManageAssetRows({ type = "vector", refreshKey }) {
         )}
         <select value={filters.category} onChange={setFilter("category")} aria-label={type === "logo" ? "Industry" : "Category"}>
           <option value="">{type === "logo" ? "All industries" : "All categories"}</option>
-          {categoryOptions(type).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          {categoryOptions(type, filters.kind).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
         <select value={filters.month} onChange={setFilter("month")} aria-label="Upload month">
           <option value="">Any month</option>

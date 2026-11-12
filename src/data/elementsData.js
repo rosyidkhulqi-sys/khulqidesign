@@ -1,10 +1,11 @@
-// Create editor elements: single SVG or PNG files, read straight from
-// public/trial-elements/<category>/<file>. Drop a file into a category folder
-// and it shows up in Create; the folder name becomes the category.
+// Create trial elements: single SVG or PNG files, read from
+// public/trial-elements/<category>/<file>. Legacy folder names are normalized
+// to the same categories used by published assets.
 //
 // Only the file list is read here (Object.keys), so no file is bundled: the
 // build keeps just the paths. Later the backend serves the same list, with
 // thousands of elements, page by page.
+import { normalizeElementCategory } from "./elementCategories";
 
 const paths = Object.keys(import.meta.glob("/public/trial-elements/*/*.{svg,png,SVG,PNG}"));
 
@@ -31,7 +32,7 @@ export const elements = paths
       id: path,
       url: fileUrl(folder, file),
       type: file.toLowerCase().endsWith(".svg") ? "svg" : "png",
-      category: folder,
+      category: normalizeElementCategory(folder),
       name: label(file.replace(/\.(svg|png)$/i, "")),
     };
   })

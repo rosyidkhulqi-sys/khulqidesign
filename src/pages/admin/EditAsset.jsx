@@ -3,7 +3,13 @@ import { useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { industries, logoStyles } from "../../data/logosData";
 import { CATEGORIES } from "./adminCategories";
-import { MAX_KEYWORDS, categoriesOf } from "./elementPublish";
+import {
+  MAX_KEYWORDS,
+  backgroundCategoryLabel,
+  categoriesOf,
+  elementCategoryLabel,
+  normalizeElementCategory,
+} from "./elementPublish";
 import { parseKeywords } from "./vectorUpload";
 import { normalizeVectorCategory, vectorCategoryLabel } from "../../data/vectorCategories";
 
@@ -18,7 +24,11 @@ function EditAsset({ row, type, onSaved, onCancel }) {
     title: row.title ?? "",
     description: row.description ?? "",
     keywords: (row.keywords ?? []).join(", "),
-    category: type === "vector" ? normalizeVectorCategory(row.category) : row.category ?? "other",
+    category: type === "vector"
+      ? normalizeVectorCategory(row.category)
+      : type === "element" && row.style !== "background"
+        ? normalizeElementCategory(row.category)
+        : row.category ?? "other",
     industry: row.industry ?? industries[0][0],
     style: row.style ?? logoStyles[0][0],
     license: row.license,
@@ -101,7 +111,15 @@ function EditAsset({ row, type, onSaved, onCancel }) {
         <label>
           Category
           <select value={form.category} onChange={set("category")}>
-            {categoryOptions.map((c) => <option key={c} value={c}>{type === "vector" ? vectorCategoryLabel(c) : capitalize(c)}</option>)}
+            {categoryOptions.map((c) => (
+              <option key={c} value={c}>
+                {type === "vector"
+                  ? vectorCategoryLabel(c)
+                  : type === "element"
+                    ? row.style === "background" ? backgroundCategoryLabel(c) : elementCategoryLabel(c)
+                    : capitalize(c)}
+              </option>
+            ))}
           </select>
         </label>
       )}

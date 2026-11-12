@@ -2,6 +2,7 @@
 import { supabase } from "./supabaseClient";
 import { publicUrl } from "./r2";
 import { normalizeVectorCategory } from "../data/vectorCategories";
+import { normalizeElementCategory } from "../data/elementCategories";
 
 const orientationOf = (w, h) => (w === h ? "square" : w > h ? "landscape" : "portrait");
 const mb = (bytes) => (bytes ? `${(bytes / 1_000_000).toFixed(1)} MB` : "");
@@ -27,7 +28,7 @@ export function toCreatePart(row) {
     thumb: publicUrl(row.thumb_key),
     type: file.format.toLowerCase(),
     kind: row.style === "background" ? "background" : "element",
-    category: row.category || "other",
+    category: row.style === "background" ? row.category || "other" : normalizeElementCategory(row.category),
     name: row.title,
     keywords: row.keywords ?? [],
   };

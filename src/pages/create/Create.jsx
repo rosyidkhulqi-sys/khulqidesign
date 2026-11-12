@@ -3,9 +3,11 @@ import {
   ActiveSelection,
   Canvas,
   Circle,
+  Ellipse,
   FabricImage,
   Group,
   Line,
+  Polygon,
   Rect,
   Textbox,
   Triangle,
@@ -21,11 +23,11 @@ import TemplateThumb from "../../components/TemplateThumb";
 import { allTemplates } from "../../data/templatesData";
 import { elements as libraryElements } from "../../data/elementsData";
 import { basicIcons } from "./basicIcons";
-import { artboardPresets, svgDataUrl, textPresets } from "./createLibrary";
+import { artboardPresets, shapes, svgDataUrl, textPresets } from "./createLibrary";
 import { loadFont, loadFontsOf, loadSiteFonts } from "./createFonts";
 import FontPicker from "./FontPicker";
-import CreateColors from "./CreateColors";
-import { toHex } from "./colorTools";
+import CreateColors, { CreateColorPanel } from "./CreateColors";
+import { colorObjectKey, toHex } from "./colorTools";
 import { attachGuides } from "./createGuides";
 import { beginCrop } from "./createCrop";
 import ProjectsPanel from "./CreateProjects";
@@ -158,6 +160,7 @@ function Create({ draft, clearDraft, user = null }) {
     }
   });
   const [active, setActive] = useState(null);
+  const [colorEditor, setColorEditor] = useState(null);
   const [, setTick] = useState(0);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
@@ -370,7 +373,7 @@ function Create({ draft, clearDraft, user = null }) {
 
   const syncBackground = () => {
     const c = fc.current;
-    setBg(c.backgroundColor || "#ffffff");
+    setBg(typeof c.backgroundColor === "string" ? c.backgroundColor : c.backgroundColor?.colorStops?.[0]?.color || "#ffffff");
     setBgPhoto(c.backgroundImage?.getSrc() ?? null);
   };
 
@@ -620,15 +623,30 @@ function Create({ draft, clearDraft, user = null }) {
 
   const addShape = (id, point) => {
     const s = unit() * 0.3;
-    const base = { fill: "#e7212e", strokeWidth: 0 };
-    const make = {
-      rect: () => new Rect({ ...base, width: s, height: s }),
-      rounded: () => new Rect({ ...base, width: s, height: s, rx: s * 0.15, ry: s * 0.15 }),
-      circle: () => new Circle({ ...base, radius: s / 2 }),
-      triangle: () => new Triangle({ ...base, width: s, height: s }),
-      line: () => new Line([0, 0, s * 1.5, 0], { stroke: "#1d1d1d", strokeWidth: Math.max(4, s * 0.03) }),
-    };
-    place(make[id](), point);
+    const definition = shapes.find((shape) => shape.id === id);
+    if (!definition) return;
+    const base = { fill: "#000000", strokeWidth: 0 };
+    let object;
+
+    if (definition.kind === "rect") object = new Rect({ ...base, width: s, height: s });
+    else if (definition.kind === "rounded") object = new Rect({ ...base, width: s, height: s, rx: s * 0.15, ry: s * 0.15 });
+    else if (definition.kind === "circle") object = new Circle({ ...base, radius: s / 2 });
+    else if (definition.kind === "oval") object = new Ellipse({ ...base, rx: s / 2, ry: s * 0.34 });
+    else if (definition.kind === "triangle") object = new Triangle({ ...base, width: s, height: s });
+    else if (definition.kind === "polygon") {
+      object = new Polygon(definition.points.map(({ x, y }) => ({ x: (x / 100) * s, y: (y / 100) * s })), base);
+    } else if (definition.kind === "line") {
+      const dash = definition.dash?.map((value) => Math.max(1, value * (unit() / 1080)));
+      object = new Line([0, 0, s * 1.5, 0], {
+        fill: null,
+        stroke: "#000000",
+        strokeWidth: Math.max(2, s * 0.012),
+        strokeDashArray: dash,
+        strokeLineCap: definition.cap,
+      });
+    }
+
+    if (object) place(object, point);
   };
 
   const addText = (preset, point) => {
@@ -962,11 +980,11 @@ function Create({ draft, clearDraft, user = null }) {
   };
 
   // a color replaces the photo; otherwise the choice wouldn't show
-  const setBackground = (color) => {
+  const setBackground = (paint, previewColor = paint) => {
     bgRequest.current += 1;
     fc.current.backgroundImage = undefined;
-    fc.current.backgroundColor = color;
-    setBg(color);
+    fc.current.backgroundColor = paint;
+    setBg(typeof previewColor === "string" ? previewColor : "#ffffff");
     setBgPhoto(null);
     fc.current.requestRenderAll();
     commit();
@@ -1174,7 +1192,11 @@ function Create({ draft, clearDraft, user = null }) {
   const isText = active instanceof Textbox;
   const isSelection = active instanceof ActiveSelection;
   const isGroup = active instanceof Group && !isSelection;
-  const hasStroke = active instanceof Rect || active instanceof Circle || active instanceof Triangle;
+  const isLine = active instanceof Line;
+  const hasStroke = active instanceof Rect || active instanceof Circle || active instanceof Ellipse || active instanceof Polygon || active instanceof Triangle;
+  const lineStyle = !active?.strokeDashArray?.length
+    ? "solid"
+    : active.strokeDashArray[0] <= active.strokeDashArray[1] * 0.5 ? "dotted" : "dashed";
   const locked = isLocked(active);
 
   // place the quick-action toolbar above the selection (below it near the top edge)
@@ -1321,6 +1343,7 @@ function Create({ draft, clearDraft, user = null }) {
                 photo={bgPhoto}
                 photos={dbBackgrounds}
                 onColor={setBackground}
+                onEditColor={() => setColorEditor({ mode: "background", color: toHex(bg) })}
                 dragItem={dragItem}
               />
             )}
@@ -1553,17 +1576,36 @@ function Create({ draft, clearDraft, user = null }) {
 
           {/* PROPERTIES */}
           <aside className="create-props" inert={cropping || aiBusy}>
-            {!active ? (
+            {colorEditor ? (
+              <CreateColorPanel
+                key={colorEditor.mode === "object" ? colorObjectKey(active) : "background"}
+                object={colorEditor.mode === "object" ? active : null}
+                initialColor={colorEditor.color}
+                mode={colorEditor.mode}
+                onBackgroundChange={setBackground}
+                onChange={() => {
+                  active?.set("dirty", true);
+                  render();
+                }}
+                onClose={() => setColorEditor(null)}
+              />
+            ) : !active ? (
               <>
                 <p className="cp-label">Artboard</p>
                 <div className="pp-row">
                   <span>Size</span>
                   <strong>{board.w} × {board.h}</strong>
                 </div>
-                <label className="pp-row">
+                <div className="pp-row">
                   <span>Background</span>
-                  <input type="color" value={toHex(bg)} onChange={(e) => setBackground(e.target.value)} />
-                </label>
+                  <button
+                    className="pp-color-chip pp-background-chip"
+                    style={{ backgroundColor: bg }}
+                    onClick={() => setColorEditor({ mode: "background", color: toHex(bg) })}
+                    title="Edit background color"
+                    aria-label="Edit background color"
+                  />
+                </div>
                 <p className="cp-hint">Select an element to edit it.</p>
               </>
             ) : (
@@ -1626,12 +1668,63 @@ function Create({ draft, clearDraft, user = null }) {
                 )}
 
                 <CreateColors
+                  key={colorObjectKey(active)}
                   object={active}
+                  onEdit={(color) => setColorEditor({ mode: "object", color })}
                   onChange={() => {
                     active.set("dirty", true);
                     render();
                   }}
                 />
+
+                {isLine && (
+                  <>
+                    <p className="cp-label">Line style</p>
+                    <div className="pp-line-styles" role="group" aria-label="Line style">
+                      {["solid", "dashed", "dotted"].map((style) => (
+                        <button
+                          key={style}
+                          type="button"
+                          className={lineStyle === style ? "on" : ""}
+                          title={`${style[0].toUpperCase()}${style.slice(1)} line`}
+                          aria-label={`${style[0].toUpperCase()}${style.slice(1)} line`}
+                          onClick={() => {
+                            const unitScale = unit() / 1080;
+                            const strokeDashArray = style === "solid"
+                              ? null
+                              : style === "dashed"
+                                ? [12 * unitScale, 8 * unitScale]
+                                : [2 * unitScale, 7 * unitScale];
+                            setProp({ strokeDashArray });
+                          }}
+                        >
+                          <span className={`pp-line-sample ${style}`} />
+                        </button>
+                      ))}
+                    </div>
+                    <label className="pp-row">
+                      <span>Rounded ends</span>
+                      <input
+                        type="checkbox"
+                        checked={active.strokeLineCap === "round"}
+                        onChange={(e) => setProp({ strokeLineCap: e.target.checked ? "round" : "butt" })}
+                      />
+                    </label>
+                    <label className="pp-row pp-line-weight">
+                      <span>Stroke weight</span>
+                      <input
+                        type="range"
+                        min="1"
+                        max="48"
+                        step="1"
+                        value={Math.max(1, Math.round(active.strokeWidth || 1))}
+                        onChange={(e) => setProp({ strokeWidth: Number(e.target.value) })}
+                        aria-label="Stroke weight"
+                      />
+                      <output>{Math.round(active.strokeWidth || 1)}</output>
+                    </label>
+                  </>
+                )}
 
                 {hasStroke && (
                   <label className="pp-row">
@@ -1717,25 +1810,25 @@ function Create({ draft, clearDraft, user = null }) {
 
                 <p className="cp-label">Arrange</p>
                 <div className="pp-grid">
-                  <button onClick={() => arrange("front")}><Icon name="front" size={16} /> To front</button>
-                  <button onClick={() => arrange("back")}><Icon name="back" size={16} /> To back</button>
-                  <button onClick={() => arrange("forward")}><Icon name="forward" size={16} /> Forward</button>
-                  <button onClick={() => arrange("backward")}><Icon name="backward" size={16} /> Backward</button>
-                  <button onClick={() => setProp({ flipX: !active.flipX })}><Icon name="flipH" size={16} /> Flip H</button>
-                  <button onClick={() => setProp({ flipY: !active.flipY })}><Icon name="flipV" size={16} /> Flip V</button>
+                  <button onClick={() => arrange("front")}><Icon name="front" size={16} /><span>To front</span></button>
+                  <button onClick={() => arrange("back")}><Icon name="back" size={16} /><span>To back</span></button>
+                  <button onClick={() => arrange("forward")}><Icon name="forward" size={16} /><span>Forward</span></button>
+                  <button onClick={() => arrange("backward")}><Icon name="backward" size={16} /><span>Backward</span></button>
+                  <button onClick={() => setProp({ flipX: !active.flipX })}><Icon name="flipH" size={16} /><span>Flip horizontal</span></button>
+                  <button onClick={() => setProp({ flipY: !active.flipY })}><Icon name="flipV" size={16} /><span>Flip vertical</span></button>
                 </div>
 
                 <p className="cp-label">Actions</p>
                 <div className="pp-grid">
-                  {isSelection && <button onClick={group}><Icon name="group" size={16} /> Group</button>}
-                  {isGroup && <button onClick={ungroup}><Icon name="ungroup" size={16} /> Ungroup</button>}
+                  {isSelection && <button onClick={group}><Icon name="group" size={16} /><span>Group</span></button>}
+                  {isGroup && <button onClick={ungroup}><Icon name="ungroup" size={16} /><span>Ungroup</span></button>}
                   {!isSelection && (
                     <button onClick={toggleLock} className={locked ? "on" : ""}>
-                      <Icon name={locked ? "lock" : "unlock"} size={16} /> {locked ? "Unlock" : "Lock"}
+                      <Icon name={locked ? "lock" : "unlock"} size={16} /><span>{locked ? "Unlock" : "Lock"}</span>
                     </button>
                   )}
-                  <button onClick={duplicate}><Icon name="copy" size={16} /> Duplicate</button>
-                  <button className="danger wide" onClick={remove}><Icon name="trash" size={16} /> Delete element</button>
+                  <button onClick={duplicate}><Icon name="copy" size={16} /><span>Duplicate</span></button>
+                  <button className="danger wide" onClick={remove}><Icon name="trash" size={16} /><span>Delete element</span></button>
                 </div>
               </>
             )}

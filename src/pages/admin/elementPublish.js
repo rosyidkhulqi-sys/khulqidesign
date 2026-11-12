@@ -5,9 +5,23 @@
 import { supabase } from "../../lib/supabaseClient";
 import { uploadToR2 } from "../../lib/r2";
 import { parseKeywords, readMetadata, shortTitle } from "./vectorUpload";
+import {
+  BACKGROUND_CATEGORIES,
+  ELEMENT_CATEGORIES,
+  backgroundCategoryLabel,
+  elementCategoryLabel,
+  elementCategoryStorageValues,
+  normalizeElementCategory,
+} from "../../data/elementCategories";
 
-export const ELEMENT_CATEGORIES = ["stickers", "illustrations", "shapes", "frames", "lines", "badges", "other"];
-export const BACKGROUND_CATEGORIES = ["abstract", "gradient", "nature", "pattern", "texture", "holiday", "business", "other"];
+export {
+  BACKGROUND_CATEGORIES,
+  ELEMENT_CATEGORIES,
+  backgroundCategoryLabel,
+  elementCategoryLabel,
+  elementCategoryStorageValues,
+  normalizeElementCategory,
+};
 export const categoriesOf = (kind) => (kind === "background" ? BACKGROUND_CATEGORIES : ELEMENT_CATEGORIES);
 
 // as on MiriCanvas: a short name and a few keywords that really fit

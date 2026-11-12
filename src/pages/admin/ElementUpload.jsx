@@ -2,9 +2,17 @@
 // JPG files; each one is an element or a background (JPGs start as backgrounds).
 import { useRef, useState } from "react";
 import { parseKeywords } from "./vectorUpload";
-import { MAX_KEYWORDS, categoriesOf, isElementFile, missingField, publishElement, readElement } from "./elementPublish";
+import {
+  MAX_KEYWORDS,
+  backgroundCategoryLabel,
+  categoriesOf,
+  elementCategoryLabel,
+  isElementFile,
+  missingField,
+  publishElement,
+  readElement,
+} from "./elementPublish";
 
-const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const mb = (bytes) => `${(bytes / 1_000_000).toFixed(1)} MB`;
 
 // type keywords with commas or Enter; each becomes a tag, up to the limit
@@ -119,7 +127,8 @@ function ElementUpload({ onPublished }) {
         <strong>Drop SVG, PNG or JPG files here</strong>
         <span>
           Each file becomes one part for Create. SVG stays recolorable, PNG keeps its transparency,
-          and JPG starts as a background. Pictures over 3000 px are scaled down.
+          and JPG starts as a background. To add a reusable photo, choose Element → Photos. Icon sets
+          are managed on the Icons tab and appear in Create automatically. Pictures over 3000 px are scaled down.
         </span>
         <button onClick={() => input.current?.click()}>Choose files</button>
         <input ref={input} type="file" multiple accept=".svg,.png,.jpg,.jpeg" hidden
@@ -158,7 +167,11 @@ function ElementUpload({ onPublished }) {
                       <select value={it.category} disabled={locked} aria-label="Category"
                               onChange={(e) => update(it.base, { category: e.target.value })}>
                         <option value="" disabled>Category</option>
-                        {categoriesOf(it.kind).map((c) => <option key={c} value={c}>{capitalize(c)}</option>)}
+                        {categoriesOf(it.kind).map((c) => (
+                          <option key={c} value={c}>
+                            {it.kind === "background" ? backgroundCategoryLabel(c) : elementCategoryLabel(c)}
+                          </option>
+                        ))}
                       </select>
                       <select value={it.license} disabled={locked} aria-label="License"
                               onChange={(e) => update(it.base, { license: e.target.value })}>
