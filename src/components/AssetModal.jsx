@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DOWNLOAD_REFUSALS, requestDownload, saveDownload } from "../lib/downloads";
 import { askLogin } from "../lib/authGate";
 import { PremiumPrompt, ToolGlyph } from "./IconControls";
@@ -61,13 +61,67 @@ function Lightbox({ src, alt, onClose }) {
   );
 }
 
+// In the detail view: press and hold to magnify the spot under the pointer
+// and move to look around (release to let go); a quick click opens the
+// picture full screen.
+const HOLD_MS = 160;
+
 function ZoomImage({ src, alt }) {
   const [open, setOpen] = useState(false);
+  const [held, setHeld] = useState(false);
+  const [origin, setOrigin] = useState("50% 50%");
+  const timer = useRef(null);
+  // the press turned into a hold, so letting go mustn't open full screen
+  const holding = useRef(false);
+
+  const aim = (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = Math.min(100, Math.max(0, ((e.clientX - r.left) / r.width) * 100));
+    const y = Math.min(100, Math.max(0, ((e.clientY - r.top) / r.height) * 100));
+    setOrigin(`${x}% ${y}%`);
+  };
+
+  const press = (e) => {
+    if (e.button !== 0) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    aim(e);
+    holding.current = false;
+    timer.current = setTimeout(() => {
+      holding.current = true;
+      setHeld(true);
+    }, HOLD_MS);
+  };
+
+  const release = () => {
+    clearTimeout(timer.current);
+    if (holding.current) {
+      holding.current = false;
+      setHeld(false);
+      return;
+    }
+    setOpen(true);
+  };
+
+  const cancel = () => {
+    clearTimeout(timer.current);
+    holding.current = false;
+    setHeld(false);
+  };
+
   return (
     <>
-      <button className="asset-zoom" onClick={() => setOpen(true)} aria-label="View larger">
-        <img src={src} alt={alt} draggable={false} />
-        <span className="asset-zoom-hint" aria-hidden="true">Click to view larger</span>
+      <button
+        className={`asset-zoom ${held ? "is-held" : ""}`}
+        onPointerDown={press}
+        onPointerMove={(e) => held && aim(e)}
+        onPointerUp={release}
+        onPointerCancel={cancel}
+        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setOpen(true))}
+        aria-label="View larger"
+      >
+        <img src={src} alt={alt} draggable={false}
+             style={{ transformOrigin: origin, transform: held ? `scale(${ZOOM})` : "none" }} />
+        <span className="asset-zoom-hint" aria-hidden="true">Hold to zoom · click to view larger</span>
       </button>
       {open && <Lightbox src={src} alt={alt} onClose={() => setOpen(false)} />}
     </>
