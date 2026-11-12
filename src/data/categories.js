@@ -14,7 +14,7 @@ export const categories = [
     meta: "EPS · JPG · Free & Premium",
   },
   {
-    key: "logos", title: "Logos", image: "/trial-logos/preview/M%200526%2011.jpg", page: "logos", ready: true, count: "New",
+    key: "logos", title: "Logos", image: "/covers/logos.jpg", page: "logos", ready: true, count: "New",
     desc: "Ready-made logos for brands, from free to exclusive.",
     meta: "Free · Premium · Exclusive",
   },

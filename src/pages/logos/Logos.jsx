@@ -7,7 +7,7 @@ import "./Logos.css";
 import Breadcrumb from "../../components/Breadcrumb";
 import AiSearchButton from "../../components/AiSearchButton";
 import LogoModal from "./LogoModal";
-import { industries, industryName, logos as trialLogos, logoStyles } from "../../data/logosData";
+import { industries, industryName, logoStyles } from "../../data/logosData";
 import { fetchPublished, toLogo } from "../../lib/catalog";
 import { matchesSearch } from "../../lib/search";
 
@@ -51,20 +51,20 @@ function Logos({ setPage, initialSearch = "", user = null }) {
   const [sort, setSort] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState(null);
-  // logos uploaded through /admin, newest first, ahead of the trial logos
+  // logos uploaded through /admin, newest first
   const [uploaded, setUploaded] = useState([]);
   useEffect(() => {
     let alive = true;
     fetchPublished("logo")
       .then((rows) => alive && setUploaded(rows.map(toLogo)))
       .catch(() => {
-        /* the trial logos still show if the catalogue can't be reached */
+        /* the page shows its empty state if the catalogue can't be reached */
       });
     return () => {
       alive = false;
     };
   }, []);
-  const allLogos = [...uploaded, ...trialLogos];
+  const allLogos = uploaded;
 
   const perPage = 24;
 
