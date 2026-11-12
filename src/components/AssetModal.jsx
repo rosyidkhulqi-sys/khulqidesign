@@ -11,6 +11,47 @@ const kindLabel = { icon: "Icon", vector: "Vector", footage: "Footage" };
 // so the view stays clean
 const TAG_LIMIT = 8;
 
+
+// Click to zoom in on the spot under the pointer, move to look around, click
+// again to zoom out. Pointer events, so a tap and a drag work the same way.
+const ZOOM = 2.5;
+
+function ZoomImage({ src, alt }) {
+  const [zoomed, setZoomed] = useState(false);
+  const [origin, setOrigin] = useState("50% 50%");
+
+  const aim = (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = Math.min(100, Math.max(0, ((e.clientX - r.left) / r.width) * 100));
+    const y = Math.min(100, Math.max(0, ((e.clientY - r.top) / r.height) * 100));
+    setOrigin(`${x}% ${y}%`);
+  };
+
+  return (
+    <div
+      className={`asset-zoom ${zoomed ? "is-zoomed" : ""}`}
+      role="button"
+      tabIndex={0}
+      aria-pressed={zoomed}
+      aria-label={zoomed ? "Zoom out" : "Zoom in"}
+      onClick={(e) => {
+        aim(e);
+        setZoomed(!zoomed);
+      }}
+      onPointerMove={(e) => zoomed && aim(e)}
+      onKeyDown={(e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        setOrigin("50% 50%");
+        setZoomed(!zoomed);
+      }}
+    >
+      <img src={src} alt={alt} draggable={false} style={{ transformOrigin: origin, transform: zoomed ? `scale(${ZOOM})` : "none" }} />
+      <span className="asset-zoom-hint" aria-hidden="true">{zoomed ? "Click to zoom out" : "Click to zoom"}</span>
+    </div>
+  );
+}
+
 function AssetModal({
   asset,
   kind,
@@ -112,7 +153,7 @@ function AssetModal({
                 <video src={asset.file} poster={asset.image} autoPlay muted loop playsInline controls />
               ) : (
                 // uploaded assets have a larger preview; the watermark is in its pixels
-                <img src={asset.previewImage || asset.image} alt={asset.title} />
+                <ZoomImage src={asset.previewImage || asset.image} alt={asset.title} />
               )}
 
               {premium && !asset.previewImage && (
