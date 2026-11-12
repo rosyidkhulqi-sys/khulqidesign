@@ -355,6 +355,18 @@
 .home-asset-preview:focus-visible { outline: 2px solid #8b8b88; outline-offset: 3px; }
 .home-asset-preview:disabled { cursor: default; }
 .home-asset-card.is-soon img { filter: grayscale(1); opacity: 0.6; }
+/* the Icons card: a few icons from the store, on a light tile */
+.home-icon-mosaic {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 10% 12%;
+  box-sizing: border-box;
+  background: #f4f4f5;
+}
+.home-asset-preview .home-icon-mosaic img { width: 46%; height: auto; object-fit: contain; }
 
 .home-asset-count {
   position: absolute;

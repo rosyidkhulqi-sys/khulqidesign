@@ -5,6 +5,7 @@ import { supabase } from "../../lib/supabaseClient";
 import { SERVICES_OPEN } from "../../data/services";
 import HomeServices from "./HomeServices";
 import "./Home.css";
+import { fetchCovers } from "../../lib/covers";
 
 const libraryLinks = [
   { page: "icons", label: "Icons" },
@@ -165,6 +166,16 @@ function Home({ setPage, user = null }) {
   // sections come and go with the account, so look again when they change
   useReveal(pageRef, [user, plan]);
 
+  // covers from the store; the fixed ones show until these arrive
+  const [covers, setCovers] = useState({});
+  useEffect(() => {
+    let alive = true;
+    fetchCovers().then((c) => alive && setCovers(c)).catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   useEffect(() => {
     if (!user) return;
     supabase.from("profiles").select("plan").eq("id", user.id).maybeSingle()
@@ -287,7 +298,13 @@ function Home({ setPage, user = null }) {
                 disabled={!cat.ready}
                 aria-label={`Browse ${cat.title}`}
               >
-                <img src={cat.image} alt="" loading="lazy" />
+                {cat.key === "icons" && covers.icons ? (
+                  <span className="home-icon-mosaic">
+                    {covers.icons.map((src) => <img key={src} src={src} alt="" loading="lazy" />)}
+                  </span>
+                ) : (
+                  <img src={covers[cat.key]?.[0] ?? cat.image} alt="" loading="lazy" />
+                )}
                 <span className="home-asset-count">{cat.count}</span>
                 {cat.key === "templates" && <span className="home-edit-hint">Edit in Create →</span>}
               </button>
