@@ -11,6 +11,9 @@ const MESSAGES = {
   already_subscribed: "You already have a plan. Manage it from your account.",
   founding_sold_out: "All founding member places have been taken.",
   no_subscription: "We couldn't find a subscription on this account.",
+  sold: "This logo has just been sold.",
+  reserved: "Someone is buying this logo right now. If they don't finish, it's free again within an hour.",
+  not_found: "This logo isn't for sale.",
   live_products_missing: "This API key is a live key, but only test products are set up.",
 };
 
@@ -32,6 +35,11 @@ async function call(body) {
 // sends the browser to Dodo's secure payment page
 export async function startCheckout(plan) {
   window.location.href = await call({ action: "checkout", plan });
+}
+
+// an Exclusive logo, bought outright
+export async function startLogoCheckout(assetId) {
+  window.location.href = await call({ action: "logo", asset: assetId });
 }
 
 // Dodo's page for changing the card or cancelling

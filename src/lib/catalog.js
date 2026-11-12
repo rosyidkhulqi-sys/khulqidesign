@@ -157,6 +157,8 @@ export function toLogo(row) {
     license: row.license,
     price: row.price_cents ? row.price_cents / 100 : null,
     sold: Boolean(row.sold_at),
+    // the buyer gets the files; everyone else sees it as sold
+    soldTo: row.sold_to ?? null,
     // the watermark is in these pixels for Premium and Exclusive logos
     image: publicUrl(row.thumb_key),
     previewImage: publicUrl(row.preview_key),

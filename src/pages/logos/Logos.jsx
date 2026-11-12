@@ -77,6 +77,7 @@ function Logos({ setPage, initialSearch = "", user = null }) {
   const filtered = allLogos
     .filter((l) => matchesSearch(q, (term) =>
       l.title.toLowerCase().includes(term) ||
+      l.code.toLowerCase().includes(term) ||
       l.searchText.includes(term) ||
       l.keywords.some((k) => k.startsWith(term) || k.split(" ").some((word) => word.startsWith(term)))
     , ["logo", "logos"]))

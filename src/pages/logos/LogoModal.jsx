@@ -1,11 +1,12 @@
 // Logo detail: the logo in a few mockups, what the pack contains, and one
 // action per license. Free downloads now; Premium asks signed-out visitors
-// to log in (the real subscription check comes with the backend); Exclusive
-// shows the USD price with checkout marked Coming soon, or that it has sold.
+// to log in; Exclusive is bought outright through Dodo checkout (while
+// CHECKOUT_OPEN), and then only its buyer can download it.
 // Builds on AssetModal.css for the layout.
 import { useEffect, useState } from "react";
 import { DOWNLOAD_REFUSALS, requestDownload, saveDownload } from "../../lib/downloads";
 import { askLogin } from "../../lib/authGate";
+import { CHECKOUT_OPEN, startLogoCheckout } from "../../lib/billing";
 import { PremiumPrompt, ToolGlyph } from "../../components/IconControls";
 import { industryName, styleName } from "../../data/logosData";
 import "../../components/AssetModal.css";
@@ -64,6 +65,7 @@ function LogoModal({ logo, related = [], user = null, onAuth, onSelect, onTag, o
   const [format, setFormat] = useState(logo.originals?.[0]?.format ?? null);
   const [refusal, setRefusal] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [buyError, setBuyError] = useState(null);
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -76,9 +78,26 @@ function LogoModal({ logo, related = [], user = null, onAuth, onSelect, onTag, o
   }, [onClose]);
 
   const { license, price, sold } = logo;
+  // the buyer of an Exclusive logo downloads it like any other
+  const owned = sold && user && logo.soldTo === user.id;
 
   // uploaded logos: the real files, handed out by the server after its checks
   const uploaded = Boolean(logo.originals);
+
+  const buy = async () => {
+    if (!user) {
+      askLogin("download");
+      return;
+    }
+    setBusy(true);
+    setBuyError(null);
+    try {
+      await startLogoCheckout(logo.dbId);
+    } catch (e) {
+      setBuyError(e.message);
+      setBusy(false);
+    }
+  };
 
   const download = async () => {
     // every download needs an account (a free one is enough)
@@ -195,8 +214,8 @@ function LogoModal({ logo, related = [], user = null, onAuth, onSelect, onTag, o
 
             {license === "exclusive" && (
               <div className="lm-price">
-                <strong>{sold ? "Sold" : `$${price}`}</strong>
-                <span>{sold ? "Bought outright by one buyer" : "One-time purchase · one buyer only"}</span>
+                <strong>{owned ? "Yours" : sold ? "Sold" : `$${price}`}</strong>
+                <span>{owned ? "You own this logo outright" : sold ? "Bought outright by one buyer" : "One-time purchase · one buyer only"}</span>
               </div>
             )}
 
@@ -227,9 +246,13 @@ function LogoModal({ logo, related = [], user = null, onAuth, onSelect, onTag, o
             )}
 
             <div className="asset-buttons">
-              {license === "exclusive" ? (
+              {license === "exclusive" && !owned ? (
                 sold ? (
                   <p className="lm-sold-note">This logo has been sold and is no longer available.</p>
+                ) : CHECKOUT_OPEN && uploaded ? (
+                  <button className="asset-download lm-buy" onClick={buy} disabled={busy}>
+                    {busy ? "Opening checkout…" : `Buy for $${price}`}
+                  </button>
                 ) : (
                   <button className="asset-download lm-buy" disabled>
                     Buy for ${price}
@@ -251,6 +274,8 @@ function LogoModal({ logo, related = [], user = null, onAuth, onSelect, onTag, o
                 <ToolGlyph name="heart" size={20} filled={liked} />
               </button>
             </div>
+
+            {buyError && <p className="lm-sold-note" role="alert">{buyError}</p>}
 
             {refusal && (
               DOWNLOAD_REFUSALS[refusal] ? (
