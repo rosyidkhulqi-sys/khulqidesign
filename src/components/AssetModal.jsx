@@ -12,13 +12,25 @@ const kindLabel = { icon: "Icon", vector: "Vector", footage: "Footage" };
 const TAG_LIMIT = 8;
 
 
-// Click to zoom in on the spot under the pointer, move to look around, click
-// again to zoom out. Pointer events, so a tap and a drag work the same way.
+// The preview opens full screen on click. There, a click zooms in on the spot
+// under the pointer and moving looks around; another click zooms back out.
+// Pointer events, so a tap and a drag work the same way on touch screens.
 const ZOOM = 2.5;
 
-function ZoomImage({ src, alt }) {
+function Lightbox({ src, alt, onClose }) {
   const [zoomed, setZoomed] = useState(false);
   const [origin, setOrigin] = useState("50% 50%");
+
+  // Esc closes this view only, not the detail window under it
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      onClose();
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [onClose]);
 
   const aim = (e) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -28,27 +40,37 @@ function ZoomImage({ src, alt }) {
   };
 
   return (
-    <div
-      className={`asset-zoom ${zoomed ? "is-zoomed" : ""}`}
-      role="button"
-      tabIndex={0}
-      aria-pressed={zoomed}
-      aria-label={zoomed ? "Zoom out" : "Zoom in"}
-      onClick={(e) => {
-        aim(e);
-        setZoomed(!zoomed);
-      }}
-      onPointerMove={(e) => zoomed && aim(e)}
-      onKeyDown={(e) => {
-        if (e.key !== "Enter" && e.key !== " ") return;
-        e.preventDefault();
-        setOrigin("50% 50%");
-        setZoomed(!zoomed);
-      }}
-    >
-      <img src={src} alt={alt} draggable={false} style={{ transformOrigin: origin, transform: zoomed ? `scale(${ZOOM})` : "none" }} />
-      <span className="asset-zoom-hint" aria-hidden="true">{zoomed ? "Click to zoom out" : "Click to zoom"}</span>
+    <div className="asset-lightbox" role="dialog" aria-modal="true" aria-label={alt} onClick={onClose}>
+      <button className="asset-lightbox-close" onClick={onClose} aria-label="Close">✕</button>
+      <div
+        className={`asset-lightbox-stage ${zoomed ? "is-zoomed" : ""}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          aim(e);
+          setZoomed(!zoomed);
+        }}
+        onPointerMove={(e) => zoomed && aim(e)}
+      >
+        <img src={src} alt={alt} draggable={false}
+             style={{ transformOrigin: origin, transform: zoomed ? `scale(${ZOOM})` : "none" }} />
+      </div>
+      <span className="asset-zoom-hint is-shown" aria-hidden="true">
+        {zoomed ? "Click to zoom out" : "Click to zoom in · Esc to close"}
+      </span>
     </div>
+  );
+}
+
+function ZoomImage({ src, alt }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button className="asset-zoom" onClick={() => setOpen(true)} aria-label="View larger">
+        <img src={src} alt={alt} draggable={false} />
+        <span className="asset-zoom-hint" aria-hidden="true">Click to view larger</span>
+      </button>
+      {open && <Lightbox src={src} alt={alt} onClose={() => setOpen(false)} />}
+    </>
   );
 }
 
