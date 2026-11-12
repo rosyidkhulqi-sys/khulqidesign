@@ -150,6 +150,11 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
           value={search}
           onChange={reset(setSearch)}
         />
+        {search && (
+          <button className="clear-search" onClick={() => setSearch("")} aria-label="Clear search">
+            ×
+          </button>
+        )}
         <AiSearchButton example="Halloween poster with a castle and a full moon" />
         <button className="search-submit" aria-label="Search">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none"

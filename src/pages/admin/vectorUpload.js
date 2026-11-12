@@ -110,7 +110,7 @@ export function drawWatermark(ctx, w, h) {
 }
 
 // a JPEG no longer than `max` px, optionally watermarked
-async function renderJpeg(bitmap, max, watermark) {
+async function renderJpeg(bitmap, max, watermark, quality = 0.9) {
   const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
   const w = Math.round(bitmap.width * scale);
   const h = Math.round(bitmap.height * scale);
@@ -122,7 +122,7 @@ async function renderJpeg(bitmap, max, watermark) {
   ctx.fillRect(0, 0, w, h);
   ctx.drawImage(bitmap, 0, 0, w, h);
   if (watermark) drawWatermark(ctx, w, h);
-  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.90));
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
   if (!blob) throw new Error("This browser couldn't make the preview");
   return blob;
 }
@@ -134,7 +134,8 @@ export async function makeImages(jpg, watermark) {
     return {
       width: bitmap.width,
       height: bitmap.height,
-      thumb: await renderJpeg(bitmap, 1700, false),
+      // the grid shows it about 450 px wide; 900 stays sharp on Retina
+      thumb: await renderJpeg(bitmap, 900, false, 0.8),
       preview: await renderJpeg(bitmap, 2800, watermark),
     };
   } finally {
