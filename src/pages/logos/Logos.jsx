@@ -8,8 +8,7 @@ import Breadcrumb from "../../components/Breadcrumb";
 import AiSearchButton from "../../components/AiSearchButton";
 import LogoModal from "./LogoModal";
 import { industries, industryName, logoStyles } from "../../data/logosData";
-import { fetchPublished, toLogo } from "../../lib/catalog";
-import { matchesSearch } from "../../lib/search";
+import { searchCatalog, toLogo } from "../../lib/catalog";
 
 const licenseLabel = { free: "Free", premium: "Premium", exclusive: "Exclusive" };
 
@@ -51,20 +50,10 @@ function Logos({ setPage, initialSearch = "", user = null }) {
   const [sort, setSort] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState(null);
-  // logos uploaded through /admin, newest first
-  const [uploaded, setUploaded] = useState([]);
-  useEffect(() => {
-    let alive = true;
-    fetchPublished("logo")
-      .then((rows) => alive && setUploaded(rows.map(toLogo)))
-      .catch(() => {
-        /* the page shows its empty state if the catalogue can't be reached */
-      });
-    return () => {
-      alive = false;
-    };
-  }, []);
-  const allLogos = uploaded;
+  // the page of logos the database found, and how many there are in all
+  const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [related, setRelated] = useState([]);
 
   const perPage = 24;
 
@@ -73,24 +62,62 @@ function Logos({ setPage, initialSearch = "", user = null }) {
     setCurrentPage(1);
   };
 
-  const q = search.toLowerCase();
-  const filtered = allLogos
-    .filter((l) => matchesSearch(q, (term) =>
-      l.title.toLowerCase().includes(term) ||
-      l.code.toLowerCase().includes(term) ||
-      l.searchText.includes(term) ||
-      l.keywords.some((k) => k.startsWith(term) || k.split(" ").some((word) => word.startsWith(term)))
-    , ["logo", "logos"]))
-    .filter((l) => license === "all" || l.license === license)
-    .filter((l) => industry === "all" || l.industry === industry)
-    .filter((l) => style === "all" || l.style === style)
-    .filter((l) => !hideSold || !l.sold)
-    .sort((a, b) =>
-      sort === "popular" ? b.downloads - a.downloads : b.id - a.id
-    );
+  // asks the database again whenever the search, a filter or the page
+  // changes; a logo's code (KD-LG-…) finds that logo
+  useEffect(() => {
+    let alive = true;
+    const code = search.trim().match(/^kd-?lg-?\d+$/i);
+    const timer = setTimeout(() => {
+      searchCatalog("logo", {
+        text: code ? "" : search,
+        kindWords: ["logo", "logos"],
+        sort,
+        page: currentPage,
+        perPage,
+        narrow: (query) => {
+          if (code) query = query.ilike("code", `%${search.trim().replace(/[^a-z0-9-]/gi, "")}%`);
+          if (license !== "all") query = query.eq("license", license);
+          if (industry !== "all") query = query.eq("industry", industry);
+          if (style !== "all") query = query.eq("style", style);
+          if (hideSold) query = query.is("sold_at", null);
+          return query;
+        },
+      })
+        .then(({ rows, total: count }) => {
+          if (!alive) return;
+          setItems(rows.map(toLogo));
+          setTotal(count);
+        })
+        .catch(() => {
+          /* the page shows its empty state if the catalogue can't be reached */
+        });
+    }, search ? 250 : 0);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [search, license, industry, style, hideSold, sort, currentPage]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-  const items = filtered.slice((currentPage - 1) * perPage, currentPage * perPage);
+  // the same industry first, then the same style from other industries
+  useEffect(() => {
+    if (!selected) return;
+    let alive = true;
+    Promise.all([
+      searchCatalog("logo", { perPage: 7, narrow: (query) => query.eq("industry", selected.industry) }),
+      searchCatalog("logo", { perPage: 6, narrow: (query) => query.eq("style", selected.style).neq("industry", selected.industry) }),
+    ])
+      .then(([same, alike]) => {
+        if (!alive) return;
+        const list = [...same.rows, ...alike.rows].map(toLogo).filter((l) => l.code !== selected.code);
+        setRelated(list.slice(0, 6));
+      })
+      .catch(() => alive && setRelated([]));
+    return () => {
+      alive = false;
+    };
+  }, [selected]);
+
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
 
   const clearFilters = () => {
     setLicense("all");
@@ -116,7 +143,7 @@ function Logos({ setPage, initialSearch = "", user = null }) {
       <div className="library-head">
         <Breadcrumb setPage={setPage} current="Logos" />
         <h1>
-          Logos <span className="library-count">{filtered.length} {filtered.length === 1 ? "logo" : "logos"}</span>
+          Logos <span className="library-count">{total} {total === 1 ? "logo" : "logos"}</span>
         </h1>
       </div>
 
@@ -252,10 +279,7 @@ function Logos({ setPage, initialSearch = "", user = null }) {
         <LogoModal
           key={selected.id}
           logo={selected}
-          related={allLogos
-            .filter((l) => l.industry === selected.industry && l.id !== selected.id)
-            .concat(allLogos.filter((l) => l.style === selected.style && l.industry !== selected.industry))
-            .slice(0, 6)}
+          related={related}
           user={user}
           onAuth={(target) => {
             setSelected(null);
