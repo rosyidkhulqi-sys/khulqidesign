@@ -2571,33 +2571,19 @@ function Create({ draft, clearDraft, user = null }) {
                     duplicate, lock and delete are on the toolbar by the element */}
                 <details className="pp-more">
                   <summary>Position</summary>
-                  {/* layer order and flips as two icon groups, rotation as a
-                      field like the type settings; names show on hover */}
-                  <div className="pp-tools">
-                    <div className="pp-seg" role="group" aria-label="Layer order">
-                      <button onClick={() => arrange("front")} title="Bring to front" aria-label="Bring to front"><Icon name="front" size={16} /></button>
-                      <button onClick={() => arrange("forward")} title="Bring forward" aria-label="Bring forward"><Icon name="forward" size={16} /></button>
-                      <button onClick={() => arrange("backward")} title="Send backward" aria-label="Send backward"><Icon name="backward" size={16} /></button>
-                      <button onClick={() => arrange("back")} title="Send to back" aria-label="Send to back"><Icon name="back" size={16} /></button>
-                    </div>
-                    <div className="pp-seg" role="group" aria-label="Flip">
-                      <button
-                        className={active.flipX ? "on" : ""}
-                        onClick={() => setProp({ flipX: !active.flipX })}
-                        title="Flip horizontal"
-                        aria-label="Flip horizontal"
-                      >
-                        <Icon name="flipH" size={16} />
-                      </button>
-                      <button
-                        className={active.flipY ? "on" : ""}
-                        onClick={() => setProp({ flipY: !active.flipY })}
-                        title="Flip vertical"
-                        aria-label="Flip vertical"
-                      >
-                        <Icon name="flipV" size={16} />
-                      </button>
-                    </div>
+                  {/* layer order and flips: an icon and a short name in compact
+                      rows, so anyone can tell them apart; rotation is a field */}
+                  <div className="pp-list">
+                    <button onClick={() => arrange("front")}><Icon name="front" size={15} /><span>To front</span></button>
+                    <button onClick={() => arrange("back")}><Icon name="back" size={15} /><span>To back</span></button>
+                    <button onClick={() => arrange("forward")}><Icon name="forward" size={15} /><span>Forward</span></button>
+                    <button onClick={() => arrange("backward")}><Icon name="backward" size={15} /><span>Backward</span></button>
+                    <button className={active.flipX ? "on" : ""} onClick={() => setProp({ flipX: !active.flipX })} title="Flip horizontal">
+                      <Icon name="flipH" size={15} /><span>Mirror</span>
+                    </button>
+                    <button className={active.flipY ? "on" : ""} onClick={() => setProp({ flipY: !active.flipY })} title="Flip vertical">
+                      <Icon name="flipV" size={15} /><span>Upside down</span>
+                    </button>
                   </div>
                   <div className="pp-type">
                     <label title="Rotation (degrees)">

@@ -82,7 +82,7 @@
   padding: 0 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
-  background: #141414;
+  background: var(--surface-2);
   color: #e7e9ec;
   font-size: 13px;
 }
@@ -1077,7 +1077,7 @@
   box-sizing: border-box;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 7px;
-  background: #141414;
+  background: var(--surface-2);
   color: white;
   font-size: 13px;
 }
@@ -1148,7 +1148,7 @@
   cursor: pointer;
 }
 .cp-color-close:hover { border-color: rgba(255, 255, 255, 0.3); color: white; }
-.cp-color-search { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 10px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 7px; background: #141414; color: #8d939b; }
+.cp-color-search { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 10px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 7px; background: var(--surface-2); color: #8d939b; }
 .cp-color-search > span { font-size: 20px; line-height: 1; }
 .cp-color-search input { min-width: 0; width: 100%; border: 0; outline: 0; background: transparent; color: #f4f4f5; font: inherit; font-size: 12px; }
 .cp-color-search input::placeholder { color: #747a83; }
@@ -1183,7 +1183,7 @@
 .cp-hue-control input::-webkit-slider-thumb { width: 15px; height: 15px; appearance: none; border: 2px solid white; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6); }
 .cp-hue-control input::-moz-range-thumb { width: 12px; height: 12px; border: 2px solid white; border-radius: 50%; background: var(--red); }
 .cp-color-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-.cp-color-fields label { display: flex; align-items: center; gap: 5px; min-width: 0; height: 34px; padding: 0 7px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 7px; background: #141414; color: #8d939b; font-size: 10px; }
+.cp-color-fields label { display: flex; align-items: center; gap: 5px; min-width: 0; height: 34px; padding: 0 7px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 7px; background: var(--surface-2); color: #8d939b; font-size: 10px; }
 .cp-color-fields .cp-hex-field { grid-column: 1 / -1; }
 .cp-color-fields input { min-width: 0; width: 100%; padding: 0; border: 0; outline: 0; background: transparent; color: #f4f4f5; font: inherit; font-size: 12px; }
 .cp-color-fields input[type="number"] { text-align: right; appearance: textfield; }
@@ -1363,7 +1363,7 @@
   box-sizing: border-box;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
-  background: #141414;
+  background: var(--surface-2);
   color: white;
 }
 .cn-custom .ct-btn { margin-left: auto; }
@@ -1589,7 +1589,7 @@
   padding: 0 8px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 7px;
-  background: #141414;
+  background: var(--surface-2);
   color: white;
   font-size: 14px;
   cursor: pointer;
@@ -1600,7 +1600,7 @@
   margin-top: 6px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 7px;
-  background: #141414;
+  background: var(--surface-2);
 }
 .fp-search {
   box-sizing: border-box;
@@ -1921,7 +1921,7 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 7px;
   /* the same field color as the font picker and every other panel input */
-  background: #141414;
+  background: var(--surface-2);
   color: #8d939b;
 }
 .pp-type label:focus-within { border-color: rgba(255, 255, 255, 0.4); color: white; }
@@ -1953,7 +1953,7 @@
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 7px;
-  background: #141414;
+  background: var(--surface-2);
 }
 .pp-seg button {
   display: grid;
@@ -1989,3 +1989,26 @@
 .pp-align.pp-seg button { flex: 1; width: auto; min-width: 0; height: 34px; }
 .pp-align.pp-seg { display: flex; width: 100%; }
 .pp-dist { width: calc(50% - 4px); display: flex; }
+
+/* icon + short name in one compact row, two per line */
+.pp-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.pp-list button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  height: 34px;
+  padding: 0 9px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 7px;
+  background: var(--surface-2);
+  color: #e7e9ec;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.pp-list button span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.pp-list button .ci { flex: none; color: #aeb3ba; }
+.pp-list button:hover { border-color: rgba(255, 255, 255, 0.3); background: #262a2e; }
+.pp-list button.on { border-color: var(--red); background: rgba(231, 33, 46, 0.18); }
