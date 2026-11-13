@@ -199,7 +199,17 @@ function CreateColors({ object, onEdit, onChange, onPickFromPage }) {
   );
 }
 
-export function CreateColorPanel({ object, initialColor = "#000000", mode = "object", onBackgroundChange, onChange, onClose }) {
+export function CreateColorPanel({ object, initialColor = "#000000", mode = "object", documentColors = [], onBackgroundChange, onChange, onClose }) {
+  // Chrome and Edge can pick a color from anywhere on screen
+  const screenPicker = typeof window !== "undefined" && typeof window.EyeDropper === "function";
+  const pickFromScreen = async () => {
+    try {
+      const { sRGBHex } = await new window.EyeDropper().open();
+      setSelectedColor(sRGBHex, alpha);
+    } catch {
+      /* closed without picking */
+    }
+  };
   const initialEntries = object ? paletteOf(object) : [];
   const initialEntry = initialEntries.find((entry) => entry.color === initialColor) ?? initialEntries[0];
   const initialTargets = initialEntry?.targets ?? (object ? targetsOf(object) : []);
@@ -346,6 +356,24 @@ export function CreateColorPanel({ object, initialColor = "#000000", mode = "obj
         </section>
       )}
 
+      {documentColors.length > 0 && (
+        <section className="cp-color-section">
+          <p className="cp-label">Document colors</p>
+          <div className="cp-color-chips">
+            {documentColors.map((color) => (
+              <button
+                key={color}
+                className={`cp-color-chip ${color === hex ? "is-active" : ""}`}
+                style={{ backgroundColor: color }}
+                onClick={() => chooseColor(color)}
+                title={color}
+                aria-label={`Use ${color}`}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       <div className="cp-color-tabs" role="tablist" aria-label="Color type">
         <button role="tab" aria-selected={tab === "solid"} className={tab === "solid" ? "is-active" : ""} onClick={() => { if (tab === "gradient") applySolid(hex, alpha); setTab("solid"); }}>Solid color</button>
         <button
@@ -378,7 +406,19 @@ export function CreateColorPanel({ object, initialColor = "#000000", mode = "obj
       )}
 
       <section className="cp-color-section cp-custom-color">
-        <p className="cp-label">{tab === "gradient" ? `Edit ${activeStop === 0 ? "start" : "end"} color` : "Color picker"}</p>
+        <div className="cp-color-section-title">
+          <p className="cp-label">{tab === "gradient" ? `Edit ${activeStop === 0 ? "start" : "end"} color` : "Color picker"}</p>
+          {screenPicker && (
+            <button className="cp-screen-pick" onClick={pickFromScreen} title="Pick a color from anywhere on screen">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="m2 22 1-1h3l9-9" />
+                <path d="M3 21v-3l9-9" />
+                <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z" />
+              </svg>
+              From screen
+            </button>
+          )}
+        </div>
         <div
           className="cp-color-sv"
           style={{ "--picker-hue": `hsl(${hsv.h} 100% 50%)`, "--picker-x": `${hsv.s * 100}%`, "--picker-y": `${(1 - hsv.v) * 100}%` }}

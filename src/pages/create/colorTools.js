@@ -33,3 +33,32 @@ export function paletteOf(obj) {
   });
   return [...found].map(([color, targets]) => ({ color, targets }));
 }
+
+// every solid color used anywhere in the design (all pages, their
+// backgrounds and the parts inside groups), most used first
+export function documentColorsOf(pages, limit = 14) {
+  const counts = new Map();
+  const add = (value) => {
+    if (typeof value !== "string" || !value || value === "none" || value === "transparent") return;
+    let hex;
+    try {
+      hex = toHex(value);
+    } catch {
+      return;
+    }
+    counts.set(hex, (counts.get(hex) ?? 0) + 1);
+  };
+  const walk = (objects = []) =>
+    objects.forEach((o) => {
+      add(o.fill);
+      add(o.stroke);
+      if (Array.isArray(o.objects)) walk(o.objects);
+    });
+  pages.forEach((page) => {
+    if (!page) return;
+    add(page.background);
+    walk(page.objects);
+  });
+  return [...counts].sort((a, b) => b[1] - a[1]).map(([hex]) => hex).slice(0, limit);
+}
+

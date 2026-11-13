@@ -32,7 +32,7 @@ import CreateShapeToolbar from "./CreateShapeToolbar";
 import "./createHandles";
 import { regularPolygonPath } from "./shapePath";
 import CreateColors, { CreateColorPanel } from "./CreateColors";
-import { colorObjectKey, toHex } from "./colorTools";
+import { colorObjectKey, documentColorsOf, toHex } from "./colorTools";
 import { attachGuides } from "./createGuides";
 import { beginCrop } from "./createCrop";
 import ProjectsPanel from "./CreateProjects";
@@ -299,6 +299,10 @@ function Create({ draft, clearDraft, user = null }) {
     const p = pagesRef.current;
     return p.list.map((json, i) => (i === p.index ? fc.current.toObject(LOCK_PROPS) : json));
   };
+
+  // the color panel, with the colors already used across the whole design
+  const openColorEditor = (mode, color) =>
+    setColorEditor({ mode, color, documentColors: documentColorsOf(currentPages()) });
 
   // a whole design: size and every page (which page is open is kept apart,
   // so moving between pages isn't an undo step)
@@ -1497,7 +1501,7 @@ function Create({ draft, clearDraft, user = null }) {
                 photo={bgPhoto}
                 photos={dbBackgrounds}
                 onColor={setBackground}
-                onEditColor={() => setColorEditor({ mode: "background", color: toHex(bg) })}
+                onEditColor={() => openColorEditor("background", toHex(bg))}
                 dragItem={dragItem}
               />
             )}
@@ -1783,6 +1787,7 @@ function Create({ draft, clearDraft, user = null }) {
                 object={colorEditor.mode === "object" ? active : null}
                 initialColor={colorEditor.color}
                 mode={colorEditor.mode}
+                documentColors={colorEditor.documentColors}
                 onBackgroundChange={setBackground}
                 onChange={() => {
                   active?.set("dirty", true);
@@ -1802,7 +1807,7 @@ function Create({ draft, clearDraft, user = null }) {
                   <button
                     className="pp-color-chip pp-background-chip"
                     style={{ backgroundColor: bg }}
-                    onClick={() => setColorEditor({ mode: "background", color: toHex(bg) })}
+                    onClick={() => openColorEditor("background", toHex(bg))}
                     title="Edit background color"
                     aria-label="Edit background color"
                   />
@@ -1873,7 +1878,7 @@ function Create({ draft, clearDraft, user = null }) {
                   key={colorObjectKey(active)}
                   onPickFromPage={pickFromPage}
                   object={active}
-                  onEdit={(color) => setColorEditor({ mode: "object", color })}
+                  onEdit={(color) => openColorEditor("object", color)}
                   onChange={() => {
                     active.set("dirty", true);
                     render();
