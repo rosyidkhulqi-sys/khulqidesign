@@ -6,6 +6,7 @@ import BatchField from "./BatchField";
 import { openBatch } from "./batches";
 import { industries, logoStyles } from "../../data/logosData";
 import { pairLogos, publishLogo, readLogo, sourceLabel } from "./logoPublish";
+import NumberInput from "../../components/NumberInput";
 
 const mb = (bytes) => `${(bytes / 1_000_000).toFixed(1)} MB`;
 
@@ -150,7 +151,7 @@ function LogoUpload({ onPublished }) {
                       {it.license === "exclusive" && (
                         <label className="ad-price">
                           $
-                          <input type="number" min="1" step="1" value={it.price} disabled={locked} aria-label="Price in USD"
+                          <NumberInput min="1" step="1" value={it.price} disabled={locked} aria-label="Price in USD"
                                  onChange={(e) => update(it.base, { price: Number(e.target.value) })} />
                         </label>
                       )}

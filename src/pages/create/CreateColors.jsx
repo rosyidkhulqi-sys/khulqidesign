@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Color, Gradient } from "fabric";
 import { leaves, paletteOf } from "./colorTools";
+import NumberInput from "../../components/NumberInput";
 
 const COLOR_GROUPS = [
   {
@@ -418,7 +419,7 @@ export function CreateColorPanel({ object, initialColor = "#000000", mode = "obj
         <div className="cp-color-fields">
           <label className="cp-hex-field"><span>HEX</span><input value={hex.toUpperCase()} onChange={(event) => { const value = event.target.value.startsWith("#") ? event.target.value : `#${event.target.value}`; setHex(value); if (/^#[0-9a-f]{6}$/i.test(value)) setSelectedColor(value, alpha); }} onBlur={() => { if (!/^#[0-9a-f]{6}$/i.test(hex)) setHex(parseColor(hex).hex); }} maxLength="7" /></label>
           {parseColor(hex).rgb.map((value, index) => (
-            <label className="cp-rgb-field" key={index}><span>{["R", "G", "B"][index]}</span><input type="number" min="0" max="255" value={value} onChange={(event) => updateRgb(index, event.target.value)} /></label>
+            <label className="cp-rgb-field" key={index}><span>{["R", "G", "B"][index]}</span><NumberInput min="0" max="255" value={value} onChange={(event) => updateRgb(index, event.target.value)} /></label>
           ))}
         </div>
         <label className="cp-alpha-field"><span>Color opacity</span><input type="range" min="0" max="100" value={Math.round(alpha * 100)} onChange={(event) => setSelectedColor(hex, Number(event.target.value) / 100)} /><output>{Math.round(alpha * 100)}%</output></label>

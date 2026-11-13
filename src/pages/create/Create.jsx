@@ -59,6 +59,7 @@ import { fetchIconCatalog, fetchPublished, toCreatePart, toVector } from "../../
 import { askLogin } from "../../lib/authGate";
 import { aiReady } from "../../lib/ai";
 import { MODELS, removeBackground, upscale } from "../../lib/aiLocal";
+import NumberInput from "../../components/NumberInput";
 
 const PANEL_KEY = "kd-create-panel";
 const PAGE_KEY = "kd-create-page";
@@ -2352,8 +2353,7 @@ function Create({ draft, clearDraft, user = null }) {
                     <div className="pp-type">
                       <label title="Font size (px)">
                         <Icon name="fontSize" size={16} />
-                        <input
-                          type="number"
+                        <NumberInput
                           min="1"
                           value={Math.round(active.fontSize)}
                           onChange={(e) => setProp({ fontSize: Math.max(1, Number(e.target.value)) })}
@@ -2362,8 +2362,7 @@ function Create({ draft, clearDraft, user = null }) {
                       </label>
                       <label title="Line spacing (px between lines)">
                         <Icon name="leading" size={16} />
-                        <input
-                          type="number"
+                        <NumberInput
                           min="1"
                           value={Math.round(active.fontSize * (active.lineHeight || 1.16) * 1.13)}
                           onChange={(e) => {
@@ -2375,8 +2374,7 @@ function Create({ draft, clearDraft, user = null }) {
                       </label>
                       <label title="Letter spacing (1/1000 em)">
                         <Icon name="tracking" size={16} />
-                        <input
-                          type="number"
+                        <NumberInput
                           step="10"
                           value={active.charSpacing || 0}
                           onChange={(e) => setProp({ charSpacing: Number(e.target.value) || 0 })}
@@ -2385,8 +2383,7 @@ function Create({ draft, clearDraft, user = null }) {
                       </label>
                       <label title="Shadow (0 to 100)">
                         <Icon name="shadow" size={16} />
-                        <input
-                          type="number"
+                        <NumberInput
                           min="0"
                           max="100"
                           step="5"
@@ -2514,8 +2511,7 @@ function Create({ draft, clearDraft, user = null }) {
                 <div className="pp-pair">
                   <label>
                     W
-                    <input
-                      type="number"
+                    <NumberInput
                       className="pp-num"
                       value={Math.round(active.getScaledWidth())}
                       onChange={(e) => setSize("w", e.target.value)}
@@ -2524,8 +2520,7 @@ function Create({ draft, clearDraft, user = null }) {
                   {!isText && (
                     <label>
                       H
-                      <input
-                        type="number"
+                      <NumberInput
                         className="pp-num"
                         value={Math.round(active.getScaledHeight())}
                         onChange={(e) => setSize("h", e.target.value)}
@@ -2574,8 +2569,7 @@ function Create({ draft, clearDraft, user = null }) {
                   </div>
                   <label className="pp-row">
                     <span>Rotation</span>
-                    <input
-                      type="number"
+                    <NumberInput
                       className="pp-num"
                       value={Math.round(active.angle)}
                       onChange={(e) => {
@@ -2619,15 +2613,13 @@ function Create({ draft, clearDraft, user = null }) {
 
             <div className="cn-custom">
               <span>Custom size</span>
-              <input
-                type="number"
+              <NumberInput
                 value={resize.w}
                 onChange={(e) => setResize({ w: Number(e.target.value), h: resize.h })}
                 aria-label="Width"
               />
               ×
-              <input
-                type="number"
+              <NumberInput
                 value={resize.h}
                 onChange={(e) => setResize({ w: resize.w, h: Number(e.target.value) })}
                 aria-label="Height"
@@ -2708,14 +2700,12 @@ function Create({ draft, clearDraft, user = null }) {
 
             <div className="cn-custom">
               <span>Custom size</span>
-              <input
-                type="number"
+              <NumberInput
                 value={custom.w}
                 onChange={(e) => setCustom({ ...custom, w: Number(e.target.value) })}
               />
               ×
-              <input
-                type="number"
+              <NumberInput
                 value={custom.h}
                 onChange={(e) => setCustom({ ...custom, h: Number(e.target.value) })}
               />

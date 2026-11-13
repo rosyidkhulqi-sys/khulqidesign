@@ -46,3 +46,44 @@ html {
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: 0.01ms !important; }
 }
+
+/* NUMBER FIELDS: the browser's grey spin buttons are hidden everywhere;
+   components/NumberInput.jsx adds the site's own steppers */
+input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+.num { position: relative; display: inline-flex; align-items: stretch; min-width: 0; }
+.num > input[type="number"] { padding-right: 20px; }
+.num-steps {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  bottom: 3px;
+  display: flex;
+  flex-direction: column;
+  width: 16px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.num:hover .num-steps,
+.num:focus-within .num-steps { opacity: 1; }
+.num-steps button {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #8d939b;
+  cursor: pointer;
+}
+.num-steps button:hover { background: rgba(255, 255, 255, 0.1); color: white; }
+.num-steps button:active { background: rgba(255, 255, 255, 0.18); }
+/* touch screens have no hover: the number pad does the job */
+@media (hover: none) {
+  .num-steps { display: none; }
+  .num > input[type="number"] { padding-right: revert-layer; }
+}

@@ -1938,3 +1938,9 @@
   font-variant-numeric: tabular-nums;
 }
 .pp-case button { font-size: 12px; font-weight: 600; letter-spacing: 0.5px; }
+
+/* number fields that fill their box (type settings, R G B) */
+.pp-type .num,
+.cp-color-fields .num { flex: 1; align-self: stretch; }
+.pp-type .num > input,
+.cp-color-fields .num > input { width: 100%; }

@@ -12,6 +12,7 @@ import {
 } from "./elementPublish";
 import { parseKeywords } from "./vectorUpload";
 import { normalizeVectorCategory, vectorCategoryLabel } from "../../data/vectorCategories";
+import NumberInput from "../../components/NumberInput";
 
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -136,7 +137,7 @@ function EditAsset({ row, type, onSaved, onCancel }) {
       {form.license === "exclusive" && (
         <label>
           Price (USD)
-          <input type="number" min="1" step="1" value={form.price} onChange={set("price")} disabled={sold} />
+          <NumberInput min="1" step="1" value={form.price} onChange={set("price")} disabled={sold} />
         </label>
       )}
 
