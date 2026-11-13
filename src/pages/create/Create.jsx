@@ -29,6 +29,7 @@ import { artboardPresets, shapes, svgDataUrl, textPresets } from "./createLibrar
 import { loadFont, loadFontsOf, loadSiteFonts } from "./createFonts";
 import FontPicker from "./FontPicker";
 import CreateShapeToolbar from "./CreateShapeToolbar";
+import "./createHandles";
 import { regularPolygonPath } from "./shapePath";
 import CreateColors, { CreateColorPanel } from "./CreateColors";
 import { colorObjectKey, toHex } from "./colorTools";
@@ -1346,7 +1347,8 @@ function Create({ draft, clearDraft, user = null }) {
     const top = Math.min(...ys) * zoom;
     floatPos = {
       left: ((Math.min(...xs) + Math.max(...xs)) / 2) * zoom,
-      top: top > 56 ? top - 52 : Math.max(...ys) * zoom + 12,
+      // clear of the corner dots above, and of the rotate dot when it sits below
+      top: top > 66 ? top - 62 : Math.max(...ys) * zoom + 50,
     };
   }
 
