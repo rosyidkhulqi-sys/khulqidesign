@@ -45,6 +45,7 @@ const paths = {
   alignCenter: <path d="M4 6h16M7 10h10M4 14h16M7 18h10" />,
   alignRight: <path d="M4 6h16M10 10h10M4 14h16M10 18h10" />,
   // aligning elements: a guide line and two bars that meet it
+  objCenter: <><path d="M12 2v20M2 12h20" /><rect x="7" y="7" width="10" height="10" rx="1.5" /></>,
   objLeft: <><path d="M4 3v18" /><rect x="7" y="6" width="12" height="4" rx="1" /><rect x="7" y="14" width="7" height="4" rx="1" /></>,
   objCenterH: <><path d="M12 3v18" /><rect x="5" y="6" width="14" height="4" rx="1" /><rect x="8" y="14" width="8" height="4" rx="1" /></>,
   objRight: <><path d="M20 3v18" /><rect x="5" y="6" width="12" height="4" rx="1" /><rect x="10" y="14" width="7" height="4" rx="1" /></>,

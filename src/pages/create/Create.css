@@ -1881,8 +1881,8 @@
 .pp-align button {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 7px;

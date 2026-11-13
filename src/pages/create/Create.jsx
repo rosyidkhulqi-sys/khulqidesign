@@ -1298,7 +1298,8 @@ function Create({ draft, clearDraft, user = null }) {
   /* ---------- align & distribute ---------- */
 
   // One element lines up with the page; several line up with each other
-  // (the box around them). edge: left, centerH, right, top, centerV, bottom.
+  // (the box around them). edge: center (both ways), left, centerH, right,
+  // top, centerV, bottom.
   // Locked elements stay put.
   const alignTo = (edge) => {
     const c = fc.current;
@@ -1325,11 +1326,13 @@ function Create({ draft, clearDraft, user = null }) {
       const b = boxes[i];
       const dx = {
         left: area.left - b.left,
+        center: (area.left + area.right) / 2 - (b.left + b.width / 2),
         centerH: (area.left + area.right) / 2 - (b.left + b.width / 2),
         right: area.right - (b.left + b.width),
       }[edge] ?? 0;
       const dy = {
         top: area.top - b.top,
+        center: (area.top + area.bottom) / 2 - (b.top + b.height / 2),
         centerV: (area.top + area.bottom) / 2 - (b.top + b.height / 2),
         bottom: area.bottom - (b.top + b.height),
       }[edge] ?? 0;
@@ -2484,6 +2487,7 @@ function Create({ draft, clearDraft, user = null }) {
                 <p className="cp-label">{isSelection ? "Align selection" : "Align to page"}</p>
                 <div className="pp-align" role="group" aria-label="Align">
                   {[
+                    ["center", "objCenter", "Align center, horizontally and vertically"],
                     ["left", "objLeft", "Align left"],
                     ["centerH", "objCenterH", "Align center"],
                     ["right", "objRight", "Align right"],
