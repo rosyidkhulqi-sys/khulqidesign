@@ -240,6 +240,9 @@ function Create({ draft, clearDraft, user = null }) {
   // the pages are being redone
   const [resize, setResize] = useState(null);
   const [resizing, setResizing] = useState(false);
+  // where a resize is: "pages", "ai", "apply"; and when it started, for the clock
+  const [resizeStage, setResizeStage] = useState(null);
+  const [resizeSeconds, setResizeSeconds] = useState(0);
   // admins can let the AI rearrange the layout for the new size (trial);
   // the last AI resize's time and cost show under the artboard size
   const [resizeWithAi, setResizeWithAi] = useState(true);
@@ -651,6 +654,8 @@ function Create({ draft, clearDraft, user = null }) {
     const from = boardRef.current;
     if (resizing || (w === from.w && h === from.h)) return;
     setResizing(true);
+    setResizeSeconds(0);
+    setResizeStage("pages");
     try {
       const { resizePages, describePages, applyLayout } = await import("./resizeDesign");
       const original = currentPages();
@@ -661,14 +666,22 @@ function Create({ draft, clearDraft, user = null }) {
       if (isAdmin && resizeWithAi) {
         try {
           const { aiResizeLayout } = await import("../../lib/aiTemplate");
+          setResizeStage("ai");
           const result = await aiResizeLayout({ from, to: { w, h, label }, pages: await describePages(original, from) });
+          setResizeStage("apply");
           pages = await applyLayout(pages, { w, h }, result.pages, LOCK_PROPS);
-          setAiResizeNote(`AI resize · ${result.usage.seconds} s · $${result.usage.costUsd.toFixed(3)}`);
+          const u = result.usage;
+          const models = u.model.replace(/claude-|-5-5/g, "").replace(/\b\w/g, (c) => c.toUpperCase());
+          setAiResizeNote(
+            `AI resize · ${models} · ${(u.input + u.cached + u.output).toLocaleString()} tokens `
+            + `(${u.input.toLocaleString()} in, ${u.output.toLocaleString()} out) · $${u.costUsd.toFixed(4)} · ${u.seconds} s`,
+          );
         } catch (err) {
           setAiResizeNote(err.message);
         }
       }
       const index = pagesRef.current.index;
+      setResizeStage("apply");
       if (asCopy) {
         flushSave();
         switchProject(null);
@@ -682,8 +695,16 @@ function Create({ draft, clearDraft, user = null }) {
       window.alert("The design couldn't be resized. A picture from another site may be blocking it.");
     } finally {
       setResizing(false);
+      setResizeStage(null);
     }
   };
+
+  // the seconds ticking while a resize runs
+  useEffect(() => {
+    if (!resizing) return;
+    const t = setInterval(() => setResizeSeconds((n) => n + 1), 1000);
+    return () => clearInterval(t);
+  }, [resizing]);
 
   // a new design is a new project; the current one stays in Projects
   const newArtboard = (w, h) => {
@@ -2345,6 +2366,32 @@ function Create({ draft, clearDraft, user = null }) {
               />
               px
             </div>
+
+            {/* what's happening, step by step, while the pages are redone */}
+            {resizing && (
+              <div className="cr-progress" role="status" aria-live="polite">
+                <div className="cr-bar"><span /></div>
+                <ol>
+                  {[
+                    ["pages", "Resizing every page"],
+                    ...(isAdmin && resizeWithAi ? [["ai", "AI is rearranging the layout"]] : []),
+                    ["apply", "Placing everything on the new pages"],
+                  ].map(([id, text], i, all) => {
+                    const at = all.findIndex(([s]) => s === resizeStage);
+                    return (
+                      <li key={id} className={i < at ? "done" : i === at ? "now" : ""}>
+                        <span aria-hidden="true">{i < at ? "✓" : i === at ? "" : ""}</span>
+                        {text}
+                      </li>
+                    );
+                  })}
+                </ol>
+                <small>
+                  {resizeSeconds} s
+                  {isAdmin && resizeWithAi && resizeStage === "ai" ? " · usually 10–40 s" : ""}
+                </small>
+              </div>
+            )}
 
             <div className="cn-footer">
               {isAdmin && (

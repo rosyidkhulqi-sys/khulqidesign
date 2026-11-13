@@ -240,9 +240,11 @@ function Ai({ setPage, user = null, animateIcon = null, openInCreate }) {
                 <button className="ai-again" onClick={generate}>Generate again</button>
                 {made.usage && (
                   <span className="ai-result-meta">
-                    {made.usage.seconds} s · {made.usage.passes} pass{made.usage.passes > 1 ? "es" : ""} ·{" "}
-                    {made.usage.input + made.usage.cached} in ({made.usage.cached} cached) · {made.usage.output} out ·{" "}
-                    ${made.usage.costUsd?.toFixed(3)}
+                    {(made.usage.model ?? "").replace(/claude-|-5-5/g, "").replace(/\b\w/g, (c) => c.toUpperCase())} ·{" "}
+                    {(made.usage.input + made.usage.cached + made.usage.output).toLocaleString()} tokens
+                    ({made.usage.input.toLocaleString()} in, {made.usage.output.toLocaleString()} out) ·{" "}
+                    ${made.usage.costUsd?.toFixed(4)} · {made.usage.seconds} s
+                    {made.usage.passes > 1 ? " · 2 passes" : ""}
                   </span>
                 )}
                 {made.checks?.found?.length > 0 && (

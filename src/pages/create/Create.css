@@ -1835,3 +1835,43 @@
   font-size: 11px;
   font-weight: 600;
 }
+
+/* resize progress: an endless bar, the steps and a clock */
+.cr-progress {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+.cr-bar { position: relative; height: 4px; overflow: hidden; border-radius: 4px; background: rgba(255, 255, 255, 0.08); }
+.cr-bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 35%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #5b8cff, #9db8ff);
+  animation: cr-slide 1.3s ease-in-out infinite;
+}
+@keyframes cr-slide { from { left: -35%; } to { left: 100%; } }
+.cr-progress ol { display: grid; gap: 8px; margin: 14px 0 10px; padding: 0; list-style: none; }
+.cr-progress li { display: flex; align-items: center; gap: 10px; color: #6b7078; font-size: 13px; }
+.cr-progress li span {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+}
+.cr-progress li.done { color: #9aa0a8; }
+.cr-progress li.done span { border-color: #4caf7a; background: #4caf7a; color: #0a0b0d; }
+.cr-progress li.now { color: white; }
+.cr-progress li.now span { border-color: #5b8cff; border-top-color: transparent; animation: ai-spin-cr 0.8s linear infinite; }
+@keyframes ai-spin-cr { to { transform: rotate(360deg); } }
+.cr-progress small { color: #8d939b; font-size: 12px; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) {
+  .cr-bar span, .cr-progress li.now span { animation: none; }
+}
