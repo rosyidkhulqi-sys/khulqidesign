@@ -355,6 +355,34 @@
 .home-asset-preview:focus-visible { outline: 2px solid #8b8b88; outline-offset: 3px; }
 .home-asset-preview:disabled { cursor: default; }
 .home-asset-card.is-soon img { filter: grayscale(1); opacity: 0.6; }
+/* the Footage card: its cover, then clips in turn on hover */
+.home-reel { position: absolute; inset: 0; display: block; }
+.home-reel img,
+.home-reel video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.home-reel video { animation: home-reel-in 0.35s ease; }
+@keyframes home-reel-in { from { opacity: 0; } to { opacity: 1; } }
+.home-reel-dots {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  gap: 5px;
+}
+.home-reel-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+}
+.home-reel-dots i.is-current { background: #fff; }
+@media (prefers-reduced-motion: reduce) { .home-reel video { animation: none; } }
+
 /* the Icons card: a few icons from the store, on a light tile */
 .home-icon-mosaic {
   display: grid;

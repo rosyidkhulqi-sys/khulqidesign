@@ -6,6 +6,7 @@ import { SERVICES_OPEN } from "../../data/services";
 import HomeServices from "./HomeServices";
 import "./Home.css";
 import { fetchCovers } from "../../lib/covers";
+import HomeReel from "./HomeReel";
 
 const libraryLinks = [
   { page: "icons", label: "Icons" },
@@ -302,6 +303,8 @@ function Home({ setPage, user = null }) {
                   <span className="home-icon-mosaic">
                     {covers.icons.map((src) => <img key={src} src={src} alt="" loading="lazy" />)}
                   </span>
+                ) : cat.key === "footage" && covers.reel ? (
+                  <HomeReel cover={covers.footage?.[0] ?? cat.image} clips={covers.reel} />
                 ) : (
                   <img src={covers[cat.key]?.[0] ?? cat.image} alt="" loading="lazy" />
                 )}
