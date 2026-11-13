@@ -114,12 +114,12 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
   // one-color icons (outline, glyph) take the chosen color; flat and gradient
   // icons keep their own colors
   const recolorable = canRecolor(icon?.style);
-  const art = useMemo(
-    // shapes without a fill of their own draw black, so a wrapping group
-    // gives them the color too
-    () => (svg && recolorable ? { ...svg, inner: `<g fill="${color}">${recolor(svg.inner, color)}</g>` } : svg),
-    [svg, recolorable, color],
-  );
+  // The icon is painted "currentColor" once, and the color itself is a CSS
+  // property on the <svg>, so changing it is instant: nothing is rebuilt and
+  // the motion keeps playing. Shapes without a fill of their own draw black,
+  // so a wrapping group gives them the color too.
+  const paint = (c) => (svg && recolorable ? { ...svg, inner: `<g fill="${c}">${recolor(svg.inner, c)}</g>` } : svg);
+  const art = useMemo(() => paint("currentColor"), [svg, recolorable]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // the list, one style at a time (the open icon's style first) and searched
   // by name, keywords and category
@@ -163,7 +163,8 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
       if (!len) return;
       const cs = getComputedStyle(el);
       if (cs.stroke === "none") {
-        el.style.stroke = cs.fill === "none" ? "currentColor" : cs.fill;
+        // a recolorable icon traces in currentColor, so a new color shows at once
+        el.style.stroke = cs.fill === "none" || recolorable ? "currentColor" : cs.fill;
         el.style.strokeWidth = width;
         el.classList.add("kd-trace");
       }
@@ -172,7 +173,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
       el.style.strokeDashoffset = len;
       el.style.animationDelay = `${i * step}s`;
     });
-  }, [svg, preset, duration, run]);
+  }, [svg, preset, duration, run, recolorable]);
 
   useEffect(() => {
     let root = stage.current?.querySelector("svg");
@@ -224,7 +225,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
       try {
         // the converter loads only when someone asks for a Lottie file
         const { buildLottie } = await import("../../lib/animateLottie");
-        const file = buildLottie(art, { preset, duration, name: icon.name });
+        const file = buildLottie(paint(color), { preset, duration, name: icon.name });
         saveBlob(new Blob([file], { type: "application/json" }), `${name}.json`);
       } catch (e) {
         setExportError(e.message || "This export didn't work. Try again.");
@@ -270,6 +271,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
             <svg
               className="animate-icon"
               viewBox={art.viewBox}
+              style={recolorable ? { color } : undefined}
               dangerouslySetInnerHTML={{ __html: art.inner }}
             />
           ) : icon ? (
@@ -385,7 +387,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
                   title={c}
                   className={color === c ? "active" : ""}
                   style={{ background: c }}
-                  onClick={() => pick(setColor)(c)}
+                  onClick={() => setColor(c)}
                 />
               ))}
               <label
@@ -396,7 +398,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
                 <input
                   type="color"
                   value={color}
-                  onChange={(e) => pick(setColor)(e.target.value)}
+                  onChange={(e) => setColor(e.target.value)}
                   aria-label="Your own color"
                 />
               </label>
@@ -416,7 +418,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
                 title={label}
                 className={`${background === c ? "active" : ""}${c ? "" : " is-none"}`}
                 style={c ? { background: c } : undefined}
-                onClick={() => pick(setBackground)(c)}
+                onClick={() => setBackground(c)}
               />
             ))}
             <label
@@ -427,7 +429,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
               <input
                 type="color"
                 value={background ?? "#ffffff"}
-                onChange={(e) => pick(setBackground)(e.target.value)}
+                onChange={(e) => setBackground(e.target.value)}
                 aria-label="Your own background color"
               />
             </label>

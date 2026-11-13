@@ -79,6 +79,8 @@ export function buildAnimatedSvg(iconEl, { preset, duration, loop, background = 
   // puts the icon's own coordinates in the middle of the file
   const place = document.createElementNS(SVG_NS, "g");
   place.setAttribute("transform", `translate(${round(center - x - width / 2)} ${round(center - y - height / 2)})`);
+  // an icon painted "currentColor" takes its color from the stage
+  place.setAttribute("color", getComputedStyle(iconEl).color);
   for (const node of iconEl.childNodes) place.appendChild(node.cloneNode(true));
   motion.appendChild(place);
   root.appendChild(motion);
