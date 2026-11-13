@@ -19,7 +19,8 @@ const paths = {
   eyeOff: <><path d="M9.9 5.2A9.7 9.7 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3 3.9M6.3 6.3A16.7 16.7 0 0 0 2 12s3.6 7 10 7a9.6 9.6 0 0 0 4.9-1.3" /><path d="M3 3l18 18" /></>,
   crop: <path d="M6 2v14a2 2 0 0 0 2 2h14M2 6h14a2 2 0 0 1 2 2v14" />,
   plus: <path d="M12 5v14M5 12h14" />,
-  pages: <><rect x="2" y="6" width="6" height="12" rx="1.5" /><rect x="9" y="6" width="6" height="12" rx="1.5" /><rect x="16" y="6" width="6" height="12" rx="1.5" /></>,
+  // three solid page tiles with clear gaps: an outline version ran together at small sizes
+  pages: <g fill="currentColor" stroke="none"><rect x="2" y="6.5" width="5.5" height="11" rx="1.3" /><rect x="9.25" y="6.5" width="5.5" height="11" rx="1.3" /><rect x="16.5" y="6.5" width="5.5" height="11" rx="1.3" /></g>,
   trash: <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />,
   copy: <><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a1 1 0 0 1 1-1h9" /></>,
   lock: <><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></>,
