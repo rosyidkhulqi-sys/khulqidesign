@@ -28,6 +28,7 @@ import { basicIcons } from "./basicIcons";
 import { artboardPresets, shapes, svgDataUrl, textPresets } from "./createLibrary";
 import { loadFont, loadFontsOf, loadSiteFonts } from "./createFonts";
 import FontPicker from "./FontPicker";
+import { pageThumbs } from "./pageThumbs";
 import CreateShapeToolbar from "./CreateShapeToolbar";
 import "./createHandles";
 import { regularPolygonPath } from "./shapePath";
@@ -60,6 +61,7 @@ import { MODELS, removeBackground, upscale } from "../../lib/aiLocal";
 
 const PANEL_KEY = "kd-create-panel";
 const PAGE_KEY = "kd-create-page";
+const STRIP_KEY = "kd-create-page-strip";
 // zoom slider range, in percent
 const ZOOM_MIN = 10;
 const ZOOM_MAX = 300;
@@ -217,6 +219,16 @@ function Create({ draft, clearDraft, user = null }) {
   const [menu, setMenu] = useState(null);
   const [isEmpty, setIsEmpty] = useState(true);
   const [pageInfo, setPageInfo] = useState({ index: 0, count: 1 });
+  // the strip of page pictures under the canvas, open unless closed before
+  const [stripOpen, setStripOpen] = useState(() => {
+    try {
+      return localStorage.getItem(STRIP_KEY) !== "closed";
+    } catch {
+      return true;
+    }
+  });
+  const [thumbs, setThumbs] = useState([]);
+  const stripRef = useRef(null);
   const [fullscreen, setFullscreen] = useState(false);
   // admins can publish the open design as a template
   const [isAdmin, setIsAdmin] = useState(false);
@@ -469,6 +481,38 @@ function Create({ draft, clearDraft, user = null }) {
     p.list.splice(p.index, 1);
     await showPage(Math.min(p.index, p.list.length - 1), false);
     commit();
+  };
+
+  // redraws the page pictures once a change is saved (only those that changed)
+  const drawThumbs = useEffectEvent(async (isCurrent) => {
+    if (!fc.current || !loadedRef.current) return;
+    const list = await pageThumbs(currentPages(), boardRef.current);
+    if (isCurrent()) setThumbs(list);
+  });
+  useEffect(() => {
+    if (!stripOpen || saveState === "saving") return;
+    let current = true;
+    const t = setTimeout(() => drawThumbs(() => current), 150);
+    return () => {
+      current = false;
+      clearTimeout(t);
+    };
+  }, [stripOpen, saveState, pageInfo, board]);
+
+  // keep the open page in view in the strip
+  useEffect(() => {
+    stripRef.current?.querySelector(".on")?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [pageInfo.index, stripOpen]);
+
+  const toggleStrip = () => {
+    setStripOpen((open) => {
+      try {
+        localStorage.setItem(STRIP_KEY, open ? "closed" : "open");
+      } catch {
+        /* storage unavailable */
+      }
+      return !open;
+    });
   };
 
   // a new or replaced design starts with one page
@@ -1725,9 +1769,46 @@ function Create({ draft, clearDraft, user = null }) {
             </div>
           </div>
 
+          {/* every page as a small picture: click one to open it */}
+          {stripOpen && (
+            <div className="create-strip" ref={stripRef} inert={cropping} role="tablist" aria-label="Pages">
+              {Array.from({ length: pageInfo.count }, (_, i) => (
+                <button
+                  key={i}
+                  className={`cs-page ${i === pageInfo.index ? "on" : ""}`}
+                  style={{ aspectRatio: `${board.w} / ${board.h}` }}
+                  onClick={() => goToPage(i)}
+                  role="tab"
+                  aria-selected={i === pageInfo.index}
+                  aria-label={`Page ${i + 1}`}
+                >
+                  {thumbs[i] && <img src={thumbs[i]} alt="" draggable="false" />}
+                  <span>{i + 1}</span>
+                </button>
+              ))}
+              <button
+                className="cs-add"
+                style={{ aspectRatio: `${board.w} / ${board.h}` }}
+                onClick={() => addPage(false)}
+                title="Add page"
+                aria-label="Add page"
+              >
+                <Icon name="plus" size={18} />
+              </button>
+            </div>
+          )}
+
           {/* pages, zoom and full screen, under the canvas as in Canva */}
           <div className="create-bottombar" inert={cropping}>
             <div className="cb-pages">
+              <button
+                className={`cb-strip ${stripOpen ? "on" : ""}`}
+                onClick={toggleStrip}
+                aria-pressed={stripOpen}
+                title={stripOpen ? "Hide pages" : "Show pages"}
+              >
+                <Icon name="pages" size={16} /> Pages
+              </button>
               <button
                 className="cb-icon"
                 onClick={() => goToPage(pageInfo.index - 1)}

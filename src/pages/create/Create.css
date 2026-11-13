@@ -667,8 +667,85 @@
   min-width: 0;
   min-height: 0;
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto auto;
 }
+
+/* the page pictures, between the canvas and the bottom bar */
+.create-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 92px;
+  padding: 0 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface);
+  scrollbar-width: thin;
+}
+.cs-page,
+.cs-add {
+  position: relative;
+  flex: none;
+  height: 64px;
+  max-width: 160px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: var(--surface-2);
+  cursor: pointer;
+}
+.cs-page img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cs-page span {
+  position: absolute;
+  left: 5px;
+  bottom: 4px;
+  min-width: 18px;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: rgba(10, 11, 13, 0.72);
+  color: #e7e9ec;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+}
+.cs-page:hover { border-color: rgba(255, 255, 255, 0.35); }
+.cs-page.on {
+  border-color: #5b8cff;
+  box-shadow: 0 0 0 1px #5b8cff;
+}
+.cs-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #aeb3ba;
+  border-style: dashed;
+  background: transparent;
+}
+.cs-add:hover { border-color: rgba(255, 255, 255, 0.4); color: white; }
+
+.cb-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 7px;
+  background: transparent;
+  color: #c6cad0;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.cb-strip:hover { background: rgba(255, 255, 255, 0.08); color: white; }
+.cb-strip.on { border-color: rgba(255, 255, 255, 0.5); color: white; }
 
 /* zoom and full screen, under the canvas as in Canva */
 .create-bottombar {
