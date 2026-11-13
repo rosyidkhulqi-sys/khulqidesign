@@ -1,4 +1,5 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
+import { askConfirm } from "../../lib/confirm";
 import {
   ActiveSelection,
   Canvas,
@@ -440,7 +441,7 @@ function Create({ draft, clearDraft, user = null }) {
   const deletePage = async () => {
     const p = pagesRef.current;
     if (p.list.length < 2) return;
-    if (fc.current.getObjects().length && !window.confirm("Delete this page?")) return;
+    if (fc.current.getObjects().length && !(await askConfirm({ title: "Delete this page?", message: "Everything on it goes too.", confirmLabel: "Delete page" }))) return;
     p.list.splice(p.index, 1);
     await showPage(Math.min(p.index, p.list.length - 1), false);
     commit();
@@ -539,7 +540,7 @@ function Create({ draft, clearDraft, user = null }) {
   // deletes a design from Projects; deleting the open one moves to the
   // newest other design, or to a blank canvas when none is left
   const deleteDesign = async (id = projectRef.current) => {
-    if (!window.confirm("Delete this design? This cannot be undone.")) return;
+    if (!(await askConfirm({ title: "Delete this design?", message: "This can't be undone.", confirmLabel: "Delete design" }))) return;
     clearTimeout(commitTimer.current);
     if (id) deleteProject(id);
     setProjects(listProjects());
@@ -561,7 +562,11 @@ function Create({ draft, clearDraft, user = null }) {
   // asNew starts a new project for it, as when it comes from the Templates page
   const openTemplate = async (t, ask = true, asNew = false) => {
     const c = fc.current;
-    if (ask && c.getObjects().length && !window.confirm("Replace the current design with this template?")) {
+    if (ask && c.getObjects().length && !(await askConfirm({
+      title: "Replace your design with this template?",
+      message: "What's on your pages now is replaced, and this can't be undone. To keep it, start a new design from File first.",
+      confirmLabel: "Replace design",
+    }))) {
       return;
     }
     if (asNew) {

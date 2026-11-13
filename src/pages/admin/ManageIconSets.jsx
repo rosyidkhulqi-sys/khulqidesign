@@ -1,6 +1,7 @@
 // Icon sets are managed as groups so an owner can find, hide, or remove a
 // whole upload without paging through hundreds of individual icons.
 import { useEffect, useState } from "react";
+import { askConfirm } from "../../lib/confirm";
 import { supabase } from "../../lib/supabaseClient";
 import { deleteFromR2, publicUrl } from "../../lib/r2";
 import { ICON_CATEGORIES, ICON_STYLES, splitKeywords } from "./iconPublish";
@@ -360,7 +361,13 @@ function ManageIconSets({ refreshKey }) {
 
   const removeSet = async (set) => {
     const count = set.iconCount;
-    if (!window.confirm(`Delete the “${set.name}” icon set and all ${count} icon${count === 1 ? "" : "s"}? Their R2 files will also be removed. This can't be undone.`)) return;
+    const sure = await askConfirm({
+      title: `Delete the “${set.name}” icon set?`,
+      message: `All ${count} icon${count === 1 ? "" : "s"} in it and their files are removed from storage. This can't be undone.`,
+      confirmLabel: "Delete set",
+      typeToConfirm: set.name,
+    });
+    if (!sure) return;
     setBusy(set.id);
     setError(null);
     try {
@@ -408,7 +415,11 @@ function ManageIconSets({ refreshKey }) {
   };
 
   const removeIcon = async (icon, set) => {
-    if (!window.confirm(`Delete ${icon.code} “${icon.title}”? Its R2 files will also be removed.`)) return;
+    const sure = await askConfirm({
+      title: `Delete ${icon.code}?`,
+      message: `“${icon.title}” and its files are removed from storage. This can't be undone.`,
+    });
+    if (!sure) return;
     setBusy(icon.id);
     setError(null);
     const { error: deleteError } = await supabase.from("assets").delete().eq("id", icon.id);

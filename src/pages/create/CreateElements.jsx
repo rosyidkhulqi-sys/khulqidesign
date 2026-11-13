@@ -4,6 +4,7 @@
 // The existing Icons catalog is reused here, without copying its records.
 // Searching happens in CreateSearch, one box for the whole library.
 import { useEffect, useMemo, useRef, useState } from "react";
+import { askConfirm } from "../../lib/confirm";
 import Icon from "./CreateIcons";
 import { basicIcons } from "./basicIcons";
 import { shapeGroups, shapes, svgDataUrl } from "./createLibrary";
@@ -224,8 +225,9 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [] }) {
   const remember = (kind, id) => setRecent(saveRecent(kind, id));
 
   // empties the recently used list and goes back to the overview
-  const clearRecent = () => {
-    if (!window.confirm("Clear recently used elements?")) return;
+  const clearRecent = async () => {
+    const sure = await askConfirm({ title: "Clear recently used elements?", confirmLabel: "Clear" });
+    if (!sure) return;
     setRecent([]);
     setView(null);
     forgetRecent();

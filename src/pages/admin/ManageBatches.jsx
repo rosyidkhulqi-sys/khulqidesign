@@ -3,6 +3,7 @@
 // files, or hide, show, rename or delete the whole batch at once. "All
 // files" is the flat list, for searching across batches.
 import { useEffect, useState } from "react";
+import { askConfirm } from "../../lib/confirm";
 import { publicUrl } from "../../lib/r2";
 import { ManageAssetRows } from "./ManageAssets";
 import { batchOverview, deleteBatch, renameBatch, setBatchStatus } from "./batches";
@@ -47,15 +48,14 @@ function ManageBatches({ type, refreshKey }) {
     setReload((n) => n + 1);
   };
 
-  const remove = (batch) => {
-    const typed = window.prompt(
-      `Delete all ${batch.total} ${LABEL[type]} in “${batch.name}” and their files? This can't be undone.\n\nType the batch name to confirm:`
-    );
-    if (typed === null) return;
-    if (typed.trim() !== batch.name) {
-      setError("The name didn't match, so nothing was deleted.");
-      return;
-    }
+  const remove = async (batch) => {
+    const sure = await askConfirm({
+      title: `Delete the batch “${batch.name}”?`,
+      message: `All ${batch.total} ${Number(batch.total) === 1 ? ONE[type] : LABEL[type]} in it and their files are removed from storage. This can't be undone.`,
+      confirmLabel: "Delete batch",
+      typeToConfirm: batch.name,
+    });
+    if (!sure) return;
     run(batch, async () => {
       const { kept } = await deleteBatch(batch.id, type, (done, total) => setProgress({ id: batch.id, done, total }));
       if (kept) setError(`${kept} ${kept === 1 ? ONE[type] : LABEL[type]} had been downloaded, so they were hidden instead of deleted.`);

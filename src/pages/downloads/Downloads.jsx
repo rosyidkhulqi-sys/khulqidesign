@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { askConfirm } from "../../lib/confirm";
 import "./Downloads.css";
 import { supabase } from "../../lib/supabaseClient";
 import { publicUrl } from "../../lib/r2";
@@ -125,7 +126,12 @@ function Downloads({ setPage, user }) {
   };
 
   const clearAll = async () => {
-    if (!window.confirm("Clear your download history? Files you already saved stay on your computer, and their licenses stay valid.")) return;
+    const sure = await askConfirm({
+      title: "Clear your download history?",
+      message: "Files you already saved stay on your computer, and their licenses stay valid.",
+      confirmLabel: "Clear history",
+    });
+    if (!sure) return;
     setLoadError(null);
     if (user) {
       const { error } = await supabase.rpc("hide_downloads");

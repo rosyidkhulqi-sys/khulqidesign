@@ -3,6 +3,7 @@
 // with thousands of assets. Admins see every row (RLS); visitors only ever see
 // published ones. Deleting removes the row first, then its files from R2.
 import { useEffect, useState } from "react";
+import { askConfirm } from "../../lib/confirm";
 import { supabase } from "../../lib/supabaseClient";
 import { publicUrl } from "../../lib/r2";
 import { industries } from "../../data/logosData";
@@ -172,7 +173,11 @@ export function ManageAssetRows({ type = "vector", refreshKey, batchId = null })
   };
 
   const remove = async (row) => {
-    if (!window.confirm(`Delete ${row.code} “${row.title}”? Its files are removed from storage too. This can't be undone.`)) return;
+    const sure = await askConfirm({
+      title: `Delete ${row.code}?`,
+      message: `“${row.title}” and its files are removed from storage. This can't be undone.`,
+    });
+    if (!sure) return;
     setBusy(row.id);
     setError(null);
     try {
