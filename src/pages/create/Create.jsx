@@ -1296,7 +1296,6 @@ function Create({ draft, clearDraft, user = null }) {
   const shapeBar = shapeInfo(active);
   const isGroup = active instanceof Group && !isSelection;
   const isLine = active instanceof Line;
-  const hasStroke = active instanceof Rect || active instanceof Circle || active instanceof Ellipse || active instanceof Polygon || active instanceof Triangle;
   const lineStyle = !active?.strokeDashArray?.length
     ? "solid"
     : active.strokeDashArray[0] <= active.strokeDashArray[1] * 0.5 ? "dotted" : "dashed";
@@ -1834,49 +1833,10 @@ function Create({ draft, clearDraft, user = null }) {
                         onChange={(e) => setProp({ strokeLineCap: e.target.checked ? "round" : "butt" })}
                       />
                     </label>
-                    <label className="pp-row pp-line-weight">
-                      <span>Stroke weight</span>
-                      <input
-                        type="range"
-                        min="1"
-                        max="48"
-                        step="1"
-                        value={Math.max(1, Math.round(active.strokeWidth || 1))}
-                        onChange={(e) => setProp({ strokeWidth: Number(e.target.value) })}
-                        aria-label="Stroke weight"
-                      />
-                      <output>{Math.round(active.strokeWidth || 1)}</output>
-                    </label>
                   </>
                 )}
 
-                {hasStroke && (
-                  <label className="pp-row">
-                    <span>Border</span>
-                    <input
-                      type="number"
-                      className="pp-num"
-                      min="0"
-                      value={active.strokeWidth}
-                      onChange={(e) => setProp({ strokeWidth: Math.max(0, Number(e.target.value)), stroke: active.stroke || "#1d1d1d" })}
-                    />
-                  </label>
-                )}
-
-                {active instanceof Rect && (
-                  <label className="pp-row">
-                    <span>Corner radius</span>
-                    <input
-                      type="number"
-                      className="pp-num"
-                      min="0"
-                      value={Math.round(active.rx)}
-                      onChange={(e) => setProp({ rx: Number(e.target.value), ry: Number(e.target.value) })}
-                    />
-                  </label>
-                )}
-
-                <p className="cp-label">Size & position</p>
+                <p className="cp-label">Size</p>
                 <div className="pp-pair">
                   <label>
                     W
@@ -1909,19 +1869,6 @@ function Create({ draft, clearDraft, user = null }) {
                   )}
                 </div>
                 <label className="pp-row">
-                  <span>Rotation</span>
-                  <input
-                    type="number"
-                    className="pp-num"
-                    value={Math.round(active.angle)}
-                    onChange={(e) => {
-                      active.rotate(Number(e.target.value) || 0);
-                      active.setCoords();
-                      render();
-                    }}
-                  />
-                </label>
-                <label className="pp-row">
                   <span>Opacity</span>
                   <input
                     type="range"
@@ -1932,28 +1879,39 @@ function Create({ draft, clearDraft, user = null }) {
                   />
                 </label>
 
-                <p className="cp-label">Arrange</p>
-                <div className="pp-grid">
-                  <button onClick={() => arrange("front")}><Icon name="front" size={16} /><span>To front</span></button>
-                  <button onClick={() => arrange("back")}><Icon name="back" size={16} /><span>To back</span></button>
-                  <button onClick={() => arrange("forward")}><Icon name="forward" size={16} /><span>Forward</span></button>
-                  <button onClick={() => arrange("backward")}><Icon name="backward" size={16} /><span>Backward</span></button>
-                  <button onClick={() => setProp({ flipX: !active.flipX })}><Icon name="flipH" size={16} /><span>Flip horizontal</span></button>
-                  <button onClick={() => setProp({ flipY: !active.flipY })}><Icon name="flipV" size={16} /><span>Flip vertical</span></button>
-                </div>
+                {(isSelection || isGroup) && (
+                  <div className="pp-grid">
+                    {isSelection && <button onClick={group}><Icon name="group" size={16} /><span>Group</span></button>}
+                    {isGroup && <button onClick={ungroup}><Icon name="ungroup" size={16} /><span>Ungroup</span></button>}
+                  </div>
+                )}
 
-                <p className="cp-label">Actions</p>
-                <div className="pp-grid">
-                  {isSelection && <button onClick={group}><Icon name="group" size={16} /><span>Group</span></button>}
-                  {isGroup && <button onClick={ungroup}><Icon name="ungroup" size={16} /><span>Ungroup</span></button>}
-                  {!isSelection && (
-                    <button onClick={toggleLock} className={locked ? "on" : ""}>
-                      <Icon name={locked ? "lock" : "unlock"} size={16} /><span>{locked ? "Unlock" : "Lock"}</span>
-                    </button>
-                  )}
-                  <button onClick={duplicate}><Icon name="copy" size={16} /><span>Duplicate</span></button>
-                  <button className="danger wide" onClick={remove}><Icon name="trash" size={16} /><span>Delete element</span></button>
-                </div>
+                {/* layer order, flip and rotation, folded away until needed;
+                    duplicate, lock and delete are on the toolbar by the element */}
+                <details className="pp-more">
+                  <summary>Position</summary>
+                  <div className="pp-grid">
+                    <button onClick={() => arrange("front")}><Icon name="front" size={16} /><span>To front</span></button>
+                    <button onClick={() => arrange("back")}><Icon name="back" size={16} /><span>To back</span></button>
+                    <button onClick={() => arrange("forward")}><Icon name="forward" size={16} /><span>Forward</span></button>
+                    <button onClick={() => arrange("backward")}><Icon name="backward" size={16} /><span>Backward</span></button>
+                    <button onClick={() => setProp({ flipX: !active.flipX })}><Icon name="flipH" size={16} /><span>Flip horizontal</span></button>
+                    <button onClick={() => setProp({ flipY: !active.flipY })}><Icon name="flipV" size={16} /><span>Flip vertical</span></button>
+                  </div>
+                  <label className="pp-row">
+                    <span>Rotation</span>
+                    <input
+                      type="number"
+                      className="pp-num"
+                      value={Math.round(active.angle)}
+                      onChange={(e) => {
+                        active.rotate(Number(e.target.value) || 0);
+                        active.setCoords();
+                        render();
+                      }}
+                    />
+                  </label>
+                </details>
               </>
             )}
           </aside>

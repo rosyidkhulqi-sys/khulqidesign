@@ -1540,3 +1540,24 @@
 }
 .cs-toolbar-toggle:hover { background: rgba(255, 255, 255, 0.08); color: var(--white); }
 
+/* folded inspector sections (Position) */
+.pp-more { margin-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.pp-more summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  color: #9aa0a8;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  list-style: none;
+}
+.pp-more summary::-webkit-details-marker { display: none; }
+.pp-more summary::after { content: "+"; font-size: 15px; font-weight: 500; letter-spacing: 0; }
+.pp-more[open] summary::after { content: "−"; }
+.pp-more summary:hover { color: var(--white); }
+.pp-more .pp-row { margin-top: 10px; }
+
