@@ -2,6 +2,8 @@
 // each clip, publish. Previews are recorded in real time, one clip after
 // another, so a 15 s clip takes about 15 s; keep this tab in front.
 import { useEffect, useRef, useState } from "react";
+import BatchField from "./BatchField";
+import { openBatch } from "./batches";
 import {
   FOOTAGE_CATEGORIES,
   findPlayable,
@@ -19,6 +21,8 @@ const clock = (s) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStar
 function FootageUpload({ onPublished }) {
   const [items, setItems] = useState([]);
   const [publishing, setPublishing] = useState(false);
+  const [batch, setBatch] = useState("");
+  const [batchError, setBatchError] = useState(null);
   const [dragging, setDragging] = useState(false);
   const input = useRef(null);
   const urls = useRef([]);
@@ -72,6 +76,15 @@ function FootageUpload({ onPublished }) {
 
   const publishAll = async () => {
     setPublishing(true);
+    let batchId;
+    try {
+      batchId = await openBatch("footage", batch);
+    } catch (e) {
+      setBatchError(e.message);
+      setPublishing(false);
+      return;
+    }
+    setBatchError(null);
     for (const item of items.filter((it) => it.status === "ready" || it.status === "failed")) {
       if (!item.title.trim()) {
         update(item.base, { status: "failed", message: "Add a title first" });
@@ -79,7 +92,7 @@ function FootageUpload({ onPublished }) {
       }
       update(item.base, { status: "uploading", progress: 0, message: "Preparing" });
       try {
-        const code = await publishClip({ ...item, title: item.title.trim() }, (message, progress) =>
+        const code = await publishClip({ ...item, batchId, title: item.title.trim() }, (message, progress) =>
           update(item.base, { message, progress })
         );
         update(item.base, { status: "done", progress: 1, message: `Published as ${code}` });
@@ -96,6 +109,8 @@ function FootageUpload({ onPublished }) {
 
   return (
     <>
+      <BatchField type="footage" value={batch} onChange={setBatch} disabled={publishing} />
+      {batchError && <p className="ad-error">{batchError}</p>}
       <div
         className={`ad-drop ${dragging ? "is-over" : ""}`}
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}

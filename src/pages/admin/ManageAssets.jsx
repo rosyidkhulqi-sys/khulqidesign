@@ -18,9 +18,9 @@ import EditAsset from "./EditAsset";
 import ManageIconSets from "./ManageIconSets";
 
 const LABEL = { vector: "vectors", icon: "icons", logo: "logos", footage: "clips", template: "templates", element: "elements" };
-const FIELDS = "id, code, ref_code, source_name, title, description, keywords, category, industry, style, license, price_cents, sold_at, status, thumb_key, preview_key, preview_video_key, files, created_at";
+const FIELDS = "id, code, ref_code, source_name, title, description, keywords, category, industry, style, license, price_cents, sold_at, status, thumb_key, preview_key, preview_video_key, files, created_at, batch_id, batch:upload_batches(name)";
 const PAGE_SIZE = 50;
-const NO_FILTERS = { search: "", category: "", kind: "", month: "", license: "", status: "", sort: "newest" };
+const NO_FILTERS = { search: "", batch: "", category: "", kind: "", month: "", license: "", status: "", sort: "newest" };
 
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -80,6 +80,7 @@ function loadAssets(type, filters, page) {
   }
   if (filters.kind === "background") query = query.eq("style", "background");
   if (filters.kind === "element") query = query.neq("style", "background");
+  if (filters.batch) query = query.eq("batch_id", filters.batch);
   if (filters.license) query = query.eq("license", filters.license);
   if (filters.status) query = query.eq("status", filters.status);
   if (filters.month) {
@@ -100,6 +101,21 @@ function ManageAssetRows({ type = "vector", refreshKey }) {
   const [rows, setRows] = useState(null);
   const [total, setTotal] = useState(0);
   const [filters, setFilters] = useState(NO_FILTERS);
+  // this type's batches, newest first, for the batch filter
+  const [batches, setBatches] = useState([]);
+  useEffect(() => {
+    let alive = true;
+    supabase
+      .from("upload_batches")
+      .select("id, name")
+      .eq("type", type)
+      .order("created_at", { ascending: false })
+      .limit(200)
+      .then(({ data }) => alive && setBatches(data ?? []));
+    return () => {
+      alive = false;
+    };
+  }, [type, refreshKey]);
   const [page, setPage] = useState(0);
   // bumped after a delete, so the page fills back up
   const [reload, setReload] = useState(0);
@@ -203,6 +219,10 @@ function ManageAssetRows({ type = "vector", refreshKey }) {
           <option value="">{type === "logo" ? "All industries" : "All categories"}</option>
           {categoryOptions(type, filters.kind).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
+        <select value={filters.batch} onChange={setFilter("batch")} aria-label="Batch">
+          <option value="">All batches</option>
+          {batches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+        </select>
         <select value={filters.month} onChange={setFilter("month")} aria-label="Upload month">
           <option value="">Any month</option>
           {monthOptions().map(([value, label]) => <option key={value} value={value}>{label}</option>)}
@@ -238,6 +258,7 @@ function ManageAssetRows({ type = "vector", refreshKey }) {
               <strong>{row.title}</strong>
               <span className="ad-file">
                 {row.ref_code && <b className="ad-ref">{row.ref_code}</b>}
+                {row.batch?.name && <span className="ad-batch-tag">{row.batch.name}</span>}
                 {row.code} · {capitalize(row.license)} ·{" "}
                 {new Date(row.created_at).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
               </span>

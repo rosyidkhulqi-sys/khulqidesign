@@ -103,6 +103,7 @@ export async function publishLogo(item, onStep) {
     onStep("Saving", 1);
     const { error } = await supabase.from("assets").insert({
       code,
+      batch_id: item.batchId ?? null,
       source_name: item.base,
       type: "logo",
       status: "published",

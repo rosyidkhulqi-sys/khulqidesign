@@ -99,6 +99,7 @@ export async function publishIcon(item, set, onStep) {
     onStep("Saving", 1);
     const { error } = await supabase.from("assets").insert({
       code,
+      batch_id: item.batchId ?? null,
       source_name: item.file.name.replace(/\.svg$/i, ""),
       type: "icon",
       status: "published",

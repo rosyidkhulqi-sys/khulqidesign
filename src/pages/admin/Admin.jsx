@@ -3,6 +3,8 @@
 // footage follow the same pattern next. Only admins get past the guard; the
 // database and the r2-sign function check the role again on every write.
 import { useEffect, useRef, useState } from "react";
+import BatchField from "./BatchField";
+import { openBatch } from "./batches";
 import "../vectors/Vectors.css";
 import "./Admin.css";
 import Breadcrumb from "../../components/Breadcrumb";
@@ -34,6 +36,8 @@ function Admin({ user, setPage }) {
   const [access, setAccess] = useState("checking");
   const [items, setItems] = useState([]);
   const [publishing, setPublishing] = useState(false);
+  const [batch, setBatch] = useState("");
+  const [batchError, setBatchError] = useState(null);
   const [dragging, setDragging] = useState(false);
   // bumped after publishing so the uploaded list reloads
   const [published, setPublished] = useState(0);
@@ -95,6 +99,15 @@ function Admin({ user, setPage }) {
 
   const publishAll = async () => {
     setPublishing(true);
+    let batchId;
+    try {
+      batchId = await openBatch("vector", batch);
+    } catch (e) {
+      setBatchError(e.message);
+      setPublishing(false);
+      return;
+    }
+    setBatchError(null);
     for (const item of items.filter((it) => it.status === "ready" || it.status === "error")) {
       if (!item.title.trim()) {
         update(item.base, { status: "error", message: "Add a title first" });
@@ -102,7 +115,7 @@ function Admin({ user, setPage }) {
       }
       update(item.base, { status: "uploading", progress: 0, message: "Preparing" });
       try {
-        const code = await publishVector({ ...item, title: item.title.trim() }, (message, progress) =>
+        const code = await publishVector({ ...item, batchId, title: item.title.trim() }, (message, progress) =>
           update(item.base, { message, progress })
         );
         update(item.base, { status: "done", progress: 1, message: `Published as ${code}` });
@@ -179,6 +192,8 @@ function Admin({ user, setPage }) {
       ) : (
       <>
       {/* DROP ZONE */}
+      <BatchField type="vector" value={batch} onChange={setBatch} disabled={publishing} />
+      {batchError && <p className="ad-error">{batchError}</p>}
       <div
         className={`ad-drop ${dragging ? "is-over" : ""}`}
         onDragOver={(e) => {

@@ -1,6 +1,8 @@
 // The Elements tab on /admin: parts for the Create editor. Drop SVG, PNG or
 // JPG files; each one is an element or a background (JPGs start as backgrounds).
 import { useRef, useState } from "react";
+import BatchField from "./BatchField";
+import { openBatch } from "./batches";
 import { parseKeywords } from "./vectorUpload";
 import {
   MAX_KEYWORDS,
@@ -57,6 +59,8 @@ function KeywordField({ keywords, disabled, onChange }) {
 function ElementUpload({ onPublished }) {
   const [items, setItems] = useState([]);
   const [publishing, setPublishing] = useState(false);
+  const [batch, setBatch] = useState("");
+  const [batchError, setBatchError] = useState(null);
   const [dragging, setDragging] = useState(false);
   const input = useRef(null);
 
@@ -95,6 +99,15 @@ function ElementUpload({ onPublished }) {
 
   const publishAll = async () => {
     setPublishing(true);
+    let batchId;
+    try {
+      batchId = await openBatch("element", batch);
+    } catch (e) {
+      setBatchError(e.message);
+      setPublishing(false);
+      return;
+    }
+    setBatchError(null);
     for (const item of items.filter((it) => it.status === "ready" || (it.status === "failed" && it.format))) {
       const missing = missingField(item);
       if (missing) {
@@ -103,7 +116,7 @@ function ElementUpload({ onPublished }) {
       }
       update(item.base, { status: "uploading", progress: 0, message: "Preparing" });
       try {
-        const code = await publishElement(item, (message, progress) => update(item.base, { message, progress }));
+        const code = await publishElement({ ...item, batchId }, (message, progress) => update(item.base, { message, progress }));
         update(item.base, { status: "done", progress: 1, message: `Published as ${code}` });
       } catch (e) {
         update(item.base, { status: "failed", message: e.message });
@@ -118,6 +131,8 @@ function ElementUpload({ onPublished }) {
 
   return (
     <>
+      <BatchField type="element" value={batch} onChange={setBatch} disabled={publishing} />
+      {batchError && <p className="ad-error">{batchError}</p>}
       <div
         className={`ad-drop ${dragging ? "is-over" : ""}`}
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}

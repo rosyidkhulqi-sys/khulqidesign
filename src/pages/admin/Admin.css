@@ -408,3 +408,30 @@
   font-size: 14px;
 }
 .ad-pager button:disabled { opacity: 0.4; }
+
+/* the batch an upload goes into */
+.ad-batch { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.ad-batch span { color: #aeb0b2; font-size: 14px; font-weight: 600; }
+.ad-batch input {
+  flex: 1;
+  max-width: 420px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: #0b0b0c;
+  color: var(--white);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+.ad-batch input:focus { border-color: #555; }
+.ad-batch-tag {
+  margin-right: 8px;
+  padding: 1px 8px;
+  border: 1px solid #333;
+  border-radius: 999px;
+  color: #c9ced6;
+  font-size: 12px;
+}
+

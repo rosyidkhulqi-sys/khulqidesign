@@ -1,5 +1,7 @@
 // The Icons tab on /admin: pick or create a set, drop SVGs, publish.
 import { useEffect, useRef, useState } from "react";
+import BatchField from "./BatchField";
+import { openBatch } from "./batches";
 import {
   ICON_CATEGORIES,
   ICON_STYLES,
@@ -21,6 +23,8 @@ function IconUpload({ onPublished }) {
   const [draft, setDraft] = useState(emptySet);
   const [items, setItems] = useState([]);
   const [publishing, setPublishing] = useState(false);
+  const [batch, setBatch] = useState("");
+  const [batchError, setBatchError] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState(null);
   const input = useRef(null);
@@ -99,11 +103,20 @@ function IconUpload({ onPublished }) {
       }
     }
     setPublishing(true);
+    let batchId;
+    try {
+      batchId = await openBatch("icon", batch);
+    } catch (e) {
+      setBatchError(e.message);
+      setPublishing(false);
+      return;
+    }
+    setBatchError(null);
     for (const item of items.filter((it) => it.status === "ready" || it.status === "failed")) {
       update(item.key, { status: "uploading", progress: 0, message: "Preparing" });
       try {
         const code = await publishIcon(
-          { ...item, keywords: splitKeywords(item.keywords), name: item.name.trim() || "Icon" },
+          { ...item, batchId, keywords: splitKeywords(item.keywords), name: item.name.trim() || "Icon" },
           set,
           (message, progress) => update(item.key, { message, progress })
         );
@@ -164,6 +177,8 @@ function IconUpload({ onPublished }) {
       </div>
 
       {/* DROP ZONE */}
+      <BatchField type="icon" value={batch} onChange={setBatch} disabled={publishing} />
+      {batchError && <p className="ad-error">{batchError}</p>}
       <div
         className={`ad-drop ${dragging ? "is-over" : ""}`}
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}

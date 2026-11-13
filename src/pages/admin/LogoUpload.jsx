@@ -2,6 +2,8 @@
 // EPS, SVG, PDF, PNG; same file name), set industry, style and license,
 // and a USD price for Exclusive logos.
 import { useEffect, useRef, useState } from "react";
+import BatchField from "./BatchField";
+import { openBatch } from "./batches";
 import { industries, logoStyles } from "../../data/logosData";
 import { pairLogos, publishLogo, readLogo, sourceLabel } from "./logoPublish";
 
@@ -10,6 +12,8 @@ const mb = (bytes) => `${(bytes / 1_000_000).toFixed(1)} MB`;
 function LogoUpload({ onPublished }) {
   const [items, setItems] = useState([]);
   const [publishing, setPublishing] = useState(false);
+  const [batch, setBatch] = useState("");
+  const [batchError, setBatchError] = useState(null);
   const [dragging, setDragging] = useState(false);
   const input = useRef(null);
   const urls = useRef([]);
@@ -55,6 +59,15 @@ function LogoUpload({ onPublished }) {
 
   const publishAll = async () => {
     setPublishing(true);
+    let batchId;
+    try {
+      batchId = await openBatch("logo", batch);
+    } catch (e) {
+      setBatchError(e.message);
+      setPublishing(false);
+      return;
+    }
+    setBatchError(null);
     for (const item of items.filter((it) => it.status === "ready" || it.status === "failed")) {
       if (!item.title.trim()) {
         update(item.base, { status: "failed", message: "Add a title first" });
@@ -62,7 +75,7 @@ function LogoUpload({ onPublished }) {
       }
       update(item.base, { status: "uploading", progress: 0, message: "Preparing" });
       try {
-        const code = await publishLogo(item, (message, progress) => update(item.base, { message, progress }));
+        const code = await publishLogo({ ...item, batchId }, (message, progress) => update(item.base, { message, progress }));
         update(item.base, { status: "done", progress: 1, message: `Published as ${code}` });
       } catch (e) {
         update(item.base, { status: "failed", message: e.message });
@@ -77,6 +90,8 @@ function LogoUpload({ onPublished }) {
 
   return (
     <>
+      <BatchField type="logo" value={batch} onChange={setBatch} disabled={publishing} />
+      {batchError && <p className="ad-error">{batchError}</p>}
       <div
         className={`ad-drop ${dragging ? "is-over" : ""}`}
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
