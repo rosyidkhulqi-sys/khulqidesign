@@ -2430,7 +2430,7 @@ function Create({ draft, clearDraft, user = null }) {
                           onClick={() => setProp({ textAlign: a })}
                           title={`Align ${a}`}
                         >
-                          <Icon name={`align${a[0].toUpperCase()}${a.slice(1)}`} size={15} />
+                          <Icon name={`align${a[0].toUpperCase()}${a.slice(1)}`} size={16} />
                         </button>
                       ))}
                     </div>

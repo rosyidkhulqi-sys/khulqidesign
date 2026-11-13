@@ -1978,3 +1978,14 @@
 .pp-align.pp-seg { display: inline-flex; flex-wrap: nowrap; gap: 0; margin-bottom: 14px; }
 .pp-align.pp-seg button { width: 26px; height: 28px; border: 0; border-radius: 0; }
 .pp-dist { margin: -6px 0 14px; }
+
+/* the segmented groups sit on the same two-column grid as the number fields
+   above them, edge to edge, and as tall (34px) as every other field */
+.pp-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.pp-tools .pp-seg { display: flex; width: 100%; }
+.pp-tools .pp-case { grid-column: 1 / -1; }
+.pp-seg button,
+.pp-case button,
+.pp-align.pp-seg button { flex: 1; width: auto; min-width: 0; height: 34px; }
+.pp-align.pp-seg { display: flex; width: 100%; }
+.pp-dist { width: calc(50% - 4px); display: flex; }
