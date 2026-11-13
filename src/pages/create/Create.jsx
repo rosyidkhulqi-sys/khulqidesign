@@ -11,6 +11,7 @@ import {
   Path,
   Polygon,
   Rect,
+  Shadow,
   Textbox,
   Triangle,
   loadSVGFromString,
@@ -1373,6 +1374,30 @@ function Create({ draft, clearDraft, user = null }) {
     render();
   };
 
+  /* ---------- text spacing, case and shadow ---------- */
+
+  // UPPER, lower or Title Case: the words themselves change (one undo step)
+  const setCase = (kind) => {
+    const text = active.text;
+    const next = kind === "upper" ? text.toUpperCase()
+      : kind === "lower" ? text.toLowerCase()
+        : text.toLowerCase().replace(/(^|[\s-])(\p{L})/gu, (_, gap, letter) => gap + letter.toUpperCase());
+    setProp({ text: next });
+  };
+
+  // a soft drop shadow, 0 (none) to 100, sized to the text so it looks the
+  // same on a small caption and a big headline
+  const shadowAmount = (obj) =>
+    obj?.shadow ? Math.round(Math.min(100, (obj.shadow.blur / Math.max(1, obj.fontSize)) * 250)) : 0;
+  const setShadow = (amount) => {
+    const size = active.fontSize || 40;
+    setProp({
+      shadow: amount > 0
+        ? new Shadow({ color: "rgba(0,0,0,0.35)", blur: (size * amount) / 250, offsetX: 0, offsetY: (size * amount) / 800 })
+        : null,
+    });
+  };
+
   const remove = () => {
     const c = fc.current;
     c.getActiveObjects().forEach((o) => c.remove(o));
@@ -2360,6 +2385,49 @@ function Create({ draft, clearDraft, user = null }) {
                           <Icon name={`align${a[0].toUpperCase()}${a.slice(1)}`} size={16} />
                         </button>
                       ))}
+                    </div>
+
+                    {/* spacing, case and shadow: the type settings designers expect */}
+                    <label className="pp-row pp-slider">
+                      <span>Letter spacing</span>
+                      <input
+                        type="range"
+                        min="-100"
+                        max="800"
+                        step="10"
+                        value={active.charSpacing || 0}
+                        onChange={(e) => setProp({ charSpacing: Number(e.target.value) })}
+                      />
+                      <output>{Math.round((active.charSpacing || 0) / 10)}</output>
+                    </label>
+                    <label className="pp-row pp-slider">
+                      <span>Line height</span>
+                      <input
+                        type="range"
+                        min="0.7"
+                        max="2.5"
+                        step="0.05"
+                        value={active.lineHeight || 1.16}
+                        onChange={(e) => setProp({ lineHeight: Number(e.target.value) })}
+                      />
+                      <output>{(active.lineHeight || 1.16).toFixed(2)}</output>
+                    </label>
+                    <label className="pp-row pp-slider">
+                      <span>Shadow</span>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="5"
+                        value={shadowAmount(active)}
+                        onChange={(e) => setShadow(Number(e.target.value))}
+                      />
+                      <output>{shadowAmount(active)}</output>
+                    </label>
+                    <div className="pp-buttons pp-case" role="group" aria-label="Letter case">
+                      <button onClick={() => setCase("upper")} title="UPPERCASE">AA</button>
+                      <button onClick={() => setCase("lower")} title="lowercase">aa</button>
+                      <button onClick={() => setCase("title")} title="Title Case">Aa</button>
                     </div>
                   </>
                 )}

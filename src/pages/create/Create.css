@@ -1908,3 +1908,14 @@
 }
 .cs-page.drop-before::before { left: -6px; }
 .cs-page.drop-after::after { right: -6px; }
+
+/* text spacing and shadow: a slider with its number beside it */
+.pp-slider input[type="range"] { flex: 1; min-width: 0; }
+.pp-slider output {
+  min-width: 30px;
+  color: var(--white);
+  font-size: 12px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.pp-case button { font-size: 12px; font-weight: 600; letter-spacing: 0.5px; }
