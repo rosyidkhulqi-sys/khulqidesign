@@ -102,7 +102,7 @@ function loadAssets(type, filters, page) {
 
 // batchId: show one batch only (inside the Batches view), without the
 // heading and the batch filter
-export function ManageAssetRows({ type = "vector", refreshKey, batchId = null }) {
+export function ManageAssetRows({ type = "vector", refreshKey, batchId = null, embedded = false }) {
   const [rows, setRows] = useState(null);
   const [total, setTotal] = useState(0);
   const blank = batchId ? { ...NO_FILTERS, batch: batchId } : NO_FILTERS;
@@ -250,8 +250,8 @@ export function ManageAssetRows({ type = "vector", refreshKey, batchId = null })
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <div className={batchId ? "ad-batch-files" : "ad-manage"}>
-      {!batchId && <h2>Uploaded {LABEL[type]} <span>{total}</span></h2>}
+    <div className={batchId || embedded ? "ad-batch-files" : "ad-manage"}>
+      {!batchId && !embedded && <h2>Uploaded {LABEL[type]} <span>{total}</span></h2>}
 
       <div className="ad-filters">
         <input

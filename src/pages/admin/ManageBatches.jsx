@@ -82,7 +82,7 @@ function ManageBatches({ type, refreshKey }) {
       </div>
 
       {view === "files" ? (
-        <ManageAssetRows type={type} refreshKey={refreshKey} />
+        <ManageAssetRows type={type} refreshKey={refreshKey} embedded />
       ) : (
         <>
           <div className="ad-filters">
