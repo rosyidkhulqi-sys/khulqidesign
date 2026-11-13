@@ -2396,25 +2396,33 @@ function Create({ draft, clearDraft, user = null }) {
                         />
                       </label>
                     </div>
-                    <div className="pp-buttons">
+                    {/* style, alignment and case as small segmented groups, so
+                        they sit in two short rows */}
+                    <div className="pp-tools">
+                    <div className="pp-seg" role="group" aria-label="Text style">
                       <button
+                        title="Bold"
                         className={Number(active.fontWeight) >= 600 || active.fontWeight === "bold" ? "on" : ""}
                         onClick={() => setProp({ fontWeight: Number(active.fontWeight) >= 600 || active.fontWeight === "bold" ? 400 : 700 })}
                       >
                         <b>B</b>
                       </button>
                       <button
+                        title="Italic"
                         className={active.fontStyle === "italic" ? "on" : ""}
                         onClick={() => setProp({ fontStyle: active.fontStyle === "italic" ? "normal" : "italic" })}
                       >
                         <i>I</i>
                       </button>
                       <button
+                        title="Underline"
                         className={active.underline ? "on" : ""}
                         onClick={() => setProp({ underline: !active.underline })}
                       >
                         <u>U</u>
                       </button>
+                    </div>
+                    <div className="pp-seg" role="group" aria-label="Text alignment">
                       {["left", "center", "right"].map((a) => (
                         <button
                           key={a}
@@ -2422,15 +2430,15 @@ function Create({ draft, clearDraft, user = null }) {
                           onClick={() => setProp({ textAlign: a })}
                           title={`Align ${a}`}
                         >
-                          <Icon name={`align${a[0].toUpperCase()}${a.slice(1)}`} size={16} />
+                          <Icon name={`align${a[0].toUpperCase()}${a.slice(1)}`} size={15} />
                         </button>
                       ))}
                     </div>
-
-                    <div className="pp-buttons pp-case" role="group" aria-label="Letter case">
+                    <div className="pp-seg pp-case" role="group" aria-label="Letter case">
                       <button onClick={() => setCase("upper")} title="UPPERCASE">AA</button>
                       <button onClick={() => setCase("lower")} title="lowercase">aa</button>
                       <button onClick={() => setCase("title")} title="Title Case">Aa</button>
+                    </div>
                     </div>
                   </>
                 )}
@@ -2485,7 +2493,7 @@ function Create({ draft, clearDraft, user = null }) {
 
                 {/* line up with the page, or with each other when several are picked */}
                 <p className="cp-label">{isSelection ? "Align selection" : "Align to page"}</p>
-                <div className="pp-align" role="group" aria-label="Align">
+                <div className="pp-align pp-seg" role="group" aria-label="Align">
                   {[
                     ["center", "objCenter", "Align center, horizontally and vertically"],
                     ["left", "objLeft", "Align left"],
@@ -2499,17 +2507,17 @@ function Create({ draft, clearDraft, user = null }) {
                       <Icon name={icon} size={16} />
                     </button>
                   ))}
-                  {isSelection && active.size() >= 3 && (
-                    <>
-                      <button onClick={() => distribute("h")} title="Distribute horizontally" aria-label="Distribute horizontally">
-                        <Icon name="distH" size={16} />
-                      </button>
-                      <button onClick={() => distribute("v")} title="Distribute vertically" aria-label="Distribute vertically">
-                        <Icon name="distV" size={16} />
-                      </button>
-                    </>
-                  )}
                 </div>
+                {isSelection && active.size() >= 3 && (
+                  <div className="pp-seg pp-dist" role="group" aria-label="Distribute">
+                    <button onClick={() => distribute("h")} title="Distribute horizontally" aria-label="Distribute horizontally">
+                      <Icon name="distH" size={16} />
+                    </button>
+                    <button onClick={() => distribute("v")} title="Distribute vertically" aria-label="Distribute vertically">
+                      <Icon name="distV" size={16} />
+                    </button>
+                  </div>
+                )}
 
                 <p className="cp-label">Size</p>
                 <div className="pp-pair">
