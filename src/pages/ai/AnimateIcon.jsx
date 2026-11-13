@@ -42,6 +42,9 @@ const speeds = [
 // seconds for one play at 1×
 const BASE = 1.2;
 
+const STYLE_ORDER = ["outline", "glyph", "flat", "gradient"];
+const STYLE_LABELS = { outline: "Outline", glyph: "Glyph", flat: "Flat", gradient: "Gradient" };
+
 // formats only Premium members can export; GIF and MP4 stay free
 const PREMIUM_EXPORTS = ["svg", "json"];
 
@@ -98,6 +101,21 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
   }, [icon?.image]);
 
   const duration = BASE / speed;
+
+  // the list, one style at a time (the open icon's style first) and searched
+  // by name, keywords and category
+  const [query, setQuery] = useState("");
+  const [style, setStyle] = useState(null);
+  const styleTabs = STYLE_ORDER.filter((s) => list.some((i) => i.style === s))
+    .concat([...new Set(list.map((i) => i.style))].filter((s) => s && !STYLE_ORDER.includes(s)));
+  const activeStyle = styleTabs.includes(style) ? style : (icon?.style && styleTabs.includes(icon.style) ? icon.style : styleTabs[0]);
+  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const shown = list.filter((i) => {
+    if (activeStyle && i.style !== activeStyle) return false;
+    if (!words.length) return true;
+    const text = [i.name, i.category, ...(i.keywords ?? [])].join(" ").toLowerCase();
+    return words.every((w) => text.includes(w));
+  });
 
   // Build: each part waits a little longer than the one before. Illustrator
   // often wraps a whole icon in one <g>, so step inside single wrappers to
@@ -268,8 +286,48 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
 
       <div className="animate-panel">
         <p className="animate-label">Icon</p>
+        {/* a small search and the icon styles, so the list stays short */}
+        <div className="animate-search">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
+          </svg>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search icons"
+            aria-label="Search icons"
+          />
+          {query && (
+            <button onClick={() => setQuery("")} aria-label="Clear search" title="Clear">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <path d="M6 6l12 12M18 6 6 18" />
+              </svg>
+            </button>
+          )}
+        </div>
+        {styleTabs.length > 1 && (
+          <div className="animate-styles" role="tablist" aria-label="Icon style">
+            {styleTabs.map((s) => (
+              <button
+                key={s}
+                role="tab"
+                aria-selected={activeStyle === s}
+                className={activeStyle === s ? "active" : ""}
+                onClick={() => setStyle(s)}
+              >
+                {STYLE_LABELS[s] ?? s[0].toUpperCase() + s.slice(1)}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="animate-icons">
-          {list.map((i) => (
+          {shown.length === 0 && !catalogLoading && (
+            <p className="animate-none">No icons match “{query}”.</p>
+          )}
+          {shown.map((i) => (
             <button
               key={i.image}
               className={i.image === icon?.image ? "active" : ""}

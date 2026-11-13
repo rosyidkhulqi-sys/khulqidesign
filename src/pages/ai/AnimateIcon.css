@@ -109,10 +109,79 @@
 }
 .animate-label:first-child { margin-top: 0; }
 
+.animate-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9px;
+  background: var(--black);
+  color: #8d939b;
+}
+.animate-search:focus-within { border-color: rgba(255, 255, 255, 0.35); }
+.animate-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--white);
+  font: inherit;
+  font-size: 13px;
+}
+.animate-search input::-webkit-search-cancel-button { display: none; }
+.animate-search button {
+  display: flex;
+  padding: 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #8d939b;
+  cursor: pointer;
+}
+.animate-search button:hover { color: white; background: rgba(255, 255, 255, 0.08); }
+
+/* the styles as a small segmented row under the search */
+.animate-styles {
+  display: flex;
+  gap: 2px;
+  margin-top: 8px;
+  padding: 3px;
+  border-radius: 9px;
+  background: var(--black);
+}
+.animate-styles button {
+  flex: 1;
+  height: 28px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #8d939b;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.animate-styles button:hover { color: white; }
+.animate-styles button.active { background: var(--surface-2); color: white; }
+
+/* about three rows show; the rest scroll inside, so the panel stays short */
 .animate-icons {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 6px;
+  max-height: 222px;
+  margin-top: 10px;
+  padding: 2px 4px 2px 2px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.animate-none {
+  grid-column: 1 / -1;
+  margin: 8px 0;
+  color: #8d939b;
+  font-size: 13px;
 }
 .animate-icons button {
   position: relative;
