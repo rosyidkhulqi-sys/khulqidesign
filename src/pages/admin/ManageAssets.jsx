@@ -74,6 +74,10 @@ function loadAssets(type, filters, page) {
     }
     else query = query.eq("category", filters.category);
   }
+  // an element-only category means elements, even with "All types"
+  if (type === "element" && !filters.kind && ELEMENT_CATEGORIES.includes(filters.category)) {
+    query = query.neq("style", "background");
+  }
   if (filters.kind === "background") query = query.eq("style", "background");
   if (filters.kind === "element") query = query.neq("style", "background");
   if (filters.license) query = query.eq("license", filters.license);

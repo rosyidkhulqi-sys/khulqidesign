@@ -1667,7 +1667,8 @@ function Create({ draft, clearDraft, user = null }) {
                   </>
                 )}
 
-                <CreateColors
+                {/* a photo's colors are its pixels; its fill isn't one of them */}
+                {!(active instanceof FabricImage) && <CreateColors
                   key={colorObjectKey(active)}
                   object={active}
                   onEdit={(color) => setColorEditor({ mode: "object", color })}
@@ -1675,7 +1676,7 @@ function Create({ draft, clearDraft, user = null }) {
                     active.set("dirty", true);
                     render();
                   }}
-                />
+                />}
 
                 {isLine && (
                   <>
