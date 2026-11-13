@@ -126,6 +126,9 @@
   font-weight: 700;
   object-fit: cover;
 }
+/* a profile picture: the red is only for the initial, it showed as a red
+   ring around the picture's edge */
+img.site-avatar { background: var(--surface-2); }
 
 .site-chevron { width: 14px; height: 14px; color: var(--muted); transition: transform 0.2s; }
 .site-chevron * { stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
