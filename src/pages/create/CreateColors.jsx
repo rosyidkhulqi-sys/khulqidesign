@@ -102,10 +102,12 @@ function gradientOf(targets) {
   return target ? target[0][target[1]] : null;
 }
 
-// Picks a color: anywhere on screen where the browser can (Chrome, Edge),
-// otherwise from the page being designed (Safari, Firefox), via onPickFromPage.
+// Picks a color from the page being designed, with the site's own small
+// preview in every browser (the browser's built-in picker draws a large
+// gridded magnifier that doesn't fit the editor). Without a page to pick
+// from, it falls back to the browser's picker where there is one.
 function ColorActions({ targets, onChange, onPicked, onNoColor, onPickFromPage }) {
-  const screenPicker = typeof window !== "undefined" && typeof window.EyeDropper === "function";
+  const screenPicker = !onPickFromPage && typeof window !== "undefined" && typeof window.EyeDropper === "function";
   const canPick = screenPicker || Boolean(onPickFromPage);
   const apply = (hex) => {
     targets.forEach(([leaf, prop]) => leaf.set(prop, hex));
@@ -132,10 +134,11 @@ function ColorActions({ targets, onChange, onPicked, onNoColor, onPickFromPage }
 
   return (
     <>
-      <button className="pp-color-tool" onClick={pick} disabled={!canPick || !targets.length} title={screenPicker ? "Pick color from screen" : canPick ? "Pick a color from the page" : "Color picker is not supported in this browser"} aria-label="Pick color from screen">
+      <button className="pp-color-tool" onClick={pick} disabled={!canPick || !targets.length} title={canPick ? "Pick a color from the page" : "Color picker is not supported in this browser"} aria-label="Pick color from screen">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="m14.5 5.5 4 4-8.7 8.7-4.6 1 1-4.6z" />
-          <path d="m13 7 4 4M16.5 3.5l2-2 4 4-2 2" />
+          <path d="m2 22 1-1h3l9-9" />
+          <path d="M3 21v-3l9-9" />
+          <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z" />
         </svg>
       </button>
       <button className="pp-color-tool pp-color-tool-none" onClick={clear} disabled={!targets.length} title="No color" aria-label="Remove color">

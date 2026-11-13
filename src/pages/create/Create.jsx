@@ -1661,10 +1661,11 @@ function Create({ draft, clearDraft, user = null }) {
                   aria-label="Click the page to pick a color. Esc cancels."
                 >
                   {picker.hex && (
-                    <span className="ct-picker-chip" style={{ left: picker.x, top: picker.y }}>
-                      <i style={{ background: picker.hex }} />
-                      {picker.hex.toUpperCase()}
-                    </span>
+                    <>
+                      {/* a ring in the color under the pointer, as in Figma */}
+                      <span className="ct-picker-ring" style={{ left: picker.x, top: picker.y, borderColor: picker.hex }} />
+                      <span className="ct-picker-chip" style={{ left: picker.x, top: picker.y }}>{picker.hex.toUpperCase()}</span>
+                    </>
                   )}
                 </div>
               )}
