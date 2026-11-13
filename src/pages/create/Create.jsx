@@ -244,7 +244,8 @@ function Create({ draft, clearDraft, user = null }) {
   const [resizeStage, setResizeStage] = useState(null);
   const [resizeSeconds, setResizeSeconds] = useState(0);
   // admins can let the AI rearrange the layout for the new size (trial);
-  // the last AI resize's time and cost show under the artboard size
+  // when it fails, a short note under the artboard size says so (its tokens
+  // and cost are in ai_generations)
   const [resizeWithAi, setResizeWithAi] = useState(true);
   const [aiResizeNote, setAiResizeNote] = useState(null);
   const [lockRatio, setLockRatio] = useState(true);
@@ -670,12 +671,6 @@ function Create({ draft, clearDraft, user = null }) {
           const result = await aiResizeLayout({ from, to: { w, h, label }, pages: await describePages(original, from) });
           setResizeStage("apply");
           pages = await applyLayout(pages, { w, h }, result.pages, LOCK_PROPS);
-          const u = result.usage;
-          const models = u.model.replace(/claude-|-5-5/g, "").replace(/\b\w/g, (c) => c.toUpperCase());
-          setAiResizeNote(
-            `AI resize · ${models} · ${(u.input + u.cached + u.output).toLocaleString()} tokens `
-            + `(${u.input.toLocaleString()} in, ${u.output.toLocaleString()} out) · $${u.costUsd.toFixed(4)} · ${u.seconds} s`,
-          );
         } catch (err) {
           setAiResizeNote(err.message);
         }
