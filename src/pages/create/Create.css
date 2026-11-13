@@ -1510,9 +1510,12 @@
 .cs-toolbar.is-collapsed { padding: 4px; }
 /* always one short row; the sliders shrink before anything wraps */
 .cs-toolbar { width: max-content; }
-.cs-toolbar-controls { display: flex; flex-wrap: nowrap; align-items: center; gap: 14px; min-width: 0; }
+.cs-toolbar-controls { display: flex; flex-wrap: nowrap; align-items: center; gap: 12px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.cs-toolbar-controls::-webkit-scrollbar { display: none; }
+/* the minimize button never gets pushed out */
+.cs-toolbar-toggle { flex: none; }
 .cs-range-control { display: flex; align-items: center; gap: 8px; color: #c9ced6; font-size: 12px; white-space: nowrap; }
-.cs-range-control input { width: clamp(52px, 6vw, 88px); accent-color: var(--red); }
+.cs-range-control input { width: clamp(44px, 5vw, 88px); accent-color: var(--red); }
 .cs-range-control output { min-width: 22px; color: var(--white); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
 .cs-stroke-control { display: flex; align-items: center; gap: 10px; }
 .cs-stroke-color { position: relative; display: block; width: 24px; height: 24px; cursor: pointer; }
