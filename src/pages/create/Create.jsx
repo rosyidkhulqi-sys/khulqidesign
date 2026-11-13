@@ -2571,26 +2571,48 @@ function Create({ draft, clearDraft, user = null }) {
                     duplicate, lock and delete are on the toolbar by the element */}
                 <details className="pp-more">
                   <summary>Position</summary>
-                  <div className="pp-grid">
-                    <button onClick={() => arrange("front")}><Icon name="front" size={16} /><span>To front</span></button>
-                    <button onClick={() => arrange("back")}><Icon name="back" size={16} /><span>To back</span></button>
-                    <button onClick={() => arrange("forward")}><Icon name="forward" size={16} /><span>Forward</span></button>
-                    <button onClick={() => arrange("backward")}><Icon name="backward" size={16} /><span>Backward</span></button>
-                    <button onClick={() => setProp({ flipX: !active.flipX })}><Icon name="flipH" size={16} /><span>Flip horizontal</span></button>
-                    <button onClick={() => setProp({ flipY: !active.flipY })}><Icon name="flipV" size={16} /><span>Flip vertical</span></button>
+                  {/* layer order and flips as two icon groups, rotation as a
+                      field like the type settings; names show on hover */}
+                  <div className="pp-tools">
+                    <div className="pp-seg" role="group" aria-label="Layer order">
+                      <button onClick={() => arrange("front")} title="Bring to front" aria-label="Bring to front"><Icon name="front" size={16} /></button>
+                      <button onClick={() => arrange("forward")} title="Bring forward" aria-label="Bring forward"><Icon name="forward" size={16} /></button>
+                      <button onClick={() => arrange("backward")} title="Send backward" aria-label="Send backward"><Icon name="backward" size={16} /></button>
+                      <button onClick={() => arrange("back")} title="Send to back" aria-label="Send to back"><Icon name="back" size={16} /></button>
+                    </div>
+                    <div className="pp-seg" role="group" aria-label="Flip">
+                      <button
+                        className={active.flipX ? "on" : ""}
+                        onClick={() => setProp({ flipX: !active.flipX })}
+                        title="Flip horizontal"
+                        aria-label="Flip horizontal"
+                      >
+                        <Icon name="flipH" size={16} />
+                      </button>
+                      <button
+                        className={active.flipY ? "on" : ""}
+                        onClick={() => setProp({ flipY: !active.flipY })}
+                        title="Flip vertical"
+                        aria-label="Flip vertical"
+                      >
+                        <Icon name="flipV" size={16} />
+                      </button>
+                    </div>
                   </div>
-                  <label className="pp-row">
-                    <span>Rotation</span>
-                    <NumberInput
-                      className="pp-num"
-                      value={Math.round(active.angle)}
-                      onChange={(e) => {
-                        active.rotate(Number(e.target.value) || 0);
-                        active.setCoords();
-                        render();
-                      }}
-                    />
-                  </label>
+                  <div className="pp-type">
+                    <label title="Rotation (degrees)">
+                      <Icon name="rotate" size={16} />
+                      <NumberInput
+                        value={Math.round(active.angle)}
+                        onChange={(e) => {
+                          active.rotate(Number(e.target.value) || 0);
+                          active.setCoords();
+                          render();
+                        }}
+                        aria-label="Rotation"
+                      />
+                    </label>
+                  </div>
                 </details>
               </>
             )}
