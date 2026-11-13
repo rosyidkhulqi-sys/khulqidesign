@@ -129,3 +129,67 @@
 
 /* model credits */
 .ai-credits { margin-top: 6px; font-size: 12px; opacity: 0.75; }
+
+/* Template from text: the design Claude made, before it opens in Create */
+.ai-trial { background: rgba(91, 140, 255, 0.16); color: #9db8ff; }
+.ai-result {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  max-width: 880px;
+  margin: -8px 0 32px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.ai-result-wait {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #c6cad0;
+  font-size: 14px;
+}
+.ai-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: ai-spin 0.8s linear infinite;
+}
+@keyframes ai-spin { to { transform: rotate(360deg); } }
+.ai-result-error { margin: 0; color: #ff8a8f; font-size: 14px; }
+.ai-result-preview {
+  flex: none;
+  width: min(360px, 55%);
+  max-height: 480px;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 16px 40px rgba(0, 0, 0, 0.4);
+}
+.ai-result-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+.ai-result-side strong { font-size: 18px; }
+.ai-result-meta { color: #8d939b; font-size: 12px; }
+.ai-again {
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  background: transparent;
+  color: #e7e9ec;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.ai-again:hover { border-color: rgba(255, 255, 255, 0.4); }
+@media (max-width: 640px) {
+  .ai-result { flex-direction: column; }
+  .ai-result-preview { width: 100%; }
+}

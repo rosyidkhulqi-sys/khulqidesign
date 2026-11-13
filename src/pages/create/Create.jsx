@@ -123,11 +123,18 @@ async function imageCover(src, w, h) {
 function sceneObjects(scene) {
   return Promise.all(
     scene.elements.map(async (el) => {
+      // AI designs may add opacity, a turn and an outline to any part
+      const look = {
+        opacity: el.opacity ?? 1,
+        angle: el.angle || 0,
+        stroke: el.strokeWidth ? el.stroke : null,
+        strokeWidth: el.strokeWidth || 0,
+      };
       if (el.type === "rect") {
-        return new Rect({ left: el.x, top: el.y, width: el.w, height: el.h, rx: el.r || 0, ry: el.r || 0, fill: el.fill, strokeWidth: 0 });
+        return new Rect({ left: el.x, top: el.y, width: el.w, height: el.h, rx: el.r || 0, ry: el.r || 0, fill: el.fill, ...look });
       }
       if (el.type === "circle") {
-        return new Circle({ left: el.x, top: el.y, radius: el.r, fill: el.fill, strokeWidth: 0 });
+        return new Circle({ left: el.x, top: el.y, radius: el.r, fill: el.fill, ...look });
       }
       if (el.type === "image") {
         const img = await imageCover(el.src, el.w, el.h);
@@ -143,6 +150,12 @@ function sceneObjects(scene) {
         fontFamily: el.font,
         fill: el.fill,
         textAlign: el.align || "left",
+        fontStyle: el.italic ? "italic" : "normal",
+        lineHeight: el.lineHeight || 1.16,
+        // letter spacing in px; Fabric counts it in thousandths of an em
+        charSpacing: el.letterSpacing ? Math.round((el.letterSpacing / el.size) * 1000) : 0,
+        opacity: el.opacity ?? 1,
+        angle: el.angle || 0,
       });
     })
   );
@@ -686,6 +699,8 @@ function Create({ draft, clearDraft, user = null }) {
       resetHistory();
       return;
     }
+    // the fonts the scene names (an AI design may pick any of Create's fonts)
+    await Promise.all([...new Set(t.scene.elements.filter((el) => el.font).map((el) => el.font))].map(loadFont));
     const objects = await sceneObjects(t.scene);
     renameDesign(t.title[0].toUpperCase() + t.title.slice(1));
     c.clear();

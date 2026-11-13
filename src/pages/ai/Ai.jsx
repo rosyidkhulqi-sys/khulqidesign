@@ -2,12 +2,16 @@
 // simpler take on Magnific and Envato. Every tool starts from our own
 // assets. The tools call lib/ai.js; until the AI backend is ready they are
 // shown as "Coming soon" and the prompt can't be sent.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "../vectors/Vectors.css";
 import "./Ai.css";
 import Breadcrumb from "../../components/Breadcrumb";
 import { Sparkle } from "../../components/AiSearchButton";
 import { aiReady } from "../../lib/ai";
+import { generateTemplate } from "../../lib/aiTemplate";
+import { supabase } from "../../lib/supabaseClient";
+import { loadFont } from "../create/createFonts";
+import TemplateThumb from "../../components/TemplateThumb";
 import AnimateIcon from "./AnimateIcon";
 import ImageTool from "./ImageTool";
 import { keptAnimate, keptTool } from "../../lib/aiKeep";
@@ -76,9 +80,42 @@ function Glyph({ name }) {
 
 // animateIcon: set when "Animate" was clicked on an icon's detail view; the
 // studio then opens straight away with that icon
-function Ai({ setPage, user = null, animateIcon = null }) {
+// openInCreate(template): opens a design in Create as a new project
+function Ai({ setPage, user = null, animateIcon = null, openInCreate }) {
   const [kind, setKind] = useState("image");
   const [prompt, setPrompt] = useState("");
+  // Template from text is on for admins while it's being tried out
+  const [isAdmin, setIsAdmin] = useState(false);
+  // { busy } while Claude designs, then { template, usage } or { error }
+  const [made, setMade] = useState(null);
+
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    supabase.rpc("is_admin").then(({ data }) => alive && setIsAdmin(data === true));
+    return () => {
+      alive = false;
+    };
+  }, [user]);
+
+  const templateOpen = isAdmin && kind === "template";
+  const canGenerate = (aiReady || templateOpen) && prompt.trim() && !made?.busy;
+
+  const generate = async (e) => {
+    e.preventDefault();
+    if (!templateOpen || !prompt.trim() || made?.busy) return;
+    setMade({ busy: true });
+    try {
+      const result = await generateTemplate(prompt.trim());
+      // the preview needs the design's fonts, as Create does
+      await Promise.all(
+        [...new Set(result.template.scene.elements.map((el) => el.font).filter(Boolean))].map(loadFont)
+      );
+      setMade(result);
+    } catch (err) {
+      setMade({ error: err.message });
+    }
+  };
   // the tool open in full, or null for the overview
   // a result kept while the visitor logged in reopens its tool
   const [tool, setTool] = useState(animateIcon ? "animate" : keptTool() ?? (keptAnimate() ? "animate" : null));
@@ -123,7 +160,7 @@ function Ai({ setPage, user = null, animateIcon = null }) {
       </div>
 
       {/* one prompt for every tool, as on Magnific */}
-      <form className="ai-prompt" onSubmit={(e) => e.preventDefault()}>
+      <form className="ai-prompt" onSubmit={generate}>
         <div className="ai-kinds" role="radiogroup" aria-label="What to create">
           {kinds.map(([id, label]) => (
             <button
@@ -146,17 +183,61 @@ function Ai({ setPage, user = null, animateIcon = null }) {
             placeholder="Describe what you want to create, like “a Ramadan sale poster in green and gold”"
             aria-label="Describe what you want to create"
           />
-          <button type="submit" className="ai-generate" disabled={!aiReady || !prompt.trim()}>
-            Generate
+          <button type="submit" className="ai-generate" disabled={!canGenerate}>
+            {made?.busy ? "Designing…" : "Generate"}
           </button>
         </div>
-        {!aiReady && (
+        {templateOpen && !made && (
+          <p className="ai-note">
+            <span className="ai-soon ai-trial">Admin trial</span>
+            Claude designs an editable template from your words. It takes about half a minute.
+          </p>
+        )}
+        {!aiReady && !templateOpen && (
           <p className="ai-note">
             <span className="ai-soon">Coming soon</span>
             AI tools open once your account and credits are live.
           </p>
         )}
       </form>
+
+      {/* the design Claude made: look first, then open it in Create */}
+      {made && (
+        <div className="ai-result" aria-live="polite">
+          {made.busy && (
+            <div className="ai-result-wait">
+              <span className="ai-spinner" aria-hidden="true" />
+              Designing your template…
+            </div>
+          )}
+          {made.error && <p className="ai-result-error" role="alert">{made.error}</p>}
+          {made.template && (
+            <>
+              <div
+                className="ai-result-preview"
+                style={{ aspectRatio: `${made.template.scene.w} / ${made.template.scene.h}` }}
+              >
+                <TemplateThumb scene={made.template.scene} />
+              </div>
+              <div className="ai-result-side">
+                <strong>{made.template.title}</strong>
+                <span className="ai-result-meta">
+                  {made.template.scene.w} × {made.template.scene.h} px · {made.template.scene.elements.length} parts, all editable
+                </span>
+                <button className="ai-generate" onClick={() => openInCreate?.(made.template)}>
+                  Open in Create
+                </button>
+                <button className="ai-again" onClick={generate}>Generate again</button>
+                {made.usage && (
+                  <span className="ai-result-meta">
+                    {made.usage.seconds} s · {made.usage.input + made.usage.cached} in ({made.usage.cached} cached) · {made.usage.output} out
+                  </span>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       <p className="ai-section">AI tools</p>
       <div className="ai-tools">

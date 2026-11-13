@@ -147,7 +147,7 @@ function App() {
     home: <Home setPage={go} user={user} />,
     ai: (
       <Suspense fallback={null}>
-        <Ai setPage={go} user={user} animateIcon={animateIcon} />
+        <Ai setPage={go} user={user} animateIcon={animateIcon} openInCreate={customize} />
       </Suspense>
     ),
     // keyed by the search, so ?q= from a link or Back starts a fresh search
