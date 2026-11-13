@@ -1844,7 +1844,7 @@ function Create({ draft, clearDraft, user = null }) {
                   aria-pressed={stripOpen}
                   title={stripOpen ? "Hide pages" : "Show pages"}
                 >
-                  <Icon name="pages" size={15} /> Pages
+                  <Icon name="pages" size={15} /> <span className="cb-strip-label">Pages</span>
                   <Icon name="chevron" size={13} />
                 </button>
               )}

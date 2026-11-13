@@ -699,6 +699,9 @@
   min-width: 0;
   min-height: 0;
   display: grid;
+  /* the one column can shrink below its content, so nothing in the middle
+     spills over the properties panel when the window gets narrow */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr) auto auto;
 }
 
@@ -859,6 +862,10 @@
 @container (max-width: 600px) {
   .create-bottombar { gap: 6px; padding: 0 10px; }
   .create-bottombar input[type="range"] { width: 80px; }
+}
+@container (max-width: 440px) {
+  .create-bottombar input[type="range"],
+  .cb-strip-label { display: none; }
 }
 
 /* the open page with its bar above and Add page below */
@@ -1719,6 +1726,10 @@
   .cs-range-control output { min-width: 16px; font-size: 11px; }
   .cs-stroke-control { gap: 6px; }
   .cs-stroke-color { width: 20px; height: 20px; }
+}
+@container (max-width: 440px) {
+  /* too narrow for one row: the shape bar wraps rather than hide a control */
+  .cs-toolbar-controls { flex-wrap: wrap; row-gap: 6px; overflow: visible; }
 }
 
 /* eyedropper over the page */
