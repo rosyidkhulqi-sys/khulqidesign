@@ -64,6 +64,9 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState(null);
   const [preset, setPreset] = useState(kept?.preset ?? "bounce");
+  // the motion under the pointer plays as a preview; the choice stays preset
+  const [hover, setHover] = useState(null);
+  const motion = hover ?? preset;
   const [speed, setSpeed] = useState(kept?.speed ?? 1);
   const [loop, setLoop] = useState(kept?.loop ?? true);
   const [color, setColor] = useState(kept?.color ?? "#000000");
@@ -148,7 +151,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
   // change (key={run}), so the markup starts clean each time.
   useEffect(() => {
     const svgEl = stage.current?.querySelector("svg");
-    if (!svgEl || preset !== "draw") return;
+    if (!svgEl || motion !== "draw") return;
     const vb = svgEl.viewBox.baseVal;
     const width = Math.max(vb?.width || 512, vb?.height || 512) / 160;
     const shapes = [...svgEl.querySelectorAll(DRAWABLE)].filter((el) => !el.closest("defs, clipPath, mask"));
@@ -173,7 +176,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
       el.style.strokeDashoffset = len;
       el.style.animationDelay = `${i * step}s`;
     });
-  }, [svg, preset, duration, run, recolorable]);
+  }, [svg, motion, duration, run, recolorable]);
 
   useEffect(() => {
     let root = stage.current?.querySelector("svg");
@@ -184,10 +187,10 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
     const parts = [...root.children].filter((el) => !/^(defs|lineargradient|radialgradient|style)$/i.test(el.tagName));
     const step = (duration * 0.6) / Math.max(1, parts.length);
     parts.forEach((part, i) => {
-      part.classList.toggle("kd-part", preset === "build");
-      part.style.animationDelay = preset === "build" ? `${i * step}s` : "";
+      part.classList.toggle("kd-part", motion === "build");
+      part.style.animationDelay = motion === "build" ? `${i * step}s` : "";
     });
-  }, [svg, preset, duration, run]);
+  }, [svg, motion, duration, run]);
 
   useEffect(() => {
     if (!user) return;
@@ -259,11 +262,12 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
       {/* a square artboard on a dotted workspace, as in Lottie and motion editors */}
       <div className="animate-workspace">
         <div
-          key={run}
+          // a new key restarts the motion: on Replay, a change, or a hover preview
+          key={`${run}-${motion}`}
           ref={stage}
-          className={`animate-stage is-${preset} ${loop ? "loop" : "once"}${playing ? "" : " paused"}`}
+          className={`animate-stage is-${motion} ${loop ? "loop" : "once"}${playing || hover ? "" : " paused"}`}
           style={{ "--dur": `${duration}s`, ...(background ? { background } : {}) }}
-          aria-label={icon ? `${icon.name} icon, ${preset} animation` : "Icon animation preview"}
+          aria-label={icon ? `${icon.name} icon, ${motion} animation` : "Icon animation preview"}
           role="img"
         >
           {art ? (
@@ -442,7 +446,15 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
             <button
               key={id}
               className={preset === id ? "active" : ""}
-              onClick={() => pick(setPreset)(id)}
+              onClick={() => {
+                setHover(null);
+                pick(setPreset)(id);
+              }}
+              // point at a motion to see it, without choosing it
+              onMouseEnter={() => setHover(id)}
+              onMouseLeave={() => setHover(null)}
+              onFocus={() => setHover(id)}
+              onBlur={() => setHover(null)}
               aria-pressed={preset === id}
             >
               {label}
