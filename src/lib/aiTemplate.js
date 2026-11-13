@@ -53,3 +53,18 @@ export const briefPayload = (brief) => ({
   colors: brief.colors,
   content: Object.entries(brief.content).map(([field, text]) => ({ field, text })),
 });
+
+// AI resize: { from, to, pages: [{ elements }] } -> { id, pages: [{ elements: [{ id, x, y, w, fontSize }] }], usage }
+export async function aiResizeLayout(body) {
+  const { data, error } = await supabase.functions.invoke("ai-resize", { body });
+  if (error) {
+    let code, detail;
+    try {
+      ({ error: code, detail } = await error.context.json());
+    } catch {
+      /* not a JSON body */
+    }
+    throw new Error(MESSAGES[code] ?? detail ?? "The AI couldn't rearrange this design. It was resized without AI.");
+  }
+  return data;
+}

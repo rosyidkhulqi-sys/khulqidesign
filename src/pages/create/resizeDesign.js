@@ -6,7 +6,7 @@
 // the whole page, such as a background photo or a full-page color block,
 // scales to cover the new page instead, so no empty edges show. Every page is
 // worked on off screen, with real Fabric objects, and comes back as JSON.
-import { FabricImage, StaticCanvas } from "fabric";
+import { FabricImage, FabricText, Group, StaticCanvas } from "fabric";
 
 // covers (nearly) the whole page: treated as background, not content
 const COVERS = 0.95;
@@ -54,6 +54,83 @@ export async function resizePages(pages, from, to, keep = []) {
       const photo = c.backgroundImage?.getSrc?.();
       if (photo) c.backgroundImage = await cover(photo, to.w, to.h);
       c.setDimensions({ width: to.w, height: to.h });
+      out.push(c.toObject(keep));
+    } finally {
+      c.dispose();
+    }
+  }
+  return out;
+}
+
+// ---------------------------------------------------------- AI resize
+
+const isBackground = (box, size) => box.width >= size.w * COVERS && box.height >= size.h * COVERS;
+// Textbox and IText are kinds of FabricText
+const kindOf = (obj) =>
+  obj instanceof FabricText ? "text"
+    : obj instanceof FabricImage ? "image"
+      : obj instanceof Group ? "group" : "shape";
+
+// What the AI is told about each page: every element but the backgrounds,
+// by its place in the page's list, with its box in the old format.
+export async function describePages(pages, size) {
+  const out = [];
+  for (const page of pages) {
+    const c = new StaticCanvas(undefined, { width: size.w, height: size.h, renderOnAddRemove: false });
+    try {
+      if (page) await c.loadFromJSON(page);
+      const elements = [];
+      c.getObjects().forEach((obj, id) => {
+        if (!obj.visible) return;
+        const box = obj.getBoundingRect();
+        if (isBackground(box, size)) return;
+        const kind = kindOf(obj);
+        elements.push({
+          id,
+          kind,
+          x: box.left,
+          y: box.top,
+          w: box.width,
+          h: box.height,
+          angle: obj.angle || 0,
+          ...(kind === "text" ? { text: obj.text, fontSize: obj.fontSize * (obj.scaleY || 1) } : {}),
+        });
+      });
+      out.push({ elements });
+    } finally {
+      c.dispose();
+    }
+  }
+  return out;
+}
+
+// Puts each element where the AI placed it. pages are the plain-resized
+// pages (backgrounds already fill them); layout is the AI's answer.
+export async function applyLayout(pages, size, layout, keep = []) {
+  const out = [];
+  for (const [i, page] of pages.entries()) {
+    const c = new StaticCanvas(undefined, { width: size.w, height: size.h, renderOnAddRemove: false });
+    try {
+      if (page) await c.loadFromJSON(page);
+      const objects = c.getObjects();
+      for (const place of layout[i]?.elements ?? []) {
+        const obj = objects[place.id];
+        if (!obj) continue;
+        if (kindOf(obj) === "text" && place.fontSize) {
+          // text gets a real font size and box, not a stretched picture of itself
+          obj.set({ scaleX: 1, scaleY: 1, fontSize: place.fontSize, width: place.w });
+          obj.initDimensions?.();
+        } else {
+          const box = obj.getBoundingRect();
+          const f = place.w / Math.max(1, box.width);
+          obj.set({ scaleX: obj.scaleX * f, scaleY: obj.scaleY * f });
+        }
+        obj.setCoords();
+        // line the box's top-left corner up with the new place
+        const box = obj.getBoundingRect();
+        obj.set({ left: obj.left + place.x - box.left, top: obj.top + place.y - box.top });
+        obj.setCoords();
+      }
       out.push(c.toObject(keep));
     } finally {
       c.dispose();

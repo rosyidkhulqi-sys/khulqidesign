@@ -240,6 +240,10 @@ function Create({ draft, clearDraft, user = null }) {
   // the pages are being redone
   const [resize, setResize] = useState(null);
   const [resizing, setResizing] = useState(false);
+  // admins can let the AI rearrange the layout for the new size (trial);
+  // the last AI resize's time and cost show under the artboard size
+  const [resizeWithAi, setResizeWithAi] = useState(true);
+  const [aiResizeNote, setAiResizeNote] = useState(null);
   const [lockRatio, setLockRatio] = useState(true);
   const [uploads, setUploads] = useState([]);
   const [name, setName] = useState(opening.name);
@@ -648,8 +652,22 @@ function Create({ draft, clearDraft, user = null }) {
     if (resizing || (w === from.w && h === from.h)) return;
     setResizing(true);
     try {
-      const { resizePages } = await import("./resizeDesign");
-      const pages = await resizePages(currentPages(), from, { w, h }, LOCK_PROPS);
+      const { resizePages, describePages, applyLayout } = await import("./resizeDesign");
+      const original = currentPages();
+      let pages = await resizePages(original, from, { w, h }, LOCK_PROPS);
+      setAiResizeNote(null);
+      // the AI re-places each element for the new shape; if it fails, the
+      // plain resize above still stands
+      if (isAdmin && resizeWithAi) {
+        try {
+          const { aiResizeLayout } = await import("../../lib/aiTemplate");
+          const result = await aiResizeLayout({ from, to: { w, h, label }, pages: await describePages(original, from) });
+          pages = await applyLayout(pages, { w, h }, result.pages, LOCK_PROPS);
+          setAiResizeNote(`AI resize · ${result.usage.seconds} s · $${result.usage.costUsd.toFixed(3)}`);
+        } catch (err) {
+          setAiResizeNote(err.message);
+        }
+      }
       const index = pagesRef.current.index;
       if (asCopy) {
         flushSave();
@@ -2083,6 +2101,7 @@ function Create({ draft, clearDraft, user = null }) {
                 <button className="pp-resize" onClick={() => setResize({ w: board.w, h: board.h })}>
                   <Icon name="maximize" size={14} /> Resize design
                 </button>
+                {aiResizeNote && <p className="pp-ai-note">{aiResizeNote}</p>}
                 <div className="pp-row">
                   <span>Background</span>
                   <button
@@ -2328,6 +2347,13 @@ function Create({ draft, clearDraft, user = null }) {
             </div>
 
             <div className="cn-footer">
+              {isAdmin && (
+                <label className="cr-ai">
+                  <input type="checkbox" checked={resizeWithAi} onChange={(e) => setResizeWithAi(e.target.checked)} />
+                  Rearrange the layout with AI
+                  <span>Admin trial</span>
+                </label>
+              )}
               <button className="ct-btn" onClick={() => setResize(null)} disabled={resizing}>Cancel</button>
               {(() => {
                 const ok = resize.w >= 16 && resize.h >= 16 && resize.w <= 8000 && resize.h <= 8000
@@ -2338,7 +2364,7 @@ function Create({ draft, clearDraft, user = null }) {
                       Resize this design
                     </button>
                     <button className="ct-btn primary" disabled={!ok || resizing} onClick={() => resizeDesign(resize, true)}>
-                      {resizing ? "Resizing…" : "Copy & resize"}
+                      {resizing ? (isAdmin && resizeWithAi ? "AI is rearranging…" : "Resizing…") : "Copy & resize"}
                     </button>
                   </>
                 );
