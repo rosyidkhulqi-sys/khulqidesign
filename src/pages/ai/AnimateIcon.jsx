@@ -11,6 +11,7 @@ import { saveBlob } from "../../lib/downloads";
 import { askLogin } from "../../lib/authGate";
 import { keepAnimate, takeAnimate } from "../../lib/aiKeep";
 import { PremiumPrompt, PremiumTag } from "../../components/IconControls";
+import EmbedCode from "./EmbedCode";
 import { fetchMembership } from "../../lib/billing";
 
 const presets = [
@@ -82,6 +83,8 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
   // the export being made: { kind, progress }, or null
   const [making, setMaking] = useState(null);
   const [exportError, setExportError] = useState(null);
+  // after an SVG or Lottie export: the code to put it on a website
+  const [embed, setEmbed] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -221,6 +224,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
     if (kind === "svg") {
       const file = buildAnimatedSvg(iconEl, options);
       saveBlob(new Blob([file], { type: "image/svg+xml" }), `${name}.svg`);
+      setEmbed({ kind: "svg", file: `${name}.svg`, label: `${icon.name} icon`, loop });
       return;
     }
 
@@ -230,6 +234,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
         const { buildLottie } = await import("../../lib/animateLottie");
         const file = buildLottie(paint(color), { preset, duration, name: icon.name });
         saveBlob(new Blob([file], { type: "application/json" }), `${name}.json`);
+        setEmbed({ kind: "json", file: `${name}.json`, label: `${icon.name} icon`, loop });
       } catch (e) {
         setExportError(e.message || "This export didn't work. Try again.");
       }
@@ -496,6 +501,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
           </button>
         </div>
         {exportError && <p className="animate-error" role="alert">{exportError}</p>}
+        {embed && <EmbedCode key={`${embed.kind}-${embed.file}`} embed={embed} onClose={() => setEmbed(null)} />}
         {upsell && (
           <PremiumPrompt
             signedIn
