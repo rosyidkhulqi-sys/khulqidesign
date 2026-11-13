@@ -1566,3 +1566,10 @@
 .pp-more summary:hover { color: var(--white); }
 .pp-more .pp-row { margin-top: 10px; }
 
+/* when the canvas area is narrow, the numbers go first so every control fits */
+.create-center { container-type: inline-size; }
+@container (max-width: 640px) {
+  .cs-range-control output { display: none; }
+  .cs-toolbar-controls { gap: 10px; }
+  .cs-range-control input { width: 52px; }
+}
