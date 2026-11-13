@@ -8,6 +8,7 @@ import {
   FabricImage,
   Group,
   Line,
+  Path,
   Polygon,
   Rect,
   Textbox,
@@ -27,6 +28,8 @@ import { basicIcons } from "./basicIcons";
 import { artboardPresets, shapes, svgDataUrl, textPresets } from "./createLibrary";
 import { loadFont, loadFontsOf, loadSiteFonts } from "./createFonts";
 import FontPicker from "./FontPicker";
+import CreateShapeToolbar from "./CreateShapeToolbar";
+import { regularPolygonPath } from "./shapePath";
 import CreateColors, { CreateColorPanel } from "./CreateColors";
 import { colorObjectKey, toHex } from "./colorTools";
 import { attachGuides } from "./createGuides";
@@ -78,7 +81,23 @@ const exportFormats = [
 
 const isLocked = (obj) => Boolean(obj?.lockMovementX);
 // saved with a design, so a locked element stays locked after undo or reload
-const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls"];
+// saved with each object: its locks, and a basic shape's sides and corner
+const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls", "kdShape"];
+
+// what the shape bar can change on an object: corners and sides, or just its
+// outline; null for anything that isn't a basic shape
+function shapeInfo(obj) {
+  if (!obj || obj.isCropFrame) return null;
+  if (obj instanceof Line) return { kind: "line" };
+  if (obj instanceof Rect) return { kind: "rect" };
+  if (obj instanceof Circle || obj instanceof Ellipse) return { kind: "round" };
+  if (obj.kdShape) return { kind: "polygon", ...obj.kdShape };
+  if (obj instanceof Triangle) return { kind: "polygon", sides: 3, corner: 0 };
+  if (obj instanceof Polygon) return { kind: "fixed" };
+  return null;
+}
+
+const SHAPE_BAR_KEY = "kd-create-shape-bar";
 
 // crop an image to fill w×h, like CSS object-fit: cover
 async function imageCover(src, w, h) {
@@ -855,6 +874,84 @@ function Create({ draft, clearDraft, user = null }) {
     render();
   };
 
+  /* ---------- basic shape bar ---------- */
+
+  // minimized to a small tab at the top right, as Illustrator's panels
+  const [shapeBarClosed, setShapeBarClosed] = useState(() => {
+    try {
+      return localStorage.getItem(SHAPE_BAR_KEY) === "closed";
+    } catch {
+      return false;
+    }
+  });
+  const toggleShapeBar = () => {
+    setShapeBarClosed((closed) => {
+      try {
+        localStorage.setItem(SHAPE_BAR_KEY, closed ? "open" : "closed");
+      } catch {
+        /* storage unavailable */
+      }
+      return !closed;
+    });
+  };
+
+  // a triangle or polygon becomes a path with its sides and corner rounding,
+  // the same size and in the same place
+  const rebuildPolygon = (next) => {
+    const c = fc.current;
+    const obj = active;
+    const index = c.getObjects().indexOf(obj);
+    const center = obj.getCenterPoint();
+    const sides = Math.max(3, Math.min(20, Math.round(next.sides)));
+    const corner = Math.max(0, next.corner);
+    // the shape's own size, kept with it: a path's box also counts its curve
+    // handles, so reading it back would make the shape grow on every change
+    const w = (obj.kdShape?.w ?? obj.width) * obj.scaleX;
+    const h = (obj.kdShape?.h ?? obj.height) * obj.scaleY;
+    const path = new Path(regularPolygonPath(w, h, sides, corner), {
+      fill: obj.fill,
+      stroke: obj.stroke,
+      strokeWidth: obj.strokeWidth,
+      strokeUniform: true,
+      opacity: obj.opacity,
+      angle: obj.angle,
+      flipX: obj.flipX,
+      flipY: obj.flipY,
+      kdShape: { sides, corner, w, h },
+    });
+    path.setPositionByOrigin(center, "center", "center");
+    path.setCoords();
+    c.remove(obj);
+    c.insertAt(Math.max(0, index), path);
+    c.setActiveObject(path);
+    setActive(path);
+    render();
+  };
+
+  const shapeCorner = () => {
+    const info = shapeInfo(active);
+    if (info?.kind === "rect") return (active.rx || 0) * active.scaleX;
+    if (info?.kind === "polygon") return info.corner;
+    return 0;
+  };
+
+  const setShapeCorner = (value) => {
+    const info = shapeInfo(active);
+    if (info.kind === "rect") setProp({ rx: value / active.scaleX, ry: value / active.scaleY });
+    else rebuildPolygon({ sides: info.sides, corner: value });
+  };
+
+  const setShapeSides = (sides) => rebuildPolygon({ sides, corner: shapeInfo(active)?.corner ?? 0 });
+  const setShapeWeight = (width) =>
+    setShapeStroke({ strokeWidth: shapeInfo(active)?.kind === "line" ? Math.max(1, width) : width });
+  const setShapeColor = (stroke) => setShapeStroke({ stroke });
+
+  const setShapeStroke = (props) => {
+    // an outline only shows with some width, so picking a color gives it one
+    if (props.stroke && !active.strokeWidth) props.strokeWidth = 2;
+    setProp({ ...props, strokeUniform: true });
+  };
+
   const setSize = (dim, value) => {
     const v = Math.max(1, Number(value) || 1);
     if (active instanceof Textbox) return setProp({ width: v / active.scaleX });
@@ -1196,6 +1293,7 @@ function Create({ draft, clearDraft, user = null }) {
 
   const isText = active instanceof Textbox;
   const isSelection = active instanceof ActiveSelection;
+  const shapeBar = shapeInfo(active);
   const isGroup = active instanceof Group && !isSelection;
   const isLine = active instanceof Line;
   const hasStroke = active instanceof Rect || active instanceof Circle || active instanceof Ellipse || active instanceof Polygon || active instanceof Triangle;
@@ -1443,6 +1541,26 @@ function Create({ draft, clearDraft, user = null }) {
 
           {/* STAGE + BOTTOM BAR */}
           <div className="create-center" inert={aiBusy}>
+            {/* corners, sides and outline for a basic shape; sits above the
+                canvas at the top right, so it never covers the page */}
+            {shapeBar && !cropping && !locked && (
+              <CreateShapeToolbar
+                collapsed={shapeBarClosed}
+                onToggle={toggleShapeBar}
+                isLine={shapeBar.kind === "line"}
+                showCorner={shapeBar.kind === "rect" || shapeBar.kind === "polygon"}
+                corner={shapeCorner()}
+                cornerMax={Math.round(Math.min(active.getScaledWidth(), active.getScaledHeight()) / 2)}
+                onCornerChange={setShapeCorner}
+                showSides={shapeBar.kind === "polygon"}
+                sides={shapeBar.sides ?? 3}
+                onSidesChange={setShapeSides}
+                stroke={toHex(typeof active.stroke === "string" && active.stroke ? active.stroke : "#000000")}
+                strokeWidth={active.strokeWidth || 0}
+                onStrokeChange={setShapeWeight}
+                onStrokeColor={setShapeColor}
+              />
+            )}
           <div
             className="create-stage"
             ref={stageRef}
