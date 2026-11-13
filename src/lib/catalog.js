@@ -34,6 +34,29 @@ export function toCreatePart(row) {
   };
 }
 
+// One page of a library, searched and filtered by the database, so a library
+// of any size stays fast. Every word must match the start of a word in the
+// title, keywords or the file's own title and description, in any order;
+// words that only name the kind of asset ("vector") are left out.
+//   narrow(query): adds the page's own filters
+export async function searchCatalog(type, { text = "", kindWords = [], narrow, sort = "popular", page = 1, perPage = 24 } = {}) {
+  let query = supabase.from("assets").select("*", { count: "exact" }).eq("type", type).eq("status", "published");
+  const words = text
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w) => w.replace(/[^\p{L}\p{N}]/gu, ""))
+    .filter((w) => w && !kindWords.includes(w));
+  if (words.length) query = query.textSearch("search", words.map((w) => `${w}:*`).join(" & "), { config: "simple" });
+  if (narrow) query = narrow(query);
+  query = sort === "popular"
+    ? query.order("downloads", { ascending: false }).order("published_at", { ascending: false })
+    : query.order("published_at", { ascending: false });
+  const from = (page - 1) * perPage;
+  const { data, count, error } = await query.range(from, from + perPage - 1);
+  if (error) throw error;
+  return { rows: data ?? [], total: count ?? 0 };
+}
+
 // a database row as a Vectors page item
 export function toVector(row) {
   const file = (format) => row.files.find((f) => f.format === format);

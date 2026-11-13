@@ -4,9 +4,8 @@ import AssetModal from "../../components/AssetModal";
 import Breadcrumb from "../../components/Breadcrumb";
 import AiSearchButton from "../../components/AiSearchButton";
 import { ToolGlyph } from "../../components/IconControls";
-import { fetchPublished, toVector } from "../../lib/catalog";
-import { matchesSearch } from "../../lib/search";
-import { VECTOR_CATEGORY_OPTIONS, vectorCategoryLabel } from "../../data/vectorCategories";
+import { searchCatalog, toVector } from "../../lib/catalog";
+import { VECTOR_CATEGORY_OPTIONS, vectorCategoryLabel, vectorCategoryStorageValues } from "../../data/vectorCategories";
 
 const formats = ["EPS", "AI", "SVG", "PNG", "JPG"];
 
@@ -60,27 +59,12 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
   const [sort, setSort] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState(null);
-  // vectors uploaded through /admin
-  const [uploaded, setUploaded] = useState([]);
+  // the page of vectors the database found, and how many there are in all
+  const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState(null);
-
-  useEffect(() => {
-    let alive = true;
-    fetchPublished("vector")
-      .then((rows) => {
-        if (!alive) return;
-        setUploaded(rows.map(toVector));
-        setCatalogError(null);
-      })
-      .catch((error) => alive && setCatalogError(error.message || "Vectors could not be loaded."))
-      .finally(() => alive && setCatalogLoading(false));
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  const allVectors = uploaded;
+  const [related, setRelated] = useState([]);
 
   const perPage = 24;
 
@@ -89,26 +73,56 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
     setCurrentPage(1);
   };
 
-  const q = search.toLowerCase();
-  const filtered = allVectors
-    // the short title, the file's own title and description, a whole keyword
-    // phrase ("copy space"), or the start of any word in a keyword ("lantern"
-    // finds "jack o lantern")
-    .filter((v) => matchesSearch(q, (term) =>
-      v.title.toLowerCase().includes(term) ||
-      v.searchText.includes(term) ||
-      v.keywords.some((k) => k.startsWith(term) || k.split(" ").some((word) => word.startsWith(term)))
-    , ["vector", "vectors"]))
-    .filter((v) => format === "all" || v.files.includes(format))
-    .filter((v) => license === "all" || v.license === license)
-    .filter((v) => orientation === "all" || v.orientation === orientation)
-    .filter((v) => category === "all" || v.category === category)
-    .sort((a, b) =>
-      sort === "popular" ? b.downloads - a.downloads : b.id - a.id
-    );
+  // asks the database again whenever the search, a filter or the page
+  // changes; waits a moment while typing
+  useEffect(() => {
+    let alive = true;
+    const timer = setTimeout(() => {
+      searchCatalog("vector", {
+        text: search,
+        kindWords: ["vector", "vectors"],
+        sort,
+        page: currentPage,
+        perPage,
+        narrow: (query) => {
+          if (format !== "all") query = query.contains("files", [{ format }]);
+          if (license !== "all") query = query.eq("license", license);
+          if (orientation !== "all") query = query.eq("orientation", orientation);
+          if (category !== "all") query = query.in("category", vectorCategoryStorageValues(category));
+          return query;
+        },
+      })
+        .then(({ rows, total: count }) => {
+          if (!alive) return;
+          setItems(rows.map(toVector));
+          setTotal(count);
+          setCatalogError(null);
+        })
+        .catch((error) => alive && setCatalogError(error.message || "Vectors could not be loaded."))
+        .finally(() => alive && setCatalogLoading(false));
+    }, search ? 250 : 0);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [search, format, license, orientation, category, sort, currentPage]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-  const items = filtered.slice((currentPage - 1) * perPage, currentPage * perPage);
+  // more from the same category, for the detail view
+  useEffect(() => {
+    if (!selected) return;
+    let alive = true;
+    searchCatalog("vector", {
+      perPage: 7,
+      narrow: (query) => query.in("category", vectorCategoryStorageValues(selected.category)),
+    })
+      .then(({ rows }) => alive && setRelated(rows.map(toVector).filter((v) => v.code !== selected.code).slice(0, 6)))
+      .catch(() => alive && setRelated([]));
+    return () => {
+      alive = false;
+    };
+  }, [selected]);
+
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
 
   const clearFilters = () => {
     setFormat("all");
@@ -135,7 +149,7 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
         <Breadcrumb setPage={setPage} current="Vectors" />
         {/* the count sits by the title, so results start higher */}
         <h1>
-          Vectors <span className="library-count">{filtered.length} {filtered.length === 1 ? "vector" : "vectors"}</span>
+          Vectors <span className="library-count">{total} {total === 1 ? "vector" : "vectors"}</span>
         </h1>
       </div>
 
@@ -290,9 +304,7 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
           kind="vector"
           options={vectorOptions(selected)}
           specs={vectorSpecs(selected)}
-          related={allVectors
-            .filter((v) => v.category === selected.category && v.id !== selected.id)
-            .slice(0, 6)}
+          related={related}
           user={user}
           onAuth={(target) => {
             setSelected(null);
