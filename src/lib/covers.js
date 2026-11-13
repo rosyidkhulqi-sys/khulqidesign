@@ -79,7 +79,7 @@ export async function fetchCovers() {
       return [key, urls];
     })
   );
-  const covers = Object.fromEntries(entries.filter(([key, urls]) => urls.length > 0));
+  const covers = Object.fromEntries(entries.filter(([, urls]) => urls.length > 0));
   const clips = await reel().catch(() => []);
   if (clips.length >= REEL_MIN) covers.reel = clips;
   return covers;
