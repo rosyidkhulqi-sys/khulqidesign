@@ -236,6 +236,10 @@ function Create({ draft, clearDraft, user = null }) {
   const [projects, setProjects] = useState(listProjects);
   const [showNew, setShowNew] = useState(() => !draft && !opening.any);
   const [custom, setCustom] = useState({ w: 1080, h: 1080 });
+  // the Resize window: the size picked in it ({ w, h, label }), and whether
+  // the pages are being redone
+  const [resize, setResize] = useState(null);
+  const [resizing, setResizing] = useState(false);
   const [lockRatio, setLockRatio] = useState(true);
   const [uploads, setUploads] = useState([]);
   const [name, setName] = useState(opening.name);
@@ -635,6 +639,32 @@ function Create({ draft, clearDraft, user = null }) {
     setTab(name);
     setQuery("");
     showPanel(true);
+  };
+
+  // Every page to a new size. As a copy, the original stays in Projects
+  // untouched; in place, it's one undo step.
+  const resizeDesign = async ({ w, h, label }, asCopy) => {
+    const from = boardRef.current;
+    if (resizing || (w === from.w && h === from.h)) return;
+    setResizing(true);
+    try {
+      const { resizePages } = await import("./resizeDesign");
+      const pages = await resizePages(currentPages(), from, { w, h }, LOCK_PROPS);
+      const index = pagesRef.current.index;
+      if (asCopy) {
+        flushSave();
+        switchProject(null);
+        renameDesign(`${nameRef.current} (${label ?? `${w}×${h}`})`);
+      }
+      await restore({ w, h, pages }, index);
+      if (asCopy) resetHistory();
+      else commit();
+      setResize(null);
+    } catch {
+      window.alert("The design couldn't be resized. A picture from another site may be blocking it.");
+    } finally {
+      setResizing(false);
+    }
   };
 
   // a new design is a new project; the current one stays in Projects
@@ -2050,6 +2080,9 @@ function Create({ draft, clearDraft, user = null }) {
                   <span>Size</span>
                   <strong>{board.w} × {board.h}</strong>
                 </div>
+                <button className="pp-resize" onClick={() => setResize({ w: board.w, h: board.h })}>
+                  <Icon name="maximize" size={14} /> Resize design
+                </button>
                 <div className="pp-row">
                   <span>Background</span>
                   <button
@@ -2250,6 +2283,70 @@ function Create({ draft, clearDraft, user = null }) {
           </aside>
         </div>
       </div>
+
+      {/* RESIZE: every page to another format, as a copy or in place */}
+      {resize && (
+        <div className="create-modal-overlay" onClick={(e) => e.target === e.currentTarget && !resizing && setResize(null)}>
+          <div className="create-modal" role="dialog" aria-label="Resize design">
+            <h2>Resize design</h2>
+            <p className="cr-note">
+              Every page changes size. The layout scales to fit and stays centered; backgrounds stretch to fill.
+            </p>
+            <div className="cn-presets">
+              {artboardPresets.map((p) => (
+                <button
+                  key={p.label}
+                  className={resize.w === p.w && resize.h === p.h ? "on" : ""}
+                  onClick={() => setResize({ w: p.w, h: p.h, label: p.label })}
+                  disabled={p.w === board.w && p.h === board.h}
+                >
+                  <span className="cn-shape">
+                    <span style={{ aspectRatio: `${p.w} / ${p.h}` }} />
+                  </span>
+                  <strong>{p.label}</strong>
+                  <small>{p.w === board.w && p.h === board.h ? "Current size" : `${p.ratio} · ${p.w}×${p.h}`}</small>
+                </button>
+              ))}
+            </div>
+
+            <div className="cn-custom">
+              <span>Custom size</span>
+              <input
+                type="number"
+                value={resize.w}
+                onChange={(e) => setResize({ w: Number(e.target.value), h: resize.h })}
+                aria-label="Width"
+              />
+              ×
+              <input
+                type="number"
+                value={resize.h}
+                onChange={(e) => setResize({ w: resize.w, h: Number(e.target.value) })}
+                aria-label="Height"
+              />
+              px
+            </div>
+
+            <div className="cn-footer">
+              <button className="ct-btn" onClick={() => setResize(null)} disabled={resizing}>Cancel</button>
+              {(() => {
+                const ok = resize.w >= 16 && resize.h >= 16 && resize.w <= 8000 && resize.h <= 8000
+                  && !(resize.w === board.w && resize.h === board.h);
+                return (
+                  <>
+                    <button className="ct-btn" disabled={!ok || resizing} onClick={() => resizeDesign(resize, false)}>
+                      Resize this design
+                    </button>
+                    <button className="ct-btn primary" disabled={!ok || resizing} onClick={() => resizeDesign(resize, true)}>
+                      {resizing ? "Resizing…" : "Copy & resize"}
+                    </button>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* NEW DESIGN */}
       {showNew && (

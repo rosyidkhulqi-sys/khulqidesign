@@ -1795,3 +1795,25 @@
   pointer-events: none;
 }
 
+
+/* Resize design */
+.pp-resize {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  margin: -2px 0 12px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: transparent;
+  color: #e7e9ec;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.pp-resize:hover { border-color: rgba(255, 255, 255, 0.4); background: rgba(255, 255, 255, 0.05); }
+.cr-note { margin: -10px 0 18px; color: #8d939b; font-size: 13px; }
+.cn-presets button.on { border-color: var(--red); background: rgba(231, 33, 46, 0.1); }
+.cn-presets button:disabled { opacity: 0.4; cursor: default; }
+.cn-presets button:disabled:hover { border-color: rgba(255, 255, 255, 0.09); background: rgba(255, 255, 255, 0.03); }
