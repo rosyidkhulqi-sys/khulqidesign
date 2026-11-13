@@ -1600,3 +1600,19 @@
 }
 .ct-picker-chip i { width: 22px; height: 22px; border: 2px solid #fff; border-radius: 50%; }
 
+/* the angle while turning an element */
+.ct-angle {
+  position: fixed;
+  z-index: 9;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+  transform: translate(16px, 16px);
+  pointer-events: none;
+}
+

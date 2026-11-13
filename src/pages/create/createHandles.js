@@ -15,6 +15,9 @@ Object.assign(InteractiveFabricObject.ownDefaults, {
   borderColor: ACCENT,
   borderScaleFactor: 1.5,
   padding: 2,
+  // rotation clicks into 0°, 45°, 90°… when it comes within 5° of them
+  snapAngle: 45,
+  snapThreshold: 5,
 });
 
 // a short rounded bar along the edge, turned with the object

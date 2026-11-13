@@ -877,6 +877,9 @@ function Create({ draft, clearDraft, user = null }) {
 
   /* ---------- picking a color from the page ---------- */
 
+  // the angle shown while an element is being turned: { angle, x, y }
+  const [rotation, setRotation] = useState(null);
+
   // set while the eyedropper is on: { apply, x, y, hex }
   const [picker, setPicker] = useState(null);
 
@@ -1217,8 +1220,19 @@ function Create({ draft, clearDraft, user = null }) {
 
   // hide the floating toolbar while an element is being dragged or resized
   const onTransform = useEffectEvent(() => setDragging(true));
+  // while turning: Shift steps by 15°, and the angle shows by the pointer
+  const onRotating = useEffectEvent((opt) => {
+    const target = opt.target;
+    if (opt.e?.shiftKey) {
+      target.rotate(Math.round(target.angle / 15) * 15);
+      target.setCoords();
+    }
+    setRotation({ angle: Math.round(target.angle) % 360, x: opt.e?.clientX ?? 0, y: opt.e?.clientY ?? 0 });
+    setDragging(true);
+  });
   const onMouseUp = useEffectEvent(() => {
     setDragging(false);
+    setRotation(null);
     refresh();
   });
 
@@ -1288,7 +1302,7 @@ function Create({ draft, clearDraft, user = null }) {
     c.on("object:removed", syncEmpty);
     c.on("object:moving", onTransform);
     c.on("object:scaling", onTransform);
-    c.on("object:rotating", onTransform);
+    c.on("object:rotating", onRotating);
     c.on("mouse:up", onMouseUp);
     c.on("mouse:dblclick", onDoubleClick);
     c.on("text:editing:entered", syncSelection);
@@ -1628,6 +1642,10 @@ function Create({ draft, clearDraft, user = null }) {
 
             <div className="create-artboard">
               <canvas ref={canvasEl} />
+
+              {rotation && (
+                <span className="ct-angle" style={{ left: rotation.x, top: rotation.y }}>{rotation.angle}°</span>
+              )}
 
               {/* the eyedropper: move over the page, click to take a color */}
               {picker && (
