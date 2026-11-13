@@ -473,3 +473,38 @@
   color: var(--white);
 }
 
+/* ticking several files to act on them together */
+.ad-row-item.ad-pickable { grid-template-columns: 22px 72px minmax(0, 1fr) auto; }
+.ad-row-item.is-picked { border-color: #55595f; background: #1b1d21; }
+.ad-pick { width: 18px; height: 18px; accent-color: var(--red); cursor: pointer; }
+.ad-bulk {
+  position: sticky;
+  top: calc(var(--header-h) + 8px);
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+}
+.ad-bulk.is-on { border-color: #3a3d42; background: var(--surface-2); }
+.ad-bulk label { display: flex; align-items: center; gap: 10px; margin-right: auto; color: #c9ced6; font-size: 14px; cursor: pointer; }
+.ad-bulk input { width: 18px; height: 18px; accent-color: var(--red); }
+.ad-bulk button {
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid #3a3c3f;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--white);
+  font-size: 14px;
+}
+.ad-bulk span { color: #aeb0b2; font-size: 13px; }
+@media (max-width: 760px) {
+  .ad-row-item.ad-pickable { grid-template-columns: 22px 56px minmax(0, 1fr); }
+}
+
+.ad-bulk .ad-delete { border-color: rgba(255, 139, 146, 0.45); color: #ff8b92; }

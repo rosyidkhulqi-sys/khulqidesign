@@ -126,6 +126,9 @@ export function ManageAssetRows({ type = "vector", refreshKey, batchId = null })
   // bumped after a delete, so the page fills back up
   const [reload, setReload] = useState(0);
   const [busy, setBusy] = useState(null);
+  // ticked rows on this page, for hiding, showing or deleting together
+  const [picked, setPicked] = useState(() => new Set());
+  const [bulk, setBulk] = useState(null);
   // the id of the asset being edited
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState(null);
@@ -144,6 +147,7 @@ export function ManageAssetRows({ type = "vector", refreshKey, batchId = null })
         setError(null);
         setRows(data);
         setTotal(count ?? 0);
+        setPicked(new Set());
       });
     }, filters.search ? 300 : 0);
     return () => {
@@ -161,6 +165,55 @@ export function ManageAssetRows({ type = "vector", refreshKey, batchId = null })
   const clearFilters = () => {
     setFilters(blank);
     setPage(0);
+  };
+
+  const pick = (id) =>
+    setPicked((set) => {
+      const next = new Set(set);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const pickPage = () =>
+    setPicked((set) => (rows && set.size === rows.length ? new Set() : new Set(rows?.map((r) => r.id))));
+
+  const bulkStatus = async (status) => {
+    const ids = [...picked];
+    setBulk(status === "hidden" ? "Hiding…" : "Showing…");
+    setError(null);
+    const { error: e } = await supabase.from("assets").update({ status }).in("id", ids);
+    setBulk(null);
+    if (e) {
+      setError(e.message);
+      return;
+    }
+    setRows((list) => list.map((r) => (picked.has(r.id) ? { ...r, status } : r)));
+    setPicked(new Set());
+  };
+
+  const bulkDelete = async () => {
+    const chosen = rows.filter((r) => picked.has(r.id));
+    const sure = await askConfirm({
+      title: `Delete ${chosen.length} ${chosen.length === 1 ? "file" : "files"}?`,
+      message: "They and their files are removed from storage. This can't be undone.",
+      confirmLabel: `Delete ${chosen.length}`,
+    });
+    if (!sure) return;
+    setError(null);
+    let kept = 0;
+    for (let i = 0; i < chosen.length; i++) {
+      setBulk(`Deleting ${i + 1} of ${chosen.length}…`);
+      try {
+        if ((await deleteAsset(chosen[i], type)) === "hidden") kept += 1;
+      } catch (e) {
+        setError(e.message);
+        break;
+      }
+    }
+    if (kept) setError(`${kept} had been downloaded, so ${kept === 1 ? "it was" : "they were"} hidden instead of deleted.`);
+    setBulk(null);
+    setReload((n) => n + 1);
   };
 
   const toggle = async (row) => {
@@ -253,9 +306,30 @@ export function ManageAssetRows({ type = "vector", refreshKey, batchId = null })
       {rows?.length === 0 && (
         <p className="ad-note">{filtered ? "Nothing matches these filters." : `No ${LABEL[type]} uploaded yet.`}</p>
       )}
+      {rows?.length > 0 && (
+        <div className={`ad-bulk ${picked.size ? "is-on" : ""}`}>
+          <label>
+            <input type="checkbox" checked={rows.length > 0 && picked.size === rows.length}
+                   ref={(el) => el && (el.indeterminate = picked.size > 0 && picked.size < rows.length)}
+                   onChange={pickPage} disabled={Boolean(bulk)} />
+            {picked.size ? `${picked.size} selected` : "Select all on this page"}
+          </label>
+          {picked.size > 0 && (
+            <>
+              <button onClick={() => bulkStatus("hidden")} disabled={Boolean(bulk)}>Hide</button>
+              <button onClick={() => bulkStatus("published")} disabled={Boolean(bulk)}>Show</button>
+              <button className="ad-delete" onClick={bulkDelete} disabled={Boolean(bulk)}>Delete</button>
+              <button onClick={() => setPicked(new Set())} disabled={Boolean(bulk)}>Clear</button>
+            </>
+          )}
+          {bulk && <span>{bulk}</span>}
+        </div>
+      )}
       <div className="ad-list">
         {rows?.map((row) => (
-          <div className={`ad-item ad-row-item is-${row.status}`} key={row.id}>
+          <div className={`ad-item ad-row-item ad-pickable is-${row.status} ${picked.has(row.id) ? "is-picked" : ""}`} key={row.id}>
+            <input type="checkbox" className="ad-pick" checked={picked.has(row.id)} onChange={() => pick(row.id)}
+                   disabled={Boolean(bulk)} aria-label={`Select ${row.code}`} />
             <div className={`ad-thumb ${type === "icon" || type === "element" ? "is-icon" : ""}`}>{row.thumb_key && <img src={publicUrl(row.thumb_key)} alt="" loading="lazy" />}</div>
             <div className="ad-fields">
               <strong>{row.title}</strong>
