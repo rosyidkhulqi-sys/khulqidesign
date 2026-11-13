@@ -1131,7 +1131,7 @@ function Create({ draft, clearDraft, user = null }) {
     const c = fc.current;
     const obj = c.getActiveObject();
     if (!obj) return;
-    const clone = await obj.clone();
+    const clone = await obj.clone(LOCK_PROPS);
     c.discardActiveObject();
     clone.set({ left: clone.left + 30, top: clone.top + 30 });
     if (clone instanceof ActiveSelection) {
@@ -1143,6 +1143,71 @@ function Create({ draft, clearDraft, user = null }) {
     }
     c.setActiveObject(clone);
     setActive(clone);
+    render();
+  };
+
+  /* ---------- clipboard, select all, nudge ---------- */
+
+  // what Ctrl+C took: a copy of the selection, the page it came from, and how
+  // many times it has been pasted (each paste on that page lands a step lower)
+  const clipboard = useRef(null);
+
+  const copy = async () => {
+    const obj = fc.current.getActiveObject();
+    if (!obj) return false;
+    // the locks and a basic shape's sides and corner come along
+    clipboard.current = { object: await obj.clone(LOCK_PROPS), page: pagesRef.current.index, pasted: 0 };
+    return true;
+  };
+
+  const paste = async () => {
+    const held = clipboard.current;
+    if (!held) return;
+    const c = fc.current;
+    const clone = await held.object.clone(LOCK_PROPS);
+    // on another page it keeps its place, as in Figma; on its own page it steps aside
+    const samePage = held.page === pagesRef.current.index;
+    const step = samePage ? 30 * ++held.pasted : 0;
+    c.discardActiveObject();
+    clone.set({ left: clone.left + step, top: clone.top + step });
+    if (clone instanceof ActiveSelection) {
+      clone.canvas = c;
+      clone.forEachObject((o) => c.add(o));
+      clone.setCoords();
+    } else {
+      c.add(clone);
+    }
+    c.setActiveObject(clone);
+    setActive(clone);
+    render();
+  };
+
+  // after a cut, the first paste puts it back where it was
+  const cut = async () => {
+    if (!(await copy())) return;
+    clipboard.current.pasted = -1;
+    remove();
+  };
+
+  // every element that can be picked: not hidden, not the crop frame
+  const selectAll = () => {
+    const c = fc.current;
+    const objects = c.getObjects().filter((o) => o.visible && o.selectable !== false && !o.isCropFrame);
+    if (!objects.length) return;
+    c.discardActiveObject();
+    const selection = objects.length === 1 ? objects[0] : new ActiveSelection(objects, { canvas: c });
+    c.setActiveObject(selection);
+    setActive(selection);
+    c.requestRenderAll();
+    refresh();
+  };
+
+  // arrow keys move the selection 1 px, or 10 px with Shift; locked ones stay
+  const nudge = (dx, dy) => {
+    const obj = fc.current.getActiveObject();
+    if (!obj || isLocked(obj)) return;
+    obj.set({ left: obj.left + dx, top: obj.top + dy });
+    obj.setCoords();
     render();
   };
 
@@ -1396,6 +1461,28 @@ function Create({ draft, clearDraft, user = null }) {
     } else if (mod && e.key.toLowerCase() === "d" && obj) {
       e.preventDefault();
       duplicate();
+    } else if (mod && e.key.toLowerCase() === "c" && obj) {
+      e.preventDefault();
+      copy();
+    } else if (mod && e.key.toLowerCase() === "x" && obj) {
+      e.preventDefault();
+      cut();
+    } else if (mod && e.key.toLowerCase() === "v" && clipboard.current) {
+      // without our own copy, the browser's paste is left alone
+      e.preventDefault();
+      paste();
+    } else if (mod && e.key.toLowerCase() === "a") {
+      e.preventDefault();
+      selectAll();
+    } else if (e.key.startsWith("Arrow") && obj && !mod) {
+      e.preventDefault();
+      const step = e.shiftKey ? 10 : 1;
+      const [dx, dy] = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+      nudge(dx, dy);
+    } else if (e.key === "Escape" && obj) {
+      fc.current.discardActiveObject();
+      fc.current.requestRenderAll();
+      setActive(null);
     } else if ((e.key === "Delete" || e.key === "Backspace") && obj) {
       e.preventDefault();
       remove();
