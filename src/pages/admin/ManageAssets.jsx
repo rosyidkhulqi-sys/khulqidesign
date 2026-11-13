@@ -4,7 +4,7 @@
 // published ones. Deleting removes the row first, then its files from R2.
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
-import { deleteFromR2, publicUrl } from "../../lib/r2";
+import { publicUrl } from "../../lib/r2";
 import { industries } from "../../data/logosData";
 import { VECTOR_CATEGORY_OPTIONS, vectorCategoryStorageValues } from "../../data/vectorCategories";
 import {
@@ -16,6 +16,8 @@ import { CATEGORIES } from "./adminCategories";
 import { BACKGROUND_CATEGORIES, ELEMENT_CATEGORIES } from "./elementPublish";
 import EditAsset from "./EditAsset";
 import ManageIconSets from "./ManageIconSets";
+import ManageBatches from "./ManageBatches";
+import { deleteAsset } from "./batches";
 
 const LABEL = { vector: "vectors", icon: "icons", logo: "logos", footage: "clips", template: "templates", element: "elements" };
 const FIELDS = "id, code, ref_code, source_name, title, description, keywords, category, industry, style, license, price_cents, sold_at, status, thumb_key, preview_key, preview_video_key, files, created_at, batch_id, batch:upload_batches(name)";
@@ -97,10 +99,13 @@ function loadAssets(type, filters, page) {
   return query.range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 }
 
-function ManageAssetRows({ type = "vector", refreshKey }) {
+// batchId: show one batch only (inside the Batches view), without the
+// heading and the batch filter
+export function ManageAssetRows({ type = "vector", refreshKey, batchId = null }) {
   const [rows, setRows] = useState(null);
   const [total, setTotal] = useState(0);
-  const [filters, setFilters] = useState(NO_FILTERS);
+  const blank = batchId ? { ...NO_FILTERS, batch: batchId } : NO_FILTERS;
+  const [filters, setFilters] = useState(blank);
   // this type's batches, newest first, for the batch filter
   const [batches, setBatches] = useState([]);
   useEffect(() => {
@@ -153,7 +158,7 @@ function ManageAssetRows({ type = "vector", refreshKey }) {
   };
 
   const clearFilters = () => {
-    setFilters(NO_FILTERS);
+    setFilters(blank);
     setPage(0);
   };
 
@@ -170,34 +175,25 @@ function ManageAssetRows({ type = "vector", refreshKey }) {
     if (!window.confirm(`Delete ${row.code} “${row.title}”? Its files are removed from storage too. This can't be undone.`)) return;
     setBusy(row.id);
     setError(null);
-    const { error: e } = await supabase.from("assets").delete().eq("id", row.id);
-    if (e) {
-      setBusy(null);
-      // 23503: a download record points at it; hide it instead so licenses stay valid
-      setError(e.code === "23503" ? `${row.code} has been downloaded, so hide it instead of deleting.` : e.message);
-      return;
+    try {
+      const result = await deleteAsset(row, type);
+      // a download record points at it, so it was hidden to keep licenses valid
+      if (result === "hidden") setError(`${row.code} has been downloaded, so it was hidden instead of deleted.`);
+    } catch (e) {
+      setError(e.message);
     }
-    const files = [
-      // templates and Create elements are read by the editor, so they're public
-      ...row.files.map((f) => [f.bucket ?? (type === "template" ? "public" : "private"), f.key]),
-      ["public", row.thumb_key],
-      ["public", row.preview_key],
-      ["public", row.preview_video_key],
-    ].filter(([, key]) => key);
-    const unique = [...new Map(files.map((f) => [f.join("/"), f])).values()];
-    await Promise.allSettled(unique.map(([bucket, key]) => deleteFromR2(bucket, key)));
     setBusy(null);
     setReload((n) => n + 1);
   };
 
   if (rows === null && !error) return <p className="ad-note">Loading uploaded {LABEL[type]}…</p>;
 
-  const filtered = Object.keys(NO_FILTERS).some((k) => k !== "sort" && filters[k]);
+  const filtered = Object.keys(NO_FILTERS).some((k) => k !== "sort" && filters[k] !== blank[k]);
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <div className="ad-manage">
-      <h2>Uploaded {LABEL[type]} <span>{total}</span></h2>
+    <div className={batchId ? "ad-batch-files" : "ad-manage"}>
+      {!batchId && <h2>Uploaded {LABEL[type]} <span>{total}</span></h2>}
 
       <div className="ad-filters">
         <input
@@ -219,10 +215,12 @@ function ManageAssetRows({ type = "vector", refreshKey }) {
           <option value="">{type === "logo" ? "All industries" : "All categories"}</option>
           {categoryOptions(type, filters.kind).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
-        <select value={filters.batch} onChange={setFilter("batch")} aria-label="Batch">
-          <option value="">All batches</option>
-          {batches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-        </select>
+        {!batchId && (
+          <select value={filters.batch} onChange={setFilter("batch")} aria-label="Batch">
+            <option value="">All batches</option>
+            {batches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+          </select>
+        )}
         <select value={filters.month} onChange={setFilter("month")} aria-label="Upload month">
           <option value="">Any month</option>
           {monthOptions().map(([value, label]) => <option key={value} value={value}>{label}</option>)}
@@ -303,7 +301,7 @@ function ManageAssetRows({ type = "vector", refreshKey }) {
 
 function ManageAssets({ type = "vector", refreshKey }) {
   if (type === "icon") return <ManageIconSets refreshKey={refreshKey} />;
-  return <ManageAssetRows type={type} refreshKey={refreshKey} />;
+  return <ManageBatches type={type} refreshKey={refreshKey} />;
 }
 
 export default ManageAssets;

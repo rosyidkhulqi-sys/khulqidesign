@@ -435,3 +435,41 @@
   font-size: 12px;
 }
 
+/* uploaded assets, one row per batch */
+.ad-view-switch { display: inline-flex; gap: 4px; margin-bottom: 14px; padding: 4px; border: 1px solid #333; border-radius: 10px; }
+.ad-view-switch button {
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #aeb0b2;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.ad-view-switch button.active { background: #26282b; color: var(--white); }
+.ad-batch-row strong { font-size: 16px; }
+.ad-batch-open { grid-column: 1 / -1; padding-top: 14px; border-top: 1px solid var(--line); }
+.ad-batch-files .ad-filters { margin-top: 0; }
+.ad-batch-rename { display: flex; gap: 8px; }
+.ad-batch-rename input {
+  flex: 1;
+  max-width: 320px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: #0b0b0c;
+  color: var(--white);
+  font: inherit;
+}
+.ad-batch-rename button {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid #3a3c3f;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--white);
+}
+
