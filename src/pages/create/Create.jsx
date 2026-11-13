@@ -60,6 +60,7 @@ import { askLogin } from "../../lib/authGate";
 import { aiReady } from "../../lib/ai";
 import { MODELS, removeBackground, upscale } from "../../lib/aiLocal";
 import NumberInput from "../../components/NumberInput";
+import { fetchMembership } from "../../lib/billing";
 
 const PANEL_KEY = "kd-create-panel";
 const PAGE_KEY = "kd-create-page";
@@ -254,6 +255,20 @@ function Create({ draft, clearDraft, user = null }) {
   const [uploads, setUploads] = useState([]);
   const [name, setName] = useState(opening.name);
   const [menu, setMenu] = useState(null);
+  // PNG / JPG export: the size (1x, 2x, 3x) and, for PNG, a see-through
+  // background (Premium, as in Canva); exportNote explains a refusal
+  const [exportScale, setExportScale] = useState(1);
+  const [exportClear, setExportClear] = useState(false);
+  const [exportNote, setExportNote] = useState(null);
+  const [canPremium, setCanPremium] = useState(false);
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    fetchMembership(user.id).then((m) => alive && setCanPremium(Boolean(m?.canUsePremium))).catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [user]);
   // a PDF being made: 0..1, or null
   const [pdfProgress, setPdfProgress] = useState(null);
   const [isEmpty, setIsEmpty] = useState(true);
@@ -1552,6 +1567,12 @@ function Create({ draft, clearDraft, user = null }) {
       askLogin("design");
       return;
     }
+    // a see-through background is a Premium export
+    if (format === "png" && exportClear && !canPremium) {
+      setExportNote("A transparent background is part of Premium. The PNG wasn't made.");
+      setMenu("download");
+      return;
+    }
     const c = fc.current;
     const b = boardRef.current;
     c.discardActiveObject();
@@ -1588,12 +1609,25 @@ function Create({ draft, clearDraft, user = null }) {
       const markup = c.toSVG({ width: b.w, height: b.h, viewBox: { x: 0, y: 0, width: b.w, height: b.h } });
       url = URL.createObjectURL(new Blob([markup], { type: "image/svg+xml" }));
     } else {
-      url = c.toDataURL({ format: format === "jpg" ? "jpeg" : "png", quality: 0.92, multiplier: 1 / c.getZoom() });
+      // the page's background color is left out for a transparent PNG, then put back
+      const clear = format === "png" && exportClear;
+      const color = c.backgroundColor;
+      if (clear) c.backgroundColor = null;
+      try {
+        url = c.toDataURL({ format: format === "jpg" ? "jpeg" : "png", quality: 0.92, multiplier: exportScale / c.getZoom() });
+      } finally {
+        if (clear) {
+          c.backgroundColor = color;
+          c.requestRenderAll();
+        }
+      }
     }
 
     const { index, list } = pagesRef.current;
     const pageTag = list.length > 1 ? `-page-${index + 1}` : "";
-    save(url, `${slug || "khulqidesign"}-${b.w}x${b.h}${pageTag}.${format}`);
+    // a 2x or 3x picture says so in its name, as designers name retina files
+    const scaleTag = format !== "svg" && exportScale > 1 ? `@${exportScale}x` : "";
+    save(url, `${slug || "khulqidesign"}-${b.w}x${b.h}${pageTag}${scaleTag}.${format}`);
   };
 
   /* ---------- canvas lifecycle ---------- */
@@ -1865,8 +1899,40 @@ function Create({ draft, clearDraft, user = null }) {
             </button>
             {menu === "download" && (
               <div className="ct-dropdown is-right">
+                {/* size and background for PNG and JPG */}
+                <div className="ct-export-opts">
+                  <div className="ct-export-row">
+                    <span>Size</span>
+                    <div className="pp-seg" role="group" aria-label="Export size">
+                      {[1, 2, 3].map((n) => (
+                        <button
+                          key={n}
+                          className={exportScale === n ? "on" : ""}
+                          onClick={() => setExportScale(n)}
+                          // Safari can't draw pictures much past 16 million pixels
+                          disabled={board.w * board.h * n * n > 16_000_000}
+                          title={`${board.w * n} × ${board.h * n} px`}
+                        >
+                          {n}×
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <small>{board.w * exportScale} × {board.h * exportScale} px (PNG, JPG)</small>
+                  <label className="ct-export-clear">
+                    <input type="checkbox" checked={exportClear} onChange={(e) => { setExportClear(e.target.checked); setExportNote(null); }} />
+                    Transparent background
+                    <span className="ct-premium">Premium</span>
+                  </label>
+                  {exportNote && (
+                    <p className="ct-export-note">
+                      {exportNote} <a href="/pricing">See plans</a>
+                    </p>
+                  )}
+                </div>
+                <hr />
                 {exportFormats.map(([format, label, hint]) => (
-                  <button key={format} onClick={() => { setMenu(null); exportFile(format); }}>
+                  <button key={format} onClick={() => { setMenu(null); setExportNote(null); exportFile(format); }}>
                     <strong>{label}</strong>
                     <small>{hint}</small>
                   </button>

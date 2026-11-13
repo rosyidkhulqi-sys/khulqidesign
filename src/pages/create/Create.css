@@ -2020,3 +2020,22 @@
 .cn-custom input:focus { outline: none; border-color: rgba(255, 255, 255, 0.45); }
 .cp-color-fields label:focus-within,
 .cp-color-search:focus-within { border-color: rgba(255, 255, 255, 0.45); }
+
+/* Download menu: size and transparent background, above the formats */
+.ct-export-opts { display: grid; gap: 8px; padding: 8px 10px 4px; }
+.ct-export-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #c6cad0; font-size: 13px; }
+.ct-export-row .pp-seg button { width: 40px; height: 30px; }
+.ct-export-opts small { color: #8d939b; font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.ct-export-clear { display: flex; align-items: center; gap: 8px; color: #e7e9ec; font-size: 13px; cursor: pointer; }
+.ct-premium {
+  margin-left: auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(245, 183, 0, 0.16);
+  color: #f5c94a;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+.ct-export-note { margin: 0; color: #f5c94a; font-size: 12px; line-height: 1.4; }
+.ct-export-note a { color: white; }
+.ct-export-clear input { accent-color: var(--red); }
