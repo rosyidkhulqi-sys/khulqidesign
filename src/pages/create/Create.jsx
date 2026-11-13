@@ -265,6 +265,8 @@ function Create({ draft, clearDraft, user = null }) {
     }
   });
   const [thumbs, setThumbs] = useState([]);
+  // a page being dragged in the strip: { from, to } (to = the gap it would land in)
+  const [pageDrag, setPageDrag] = useState(null);
   const stripRef = useRef(null);
   const [fullscreen, setFullscreen] = useState(false);
   // admins can publish the open design as a template
@@ -511,6 +513,22 @@ function Create({ draft, clearDraft, user = null }) {
       : { version: p.list[p.index].version, objects: [], background: "#ffffff" };
     p.list.splice(p.index + 1, 0, page);
     await showPage(p.index + 1, false);
+    commit();
+  };
+
+  // Moves a page to another place in the design; the open page stays open.
+  // to is a gap: 0 before the first page, count after the last.
+  const movePage = (from, to) => {
+    const p = pagesRef.current;
+    const at = to > from ? to - 1 : to;
+    if (from === at || at < 0 || at >= p.list.length) return;
+    p.list[p.index] = fc.current.toObject(LOCK_PROPS);
+    const open = p.list[p.index];
+    const [page] = p.list.splice(from, 1);
+    p.list.splice(at, 0, page);
+    p.index = p.list.indexOf(open);
+    syncPages();
+    rememberPage(p.index);
     commit();
   };
 
@@ -2116,12 +2134,51 @@ function Create({ draft, clearDraft, user = null }) {
               {Array.from({ length: pageInfo.count }, (_, i) => (
                 <button
                   key={i}
-                  className={`cs-page ${i === pageInfo.index ? "on" : ""}`}
+                  className={[
+                    "cs-page",
+                    i === pageInfo.index ? "on" : "",
+                    pageDrag?.from === i ? "dragging" : "",
+                    pageDrag && pageDrag.to === i && pageDrag.from !== i && pageDrag.from !== i - 1 ? "drop-before" : "",
+                    pageDrag && pageDrag.to === i + 1 && i === pageInfo.count - 1 && pageDrag.from !== i ? "drop-after" : "",
+                  ].join(" ")}
                   style={{ aspectRatio: `${board.w} / ${board.h}` }}
                   onClick={() => goToPage(i)}
                   role="tab"
                   aria-selected={i === pageInfo.index}
-                  aria-label={`Page ${i + 1}`}
+                  aria-label={`Page ${i + 1}. Drag, or Alt and an arrow key, to move it`}
+                  title="Drag to reorder"
+                  // drag a page to a new place; the line shows where it lands
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.effectAllowed = "move";
+                    e.dataTransfer.setData("text/x-kd-page", String(i));
+                    setPageDrag({ from: i, to: i });
+                  }}
+                  onDragOver={(e) => {
+                    if (!pageDrag) return;
+                    e.preventDefault();
+                    const r = e.currentTarget.getBoundingClientRect();
+                    const to = e.clientX < r.left + r.width / 2 ? i : i + 1;
+                    if (to !== pageDrag.to) setPageDrag({ ...pageDrag, to });
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (pageDrag) movePage(pageDrag.from, pageDrag.to);
+                    setPageDrag(null);
+                  }}
+                  onDragEnd={() => setPageDrag(null)}
+                  // the keyboard way: Alt+Left or Alt+Right
+                  onKeyDown={(e) => {
+                    if (!e.altKey || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const to = e.key === "ArrowLeft" ? i - 1 : i + 2;
+                    if (to < 0 || to > pageInfo.count) return;
+                    movePage(i, to);
+                    // keep the focus on the page that moved
+                    const at = e.key === "ArrowLeft" ? i - 1 : i + 1;
+                    requestAnimationFrame(() => stripRef.current?.querySelectorAll(".cs-page")[at]?.focus());
+                  }}
                 >
                   {thumbs[i] && <img src={thumbs[i]} alt="" draggable="false" />}
                   <span>{i + 1}</span>

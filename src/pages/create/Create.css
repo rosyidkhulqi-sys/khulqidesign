@@ -1892,3 +1892,19 @@
 }
 .pp-align button:hover:not(:disabled) { border-color: rgba(255, 255, 255, 0.4); color: white; background: rgba(255, 255, 255, 0.05); }
 .pp-align button:disabled { opacity: 0.35; cursor: default; }
+
+/* reordering pages: the dragged page fades, a line marks where it lands */
+.cs-page[draggable="true"] { cursor: grab; }
+.cs-page.dragging { opacity: 0.35; }
+.cs-page.drop-before::before,
+.cs-page.drop-after::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 3px;
+  border-radius: 3px;
+  background: #5b8cff;
+}
+.cs-page.drop-before::before { left: -6px; }
+.cs-page.drop-after::after { right: -6px; }
