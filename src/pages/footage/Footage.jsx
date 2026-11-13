@@ -5,14 +5,7 @@ import "./Footage.css";
 import Breadcrumb from "../../components/Breadcrumb";
 import AiSearchButton from "../../components/AiSearchButton";
 import { ToolGlyph } from "../../components/IconControls";
-import { fetchPublished, toClip } from "../../lib/catalog";
-import { matchesSearch } from "../../lib/search";
-
-const durationRange = {
-  short: (d) => d < 10,
-  medium: (d) => d >= 10 && d <= 30,
-  long: (d) => d > 30,
-};
+import { searchCatalog, toClip } from "../../lib/catalog";
 
 const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
@@ -156,25 +149,12 @@ function Footage({ setPage, initialSearch = "", user = null }) {
   const [sort, setSort] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState(null);
-  // clips uploaded through /admin
-  const [uploaded, setUploaded] = useState([]);
+  // the page of clips the database found, and how many there are in all
+  const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState(null);
-  useEffect(() => {
-    let alive = true;
-    fetchPublished("footage")
-      .then((rows) => {
-        if (!alive) return;
-        setUploaded(rows.map(toClip));
-        setCatalogError(null);
-      })
-      .catch((error) => alive && setCatalogError(error.message || "Footage could not be loaded."))
-      .finally(() => alive && setCatalogLoading(false));
-    return () => {
-      alive = false;
-    };
-  }, []);
-  const allClips = uploaded;
+  const [related, setRelated] = useState([]);
 
   const perPage = 24;
 
@@ -183,26 +163,58 @@ function Footage({ setPage, initialSearch = "", user = null }) {
     setCurrentPage(1);
   };
 
-  const q = search.toLowerCase();
-  const filtered = allClips
-    // the short title, the clip's own title and description, a whole keyword
-    // phrase, or the start of any word in a keyword
-    .filter((c) => matchesSearch(q, (term) =>
-      c.title.toLowerCase().includes(term) ||
-      c.searchText.includes(term) ||
-      c.keywords.some((k) => k.startsWith(term) || k.split(" ").some((word) => word.startsWith(term)))
-    , ["footage", "video", "videos", "clip", "clips"]))
-    .filter((c) => resolution === "all" || c.resolution === resolution)
-    .filter((c) => fps === "all" || c.fps === Number(fps))
-    .filter((c) => duration === "all" || durationRange[duration](c.duration))
-    .filter((c) => orientation === "all" || c.orientation === orientation)
-    .filter((c) => license === "all" || c.license === license)
-    .sort((a, b) =>
-      sort === "popular" ? b.downloads - a.downloads : b.id - a.id
-    );
+  // asks the database again whenever the search, a filter or the page
+  // changes; waits a moment while typing. Durations and frame rates are
+  // rounded on the cards, so the ranges here match what people see.
+  useEffect(() => {
+    let alive = true;
+    const timer = setTimeout(() => {
+      searchCatalog("footage", {
+        text: search,
+        kindWords: ["footage", "video", "videos", "clip", "clips"],
+        sort,
+        page: currentPage,
+        perPage,
+        narrow: (query) => {
+          if (resolution === "4K") query = query.or("width.gte.3840,height.gte.3840");
+          if (resolution === "HD") query = query.lt("width", 3840).lt("height", 3840);
+          if (fps !== "all") query = query.gte("fps", Number(fps) - 0.5).lt("fps", Number(fps) + 0.5);
+          if (duration === "short") query = query.lt("duration_s", 9.5);
+          if (duration === "medium") query = query.gte("duration_s", 9.5).lt("duration_s", 30.5);
+          if (duration === "long") query = query.gte("duration_s", 30.5);
+          if (orientation !== "all") query = query.eq("orientation", orientation);
+          if (license !== "all") query = query.eq("license", license);
+          return query;
+        },
+      })
+        .then(({ rows, total: count }) => {
+          if (!alive) return;
+          setItems(rows.map(toClip));
+          setTotal(count);
+          setCatalogError(null);
+        })
+        .catch((error) => alive && setCatalogError(error.message || "Footage could not be loaded."))
+        .finally(() => alive && setCatalogLoading(false));
+    }, search ? 250 : 0);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [search, resolution, fps, duration, orientation, license, sort, currentPage]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-  const items = filtered.slice((currentPage - 1) * perPage, currentPage * perPage);
+  // more from the same category, for the detail view
+  useEffect(() => {
+    if (!selected) return;
+    let alive = true;
+    searchCatalog("footage", { perPage: 7, narrow: (query) => query.eq("category", selected.category) })
+      .then(({ rows }) => alive && setRelated(rows.map(toClip).filter((c) => c.code !== selected.code).slice(0, 6)))
+      .catch(() => alive && setRelated([]));
+    return () => {
+      alive = false;
+    };
+  }, [selected]);
+
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
 
   const clearFilters = () => {
     setResolution("all");
@@ -231,7 +243,7 @@ function Footage({ setPage, initialSearch = "", user = null }) {
         <Breadcrumb setPage={setPage} current="Footage" />
         {/* the count sits by the title, so results start higher */}
         <h1>
-          Footage <span className="library-count">{filtered.length} {filtered.length === 1 ? "clip" : "clips"}</span>
+          Footage <span className="library-count">{total} {total === 1 ? "clip" : "clips"}</span>
         </h1>
       </div>
 
@@ -368,9 +380,7 @@ function Footage({ setPage, initialSearch = "", user = null }) {
           kind="footage"
           options={clipOptions(selected)}
           specs={clipSpecs(selected)}
-          related={allClips
-            .filter((c) => c.category === selected.category && c.id !== selected.id)
-            .slice(0, 6)}
+          related={related}
           user={user}
           onAuth={(target) => {
             setSelected(null);
