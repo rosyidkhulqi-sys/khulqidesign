@@ -8,10 +8,11 @@ import "./Ai.css";
 import Breadcrumb from "../../components/Breadcrumb";
 import { Sparkle } from "../../components/AiSearchButton";
 import { aiReady } from "../../lib/ai";
-import { generateTemplate } from "../../lib/aiTemplate";
+import { briefPayload, emptyBrief, generateTemplate } from "../../lib/aiTemplate";
 import { supabase } from "../../lib/supabaseClient";
 import { loadFont } from "../create/createFonts";
 import TemplateThumb from "../../components/TemplateThumb";
+import TemplateBrief from "./TemplateBrief";
 import AnimateIcon from "./AnimateIcon";
 import ImageTool from "./ImageTool";
 import { keptAnimate, keptTool } from "../../lib/aiKeep";
@@ -88,6 +89,7 @@ function Ai({ setPage, user = null, animateIcon = null, openInCreate }) {
   const [isAdmin, setIsAdmin] = useState(false);
   // { busy } while Claude designs, then { template, usage } or { error }
   const [made, setMade] = useState(null);
+  const [brief, setBrief] = useState(emptyBrief);
 
   useEffect(() => {
     if (!user) return;
@@ -106,7 +108,7 @@ function Ai({ setPage, user = null, animateIcon = null, openInCreate }) {
     if (!templateOpen || !prompt.trim() || made?.busy) return;
     setMade({ busy: true });
     try {
-      const result = await generateTemplate(prompt.trim());
+      const result = await generateTemplate(prompt.trim(), briefPayload(brief));
       // the preview needs the design's fonts, as Create does
       await Promise.all(
         [...new Set(result.template.scene.elements.map((el) => el.font).filter(Boolean))].map(loadFont)
@@ -187,6 +189,7 @@ function Ai({ setPage, user = null, animateIcon = null, openInCreate }) {
             {made?.busy ? "Designing…" : "Generate"}
           </button>
         </div>
+        {templateOpen && <TemplateBrief brief={brief} onChange={setBrief} />}
         {templateOpen && !made && (
           <p className="ai-note">
             <span className="ai-soon ai-trial">Admin trial</span>
@@ -224,13 +227,28 @@ function Ai({ setPage, user = null, animateIcon = null, openInCreate }) {
                 <span className="ai-result-meta">
                   {made.template.scene.w} × {made.template.scene.h} px · {made.template.scene.elements.length} parts, all editable
                 </span>
-                <button className="ai-generate" onClick={() => openInCreate?.(made.template)}>
+                <button
+                  className="ai-generate"
+                  onClick={() => {
+                    // logged as used: the designs people keep are the ones to learn from
+                    if (made.id) supabase.rpc("mark_generation_opened", { generation: made.id }).then(() => {});
+                    openInCreate?.(made.template);
+                  }}
+                >
                   Open in Create
                 </button>
                 <button className="ai-again" onClick={generate}>Generate again</button>
                 {made.usage && (
                   <span className="ai-result-meta">
-                    {made.usage.seconds} s · {made.usage.input + made.usage.cached} in ({made.usage.cached} cached) · {made.usage.output} out
+                    {made.usage.seconds} s · {made.usage.passes} pass{made.usage.passes > 1 ? "es" : ""} ·{" "}
+                    {made.usage.input + made.usage.cached} in ({made.usage.cached} cached) · {made.usage.output} out ·{" "}
+                    ${made.usage.costUsd?.toFixed(3)}
+                  </span>
+                )}
+                {made.checks?.found?.length > 0 && (
+                  <span className="ai-result-meta">
+                    Layout check: {made.checks.found.length} issue{made.checks.found.length > 1 ? "s" : ""} found
+                    {made.checks.fixed ? `, ${made.checks.left.length} left after the fix` : ", not fixed"}
                   </span>
                 )}
               </div>

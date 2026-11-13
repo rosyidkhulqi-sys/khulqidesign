@@ -11,9 +11,10 @@ const MESSAGES = {
   empty_design: "The design came back empty. Try again.",
 };
 
-// -> { template: { title, scene }, usage }
-export async function generateTemplate(prompt) {
-  const { data, error } = await supabase.functions.invoke("ai-template", { body: { prompt } });
+// brief: { format, style, colors, content } (see pages/ai/TemplateBrief.jsx)
+// -> { id, template: { title, scene }, usage, checks }
+export async function generateTemplate(prompt, brief) {
+  const { data, error } = await supabase.functions.invoke("ai-template", { body: { prompt, brief } });
   if (error) {
     let code, detail;
     try {
@@ -26,3 +27,29 @@ export async function generateTemplate(prompt) {
   }
   return data;
 }
+
+// ---------------------------------------------------------- the brief
+
+export const BRIEF_FIELDS = [
+  ["headline", "Headline", "Seminar Nasional AI 2026"],
+  ["subheadline", "Subheadline", "Peluang dan etika di dunia kerja"],
+  ["date", "Date", "Sabtu, 12 Desember 2026"],
+  ["time", "Time", "09.00 – 12.00 WIB"],
+  ["place", "Place", "Aula Utama, Gedung Rektorat"],
+  ["speakers", "Speakers", "Dr. Rina Kusuma, Prof. Adi Pratama"],
+  ["price", "Price / offer", "Gratis untuk mahasiswa"],
+  ["cta", "Button", "Daftar sekarang"],
+  ["contact", "Contact / link", "bit.ly/seminar-ai"],
+  ["organizer", "Organizer", "Fakultas Ilmu Komputer"],
+  ["logo", "Logo spot", null],
+];
+
+export const emptyBrief = { format: "auto", style: "auto", colors: [], content: {} };
+
+// the brief as the function reads it
+export const briefPayload = (brief) => ({
+  format: brief.format === "auto" ? undefined : brief.format,
+  style: brief.style === "auto" ? undefined : brief.style,
+  colors: brief.colors,
+  content: Object.entries(brief.content).map(([field, text]) => ({ field, text })),
+});

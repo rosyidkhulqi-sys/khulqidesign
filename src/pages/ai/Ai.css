@@ -193,3 +193,89 @@
   .ai-result { flex-direction: column; }
   .ai-result-preview { width: 100%; }
 }
+
+/* the design brief, under the prompt */
+.tb {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.tb-row { display: flex; align-items: flex-start; gap: 12px; }
+.tb-label {
+  flex: none;
+  width: 64px;
+  padding-top: 7px;
+  color: #8d939b;
+  font-size: 12px;
+  font-weight: 600;
+}
+.tb-chips { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.tb-chips > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 11px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: transparent;
+  color: #c6cad0;
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.tb-chips > button:hover { border-color: rgba(255, 255, 255, 0.35); color: white; }
+.tb-chips > button.active { background: var(--white); border-color: var(--white); color: #111; }
+.tb-ratio { display: inline-block; border: 1.5px solid currentColor; border-radius: 2px; opacity: 0.8; }
+.tb-check span { width: 10px; text-align: center; font-weight: 700; }
+.tb-add { border-style: dashed !important; }
+.tb-color { position: relative; display: inline-flex; }
+.tb-color label {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+}
+.tb-color input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.tb-color button {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #2a2d31;
+  color: #c6cad0;
+  font-size: 11px;
+  line-height: 16px;
+  cursor: pointer;
+}
+.tb-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+  margin-left: 76px;
+}
+.tb-fields label { display: grid; gap: 4px; color: #8d939b; font-size: 11.5px; }
+.tb-fields input {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: var(--black);
+  color: var(--white);
+  font: inherit;
+  font-size: 13px;
+}
+.tb-fields input:focus { outline: none; border-color: rgba(255, 255, 255, 0.4); }
+@media (max-width: 640px) {
+  .tb-row { flex-direction: column; gap: 6px; }
+  .tb-label { padding-top: 0; }
+  .tb-fields { margin-left: 0; }
+}
