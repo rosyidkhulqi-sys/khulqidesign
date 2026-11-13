@@ -106,8 +106,10 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
   // by name, keywords and category
   const [query, setQuery] = useState("");
   const [style, setStyle] = useState(null);
-  const styleTabs = STYLE_ORDER.filter((s) => list.some((i) => i.style === s))
-    .concat([...new Set(list.map((i) => i.style))].filter((s) => s && !STYLE_ORDER.includes(s)));
+  // every style shows, even before it has icons, plus any other style found
+  const styleTabs = STYLE_ORDER.concat(
+    [...new Set(list.map((i) => i.style))].filter((s) => s && !STYLE_ORDER.includes(s)),
+  );
   const activeStyle = styleTabs.includes(style) ? style : (icon?.style && styleTabs.includes(icon.style) ? icon.style : styleTabs[0]);
   const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const shown = list.filter((i) => {
@@ -308,7 +310,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
             </button>
           )}
         </div>
-        {styleTabs.length > 1 && (
+        {list.length > 0 && (
           <div className="animate-styles" role="tablist" aria-label="Icon style">
             {styleTabs.map((s) => (
               <button
@@ -325,7 +327,11 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
         )}
         <div className="animate-icons">
           {shown.length === 0 && !catalogLoading && (
-            <p className="animate-none">No icons match “{query}”.</p>
+            <p className="animate-none">
+              {words.length
+                ? `No ${STYLE_LABELS[activeStyle] ?? activeStyle} icons match “${query}”.`
+                : `No ${STYLE_LABELS[activeStyle] ?? activeStyle} icons yet.`}
+            </p>
           )}
           {shown.map((i) => (
             <button

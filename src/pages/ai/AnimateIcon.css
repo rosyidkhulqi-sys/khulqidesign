@@ -166,12 +166,13 @@
 .animate-styles button:hover { color: white; }
 .animate-styles button.active { background: var(--surface-2); color: white; }
 
-/* about three rows show; the rest scroll inside, so the panel stays short */
+/* four across, about three rows show; the rest scroll inside, so the panel stays short */
 .animate-icons {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 6px;
-  max-height: 222px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  /* three rows and a peek of the fourth, so it's clear the list scrolls */
+  max-height: 268px;
   margin-top: 10px;
   padding: 2px 4px 2px 2px;
   overflow-y: auto;
