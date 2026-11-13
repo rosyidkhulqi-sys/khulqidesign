@@ -6,7 +6,9 @@
 import { supabase } from "./supabaseClient";
 import { publicUrl } from "./r2";
 
-const TYPES = { icons: "icon", vectors: "vector", logos: "logo", footage: "footage", templates: "template" };
+// icons keep their own cover (public/covers/icons.jpg): a sheet of the
+// store's outline icons, rendered once, reads better than a few loose marks
+const TYPES = { vectors: "vector", logos: "logo", footage: "footage", templates: "template" };
 
 // covers chosen by hand (asset codes), ahead of the automatic pick; a code
 // that is hidden or deleted is simply skipped
@@ -20,8 +22,6 @@ const PINNED = {
 const REEL = ["KD-FT-4346269", "KD-FT-6181298", "KD-FT-2904492", "KD-FT-6181959"];
 const REEL_MIN = 2;
 const REEL_MAX = 4;
-// icons are small marks, so their card shows a few of them together
-const ICONS_SHOWN = 6;
 
 async function pick(type, count) {
   let query = supabase
@@ -68,18 +68,18 @@ async function reel() {
   return [...new Set([...chosen, ...(data ?? []).map((row) => publicUrl(row.preview_video_key))])].slice(0, REEL_MAX);
 }
 
-// { vectors: [url], icons: [url, ...], ..., reel: [video url, ...] }; a
+// { vectors: [url], ..., reel: [video url, ...] }; a
 // library with nothing to show is left out, and its card keeps the cover in
 // data/categories.js
 export async function fetchCovers() {
   const entries = await Promise.all(
     Object.entries(TYPES).map(async ([key, type]) => {
       const pinned = await byCode(PINNED[key] ?? [], "thumb_key").catch(() => []);
-      const urls = pinned.length ? pinned : await pick(type, key === "icons" ? ICONS_SHOWN : 1).catch(() => []);
+      const urls = pinned.length ? pinned : await pick(type, 1).catch(() => []);
       return [key, urls];
     })
   );
-  const covers = Object.fromEntries(entries.filter(([key, urls]) => urls.length >= (key === "icons" ? 3 : 1)));
+  const covers = Object.fromEntries(entries.filter(([key, urls]) => urls.length > 0));
   const clips = await reel().catch(() => []);
   if (clips.length >= REEL_MIN) covers.reel = clips;
   return covers;

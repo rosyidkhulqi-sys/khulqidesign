@@ -299,11 +299,7 @@ function Home({ setPage, user = null }) {
                 disabled={!cat.ready}
                 aria-label={`Browse ${cat.title}`}
               >
-                {cat.key === "icons" && covers.icons ? (
-                  <span className="home-icon-mosaic">
-                    {covers.icons.map((src) => <img key={src} src={src} alt="" loading="lazy" />)}
-                  </span>
-                ) : cat.key === "footage" && covers.reel ? (
+                {cat.key === "footage" && covers.reel ? (
                   <HomeReel cover={covers.footage?.[0] ?? cat.image} clips={covers.reel} />
                 ) : (
                   <img src={covers[cat.key]?.[0] ?? cat.image} alt="" loading="lazy" />
