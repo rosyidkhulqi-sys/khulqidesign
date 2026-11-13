@@ -1566,10 +1566,15 @@
 .pp-more summary:hover { color: var(--white); }
 .pp-more .pp-row { margin-top: 10px; }
 
-/* when the canvas area is narrow, the numbers go first so every control fits */
+/* when the canvas area is narrow, everything gets a little smaller so the
+   numbers can stay */
 .create-center { container-type: inline-size; }
 @container (max-width: 640px) {
-  .cs-range-control output { display: none; }
-  .cs-toolbar-controls { gap: 10px; }
-  .cs-range-control input { width: 52px; }
+  .cs-toolbar { padding-left: 10px; }
+  .cs-toolbar-controls { gap: 8px; }
+  .cs-range-control { gap: 5px; font-size: 11px; }
+  .cs-range-control input { width: 40px; }
+  .cs-range-control output { min-width: 16px; font-size: 11px; }
+  .cs-stroke-control { gap: 6px; }
+  .cs-stroke-color { width: 20px; height: 20px; }
 }
