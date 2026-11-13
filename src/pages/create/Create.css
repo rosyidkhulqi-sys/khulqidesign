@@ -102,7 +102,7 @@
   text-overflow: ellipsis;
 }
 .ct-name:hover { border-color: var(--line); }
-.ct-name:focus { border-color: #555; outline: none; background: var(--black); }
+.ct-name:focus { border-color: rgba(255, 255, 255, 0.45); outline: none; background: var(--surface-2); }
 
 .ct-history {
   display: flex;
@@ -2012,3 +2012,11 @@
 .pp-list button .ci { flex: none; color: #aeb3ba; }
 .pp-list button:hover { border-color: rgba(255, 255, 255, 0.3); background: #262a2e; }
 .pp-list button.on { border-color: var(--red); background: rgba(231, 33, 46, 0.18); }
+
+/* focus on panel fields: a lighter outline, never the system color */
+.pp-num:focus,
+.pp-input:focus,
+.pp-textarea:focus,
+.cn-custom input:focus { outline: none; border-color: rgba(255, 255, 255, 0.45); }
+.cp-color-fields label:focus-within,
+.cp-color-search:focus-within { border-color: rgba(255, 255, 255, 0.45); }
