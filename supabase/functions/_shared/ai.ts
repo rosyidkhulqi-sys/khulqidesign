@@ -9,9 +9,24 @@ const ALLOWED_ORIGINS = [
 ];
 const PUBLISHABLE_KEY = "sb_publishable_IxJSv34yZhNyGkgWbvYAjg_UFmo6CDO";
 
-export const MODEL = "claude-opus-5-5";
-// USD per million tokens for claude-opus-5-5 (cache writes are 1.25x input)
-const PRICE = { input: 4, cacheWrite: 5, cacheRead: 0.2, output: 20 };
+// The models, cheapest first. Each task picks the least it needs, and can be
+// switched with a function secret (AI_TEMPLATE_MODEL, AI_RESIZE_MODEL)
+// without a redeploy. USD per million tokens; cache writes are 1.25x input.
+export const HAIKU = "claude-haiku-5-5";
+export const SONNET = "claude-sonnet-5-5";
+export const OPUS = "claude-opus-5-5";
+const PRICES: Record<string, { input: number; cacheWrite: number; cacheRead: number; output: number }> = {
+  [HAIKU]: { input: 0.1, cacheWrite: 0.125, cacheRead: 0.01, output: 0.5 },
+  [SONNET]: { input: 2, cacheWrite: 2.5, cacheRead: 0.1, output: 10 },
+  [OPUS]: { input: 4, cacheWrite: 5, cacheRead: 0.2, output: 20 },
+};
+const KNOWN = Object.keys(PRICES);
+
+// the model a task uses: its secret if set to a known model, else the default
+export function modelFor(secret: string, fallback: string) {
+  const chosen = Deno.env.get(secret)?.trim();
+  return chosen && KNOWN.includes(chosen) ? chosen : fallback;
+}
 
 export function cors(origin: string | null) {
   return {
@@ -47,21 +62,48 @@ export async function whoIs(req: Request) {
   return { userId, isAdmin: adminRes.ok && (await adminRes.json()) === true };
 }
 
-export type Tally = { input: number; cacheWrite: number; cacheRead: number; output: number; model: string };
-export const newTally = (): Tally => ({ input: 0, cacheWrite: 0, cacheRead: 0, output: 0, model: MODEL });
+// tokens and dollars over every call of one generation; model lists each
+// model that ran, in order ("claude-haiku-5-5 > claude-sonnet-5-5")
+export type Tally = { input: number; cacheWrite: number; cacheRead: number; output: number; cost: number; model: string };
+export const newTally = (): Tally => ({ input: 0, cacheWrite: 0, cacheRead: 0, output: 0, cost: 0, model: "" });
 
 // deno-lint-ignore no-explicit-any
 export function addUsage(tally: Tally, response: any) {
   const u = response.usage ?? {};
-  tally.input += u.input_tokens ?? 0;
-  tally.cacheWrite += u.cache_creation_input_tokens ?? 0;
-  tally.cacheRead += u.cache_read_input_tokens ?? 0;
-  tally.output += u.output_tokens ?? 0;
-  tally.model = response.model ?? tally.model;
+  const price = PRICES[response.model] ?? PRICES[OPUS];
+  const add = { input: u.input_tokens ?? 0, cacheWrite: u.cache_creation_input_tokens ?? 0, cacheRead: u.cache_read_input_tokens ?? 0, output: u.output_tokens ?? 0 };
+  tally.input += add.input;
+  tally.cacheWrite += add.cacheWrite;
+  tally.cacheRead += add.cacheRead;
+  tally.output += add.output;
+  tally.cost += (add.input * price.input + add.cacheWrite * price.cacheWrite + add.cacheRead * price.cacheRead + add.output * price.output) / 1e6;
+  tally.model = tally.model ? `${tally.model} > ${response.model}` : response.model;
 }
 
-export const costOf = (t: Tally) =>
-  (t.input * PRICE.input + t.cacheWrite * PRICE.cacheWrite + t.cacheRead * PRICE.cacheRead + t.output * PRICE.output) / 1e6;
+export const costOf = (t: Tally) => t.cost;
+
+// One structured call: the answer is held to the JSON schema and parsed.
+// Haiku has no server-side fallback; Sonnet and Opus fall back on a decline.
+export async function askJson(
+  // deno-lint-ignore no-explicit-any
+  client: any,
+  { model, effort, system, message, schema }: { model: string; effort: string; system: string; message: string; schema: unknown },
+  tally: Tally,
+) {
+  const response = await client.beta.messages.create({
+    model,
+    max_tokens: 16000,
+    ...(model === HAIKU ? {} : { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" }),
+    output_config: { effort, format: { type: "json_schema", schema } },
+    system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
+    messages: [{ role: "user", content: message }],
+  });
+  addUsage(tally, response);
+  if (response.stop_reason === "refusal") throw Object.assign(new Error("refused"), { code: "refused" });
+  if (response.stop_reason === "max_tokens") throw Object.assign(new Error("too long"), { code: "too_long" });
+  // deno-lint-ignore no-explicit-any
+  return JSON.parse((response.content as any[]).find((b) => b.type === "text")?.text ?? "{}");
+}
 
 // what the browser is shown about one generation
 export const usageOf = (t: Tally, started: number, passes = 1) => ({

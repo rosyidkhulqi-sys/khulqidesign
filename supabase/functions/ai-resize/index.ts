@@ -11,7 +11,7 @@
 // pictures, icons and groups stay exactly as they were. Backgrounds (things
 // covering the whole page) are left out: the browser stretches those itself.
 import Anthropic from "npm:@anthropic-ai/sdk@1.8.0";
-import { addUsage, logGeneration, MODEL, newTally, reply, usageOf, whoIs } from "../_shared/ai.ts";
+import { askJson, HAIKU, logGeneration, modelFor, newTally, reply, SONNET, usageOf, whoIs } from "../_shared/ai.ts";
 
 const MAX_PAGES = 30;
 const MAX_ELEMENTS = 60;
@@ -70,6 +70,53 @@ You get each page's elements with their boxes in the old format, and the new for
 const num = (v: any, lo: number, hi: number, fallback: number) =>
   typeof v === "number" && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fallback;
 
+type Box = { x: number; y: number; w: number; h: number };
+const overlaps = (a: Box, b: Box) =>
+  Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) > 4 && Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) > 4;
+
+// Problems in a placement, in plain words: elements left out, text off the
+// page, and text that now collides with something it didn't touch before.
+// An empty list means the cheap model's answer is good enough.
+// deno-lint-ignore no-explicit-any
+function check(asked: any[][], placed: any[], to: { w: number; h: number }) {
+  const issues: string[] = [];
+  asked.forEach((els, i) => {
+    const got = new Map((placed[i]?.elements ?? []).map((e: { id: number }) => [e.id, e]));
+    const boxes = new Map<number, Box>();
+    for (const e of els) {
+      // deno-lint-ignore no-explicit-any
+      const p: any = got.get(e.id);
+      if (!p) {
+        issues.push(`Page ${i + 1}: element ${e.id} is missing.`);
+        continue;
+      }
+      let h = (p.w * e.h) / Math.max(1, e.w);
+      if (e.kind === "text") {
+        const perLine = Math.max(1, Math.floor(p.w / (p.fontSize * 0.55)));
+        const lines = String(e.text).split("\n").reduce((n: number, para: string) => n + Math.max(1, Math.ceil(para.length / perLine)), 0);
+        h = lines * p.fontSize * 1.2;
+        const m = to.w * 0.03;
+        if (p.x < m || p.y < m || p.x + p.w > to.w - m || p.y + h > to.h - m) {
+          issues.push(`Page ${i + 1}: text ${e.id} runs off the page or into the edge.`);
+        }
+      }
+      boxes.set(e.id, { x: p.x, y: p.y, w: p.w, h });
+    }
+    // deno-lint-ignore no-explicit-any
+    const before = new Map(els.map((e: any) => [e.id, { x: e.x, y: e.y, w: e.w, h: e.h }]));
+    for (const a of els) {
+      if (a.kind !== "text" || !boxes.has(a.id)) continue;
+      for (const b of els) {
+        if (a.id === b.id || !boxes.has(b.id) || (b.kind === "text" && b.id < a.id)) continue;
+        if (overlaps(boxes.get(a.id)!, boxes.get(b.id)!) && !overlaps(before.get(a.id)!, before.get(b.id)!)) {
+          issues.push(`Page ${i + 1}: text ${a.id} now overlaps element ${b.id}.`);
+        }
+      }
+    }
+  });
+  return issues.slice(0, 12);
+}
+
 Deno.serve(async (req) => {
   const origin = req.headers.get("Origin");
   if (req.method === "OPTIONS") return reply("ok", 200, origin);
@@ -115,25 +162,10 @@ Deno.serve(async (req) => {
 
     const message = `Old format: ${from.w} x ${from.h} px. New format: ${to.w} x ${to.h} px.\n\n`
       + pages.map((els: unknown[], i: number) => `PAGE ${i + 1}\n${JSON.stringify(els)}`).join("\n\n");
-    const response = await client.beta.messages.create({
-      model: MODEL,
-      max_tokens: 16000,
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
-      output_config: { effort: "medium", format: { type: "json_schema", schema: SCHEMA } },
-      system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
-      messages: [{ role: "user", content: message }],
-      // deno-lint-ignore no-explicit-any
-    } as any);
-    addUsage(tally, response);
-    if (response.stop_reason === "refusal") throw Object.assign(new Error("refused"), { code: "refused" });
-    if (response.stop_reason === "max_tokens") throw Object.assign(new Error("too long"), { code: "too_long" });
-    // deno-lint-ignore no-explicit-any
-    const raw = JSON.parse((response.content as any[]).find((b) => b.type === "text")?.text ?? "{}");
 
     // only ids that were sent, with sane numbers, go back
     // deno-lint-ignore no-explicit-any
-    const layout = pages.map((els: any[], i: number) => {
+    const tidy = (raw: any) => pages.map((els: any[], i: number) => {
       const asked = new Map(els.map((e) => [e.id, e]));
       // deno-lint-ignore no-explicit-any
       const got = Array.isArray(raw?.pages?.[i]?.elements) ? raw.pages[i].elements : [];
@@ -152,12 +184,28 @@ Deno.serve(async (req) => {
       };
     });
 
+    // The cheap model first; when its placement fails the check, the next
+    // model up does it again with the problems listed.
+    const first = modelFor("AI_RESIZE_MODEL", HAIKU);
+    let layout = tidy(await askJson(client, { model: first, effort: "medium", system: SYSTEM, message, schema: SCHEMA }, tally));
+    const found = check(pages, layout, to);
+    let escalated = false;
+    if (found.length && first !== SONNET) {
+      const retry = `${message}\n\nA first attempt had these problems; avoid them:\n- ${found.join("\n- ")}`;
+      const better = tidy(await askJson(client, { model: SONNET, effort: "medium", system: SYSTEM, message: retry, schema: SCHEMA }, tally));
+      if (check(pages, better, to).length <= found.length) {
+        layout = better;
+        escalated = true;
+      }
+    }
+    const checks = { found, escalated, left: escalated ? check(pages, layout, to) : found };
+
     const id = await logGeneration(
-      { user_id: who.userId, kind: "resize", prompt: summary, brief: { from, to }, result: { pages: layout } },
+      { user_id: who.userId, kind: "resize", prompt: summary, brief: { from, to }, result: { pages: layout }, checks },
       tally,
       started,
     );
-    return reply({ id, pages: layout, usage: usageOf(tally, started) }, 200, origin);
+    return reply({ id, pages: layout, checks, usage: usageOf(tally, started, escalated ? 2 : 1) }, 200, origin);
   } catch (e) {
     // deno-lint-ignore no-explicit-any
     const code = (e as any)?.code;
