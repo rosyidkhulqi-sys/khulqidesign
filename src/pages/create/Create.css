@@ -1393,6 +1393,8 @@
   .props-toggle { display: none; }
   /* stacked under the canvas, the properties always show */
   .props-closed .create-props { visibility: visible; padding: 14px; overflow-y: auto; }
+  /* a hidden library panel takes no room above the canvas */
+  .panel-closed .create-panel { display: none; }
   .create-rail {
     flex-direction: row;
     overflow-x: auto;
