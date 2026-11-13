@@ -490,7 +490,7 @@ function Create({ draft, clearDraft, user = null }) {
     if (isCurrent()) setThumbs(list);
   });
   useEffect(() => {
-    if (!stripOpen || saveState === "saving") return;
+    if (!stripOpen || pageInfo.count < 2 || saveState === "saving") return;
     let current = true;
     const t = setTimeout(() => drawThumbs(() => current), 150);
     return () => {
@@ -1770,7 +1770,7 @@ function Create({ draft, clearDraft, user = null }) {
           </div>
 
           {/* every page as a small picture: click one to open it */}
-          {stripOpen && (
+          {stripOpen && pageInfo.count > 1 && (
             <div className="create-strip" ref={stripRef} inert={cropping} role="tablist" aria-label="Pages">
               {Array.from({ length: pageInfo.count }, (_, i) => (
                 <button
@@ -1801,14 +1801,17 @@ function Create({ draft, clearDraft, user = null }) {
           {/* pages, zoom and full screen, under the canvas as in Canva */}
           <div className="create-bottombar" inert={cropping}>
             <div className="cb-pages">
-              <button
-                className={`cb-strip ${stripOpen ? "on" : ""}`}
-                onClick={toggleStrip}
-                aria-pressed={stripOpen}
-                title={stripOpen ? "Hide pages" : "Show pages"}
-              >
-                <Icon name="pages" size={16} /> Pages
-              </button>
+              {pageInfo.count > 1 && (
+                <button
+                  className={`cb-strip ${stripOpen ? "on" : ""}`}
+                  onClick={toggleStrip}
+                  aria-pressed={stripOpen}
+                  title={stripOpen ? "Hide pages" : "Show pages"}
+                >
+                  <Icon name="pages" size={15} /> Pages
+                  <Icon name="chevron" size={13} />
+                </button>
+              )}
               <button
                 className="cb-icon"
                 onClick={() => goToPage(pageInfo.index - 1)}
