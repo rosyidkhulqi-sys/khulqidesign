@@ -173,12 +173,44 @@
   /* rail and panel widths, shared with the panel toggle's position */
   --rail-w: 76px;
   --panel-w: 260px;
+  --props-w: 260px;
   position: relative;
   min-height: 0;
   display: grid;
-  grid-template-columns: var(--rail-w) var(--panel-w) minmax(0, 1fr) 260px;
+  grid-template-columns: var(--rail-w) var(--panel-w) minmax(0, 1fr) var(--props-w);
 }
 .create-body.panel-closed { --panel-w: 0px; }
+.create-body.props-closed { --props-w: 0px; }
+.props-closed .create-props {
+  visibility: hidden;
+  padding: 0;
+  border: none;
+  overflow: hidden;
+}
+
+/* the same tab on the right edge, for the properties panel */
+.props-toggle {
+  position: absolute;
+  top: 50%;
+  right: var(--props-w);
+  z-index: 5;
+  width: 18px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  background: var(--surface);
+  color: #aeb3ba;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+.props-toggle:hover { color: white; background: #202326; }
+.props-toggle .ci { transform: rotate(-90deg); }
+.props-closed .props-toggle .ci { transform: rotate(90deg); }
 .panel-closed .create-panel {
   visibility: hidden;
   padding: 0;
@@ -820,7 +852,13 @@
   align-items: center;
   gap: 8px;
   margin-right: auto;
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+/* a narrow middle (both side panels open on a small screen) keeps one row */
+@container (max-width: 600px) {
+  .create-bottombar { gap: 6px; padding: 0 10px; }
+  .create-bottombar input[type="range"] { width: 80px; }
 }
 
 /* the open page with its bar above and Add page below */
@@ -980,8 +1018,11 @@
 /* PROPERTIES */
 
 .create-props {
+  min-width: 0;
   padding: 14px;
   border-left: 1px solid rgba(255, 255, 255, 0.08);
+  /* never scrolls sideways: that cut its content off on the left */
+  overflow-x: hidden;
   overflow-y: auto;
   font-size: 13px;
 }
@@ -1331,8 +1372,9 @@
 /* RESPONSIVE */
 
 @media (max-width: 1100px) {
-  .create-body { --rail-w: 70px; --panel-w: 220px; grid-template-columns: var(--rail-w) var(--panel-w) minmax(0, 1fr) 220px; }
+  .create-body { --rail-w: 70px; --panel-w: 220px; --props-w: 220px; }
   .create-body.panel-closed { --panel-w: 0px; }
+  .create-body.props-closed { --props-w: 0px; }
 }
 
 @media (max-width: 860px) {
@@ -1340,7 +1382,10 @@
   .create-editor { min-height: 100vh; }
   .create-body { grid-template-columns: 1fr; }
   /* phones stack the panel above the canvas; the tabs show and hide it */
-  .panel-toggle { display: none; }
+  .panel-toggle,
+  .props-toggle { display: none; }
+  /* stacked under the canvas, the properties always show */
+  .props-closed .create-props { visibility: visible; padding: 14px; overflow-y: auto; }
   .create-rail {
     flex-direction: row;
     overflow-x: auto;

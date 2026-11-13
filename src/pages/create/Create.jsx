@@ -62,6 +62,7 @@ import { MODELS, removeBackground, upscale } from "../../lib/aiLocal";
 const PANEL_KEY = "kd-create-panel";
 const PAGE_KEY = "kd-create-page";
 const STRIP_KEY = "kd-create-page-strip";
+const PROPS_KEY = "kd-create-props";
 // zoom slider range, in percent
 const ZOOM_MIN = 10;
 const ZOOM_MAX = 300;
@@ -178,6 +179,14 @@ function Create({ draft, clearDraft, user = null }) {
   const [panelOpen, setPanelOpen] = useState(() => {
     try {
       return localStorage.getItem(PANEL_KEY) !== "closed";
+    } catch {
+      return true;
+    }
+  });
+  // the properties panel on the right hides the same way
+  const [propsOpen, setPropsOpen] = useState(() => {
+    try {
+      return localStorage.getItem(PROPS_KEY) !== "closed";
     } catch {
       return true;
     }
@@ -313,8 +322,11 @@ function Create({ draft, clearDraft, user = null }) {
   };
 
   // the color panel, with the colors already used across the whole design
-  const openColorEditor = (mode, color) =>
+  const openColorEditor = (mode, color) => {
     setColorEditor({ mode, color, documentColors: documentColorsOf(currentPages()) });
+    // the color panel lives on the right, so a hidden panel comes back
+    if (!propsOpen) showProps(true);
+  };
 
   // a whole design: size and every page (which page is open is kept apart,
   // so moving between pages isn't an undo step)
@@ -499,10 +511,16 @@ function Create({ draft, clearDraft, user = null }) {
     };
   }, [stripOpen, saveState, pageInfo, board]);
 
-  // keep the open page in view in the strip
+  // keep the open page in view in the strip. Only the strip scrolls:
+  // scrollIntoView would also nudge the editor and the side panels.
   useEffect(() => {
-    stripRef.current?.querySelector(".on")?.scrollIntoView({ block: "nearest", inline: "nearest" });
-  }, [pageInfo.index, stripOpen]);
+    const strip = stripRef.current;
+    const on = strip?.querySelector(".on");
+    if (!on) return;
+    if (on.offsetLeft < strip.scrollLeft) strip.scrollLeft = on.offsetLeft - 16;
+    else if (on.offsetLeft + on.offsetWidth > strip.scrollLeft + strip.clientWidth)
+      strip.scrollLeft = on.offsetLeft + on.offsetWidth - strip.clientWidth + 16;
+  }, [pageInfo.index, pageInfo.count, stripOpen]);
 
   const toggleStrip = () => {
     setStripOpen((open) => {
@@ -582,6 +600,15 @@ function Create({ draft, clearDraft, user = null }) {
     setPanelOpen(open);
     try {
       localStorage.setItem(PANEL_KEY, open ? "open" : "closed");
+    } catch {
+      /* storage unavailable */
+    }
+  };
+
+  const showProps = (open) => {
+    setPropsOpen(open);
+    try {
+      localStorage.setItem(PROPS_KEY, open ? "open" : "closed");
     } catch {
       /* storage unavailable */
     }
@@ -1501,7 +1528,7 @@ function Create({ draft, clearDraft, user = null }) {
         </div>
         {menu && <div className="ct-backdrop" onClick={() => setMenu(null)} />}
 
-        <div className={`create-body ${panelOpen ? "" : "panel-closed"}`}>
+        <div className={`create-body ${panelOpen ? "" : "panel-closed"} ${propsOpen ? "" : "props-closed"}`}>
           {/* TAB RAIL — the open tab's button hides and shows the panel, as in Canva */}
           <nav className="create-rail" inert={cropping || aiBusy}>
             {tabs.map((t) => (
@@ -1634,6 +1661,15 @@ function Create({ draft, clearDraft, user = null }) {
             aria-label={panelOpen ? "Hide panel" : "Show panel"}
             aria-expanded={panelOpen}
             title={panelOpen ? "Hide panel" : "Show panel"}
+          >
+            <Icon name="chevron" size={16} />
+          </button>
+          <button
+            className="props-toggle"
+            onClick={() => showProps(!propsOpen)}
+            aria-label={propsOpen ? "Hide properties" : "Show properties"}
+            aria-expanded={propsOpen}
+            title={propsOpen ? "Hide properties" : "Show properties"}
           >
             <Icon name="chevron" size={16} />
           </button>
@@ -1864,7 +1900,7 @@ function Create({ draft, clearDraft, user = null }) {
           </div>
 
           {/* PROPERTIES */}
-          <aside className="create-props" inert={cropping || aiBusy}>
+          <aside className="create-props" inert={!propsOpen || cropping || aiBusy} aria-hidden={!propsOpen}>
             {colorEditor ? (
               <CreateColorPanel
                 key={colorEditor.mode === "object" ? colorObjectKey(active) : "background"}
