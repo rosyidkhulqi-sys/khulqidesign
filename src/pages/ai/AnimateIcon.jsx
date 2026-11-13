@@ -2,9 +2,9 @@
 // watch it play. Presets are plain CSS, so this works without AI or a server.
 // Anyone can try it; exporting asks for an account. Every export is built here
 // in the browser (lib/animateExport.js, lib/animateLottie.js).
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "./AnimateIcon.css";
-import { fileSlug, loadIconSvg } from "../../lib/iconEditor";
+import { canRecolor, fileSlug, iconColors, loadIconSvg, recolor } from "../../lib/iconEditor";
 import { fetchIconCatalog } from "../../lib/catalog";
 import { buildAnimatedSvg, buildGif, buildMp4 } from "../../lib/animateExport";
 import { saveBlob } from "../../lib/downloads";
@@ -42,6 +42,13 @@ const speeds = [
 // seconds for one play at 1×
 const BASE = 1.2;
 
+// the background choices: none (see-through), white, dark, or the visitor's own
+const BACKGROUNDS = [
+  [null, "Transparent"],
+  ["#ffffff", "White"],
+  ["#0a0b0d", "Dark"],
+];
+
 const STYLE_ORDER = ["outline", "glyph", "flat", "gradient"];
 const STYLE_LABELS = { outline: "Outline", glyph: "Glyph", flat: "Flat", gradient: "Gradient" };
 
@@ -59,6 +66,8 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
   const [preset, setPreset] = useState(kept?.preset ?? "bounce");
   const [speed, setSpeed] = useState(kept?.speed ?? 1);
   const [loop, setLoop] = useState(kept?.loop ?? true);
+  const [color, setColor] = useState(kept?.color ?? "#000000");
+  const [background, setBackground] = useState(kept?.background ?? null);
   // changing the key restarts the animation (Replay)
   const [run, setRun] = useState(0);
   const [playing, setPlaying] = useState(true);
@@ -101,6 +110,16 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
   }, [icon?.image]);
 
   const duration = BASE / speed;
+
+  // one-color icons (outline, glyph) take the chosen color; flat and gradient
+  // icons keep their own colors
+  const recolorable = canRecolor(icon?.style);
+  const art = useMemo(
+    // shapes without a fill of their own draw black, so a wrapping group
+    // gives them the color too
+    () => (svg && recolorable ? { ...svg, inner: `<g fill="${color}">${recolor(svg.inner, color)}</g>` } : svg),
+    [svg, recolorable, color],
+  );
 
   // the list, one style at a time (the open icon's style first) and searched
   // by name, keywords and category
@@ -181,7 +200,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
   const exportAs = async (kind) => {
     if (!icon) return;
     if (!user) {
-      keepAnimate({ icon, preset, speed, loop });
+      keepAnimate({ icon, preset, speed, loop, color, background });
       askLogin("download");
       return;
     }
@@ -191,7 +210,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
     }
     const iconEl = stage.current?.querySelector("svg.animate-icon");
     if (!iconEl || making) return;
-    const options = { preset, duration, loop };
+    const options = { preset, duration, loop, background };
     const name = `${fileSlug(icon.name)}-${preset}`;
     setExportError(null);
 
@@ -205,7 +224,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
       try {
         // the converter loads only when someone asks for a Lottie file
         const { buildLottie } = await import("../../lib/animateLottie");
-        const file = buildLottie(svg, { preset, duration, name: icon.name });
+        const file = buildLottie(art, { preset, duration, name: icon.name });
         saveBlob(new Blob([file], { type: "application/json" }), `${name}.json`);
       } catch (e) {
         setExportError(e.message || "This export didn't work. Try again.");
@@ -242,16 +261,16 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
           key={run}
           ref={stage}
           className={`animate-stage is-${preset} ${loop ? "loop" : "once"}${playing ? "" : " paused"}`}
-          style={{ "--dur": `${duration}s` }}
+          style={{ "--dur": `${duration}s`, ...(background ? { background } : {}) }}
           aria-label={icon ? `${icon.name} icon, ${preset} animation` : "Icon animation preview"}
           role="img"
         >
-          {svg ? (
+          {art ? (
             // our own icon files, cleaned by loadIconSvg (no scripts or handlers)
             <svg
               className="animate-icon"
-              viewBox={svg.viewBox}
-              dangerouslySetInnerHTML={{ __html: svg.inner }}
+              viewBox={art.viewBox}
+              dangerouslySetInnerHTML={{ __html: art.inner }}
             />
           ) : icon ? (
             <img className="animate-icon" src={icon.image} alt="" />
@@ -352,6 +371,69 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
         </div>
         {catalogError && <p className="animate-error" role="alert">{catalogError}</p>}
 
+        {/* color and background: one row of dots each, as easy as a swatch */}
+        {recolorable && (
+          <div className="animate-swatches" role="radiogroup" aria-label="Icon color">
+            <p className="animate-label">Color</p>
+            <div>
+              {iconColors.map((c) => (
+                <button
+                  key={c}
+                  role="radio"
+                  aria-checked={color === c}
+                  aria-label={c}
+                  title={c}
+                  className={color === c ? "active" : ""}
+                  style={{ background: c }}
+                  onClick={() => pick(setColor)(c)}
+                />
+              ))}
+              <label
+                className={`animate-own ${iconColors.includes(color) ? "" : "active"}`}
+                title="Your own color"
+                style={iconColors.includes(color) ? undefined : { background: color }}
+              >
+                <input
+                  type="color"
+                  value={color}
+                  onChange={(e) => pick(setColor)(e.target.value)}
+                  aria-label="Your own color"
+                />
+              </label>
+            </div>
+          </div>
+        )}
+
+        <div className="animate-swatches" role="radiogroup" aria-label="Background">
+          <p className="animate-label">Background</p>
+          <div>
+            {BACKGROUNDS.map(([c, label]) => (
+              <button
+                key={label}
+                role="radio"
+                aria-checked={background === c}
+                aria-label={label}
+                title={label}
+                className={`${background === c ? "active" : ""}${c ? "" : " is-none"}`}
+                style={c ? { background: c } : undefined}
+                onClick={() => pick(setBackground)(c)}
+              />
+            ))}
+            <label
+              className={`animate-own ${background && !BACKGROUNDS.some(([c]) => c === background) ? "active" : ""}`}
+              title="Your own background color"
+              style={background && !BACKGROUNDS.some(([c]) => c === background) ? { background } : undefined}
+            >
+              <input
+                type="color"
+                value={background ?? "#ffffff"}
+                onChange={(e) => pick(setBackground)(e.target.value)}
+                aria-label="Your own background color"
+              />
+            </label>
+          </div>
+        </div>
+
         <p className="animate-label">Motion</p>
         <div className="animate-chips">
           {presets.filter(([id]) => id !== "draw" || canDraw(icon)).map(([id, label]) => (
@@ -409,9 +491,11 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
             onDismiss={() => setUpsell(false)}
           />
         )}
-        <p className="animate-note">
-          GIF and MP4 have a white background.
-        </p>
+        {!background && (
+          <p className="animate-note">
+            GIF and MP4 can't be transparent, so they get a white background.
+          </p>
+        )}
       </div>
     </div>
   );

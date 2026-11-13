@@ -50,7 +50,8 @@ function stylesFor(preset, { duration, loop, center, unit }) {
 }
 
 // iconEl: the <svg> in the studio's stage. Returns the file's text.
-export function buildAnimatedSvg(iconEl, { preset, duration, loop }) {
+// background: a color filling the whole file, or null to keep it transparent
+export function buildAnimatedSvg(iconEl, { preset, duration, loop, background = null }) {
   const { x, y, width, height } = iconEl.viewBox.baseVal;
   const unit = Math.max(width, height);
   const size = unit / ICON_SHARE;
@@ -64,6 +65,14 @@ export function buildAnimatedSvg(iconEl, { preset, duration, loop }) {
   const style = document.createElementNS(SVG_NS, "style");
   style.textContent = stylesFor(preset, { duration: round(duration), loop, center, unit });
   root.appendChild(style);
+
+  if (background) {
+    const bg = document.createElementNS(SVG_NS, "rect");
+    bg.setAttribute("width", "100%");
+    bg.setAttribute("height", "100%");
+    bg.setAttribute("fill", background);
+    root.appendChild(bg);
+  }
 
   const motion = document.createElementNS(SVG_NS, "g");
   motion.setAttribute("class", "kd-i");
@@ -97,11 +106,14 @@ const loadImage = (url) =>
 
 // A hidden copy of the animation that can be stopped at any moment. Each
 // moment is frozen into a still SVG (a picture of a running animation can't
-// be asked for a given time) and drawn on a white canvas.
+// be asked for a given time) and drawn on the chosen background (white
+// when the background is transparent).
 // A clip is whole passes of the motion, so it loops cleanly; passesFor(seconds)
 // says how many, given how long one takes.
 async function renderFrames(iconEl, options, fps, passesFor, onFrame) {
-  const file = buildAnimatedSvg(iconEl, { ...options, loop: false });
+  // GIF and MP4 can't be see-through: a transparent choice becomes white
+  const file = buildAnimatedSvg(iconEl, { ...options, loop: false, background: null });
+  const paper = options.background || "#ffffff";
   const host = document.createElement("div");
   host.style.cssText = `position:fixed;left:-10000px;top:0;width:${FILE_PX}px;height:${FILE_PX}px`;
   host.innerHTML = file;
@@ -142,7 +154,7 @@ async function renderFrames(iconEl, options, fps, passesFor, onFrame) {
       );
       try {
         const img = await loadImage(url);
-        ctx.fillStyle = "#ffffff";
+        ctx.fillStyle = paper;
         ctx.fillRect(0, 0, FILE_PX, FILE_PX);
         ctx.drawImage(img, 0, 0, FILE_PX, FILE_PX);
       } finally {

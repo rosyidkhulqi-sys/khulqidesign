@@ -72,7 +72,7 @@ export async function loadIconSvg(src) {
 }
 
 // Single-color icons (glyph, outline): every painted fill and stroke takes the new color.
-function recolor(markup, color) {
+export function recolor(markup, color) {
   return markup
     .replace(/\b(fill|stroke)="(?!none)[^"]*"/g, `$1="${color}"`)
     .replace(/\b(fill|stroke):\s*(?!none)[^;"]+/g, `$1:${color}`);
