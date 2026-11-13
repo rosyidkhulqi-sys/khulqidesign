@@ -4,6 +4,7 @@
 // same timing as the studio's CSS. Loaded only when someone exports one.
 import svgpath from "svgpath";
 import { FILE_PX, ICON_SHARE } from "./animateExport";
+import { BUILD_EASE, easingOf } from "./animateMotion";
 
 const FPS = 60;
 const DRAWABLE = "path, circle, rect, ellipse, line, polyline, polygon";
@@ -12,8 +13,6 @@ const HIDDEN = "defs, clipPath, mask, symbol, pattern, marker";
 const UNSUPPORTED = "image, text, use, foreignObject, [clip-path], [mask], [filter]";
 
 const EASE_IN_OUT = [0.42, 0, 0.58, 1];
-const EASE_SPIN = [0.6, 0, 0.4, 1];
-const EASE_BUILD = [0.3, 1.4, 0.5, 1];
 
 // The studio's whole-icon presets. [percent of the time, value(s)]; distances
 // are percent of the icon's size. Each interval eases on its own, as in CSS.
@@ -26,7 +25,7 @@ const MOTIONS = {
     scale: [[0, 60, 60], [45, 112, 112], [70, 96, 96], [100, 100, 100]],
     opacity: [[0, 0], [45, 100], [100, 100]],
   },
-  spin: { rotate: [[0, 0], [100, 360]], ease: EASE_SPIN },
+  spin: { rotate: [[0, 0], [100, 360]] },
   shake: {
     x: [[0, 0], [20, -5], [40, 5], [60, -3], [80, 3], [100, 0]],
     rotate: [[0, 0], [20, -6], [40, 6], [60, -3], [80, 3], [100, 0]],
@@ -316,9 +315,10 @@ function layer(index, name, shapes, transform, end) {
   };
 }
 
-function wholeIconLayers(preset, shapes, duration) {
+// pause: seconds the icon holds still after each play, before the next loop
+function wholeIconLayers(preset, shapes, duration, easing, pause) {
   const motion = MOTIONS[preset];
-  const ease = motion.ease ?? EASE_IN_OUT;
+  const ease = easingOf(preset, easing);
   const end = duration * FPS;
   const at = (percent) => (percent / 100) * end;
   const unit = FILE_PX * ICON_SHARE;
@@ -341,7 +341,8 @@ function wholeIconLayers(preset, shapes, duration) {
   if (motion.rotate) transform.r = animated(motion.rotate.map(([p, v]) => [at(p), [v]]), ease);
   if (motion.opacity) transform.o = animated(motion.opacity.map(([p, v]) => [at(p), [v]]), ease);
 
-  const op = Math.ceil(end);
+  // the last keyframe holds through the pause
+  const op = Math.ceil(end + pause * FPS);
   return { layers: [layer(1, "Icon", [...shapes].reverse().map(plainGroup), transform, op)], op };
 }
 
@@ -375,10 +376,10 @@ function centerOf(shapes) {
 }
 
 // Build: each part of the icon pops in after the one before it
-function buildLayers(parts, duration) {
+function buildLayers(parts, duration, pause) {
   const length = duration * FPS;
   const step = (length * 0.6) / Math.max(1, parts.length);
-  const op = Math.ceil(length + step * (parts.length - 1));
+  const op = Math.ceil(length + step * (parts.length - 1) + pause * FPS);
   const layers = parts.map((shapes, i) => {
     const start = i * step;
     const [cx, cy] = centerOf(shapes);
@@ -386,8 +387,8 @@ function buildLayers(parts, duration) {
     return layer(i + 1, `Part ${i + 1}`, [...shapes].reverse().map(plainGroup), {
       a: fixed([round(cx), round(cy), 0]),
       p: fixed([round(cx), round(cy), 0]),
-      s: animated([[start, [0, 0, 100]], [peak, [100, 100, 100]]], EASE_BUILD),
-      o: animated([[start, [0]], [peak, [100]]], EASE_BUILD),
+      s: animated([[start, [0, 0, 100]], [peak, [100, 100, 100]]], BUILD_EASE),
+      o: animated([[start, [0]], [peak, [100]]], BUILD_EASE),
     }, op);
   });
   return { layers: layers.reverse(), op };
@@ -442,10 +443,10 @@ function traceKeys(length, totalLength, at) {
 }
 
 // Draw: a line traces each shape, then its color comes in
-function drawLayers(shapes, duration, unit) {
+function drawLayers(shapes, duration, unit, pause) {
   const length = duration * 1.8 * FPS;
   const step = (duration * FPS * 0.4) / Math.max(1, shapes.length);
-  const op = Math.ceil(length + step * (shapes.length - 1));
+  const op = Math.ceil(length + step * (shapes.length - 1) + pause * FPS);
 
   const groups = shapes.map(({ contours, paint }, i) => {
     const start = i * step;
@@ -513,7 +514,7 @@ const leavesOf = (el) =>
   (el.matches(DRAWABLE) ? [el] : [...el.querySelectorAll(DRAWABLE)]).filter((node) => !node.closest(HIDDEN));
 
 // source: { viewBox, inner } from loadIconSvg. Returns the file's text.
-export function buildLottie(source, { preset, duration, name }) {
+export function buildLottie(source, { preset, duration, name, easing, pause = 0 }) {
   const [x, y, width, height] = source.viewBox.trim().split(/[\s,]+/).map(Number);
   const iconUnits = Math.max(width, height);
   const size = iconUnits / ICON_SHARE;
@@ -541,9 +542,9 @@ export function buildLottie(source, { preset, duration, name }) {
     const seconds = round(duration);
     const unit = FILE_PX * ICON_SHARE;
     let result;
-    if (preset === "build") result = buildLayers(parts, seconds);
-    else if (preset === "draw") result = drawLayers(shapes, seconds, unit);
-    else result = wholeIconLayers(preset, shapes, seconds);
+    if (preset === "build") result = buildLayers(parts, seconds, pause);
+    else if (preset === "draw") result = drawLayers(shapes, seconds, unit, pause);
+    else result = wholeIconLayers(preset, shapes, seconds, easing, pause);
 
     return JSON.stringify({
       v: "5.7.4",

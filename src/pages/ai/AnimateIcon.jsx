@@ -10,6 +10,7 @@ import { buildAnimatedSvg, buildGif, buildMp4 } from "../../lib/animateExport";
 import { saveBlob } from "../../lib/downloads";
 import { askLogin } from "../../lib/authGate";
 import { keepAnimate, takeAnimate } from "../../lib/aiKeep";
+import { EASINGS, PAUSES, motionStyles, wholeIcon } from "../../lib/animateMotion";
 import { PremiumPrompt, PremiumTag } from "../../components/IconControls";
 import EmbedCode from "./EmbedCode";
 import { fetchMembership } from "../../lib/billing";
@@ -70,6 +71,9 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
   const motion = hover ?? preset;
   const [speed, setSpeed] = useState(kept?.speed ?? 1);
   const [loop, setLoop] = useState(kept?.loop ?? true);
+  // how the motion eases, and how long it rests between loops
+  const [easing, setEasing] = useState(kept?.easing ?? "smooth");
+  const [pause, setPause] = useState(kept?.pause ?? 0);
   const [color, setColor] = useState(kept?.color ?? "#000000");
   const [background, setBackground] = useState(kept?.background ?? null);
   // changing the key restarts the animation (Replay)
@@ -116,6 +120,8 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
   }, [icon?.image]);
 
   const duration = BASE / speed;
+  // the pause only exists between loops
+  const rest = loop ? pause : 0;
 
   // one-color icons (outline, glyph) take the chosen color; flat and gradient
   // icons keep their own colors
@@ -207,7 +213,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
   const exportAs = async (kind) => {
     if (!icon) return;
     if (!user) {
-      keepAnimate({ icon, preset, speed, loop, color, background });
+      keepAnimate({ icon, preset, speed, loop, color, background, easing, pause });
       askLogin("download");
       return;
     }
@@ -217,7 +223,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
     }
     const iconEl = stage.current?.querySelector("svg.animate-icon");
     if (!iconEl || making) return;
-    const options = { preset, duration, loop, background };
+    const options = { preset, duration, loop, easing, pause: rest, background };
     const name = `${fileSlug(icon.name)}-${preset}`;
     setExportError(null);
 
@@ -232,7 +238,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
       try {
         // the converter loads only when someone asks for a Lottie file
         const { buildLottie } = await import("../../lib/animateLottie");
-        const file = buildLottie(paint(color), { preset, duration, name: icon.name });
+        const file = buildLottie(paint(color), { preset, duration, name: icon.name, easing, pause: rest });
         saveBlob(new Blob([file], { type: "application/json" }), `${name}.json`);
         setEmbed({ kind: "json", file: `${name}.json`, label: `${icon.name} icon`, loop });
       } catch (e) {
@@ -275,6 +281,23 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
           aria-label={icon ? `${icon.name} icon, ${motion} animation` : "Icon animation preview"}
           role="img"
         >
+          {/* the motion itself, from the same source as every export */}
+          <style>
+            {motionStyles(motion, {
+              duration,
+              loop,
+              easing,
+              pause: rest,
+              name: "kd-live",
+              sel: {
+                icon: ".animate-stage .animate-icon",
+                part: ".animate-stage .kd-part",
+                draw: ".animate-stage .kd-draw",
+                trace: ".animate-stage .kd-trace",
+              },
+              d: (percent) => `${percent}%`,
+            })}
+          </style>
           {art ? (
             // our own icon files, cleaned by loadIconSvg (no scripts or handlers)
             <svg
@@ -311,7 +334,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
             </svg>
           </button>
           <span className="animate-bar-info">
-            512 × 512 · {duration.toFixed(1)} s · {loop ? "Loop" : "Once"}
+            512 × 512 · {duration.toFixed(1)} s{rest ? ` + ${rest} s pause` : ""} · {loop ? "Loop" : "Once"}
           </span>
         </div>
       </div>
@@ -483,6 +506,41 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
             <input type="checkbox" checked={loop} onChange={(e) => pick(setLoop)(e.target.checked)} />
             Loop
           </label>
+        </div>
+
+        {/* Build and Draw keep their own curves */}
+        {wholeIcon(motion) && (
+          <>
+            <p className="animate-label">Easing</p>
+            <div className="animate-chips">
+              {EASINGS.map(([id, label]) => (
+                <button
+                  key={id}
+                  className={easing === id ? "active" : ""}
+                  onClick={() => pick(setEasing)(id)}
+                  aria-pressed={easing === id}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        <p className="animate-label">Pause between loops</p>
+        <div className="animate-chips">
+          {PAUSES.map((value) => (
+            <button
+              key={value}
+              className={pause === value ? "active" : ""}
+              onClick={() => pick(setPause)(value)}
+              aria-pressed={pause === value}
+              disabled={!loop}
+              title={loop ? undefined : "Turn on Loop to pause between plays"}
+            >
+              {value ? `${value} s` : "None"}
+            </button>
+          ))}
         </div>
 
         <p className="animate-label">Export</p>

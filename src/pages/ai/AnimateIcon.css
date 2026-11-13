@@ -86,9 +86,9 @@
   white-space: nowrap;
 }
 
-.paused .animate-icon,
-.paused .kd-part,
-.paused .kd-draw { animation-play-state: paused; }
+.animate-stage.paused .animate-icon,
+.animate-stage.paused .kd-part,
+.animate-stage.paused .kd-draw { animation-play-state: paused; }
 
 /* PANEL */
 
@@ -217,6 +217,8 @@
 }
 .animate-chips button:hover { border-color: rgba(255, 255, 255, 0.35); color: white; }
 .animate-chips button.active { background: var(--white); border-color: var(--white); color: #111; }
+.animate-chips button:disabled { opacity: 0.35; cursor: default; }
+.animate-chips button:disabled:hover { border-color: rgba(255, 255, 255, 0.12); color: #c6cad0; }
 
 .animate-loop {
   display: inline-flex;
@@ -263,91 +265,12 @@
 }
 .animate-note .ai-soon { margin-left: 0; }
 
-/* MOTION PRESETS — on the whole icon, or (Build) on each part */
-
-.animate-stage .animate-icon {
-  animation-duration: var(--dur);
-  animation-timing-function: ease-in-out;
-  animation-fill-mode: both;
-}
-.loop .animate-icon { animation-iteration-count: infinite; }
-.once .animate-icon { animation-iteration-count: 1; }
-
-.is-bounce .animate-icon { animation-name: kd-bounce; }
-.is-pop .animate-icon { animation-name: kd-pop; }
-.is-spin .animate-icon { animation-name: kd-spin; animation-timing-function: cubic-bezier(0.6, 0, 0.4, 1); }
-.is-shake .animate-icon { animation-name: kd-shake; }
-.is-pulse .animate-icon { animation-name: kd-pulse; }
-.is-float .animate-icon { animation-name: kd-float; }
-.is-swing .animate-icon { animation-name: kd-swing; transform-origin: 50% 10%; }
-
-/* Build: the icon stays, its parts pop in one by one (delays set in JS) */
-.is-build .kd-part {
-  transform-box: fill-box;
-  transform-origin: 50% 50%;
-  animation: kd-build var(--dur) cubic-bezier(0.3, 1.4, 0.5, 1) both;
-}
-.is-build.loop .kd-part { animation-iteration-count: infinite; }
-
-/* Draw: the dash offset starts at the shape's length (set in JS) and slides
-   to 0; the fill comes in after the line, then the borrowed trace fades */
-.is-draw .kd-draw {
-  animation: kd-draw calc(var(--dur) * 1.8) ease-in-out both;
-}
-.is-draw .kd-trace { animation-name: kd-draw-trace; }
-.is-draw.loop .kd-draw { animation-iteration-count: infinite; }
-
-@keyframes kd-draw {
-  0% { fill-opacity: 0; }
-  55% { stroke-dashoffset: 0; fill-opacity: 0; }
-  75%, 100% { stroke-dashoffset: 0; fill-opacity: 1; }
-}
-@keyframes kd-draw-trace {
-  0% { fill-opacity: 0; stroke-opacity: 1; }
-  55% { stroke-dashoffset: 0; fill-opacity: 0; stroke-opacity: 1; }
-  75%, 100% { stroke-dashoffset: 0; fill-opacity: 1; stroke-opacity: 0; }
-}
-
-@keyframes kd-bounce {
-  0%, 100% { transform: translateY(0); }
-  30% { transform: translateY(-16%); }
-  50% { transform: translateY(0) scale(1.04, 0.96); }
-  65% { transform: translateY(-5%); }
-}
-@keyframes kd-pop {
-  0% { transform: scale(0.6); opacity: 0; }
-  45% { transform: scale(1.12); opacity: 1; }
-  70% { transform: scale(0.96); }
-  100% { transform: scale(1); }
-}
-@keyframes kd-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-@keyframes kd-shake {
-  0%, 100% { transform: translateX(0) rotate(0); }
-  20% { transform: translateX(-5%) rotate(-6deg); }
-  40% { transform: translateX(5%) rotate(6deg); }
-  60% { transform: translateX(-3%) rotate(-3deg); }
-  80% { transform: translateX(3%) rotate(3deg); }
-}
-@keyframes kd-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.12); }
-}
-@keyframes kd-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8%); }
-}
-@keyframes kd-swing {
-  0%, 100% { transform: rotate(0); }
-  25% { transform: rotate(12deg); }
-  75% { transform: rotate(-12deg); }
-}
-@keyframes kd-build {
-  0% { transform: scale(0); opacity: 0; }
-  60%, 100% { transform: scale(1); opacity: 1; }
-}
+/* MOTION PRESETS: the keyframes and timing come from lib/animateMotion.js
+   (a <style> inside the stage), shared with every export. Only the pivots
+   live here. */
+.is-swing .animate-icon { transform-origin: 50% 10%; }
+/* Build: the parts pop in one by one (delays set in JS) */
+.is-build .kd-part { transform-box: fill-box; transform-origin: 50% 50%; }
 
 /* people who ask for less motion still get a calm preview */
 @media (prefers-reduced-motion: reduce) {
