@@ -1366,6 +1366,36 @@ function Create({ draft, clearDraft, user = null }) {
     commit();
   };
 
+  // Background photo out to a normal picture at the back, to move, crop or
+  // turn it (Canva's "Detach image from background")
+  const detachBackground = async () => {
+    const c = fc.current;
+    const bg = c.backgroundImage;
+    if (!bg) return;
+    const img = await bg.clone();
+    img.set({ left: 0, top: 0 });
+    bgRequest.current++;
+    c.backgroundImage = undefined;
+    setBgPhoto(null);
+    c.insertAt(0, img);
+    c.setActiveObject(img);
+    setActive(img);
+    render();
+  };
+
+  // the selected picture becomes the page's background: it fills the page and
+  // can't be moved by accident any more (Canva's "Set image as background")
+  const setAsBackground = async () => {
+    const c = fc.current;
+    const obj = c.getActiveObject();
+    if (!(obj instanceof FabricImage)) return;
+    const src = obj.getSrc();
+    c.discardActiveObject();
+    c.remove(obj);
+    setActive(null);
+    await setBackgroundPhoto(src);
+  };
+
   const search = (text) => {
     setQuery(text);
     if (libraryAsked.current) return;
@@ -1956,7 +1986,10 @@ function Create({ draft, clearDraft, user = null }) {
               {floatPos && !cropping && (
                 <div className="ct-float" style={floatPos}>
                   {active instanceof FabricImage && !locked && (
-                    <button onClick={startCrop} title="Crop (double-click)"><Icon name="crop" /></button>
+                    <>
+                      <button onClick={startCrop} title="Crop (double-click)"><Icon name="crop" /></button>
+                      <button onClick={setAsBackground} title="Set as background"><Icon name="background" /></button>
+                    </>
                   )}
                   <button onClick={duplicate} title="Duplicate (Ctrl+D)"><Icon name="copy" /></button>
                   <button onClick={() => arrange("forward")} title="Bring forward"><Icon name="forward" /></button>
@@ -2128,6 +2161,11 @@ function Create({ draft, clearDraft, user = null }) {
                     aria-label="Edit background color"
                   />
                 </div>
+                {bgPhoto && (
+                  <button className="pp-resize" onClick={detachBackground} title="Make the background photo a picture you can move, crop and resize">
+                    <Icon name="unlock" size={14} /> Detach background
+                  </button>
+                )}
                 <p className="cp-hint">Select an element to edit it.</p>
               </>
             ) : (
