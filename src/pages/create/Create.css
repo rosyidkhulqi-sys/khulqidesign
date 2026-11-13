@@ -1148,7 +1148,7 @@
   cursor: pointer;
 }
 .cp-color-close:hover { border-color: rgba(255, 255, 255, 0.3); color: white; }
-.cp-color-search { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 10px; border: 1px solid #34373a; border-radius: 9px; background: #101113; color: #8d939b; }
+.cp-color-search { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 10px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 7px; background: #141414; color: #8d939b; }
 .cp-color-search > span { font-size: 20px; line-height: 1; }
 .cp-color-search input { min-width: 0; width: 100%; border: 0; outline: 0; background: transparent; color: #f4f4f5; font: inherit; font-size: 12px; }
 .cp-color-search input::placeholder { color: #747a83; }
@@ -1183,7 +1183,7 @@
 .cp-hue-control input::-webkit-slider-thumb { width: 15px; height: 15px; appearance: none; border: 2px solid white; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6); }
 .cp-hue-control input::-moz-range-thumb { width: 12px; height: 12px; border: 2px solid white; border-radius: 50%; background: var(--red); }
 .cp-color-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-.cp-color-fields label { display: flex; align-items: center; gap: 5px; min-width: 0; height: 34px; padding: 0 7px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 7px; background: #101113; color: #8d939b; font-size: 10px; }
+.cp-color-fields label { display: flex; align-items: center; gap: 5px; min-width: 0; height: 34px; padding: 0 7px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 7px; background: #141414; color: #8d939b; font-size: 10px; }
 .cp-color-fields .cp-hex-field { grid-column: 1 / -1; }
 .cp-color-fields input { min-width: 0; width: 100%; padding: 0; border: 0; outline: 0; background: transparent; color: #f4f4f5; font: inherit; font-size: 12px; }
 .cp-color-fields input[type="number"] { text-align: right; appearance: textfield; }
@@ -1919,8 +1919,9 @@
   height: 34px;
   padding: 0 4px 0 8px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  background: var(--black);
+  border-radius: 7px;
+  /* the same field color as the font picker and every other panel input */
+  background: #141414;
   color: #8d939b;
 }
 .pp-type label:focus-within { border-color: rgba(255, 255, 255, 0.4); color: white; }
