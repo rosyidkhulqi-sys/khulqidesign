@@ -102,17 +102,26 @@ function gradientOf(targets) {
   return target ? target[0][target[1]] : null;
 }
 
-function ColorActions({ targets, onChange, onPicked, onNoColor }) {
-  const canPick = typeof window !== "undefined" && typeof window.EyeDropper === "function";
+// Picks a color: anywhere on screen where the browser can (Chrome, Edge),
+// otherwise from the page being designed (Safari, Firefox), via onPickFromPage.
+function ColorActions({ targets, onChange, onPicked, onNoColor, onPickFromPage }) {
+  const screenPicker = typeof window !== "undefined" && typeof window.EyeDropper === "function";
+  const canPick = screenPicker || Boolean(onPickFromPage);
+  const apply = (hex) => {
+    targets.forEach(([leaf, prop]) => leaf.set(prop, hex));
+    onPicked?.(hex);
+    onChange?.();
+  };
   const pick = async () => {
-    if (!canPick) return;
+    if (!screenPicker) {
+      onPickFromPage?.(apply);
+      return;
+    }
     try {
       const { sRGBHex } = await new window.EyeDropper().open();
-      targets.forEach(([leaf, prop]) => leaf.set(prop, sRGBHex));
-      onPicked?.(sRGBHex);
-      onChange?.();
-    } catch (error) {
-      if (error?.name !== "AbortError") return;
+      apply(sRGBHex);
+    } catch {
+      /* closed without picking */
     }
   };
   const clear = () => {
@@ -123,7 +132,7 @@ function ColorActions({ targets, onChange, onPicked, onNoColor }) {
 
   return (
     <>
-      <button className="pp-color-tool" onClick={pick} disabled={!canPick || !targets.length} title={canPick ? "Pick color from screen" : "Color picker is not supported in this browser"} aria-label="Pick color from screen">
+      <button className="pp-color-tool" onClick={pick} disabled={!canPick || !targets.length} title={screenPicker ? "Pick color from screen" : canPick ? "Pick a color from the page" : "Color picker is not supported in this browser"} aria-label="Pick color from screen">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="m14.5 5.5 4 4-8.7 8.7-4.6 1 1-4.6z" />
           <path d="m13 7 4 4M16.5 3.5l2-2 4 4-2 2" />
@@ -136,7 +145,7 @@ function ColorActions({ targets, onChange, onPicked, onNoColor }) {
   );
 }
 
-function CreateColors({ object, onEdit, onChange }) {
+function CreateColors({ object, onEdit, onChange, onPickFromPage }) {
   const entries = paletteOf(object);
   const allTargets = targetsOf(object);
   const gradient = gradientOf(allTargets);
@@ -152,7 +161,7 @@ function CreateColors({ object, onEdit, onChange }) {
         <div className="pp-color-heading"><p className="cp-label">Colors</p><button onClick={() => onEdit(stopColors[0] ?? "#000000")}>Edit color</button></div>
         <div className="pp-colors">
           <button className="pp-color-chip pp-color-gradient-chip" style={{ background: `linear-gradient(90deg, ${stopColors.join(", ")})` }} onClick={() => onEdit(stopColors[0] ?? "#000000")} aria-label="Edit gradient color" />
-          <ColorActions targets={actionTargets} onChange={onChange} />
+          <ColorActions targets={actionTargets} onChange={onChange} onPickFromPage={onPickFromPage} />
         </div>
       </div>
     );
@@ -178,6 +187,7 @@ function CreateColors({ object, onEdit, onChange }) {
         <ColorActions
           targets={actionTargets}
           onChange={onChange}
+          onPickFromPage={onPickFromPage}
           onPicked={(color) => setActiveColor(color)}
           onNoColor={() => setActiveColor(null)}
         />

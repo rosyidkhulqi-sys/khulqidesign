@@ -874,6 +874,42 @@ function Create({ draft, clearDraft, user = null }) {
     render();
   };
 
+  /* ---------- picking a color from the page ---------- */
+
+  // set while the eyedropper is on: { apply, x, y, hex }
+  const [picker, setPicker] = useState(null);
+
+  const pickFromPage = (apply) => setPicker({ apply, x: 0, y: 0, hex: null });
+
+  // the pixel under the pointer, from the rendered page (not the selection
+  // handles, which sit on a canvas above it)
+  const colorAt = (e) => {
+    const lower = fc.current?.lowerCanvasEl;
+    if (!lower) return null;
+    const r = lower.getBoundingClientRect();
+    const x = Math.floor(((e.clientX - r.left) / r.width) * lower.width);
+    const y = Math.floor(((e.clientY - r.top) / r.height) * lower.height);
+    if (x < 0 || y < 0 || x >= lower.width || y >= lower.height) return null;
+    try {
+      const [red, green, blue] = lower.getContext("2d").getImageData(x, y, 1, 1).data;
+      return `#${[red, green, blue].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+    } catch {
+      // a picture from another site without permission can't be read
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    if (!picker) return;
+    const onKey = (e) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      setPicker(null);
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [picker]);
+
   /* ---------- basic shape bar ---------- */
 
   // minimized to a small tab at the top right, as Illustrator's panels
@@ -1591,6 +1627,28 @@ function Create({ draft, clearDraft, user = null }) {
             <div className="create-artboard">
               <canvas ref={canvasEl} />
 
+              {/* the eyedropper: move over the page, click to take a color */}
+              {picker && (
+                <div
+                  className="ct-picker"
+                  onPointerMove={(e) => setPicker((p) => p && { ...p, x: e.clientX, y: e.clientY, hex: colorAt(e) })}
+                  onClick={(e) => {
+                    const hex = colorAt(e);
+                    if (hex) picker.apply(hex);
+                    setPicker(null);
+                  }}
+                  role="application"
+                  aria-label="Click the page to pick a color. Esc cancels."
+                >
+                  {picker.hex && (
+                    <span className="ct-picker-chip" style={{ left: picker.x, top: picker.y }}>
+                      <i style={{ background: picker.hex }} />
+                      {picker.hex.toUpperCase()}
+                    </span>
+                  )}
+                </div>
+              )}
+
               {floatPos && cropping && (
                 <div className="ct-float ct-float-crop" style={floatPos}>
                   <button onClick={() => finishCrop(false)}>Cancel</button>
@@ -1792,6 +1850,7 @@ function Create({ draft, clearDraft, user = null }) {
                 {/* a photo's colors are its pixels; its fill isn't one of them */}
                 {!(active instanceof FabricImage) && <CreateColors
                   key={colorObjectKey(active)}
+                  onPickFromPage={pickFromPage}
                   object={active}
                   onEdit={(color) => setColorEditor({ mode: "object", color })}
                   onChange={() => {
