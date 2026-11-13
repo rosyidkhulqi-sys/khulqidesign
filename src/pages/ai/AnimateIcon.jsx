@@ -57,6 +57,42 @@ const STYLE_LABELS = { outline: "Outline", glyph: "Glyph", flat: "Flat", gradien
 // formats only Premium members can export; GIF and MP4 stay free
 const PREMIUM_EXPORTS = ["svg", "json"];
 
+// which panel sections are open, remembered on this device
+const SECTIONS_KEY = "kd-animate-sections";
+const SECTIONS_OPEN = { icon: true, look: false, motion: true, timing: false };
+
+function readSections() {
+  try {
+    return { ...SECTIONS_OPEN, ...JSON.parse(localStorage.getItem(SECTIONS_KEY) ?? "{}") };
+  } catch {
+    return SECTIONS_OPEN;
+  }
+}
+
+// One part of the panel that folds away; closed, its header still says
+// what's chosen inside (summary), so nothing is hidden from view entirely.
+function Section({ id, title, summary, open, onToggle, children }) {
+  return (
+    <section className={`animate-section ${open ? "open" : ""}`}>
+      <button
+        type="button"
+        className="animate-section-head"
+        onClick={() => onToggle(id)}
+        aria-expanded={open}
+        aria-controls={`animate-${id}`}
+      >
+        <span className="animate-section-title">{title}</span>
+        {!open && <span className="animate-section-summary">{summary}</span>}
+        <svg className="animate-section-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      {open && <div className="animate-section-body" id={`animate-${id}`}>{children}</div>}
+    </section>
+  );
+}
+
 function AnimateIcon({ initialIcon = null, user = null, setPage }) {
   // back from logging in to export: what the visitor had chosen
   const [kept] = useState(takeAnimate);
@@ -74,6 +110,17 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
   // how the motion eases, and how long it rests between loops
   const [easing, setEasing] = useState(kept?.easing ?? "smooth");
   const [pause, setPause] = useState(kept?.pause ?? 0);
+  const [sections, setSections] = useState(readSections);
+  const toggleSection = (id) =>
+    setSections((open) => {
+      const next = { ...open, [id]: !open[id] };
+      try {
+        localStorage.setItem(SECTIONS_KEY, JSON.stringify(next));
+      } catch {
+        /* storage unavailable */
+      }
+      return next;
+    });
   const [color, setColor] = useState(kept?.color ?? "#000000");
   const [background, setBackground] = useState(kept?.background ?? null);
   // changing the key restarts the animation (Replay)
@@ -340,7 +387,7 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
       </div>
 
       <div className="animate-panel">
-        <p className="animate-label">Icon</p>
+        <Section id="icon" title="Icon" summary={icon?.name ?? "None"} open={sections.icon} onToggle={toggleSection}>
         {/* a small search and the icon styles, so the list stays short */}
         <div className="animate-search">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -404,7 +451,20 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
           ))}
         </div>
         {catalogError && <p className="animate-error" role="alert">{catalogError}</p>}
+        </Section>
 
+        <Section
+          id="look"
+          title="Look"
+          summary={
+            <>
+              {recolorable && <i className="animate-dot" style={{ background: color }} />}
+              <i className={`animate-dot ${background ? "" : "is-none"}`} style={background ? { background } : undefined} />
+            </>
+          }
+          open={sections.look}
+          onToggle={toggleSection}
+        >
         {/* color and background: one row of dots each, as easy as a swatch */}
         {recolorable && (
           <div className="animate-swatches" role="radiogroup" aria-label="Icon color">
@@ -468,7 +528,15 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
           </div>
         </div>
 
-        <p className="animate-label">Motion</p>
+        </Section>
+
+        <Section
+          id="motion"
+          title="Motion"
+          summary={`${presets.find(([id]) => id === preset)?.[1]} · ${speeds.find(([v]) => v === speed)?.[1]} · ${loop ? "Loop" : "Once"}`}
+          open={sections.motion}
+          onToggle={toggleSection}
+        >
         <div className="animate-chips">
           {presets.filter(([id]) => id !== "draw" || canDraw(icon)).map(([id, label]) => (
             <button
@@ -508,6 +576,15 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
           </label>
         </div>
 
+        </Section>
+
+        <Section
+          id="timing"
+          title="Timing"
+          summary={`${wholeIcon(motion) ? `${EASINGS.find(([id]) => id === easing)?.[1]} · ` : ""}${rest ? `${rest} s pause` : "No pause"}`}
+          open={sections.timing}
+          onToggle={toggleSection}
+        >
         {/* Build and Draw keep their own curves */}
         {wholeIcon(motion) && (
           <>
@@ -543,7 +620,9 @@ function AnimateIcon({ initialIcon = null, user = null, setPage }) {
           ))}
         </div>
 
-        <p className="animate-label">Export</p>
+        </Section>
+
+        <p className="animate-label animate-export-label">Export</p>
         <div className="animate-export">
           <button className="is-ready" onClick={() => exportAs("gif")} disabled={!svg || Boolean(making)}>
             {exportLabel("gif", "GIF")}

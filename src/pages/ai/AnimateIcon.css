@@ -16,6 +16,9 @@
   gap: 18px;
   min-height: 560px;
   padding: 36px 24px 24px;
+  /* stays in view while the panel scrolls, so every change can be seen */
+  position: sticky;
+  top: calc(var(--header-h) + 16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
   background-color: #111113;
@@ -281,7 +284,7 @@
 
 @media (max-width: 900px) {
   .animate { grid-template-columns: 1fr; }
-  .animate-workspace { min-height: 0; padding: 20px 16px 16px; }
+  .animate-workspace { position: static; min-height: 0; padding: 20px 16px 16px; }
 }
 
 /* Color and Background: the name on the left, a row of dots on the right */
@@ -384,3 +387,67 @@
   font: 11.5px/1.55 "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   white-space: pre;
 }
+
+/* a short screen keeps the whole artboard and its bar in view */
+@media (min-width: 901px) {
+  .animate-stage { width: min(100%, 440px, calc(100vh - var(--header-h) - 180px)); }
+  .animate-workspace { min-height: min(560px, calc(100vh - var(--header-h) - 32px)); }
+}
+
+/* PANEL SECTIONS: each folds away, showing what's chosen when closed */
+.animate-section + .animate-section { margin-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.07); }
+.animate-section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  color: #c6cad0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.animate-section-title {
+  color: #8d939b;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+.animate-section-head:hover .animate-section-title { color: white; }
+.animate-section-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  margin-left: auto;
+  overflow: hidden;
+  color: #c6cad0;
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.animate-section-chevron { flex: none; margin-left: auto; color: #8d939b; transition: transform 0.15s ease; }
+.animate-section-summary + .animate-section-chevron { margin-left: 0; }
+.animate-section:not(.open) .animate-section-chevron { transform: rotate(-90deg); }
+.animate-section-body { padding-bottom: 14px; }
+.animate-section-body > .animate-label:first-child,
+.animate-section-body > .animate-swatches:first-child { margin-top: 2px; }
+.animate-dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+.animate-dot.is-none {
+  background-color: #f4f4f5;
+  background-image: linear-gradient(45deg, #c9cbd0 25%, transparent 25%), linear-gradient(-45deg, #c9cbd0 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #c9cbd0 75%), linear-gradient(-45deg, transparent 75%, #c9cbd0 75%);
+  background-size: 6px 6px;
+  background-position: 0 0, 0 3px, 3px -3px, -3px 0;
+}
+.animate-export-label { padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.07); }
