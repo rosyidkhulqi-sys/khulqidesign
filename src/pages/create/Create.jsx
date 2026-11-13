@@ -81,6 +81,7 @@ const exportFormats = [
   ["png", "PNG", "High quality image"],
   ["jpg", "JPG", "Smaller file size"],
   ["svg", "SVG", "Scalable vector"],
+  ["pdf", "PDF", "Every page, print quality"],
 ];
 
 const isLocked = (obj) => Boolean(obj?.lockMovementX);
@@ -239,6 +240,8 @@ function Create({ draft, clearDraft, user = null }) {
   const [uploads, setUploads] = useState([]);
   const [name, setName] = useState(opening.name);
   const [menu, setMenu] = useState(null);
+  // a PDF being made: 0..1, or null
+  const [pdfProgress, setPdfProgress] = useState(null);
   const [isEmpty, setIsEmpty] = useState(true);
   const [pageInfo, setPageInfo] = useState({ index: 0, count: 1 });
   // the strip of page pictures under the canvas, open unless closed before
@@ -1269,6 +1272,31 @@ function Create({ draft, clearDraft, user = null }) {
     c.renderAll();
     setActive(null);
 
+    const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const save = (href, file) => {
+      const a = document.createElement("a");
+      a.href = href;
+      a.download = file;
+      a.click();
+    };
+
+    // every page in one file; the open page's latest edits included
+    if (format === "pdf") {
+      if (pdfProgress !== null) return;
+      const pages = currentPages();
+      setPdfProgress(0);
+      import("./exportPdf")
+        .then(({ buildPdf }) => buildPdf(pages, b, setPdfProgress))
+        .then((blob) => {
+          const href = URL.createObjectURL(blob);
+          save(href, `${slug || "khulqidesign"}-${b.w}x${b.h}.pdf`);
+          setTimeout(() => URL.revokeObjectURL(href), 10000);
+        })
+        .catch(() => window.alert("The PDF couldn't be made. A picture from another site may be blocking it; try removing it."))
+        .finally(() => setPdfProgress(null));
+      return;
+    }
+
     let url;
     if (format === "svg") {
       const markup = c.toSVG({ width: b.w, height: b.h, viewBox: { x: 0, y: 0, width: b.w, height: b.h } });
@@ -1277,13 +1305,9 @@ function Create({ draft, clearDraft, user = null }) {
       url = c.toDataURL({ format: format === "jpg" ? "jpeg" : "png", quality: 0.92, multiplier: 1 / c.getZoom() });
     }
 
-    const a = document.createElement("a");
-    a.href = url;
-    const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     const { index, list } = pagesRef.current;
     const pageTag = list.length > 1 ? `-page-${index + 1}` : "";
-    a.download = `${slug || "khulqidesign"}-${b.w}x${b.h}${pageTag}.${format}`;
-    a.click();
+    save(url, `${slug || "khulqidesign"}-${b.w}x${b.h}${pageTag}.${format}`);
   };
 
   /* ---------- canvas lifecycle ---------- */
@@ -1527,7 +1551,9 @@ function Create({ draft, clearDraft, user = null }) {
 
           <div className="ct-menu ct-export">
             <button className="ct-btn primary" onClick={() => setMenu(menu === "download" ? null : "download")}>
-              <Icon name="download" /> Download <Icon name="chevron" size={14} />
+              <Icon name="download" />
+              {pdfProgress === null ? "Download" : `PDF ${Math.round(pdfProgress * 100)}%`}
+              <Icon name="chevron" size={14} />
             </button>
             {menu === "download" && (
               <div className="ct-dropdown is-right">
