@@ -2347,15 +2347,55 @@ function Create({ draft, clearDraft, user = null }) {
                         setProp({ fontFamily });
                       }}
                     />
-                    <label className="pp-row">
-                      <span>Font size</span>
-                      <input
-                        type="number"
-                        className="pp-num"
-                        value={Math.round(active.fontSize)}
-                        onChange={(e) => setProp({ fontSize: Math.max(1, Number(e.target.value)) })}
-                      />
-                    </label>
+                    {/* size, leading, tracking and shadow: icon and number, as in
+                        Illustrator's Character panel; arrow keys step them */}
+                    <div className="pp-type">
+                      <label title="Font size (px)">
+                        <Icon name="fontSize" size={16} />
+                        <input
+                          type="number"
+                          min="1"
+                          value={Math.round(active.fontSize)}
+                          onChange={(e) => setProp({ fontSize: Math.max(1, Number(e.target.value)) })}
+                          aria-label="Font size"
+                        />
+                      </label>
+                      <label title="Line spacing (px between lines)">
+                        <Icon name="leading" size={16} />
+                        <input
+                          type="number"
+                          min="1"
+                          value={Math.round(active.fontSize * (active.lineHeight || 1.16) * 1.13)}
+                          onChange={(e) => {
+                            const px = Number(e.target.value);
+                            if (px > 0) setProp({ lineHeight: Math.max(0.5, px / (active.fontSize * 1.13)) });
+                          }}
+                          aria-label="Line spacing"
+                        />
+                      </label>
+                      <label title="Letter spacing (1/1000 em)">
+                        <Icon name="tracking" size={16} />
+                        <input
+                          type="number"
+                          step="10"
+                          value={active.charSpacing || 0}
+                          onChange={(e) => setProp({ charSpacing: Number(e.target.value) || 0 })}
+                          aria-label="Letter spacing"
+                        />
+                      </label>
+                      <label title="Shadow (0 to 100)">
+                        <Icon name="shadow" size={16} />
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="5"
+                          value={shadowAmount(active)}
+                          onChange={(e) => setShadow(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                          aria-label="Shadow"
+                        />
+                      </label>
+                    </div>
                     <div className="pp-buttons">
                       <button
                         className={Number(active.fontWeight) >= 600 || active.fontWeight === "bold" ? "on" : ""}
@@ -2387,43 +2427,6 @@ function Create({ draft, clearDraft, user = null }) {
                       ))}
                     </div>
 
-                    {/* spacing, case and shadow: the type settings designers expect */}
-                    <label className="pp-row pp-slider">
-                      <span>Letter spacing</span>
-                      <input
-                        type="range"
-                        min="-100"
-                        max="800"
-                        step="10"
-                        value={active.charSpacing || 0}
-                        onChange={(e) => setProp({ charSpacing: Number(e.target.value) })}
-                      />
-                      <output>{Math.round((active.charSpacing || 0) / 10)}</output>
-                    </label>
-                    <label className="pp-row pp-slider">
-                      <span>Line height</span>
-                      <input
-                        type="range"
-                        min="0.7"
-                        max="2.5"
-                        step="0.05"
-                        value={active.lineHeight || 1.16}
-                        onChange={(e) => setProp({ lineHeight: Number(e.target.value) })}
-                      />
-                      <output>{(active.lineHeight || 1.16).toFixed(2)}</output>
-                    </label>
-                    <label className="pp-row pp-slider">
-                      <span>Shadow</span>
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        step="5"
-                        value={shadowAmount(active)}
-                        onChange={(e) => setShadow(Number(e.target.value))}
-                      />
-                      <output>{shadowAmount(active)}</output>
-                    </label>
                     <div className="pp-buttons pp-case" role="group" aria-label="Letter case">
                       <button onClick={() => setCase("upper")} title="UPPERCASE">AA</button>
                       <button onClick={() => setCase("lower")} title="lowercase">aa</button>

@@ -1909,13 +1909,32 @@
 .cs-page.drop-before::before { left: -6px; }
 .cs-page.drop-after::after { right: -6px; }
 
-/* text spacing and shadow: a slider with its number beside it */
-.pp-slider input[type="range"] { flex: 1; min-width: 0; }
-.pp-slider output {
-  min-width: 30px;
+/* the type settings: two columns of icon + number */
+.pp-type { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.pp-type label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 34px;
+  padding: 0 4px 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: var(--black);
+  color: #8d939b;
+}
+.pp-type label:focus-within { border-color: rgba(255, 255, 255, 0.4); color: white; }
+.pp-type input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
   color: var(--white);
-  font-size: 12px;
-  text-align: right;
+  font: inherit;
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
 }
 .pp-case button { font-size: 12px; font-weight: 600; letter-spacing: 0.5px; }

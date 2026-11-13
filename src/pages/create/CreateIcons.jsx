@@ -53,6 +53,11 @@ const paths = {
   objBottom: <><path d="M3 20h18" /><rect x="6" y="5" width="4" height="12" rx="1" /><rect x="14" y="10" width="4" height="7" rx="1" /></>,
   distH: <><path d="M3 4v16M21 4v16" /><rect x="9.5" y="7" width="5" height="10" rx="1" /></>,
   distV: <><path d="M4 3h16M4 21h16" /><rect x="7" y="9.5" width="10" height="5" rx="1" /></>,
+  // type settings, as in Illustrator's Character panel
+  fontSize: <><path d="M3 7V5h9v2M7.5 5v14M5.5 19h4" /><path d="M13 11v-1.5h8V11M17 9.5V19M15.5 19h3" /></>,
+  leading: <><path d="M5 10l3-7 3 7M6.2 7.5h3.6" /><path d="M5 21l3-7 3 7M6.2 18.5h3.6" /><path d="M18 4v16M15.5 6.5 18 4l2.5 2.5M15.5 17.5 18 20l2.5-2.5" /></>,
+  tracking: <><path d="M3 4l3.5 9L10 4M12 13l3.5-9L19 13M13.2 10h4.6" /><path d="M3 19h18M5.5 16.5 3 19l2.5 2.5M18.5 16.5 21 19l-2.5 2.5" /></>,
+  shadow: <><rect x="3" y="3" width="13" height="13" rx="2" /><path d="M19 8v9a2 2 0 0 1-2 2H8" strokeWidth="3" opacity="0.45" /></>,
 };
 
 function Icon({ name, size = 18 }) {
