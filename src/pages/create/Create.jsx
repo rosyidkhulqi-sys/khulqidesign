@@ -1275,6 +1275,86 @@ function Create({ draft, clearDraft, user = null }) {
     render();
   };
 
+  /* ---------- align & distribute ---------- */
+
+  // One element lines up with the page; several line up with each other
+  // (the box around them). edge: left, centerH, right, top, centerV, bottom.
+  // Locked elements stay put.
+  const alignTo = (edge) => {
+    const c = fc.current;
+    const sel = c.getActiveObject();
+    if (!sel) return;
+    const many = sel instanceof ActiveSelection;
+    const objects = many ? sel.getObjects() : [sel];
+    if (many) c.discardActiveObject();
+    const boxes = objects.map((o) => o.getBoundingRect());
+    const area = many
+      ? (() => {
+          const left = Math.min(...boxes.map((b) => b.left));
+          const top = Math.min(...boxes.map((b) => b.top));
+          return {
+            left,
+            top,
+            right: Math.max(...boxes.map((b) => b.left + b.width)),
+            bottom: Math.max(...boxes.map((b) => b.top + b.height)),
+          };
+        })()
+      : { left: 0, top: 0, right: boardRef.current.w, bottom: boardRef.current.h };
+    objects.forEach((o, i) => {
+      if (isLocked(o)) return;
+      const b = boxes[i];
+      const dx = {
+        left: area.left - b.left,
+        centerH: (area.left + area.right) / 2 - (b.left + b.width / 2),
+        right: area.right - (b.left + b.width),
+      }[edge] ?? 0;
+      const dy = {
+        top: area.top - b.top,
+        centerV: (area.top + area.bottom) / 2 - (b.top + b.height / 2),
+        bottom: area.bottom - (b.top + b.height),
+      }[edge] ?? 0;
+      o.set({ left: o.left + dx, top: o.top + dy });
+      o.setCoords();
+    });
+    reselect(objects, many);
+  };
+
+  // equal gaps between three or more elements, keeping the outer two in place
+  const distribute = (axis) => {
+    const c = fc.current;
+    const sel = c.getActiveObject();
+    if (!(sel instanceof ActiveSelection) || sel.size() < 3) return;
+    const objects = sel.getObjects();
+    c.discardActiveObject();
+    const start = axis === "h" ? "left" : "top";
+    const size = axis === "h" ? "width" : "height";
+    const items = objects
+      .map((o) => ({ o, b: o.getBoundingRect() }))
+      .sort((a, b) => a.b[start] - b.b[start]);
+    const first = items[0].b;
+    const last = items[items.length - 1].b;
+    const used = items.reduce((sum, { b }) => sum + b[size], 0);
+    const gap = (last[start] + last[size] - first[start] - used) / (items.length - 1);
+    let at = first[start] + first[size] + gap;
+    items.slice(1, -1).forEach(({ o, b }) => {
+      if (!isLocked(o)) {
+        o.set({ [start]: o[start] + (at - b[start]) });
+        o.setCoords();
+      }
+      at += b[size] + gap;
+    });
+    reselect(objects, true);
+  };
+
+  // picks the same elements again after moving them
+  const reselect = (objects, many) => {
+    const c = fc.current;
+    const next = many ? new ActiveSelection(objects, { canvas: c }) : objects[0];
+    c.setActiveObject(next);
+    setActive(next);
+    render();
+  };
+
   const remove = () => {
     const c = fc.current;
     c.getActiveObjects().forEach((o) => c.remove(o));
@@ -2274,6 +2354,33 @@ function Create({ draft, clearDraft, user = null }) {
                     </label>
                   </>
                 )}
+
+                {/* line up with the page, or with each other when several are picked */}
+                <p className="cp-label">{isSelection ? "Align selection" : "Align to page"}</p>
+                <div className="pp-align" role="group" aria-label="Align">
+                  {[
+                    ["left", "objLeft", "Align left"],
+                    ["centerH", "objCenterH", "Align center"],
+                    ["right", "objRight", "Align right"],
+                    ["top", "objTop", "Align top"],
+                    ["centerV", "objCenterV", "Align middle"],
+                    ["bottom", "objBottom", "Align bottom"],
+                  ].map(([edge, icon, label]) => (
+                    <button key={edge} onClick={() => alignTo(edge)} title={label} aria-label={label} disabled={locked}>
+                      <Icon name={icon} size={16} />
+                    </button>
+                  ))}
+                  {isSelection && active.size() >= 3 && (
+                    <>
+                      <button onClick={() => distribute("h")} title="Distribute horizontally" aria-label="Distribute horizontally">
+                        <Icon name="distH" size={16} />
+                      </button>
+                      <button onClick={() => distribute("v")} title="Distribute vertically" aria-label="Distribute vertically">
+                        <Icon name="distV" size={16} />
+                      </button>
+                    </>
+                  )}
+                </div>
 
                 <p className="cp-label">Size</p>
                 <div className="pp-pair">

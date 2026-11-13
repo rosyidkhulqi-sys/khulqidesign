@@ -44,6 +44,15 @@ const paths = {
   alignLeft: <path d="M4 6h16M4 10h10M4 14h16M4 18h10" />,
   alignCenter: <path d="M4 6h16M7 10h10M4 14h16M7 18h10" />,
   alignRight: <path d="M4 6h16M10 10h10M4 14h16M10 18h10" />,
+  // aligning elements: a guide line and two bars that meet it
+  objLeft: <><path d="M4 3v18" /><rect x="7" y="6" width="12" height="4" rx="1" /><rect x="7" y="14" width="7" height="4" rx="1" /></>,
+  objCenterH: <><path d="M12 3v18" /><rect x="5" y="6" width="14" height="4" rx="1" /><rect x="8" y="14" width="8" height="4" rx="1" /></>,
+  objRight: <><path d="M20 3v18" /><rect x="5" y="6" width="12" height="4" rx="1" /><rect x="10" y="14" width="7" height="4" rx="1" /></>,
+  objTop: <><path d="M3 4h18" /><rect x="6" y="7" width="4" height="12" rx="1" /><rect x="14" y="7" width="4" height="7" rx="1" /></>,
+  objCenterV: <><path d="M3 12h18" /><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="8" width="4" height="8" rx="1" /></>,
+  objBottom: <><path d="M3 20h18" /><rect x="6" y="5" width="4" height="12" rx="1" /><rect x="14" y="10" width="4" height="7" rx="1" /></>,
+  distH: <><path d="M3 4v16M21 4v16" /><rect x="9.5" y="7" width="5" height="10" rx="1" /></>,
+  distV: <><path d="M4 3h16M4 21h16" /><rect x="7" y="9.5" width="10" height="5" rx="1" /></>,
 };
 
 function Icon({ name, size = 18 }) {
