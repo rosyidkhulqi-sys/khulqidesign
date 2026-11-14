@@ -2378,6 +2378,7 @@ function Create({ draft, clearDraft, user = null }) {
                 library={library}
                 dragItem={dragItem}
                 templateTile={templateTile}
+                onAddQr={addQr}
               />
             )}
 

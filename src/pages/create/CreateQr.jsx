@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { QR_MAX } from "./qrCode";
 
-export function QrPanel({ onAdd }) {
+// focus: put the cursor in the field (not when it shows up under a search)
+export function QrPanel({ onAdd, focus = true }) {
   const [text, setText] = useState("");
   const ready = text.trim().length > 0;
   return (
@@ -24,7 +25,7 @@ export function QrPanel({ onAdd }) {
         maxLength={QR_MAX}
         placeholder="yourbrand.com"
         onChange={(e) => setText(e.target.value)}
-        autoFocus
+        autoFocus={focus}
       />
       <button className="cq-add" disabled={!ready}>Add QR code</button>
       <p className="cp-hint">

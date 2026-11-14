@@ -9,6 +9,7 @@ import { shapes } from "./createLibrary";
 import { BasicTile, ElementTile, PagedGrid, SetIconTile, ShapeTile } from "./CreateElements";
 import { saveRecent, withRecent } from "./createRecent";
 import { PhotoTile } from "./CreateBackground";
+import { QrPanel } from "./CreateQr";
 import { elements as trialElements } from "../../data/elementsData";
 import { matchesSearch } from "../../lib/search";
 import { pathFor } from "../../lib/router";
@@ -49,7 +50,10 @@ function VectorTile({ vector, dragItem }) {
   );
 }
 
-function CreateSearch({ query, tab, templates, uploaded, backgrounds, photo, library, dragItem: placeItem, templateTile }) {
+// searches that mean "make a QR code": the maker itself comes first
+const QR_SEARCH = /\b(qr|qrcode|barcode)\b/i;
+
+function CreateSearch({ query, tab, templates, uploaded, backgrounds, photo, library, dragItem: placeItem, templateTile, onAddQr }) {
   // the section open in full ("See all")
   const [view, setView] = useState(null);
   const dragItem = withRecent(placeItem, saveRecent);
@@ -106,9 +110,15 @@ function CreateSearch({ query, tab, templates, uploaded, backgrounds, photo, lib
   }
 
   const term = query.trim();
+  const wantsQr = QR_SEARCH.test(term) && onAddQr;
   return (
     <>
-      {sections.length === 0 && <p className="cp-hint">Nothing found for “{term}”.</p>}
+      {wantsQr && (
+        <div className="cp-found">
+          <QrPanel onAdd={onAddQr} focus={false} />
+        </div>
+      )}
+      {sections.length === 0 && !wantsQr && <p className="cp-hint">Nothing found for “{term}”.</p>}
 
       {sections.map((s) => {
         const short = s.items.slice(0, s.columns === "three" ? 6 : 4);
