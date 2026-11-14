@@ -109,8 +109,9 @@ export function drawWatermark(ctx, w, h) {
   ctx.restore();
 }
 
-// a JPEG no longer than `max` px, optionally watermarked
-async function renderJpeg(bitmap, max, watermark, quality = 0.9) {
+// a picture no longer than \`max\` px, optionally watermarked; JPEG, or WebP
+// when asked and the browser can make it (it's about 70% lighter)
+async function renderImage(bitmap, max, watermark, quality = 0.9, type = "image/jpeg") {
   const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
   const w = Math.round(bitmap.width * scale);
   const h = Math.round(bitmap.height * scale);
@@ -122,7 +123,9 @@ async function renderJpeg(bitmap, max, watermark, quality = 0.9) {
   ctx.fillRect(0, 0, w, h);
   ctx.drawImage(bitmap, 0, 0, w, h);
   if (watermark) drawWatermark(ctx, w, h);
-  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+  let blob = await new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+  // a browser without a WebP encoder hands back a PNG: use JPEG then
+  if (blob && blob.type !== type) blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
   if (!blob) throw new Error("This browser couldn't make the preview");
   return blob;
 }
@@ -135,8 +138,8 @@ export async function makeImages(jpg, watermark) {
       width: bitmap.width,
       height: bitmap.height,
       // the grid shows it about 450 px wide; 900 stays sharp on Retina
-      thumb: await renderJpeg(bitmap, 900, false, 0.8),
-      preview: await renderJpeg(bitmap, 2800, watermark),
+      thumb: await renderImage(bitmap, 900, false, 0.85, "image/webp"),
+      preview: await renderImage(bitmap, 2800, watermark),
     };
   } finally {
     bitmap.close();
@@ -162,7 +165,13 @@ export async function publishVector(item, onStep) {
     const steps = [
       { bucket: "private", key: `${folder}/${name}.eps`, file: item.eps, contentType: "application/postscript", label: "EPS" },
       { bucket: "private", key: `${folder}/${name}.jpg`, file: item.jpg, contentType: "image/jpeg", label: "JPG" },
-      { bucket: "public", key: `${folder}/thumb.jpg`, file: images.thumb, contentType: "image/jpeg", label: "Thumbnail" },
+      {
+        bucket: "public",
+        key: `${folder}/thumb.${images.thumb.type === "image/webp" ? "webp" : "jpg"}`,
+        file: images.thumb,
+        contentType: images.thumb.type,
+        label: "Thumbnail",
+      },
       { bucket: "public", key: `${folder}/preview.jpg`, file: images.preview, contentType: "image/jpeg", label: "Preview" },
     ];
     const total = steps.reduce((sum, s) => sum + s.file.size, 0);
