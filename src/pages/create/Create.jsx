@@ -61,6 +61,8 @@ import { aiReady } from "../../lib/ai";
 import { MODELS, removeBackground, upscale } from "../../lib/aiLocal";
 import NumberInput from "../../components/NumberInput";
 import { fetchMembership } from "../../lib/billing";
+import { emptyKit, fetchBrandKit, saveBrandKit } from "../../lib/brandKit";
+import CreateBrand from "./CreateBrand";
 
 const PANEL_KEY = "kd-create-panel";
 const PAGE_KEY = "kd-create-page";
@@ -75,7 +77,7 @@ const DRAG_TYPE = "application/x-kd-item";
 const UNTITLED = "Untitled design";
 
 // icons, vectors and footage live inside Elements, as Canva groups them
-const tabs = ["templates", "elements", "background", "text", "uploads", "layers", "projects", "ai"];
+const tabs = ["templates", "elements", "background", "text", "brand", "uploads", "layers", "projects", "ai"];
 // the tabs that browse the library, under the one search box
 const SEARCH_TABS = ["templates", "elements", "background"];
 const tabLabel = (t) => (t === "ai" ? "AI" : t[0].toUpperCase() + t.slice(1));
@@ -261,10 +263,16 @@ function Create({ draft, clearDraft, user = null }) {
   const [exportClear, setExportClear] = useState(false);
   const [exportNote, setExportNote] = useState(null);
   const [canPremium, setCanPremium] = useState(false);
+  // the member's brand kit (Premium), saved to their account a moment after a change
+  const [brandKit, setBrandKit] = useState(emptyKit);
+  const [brandSaving, setBrandSaving] = useState(false);
+  const [brandError, setBrandError] = useState(null);
+  const brandTimer = useRef(null);
   useEffect(() => {
     if (!user) return;
     let alive = true;
     fetchMembership(user.id).then((m) => alive && setCanPremium(Boolean(m?.canUsePremium))).catch(() => {});
+    fetchBrandKit(user.id).then((kit) => alive && setBrandKit(kit)).catch(() => {});
     return () => {
       alive = false;
     };
@@ -866,16 +874,53 @@ function Create({ draft, clearDraft, user = null }) {
     if (object) place(object, point);
   };
 
-  const addText = (preset, point) => {
+  // new text takes the brand fonts when the member has a brand kit:
+  // the heading font for bold presets, the body font for the rest
+  const addText = async (preset, point) => {
     const k = unit() / 1080;
+    const brandFont = canPremium ? (preset.weight >= 600 ? brandKit.headingFont : brandKit.bodyFont) : null;
+    const fontFamily = brandFont || "Space Grotesk";
+    if (brandFont) await loadFont(brandFont);
     const text = new Textbox(preset.label, {
       width: boardRef.current.w * 0.8,
       fontSize: Math.round(preset.size * k),
       fontWeight: preset.weight,
-      fontFamily: "Space Grotesk",
+      fontFamily,
       fill: "#1d1d1d",
     });
     place(text, point);
+  };
+
+  /* ---------- brand kit ---------- */
+
+  const changeBrandKit = (kit) => {
+    setBrandKit(kit);
+    setBrandError(null);
+    if (!user || !canPremium) return;
+    clearTimeout(brandTimer.current);
+    setBrandSaving(true);
+    brandTimer.current = setTimeout(() => {
+      saveBrandKit(user.id, kit)
+        .catch(() => setBrandError("Couldn't save the brand kit. Check your connection."))
+        .finally(() => setBrandSaving(false));
+    }, 600);
+  };
+
+  // a brand color paints the selection (every colored part of an icon or
+  // group), or the page when nothing is selected
+  const applyBrandColor = (color) => {
+    const obj = fc.current?.getActiveObject();
+    if (!obj) return setBackground(color);
+    const parts = obj instanceof Group || obj instanceof ActiveSelection ? obj.getObjects() : [obj];
+    const paint = (o) => {
+      if (o instanceof Group) return o.getObjects().forEach(paint);
+      if (o instanceof FabricImage) return;
+      if (o.fill && o.fill !== "transparent" && o.fill !== "none") o.set({ fill: color });
+      else if (o.stroke) o.set({ stroke: color });
+    };
+    parts.forEach(paint);
+    obj.set({ dirty: true });
+    render();
   };
 
   const addSvg = async (markup, point) => {
@@ -2040,6 +2085,20 @@ function Create({ draft, clearDraft, user = null }) {
               </div>
             )}
 
+            {tab === "brand" && (
+              <CreateBrand
+                kit={brandKit}
+                onChange={changeBrandKit}
+                canUse={canPremium}
+                signedIn={Boolean(user)}
+                onLogin={() => askLogin("design")}
+                onUseColor={applyBrandColor}
+                onUseLogo={(src) => (src.startsWith("data:image/svg") ? addSvg(atob(src.split(",")[1]), undefined) : addImage(src))}
+                saving={brandSaving}
+                error={brandError}
+              />
+            )}
+
             {tab === "uploads" && (
               <>
                 <button className="cp-upload" onClick={() => fileInput.current.click()}>
@@ -2365,6 +2424,7 @@ function Create({ draft, clearDraft, user = null }) {
                 initialColor={colorEditor.color}
                 mode={colorEditor.mode}
                 documentColors={colorEditor.documentColors}
+                brandColors={canPremium ? brandKit.colors : []}
                 onBackgroundChange={setBackground}
                 onChange={() => {
                   active?.set("dirty", true);

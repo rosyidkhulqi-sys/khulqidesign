@@ -5,7 +5,7 @@ import NumberInput from "../../components/NumberInput";
 
 const COLOR_GROUPS = [
   {
-    name: "Brand kit",
+    name: "Basics",
     colors: [
       ["Brand red", "#f21d2b"], ["Black", "#000000"], ["White", "#ffffff"],
       ["Warm grey", "#8d939b"], ["Deep grey", "#25272a"], ["Paper", "#f4f1ea"],
@@ -200,7 +200,11 @@ function CreateColors({ object, onEdit, onChange, onPickFromPage }) {
   );
 }
 
-export function CreateColorPanel({ object, initialColor = "#000000", mode = "object", documentColors = [], onBackgroundChange, onChange, onClose }) {
+export function CreateColorPanel({ object, initialColor = "#000000", mode = "object", documentColors = [], brandColors = [], onBackgroundChange, onChange, onClose }) {
+  // the member's own brand colors come first, when they have a brand kit
+  const groups = brandColors.length
+    ? [{ name: "Brand kit", colors: brandColors.map((c) => [c.toUpperCase(), c]) }, ...COLOR_GROUPS]
+    : COLOR_GROUPS;
   const initialEntries = object ? paletteOf(object) : [];
   const initialEntry = initialEntries.find((entry) => entry.color === initialColor) ?? initialEntries[0];
   const initialTargets = initialEntry?.targets ?? (object ? targetsOf(object) : []);
@@ -221,7 +225,7 @@ export function CreateColorPanel({ object, initialColor = "#000000", mode = "obj
   const targetRef = useRef(initialTargets);
 
   const entries = object ? paletteOf(object) : [];
-  const filteredColors = COLOR_GROUPS.flatMap((group) => group.colors)
+  const filteredColors = groups.flatMap((group) => group.colors)
     .filter(([name, color]) => !search || `${name} ${color}`.toLowerCase().includes(search.trim().toLowerCase()));
 
   const setSelectedColor = (color, nextAlpha = 1, apply = true) => {
@@ -426,7 +430,7 @@ export function CreateColorPanel({ object, initialColor = "#000000", mode = "obj
       </section>
 
       <section className="cp-color-section cp-preset-list">
-        {COLOR_GROUPS.map((group) => {
+        {groups.map((group) => {
           const colors = group.colors.filter(([name, color]) => !search || `${name} ${color}`.toLowerCase().includes(search.trim().toLowerCase()));
           if (!colors.length) return null;
           return (
