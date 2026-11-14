@@ -11,14 +11,6 @@ import HomeAiDemo from "./HomeAiDemo";
 import HomeReel from "./HomeReel";
 import AiSearchButton from "../../components/AiSearchButton";
 
-const libraryLinks = [
-  { page: "icons", label: "Icons" },
-  { page: "vectors", label: "Vectors" },
-  { page: "logos", label: "Logos" },
-  { page: "templates", label: "Templates" },
-  { page: "footage", label: "Footage" },
-  { page: "create", label: "Create" },
-];
 
 // How it works: the three ways to get a design here, in the order most
 // visitors need them. flow is the short path; cta opens the place to start.
@@ -45,6 +37,16 @@ const ways = [
     flow: ["Pick a logo", "Buy once", "Yours alone"],
     cta: ["Browse logos", "logos"],
   },
+];
+
+// popular searches under the hero search bar: the words, and the library
+// they open in (picked from what's in the store)
+const POPULAR = [
+  ["Abstract background", "vectors"],
+  ["Business icons", "icons"],
+  ["Mascot logo", "logos"],
+  ["Event poster", "templates"],
+  ["Abstract footage", "footage"],
 ];
 
 // free with an account, running in the visitor's browser
@@ -236,9 +238,11 @@ function Home({ setPage, user = null }) {
             <button type="submit" className="home-search-go">Search</button>
           </form>
 
+          {/* popular searches: ideas of what to look for, one click to results */}
           <div className="home-chips">
-            {libraryLinks.filter((item) => item.page !== "create").map((item) => (
-              <button key={item.page} onClick={go(item.page)}>{item.label}</button>
+            <span className="home-chips-label">Popular:</span>
+            {POPULAR.map(([words, page]) => (
+              <button key={words} onClick={() => { setPage(page, words); window.scrollTo(0, 0); }}>{words}</button>
             ))}
           </div>
 
