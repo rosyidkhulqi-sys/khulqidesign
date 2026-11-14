@@ -75,7 +75,7 @@ function CreateSearch({ query, tab, templates, uploaded, backgrounds, photo, lib
       : <SetIconTile key={i.id} icon={i} dragItem={dragItem} />;
 
   const sections = [
-    { id: "templates", title: "Templates", columns: "two", tile: templateTile },
+    { id: "templates", title: "Templates", columns: "masonry", tile: templateTile },
     { id: "elements", title: "Elements", columns: "three", tile: elementTile },
     { id: "icons", title: "Icons", columns: "three", tile: iconTile },
     { id: "vectors", title: "Vectors", columns: "two", tile: (v) => <VectorTile key={v.id} vector={v} dragItem={dragItem} /> },
@@ -111,7 +111,7 @@ function CreateSearch({ query, tab, templates, uploaded, backgrounds, photo, lib
       {sections.length === 0 && <p className="cp-hint">Nothing found for “{term}”.</p>}
 
       {sections.map((s) => {
-        const short = s.items.slice(0, s.columns === "two" ? 4 : 6);
+        const short = s.items.slice(0, s.columns === "three" ? 6 : 4);
         return (
           <div key={s.id} className="cp-found">
             <div className="cp-head">
@@ -120,7 +120,7 @@ function CreateSearch({ query, tab, templates, uploaded, backgrounds, photo, lib
                 <button className="cp-all" onClick={() => setView(s.id)}>See all ({s.items.length})</button>
               )}
             </div>
-            <div className={`cp-grid ${s.columns}`}>{short.map(s.tile)}</div>
+            <div className={s.columns === "masonry" ? "cp-masonry" : `cp-grid ${s.columns}`}>{short.map(s.tile)}</div>
           </div>
         );
       })}

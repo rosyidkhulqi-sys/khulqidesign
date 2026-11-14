@@ -2116,3 +2116,8 @@
 .cb-locked p { margin: 0; color: #8d939b; font-size: 13px; line-height: 1.5; }
 .cb-badge { padding: 2px 8px; border-radius: 999px; background: rgba(245, 183, 0, 0.16); color: #f5c94a; font-size: 11px; font-weight: 600; }
 .cb-locked .ct-btn { text-decoration: none; }
+
+/* templates of different shapes flow down two columns, Pinterest-style,
+   so a short business card leaves no gap beside a tall story */
+.cp-masonry { columns: 2; column-gap: 8px; }
+.cp-masonry .cp-template { display: block; width: 100%; margin: 0 0 8px; break-inside: avoid; }

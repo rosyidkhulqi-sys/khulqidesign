@@ -134,7 +134,7 @@ export function PagedGrid({ items, renderTile, columns = "three" }) {
 
   return (
     <>
-      <div className={`cp-grid ${columns}`}>{items.slice(0, count).map(renderTile)}</div>
+      <div className={columns === "masonry" ? "cp-masonry" : `cp-grid ${columns}`}>{items.slice(0, count).map(renderTile)}</div>
       {count < items.length && <div ref={end} className="cp-more" aria-hidden="true" />}
     </>
   );

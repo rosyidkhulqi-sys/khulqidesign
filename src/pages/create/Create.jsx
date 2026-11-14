@@ -2022,7 +2022,7 @@ function Create({ draft, clearDraft, user = null }) {
               />
             )}
 
-            {!searching && tab === "templates" && <div className="cp-grid two">{allDesigns.map(templateTile)}</div>}
+            {!searching && tab === "templates" && <div className="cp-masonry">{allDesigns.map(templateTile)}</div>}
 
             {!searching && tab === "elements" && <ElementsPanel dragItem={dragItem} uploaded={dbElements} />}
             {!searching && tab === "background" && (
