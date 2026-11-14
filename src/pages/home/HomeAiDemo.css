@@ -33,9 +33,10 @@
 }
 /* Upscale: the whole logo, and a magnifier on the face (centre at 50%, 54%
    of the square picture) where the line sweeps from 250 px to 4× */
-.is-lens { background: #fff; }
+/* the same light panel as the other cards; the logo's white melts into it */
+.is-lens { background: #f3f3f1; }
 /* the logo whole on the left, the magnifier on the right */
-.is-lens .ha-whole { object-fit: contain; object-position: 12% 50%; padding: 7% 0; }
+.is-lens .ha-whole { object-fit: contain; object-position: 12% 50%; padding: 7% 0; mix-blend-mode: multiply; }
 .ha-lens {
   position: absolute;
   left: 70%;
