@@ -1,14 +1,16 @@
 // How it works, shown rather than told (as Magnific and Apple do): the three
 // ways on the left, one at a time, each with a progress line that moves on to
 // the next; on the right a stage of the real thing: assets from the store
-// that drift with the pointer, the Create editor as it is (zooming where the
-// pointer goes), and a logo bought once. Click a way to stay on it.
+// that drift with the pointer; the Create editor recorded at work (a color
+// changed, the headline retyped); and a logo's page recorded as its mockups
+// are tried. Each recording zooms where the pointer is. Click a way to stay.
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { publicUrl } from "../../lib/r2";
 import "./HomeShowcase.css";
 
-const STEP_MS = 7000;
+// how long each way stays; Make it yours plays its whole edit first
+const STEP_MS = [7000, 9500, 8000];
 
 // words typed into the Download stage's search bar
 const SEARCHES = ["Abstract background", "Business icons", "Ocean footage"];
@@ -147,6 +149,9 @@ function HomeShowcase({ ways, covers = {}, go }) {
               <div className="hs-way-body">
                 <div>
                   <p>{w.text}</p>
+                  <ol className="hs-flow">
+                    {w.flow.map((step) => <li key={step}>{step}</li>)}
+                  </ol>
                   {w.cta[1].startsWith("#") ? (
                     <a href={w.cta[1]}>{w.cta[0]} →</a>
                   ) : (
@@ -158,7 +163,7 @@ function HomeShowcase({ ways, covers = {}, go }) {
               <span
                 key={`${i}-${active}`}
                 className="hs-progress"
-                style={{ animationDuration: `${STEP_MS}ms` }}
+                style={{ animationDuration: `${STEP_MS[i] ?? 7000}ms` }}
                 onAnimationEnd={() => i === active && setActive((active + 1) % ways.length)}
               />
             </li>
@@ -186,22 +191,34 @@ function HomeShowcase({ ways, covers = {}, go }) {
 
         {/* 02 MAKE IT YOURS: the editor as it is */}
         <div className={`hs-scene hs-edit ${active === 1 ? "is-on" : ""}`} aria-hidden={active !== 1}>
+          {/* recorded in Create: the shapes picked, a color changed, the
+              headline retyped; the pointer goes where the change was made */}
           <div className="hs-shot">
-            <img src="/showcase/create.webp" alt="" loading="lazy" />
+            <div className="hs-shot-zoom">
+              <img className="hs-frame hs-f1" src="/showcase/edit-1.webp" alt="" loading="lazy" />
+              <img className="hs-frame hs-f2" src="/showcase/edit-2.webp" alt="" loading="lazy" />
+              <img className="hs-frame hs-f3" src="/showcase/edit-3.webp" alt="" loading="lazy" />
+              <svg className="hs-pointer" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 3l14 8-6.2 1.6L10 19z" fill="#fff" stroke="#0a0b0d" strokeWidth="1.4" strokeLinejoin="round" />
+              </svg>
+            </div>
           </div>
-          <span className="hs-chip hs-chip-a">
-            <i style={{ background: "#F5B700" }} /><i style={{ background: "#2D6CDF" }} /><i style={{ background: "#E63946" }} />
-            Your brand colors
-          </span>
           <span className="hs-chip hs-chip-b">Edit in the browser · no install</span>
         </div>
 
-        {/* 03 OWN IT OUTRIGHT: one buyer */}
+        {/* 03 A LOGO: its page recorded on the Logos library, the pointer
+            trying it on dark, a business card and a social profile */}
         <div className={`hs-scene hs-own ${active === 2 ? "is-on" : ""}`} aria-hidden={active !== 2}>
-          <img className="hs-card hs-logo" src={covers.logos?.[0] ?? "/covers/logos.jpg"} alt="" loading="lazy" />
-          <span className="hs-chip hs-chip-c"><b>Exclusive</b> · sold to one buyer</span>
-          <span className="hs-chip hs-chip-d">AI · EPS · SVG · PNG · full rights</span>
-          <span className="hs-chip hs-chip-e">✓ Taken off sale</span>
+          <div className="hs-shot is-logo">
+            <div className="hs-shot-zoom">
+              {[1, 2, 3, 4].map((n) => (
+                <img key={n} className={`hs-frame hs-l${n}`} src={`/showcase/logo-${n}.webp`} alt="" loading="lazy" />
+              ))}
+              <svg className="hs-pointer" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 3l14 8-6.2 1.6L10 19z" fill="#fff" stroke="#0a0b0d" strokeWidth="1.4" strokeLinejoin="round" />
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
     </div>

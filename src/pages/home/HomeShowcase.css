@@ -24,7 +24,7 @@
 }
 .hs-side h2 em { color: var(--red); font-family: "Instrument Serif", serif; font-weight: 400; letter-spacing: -0.02em; }
 .hs-ways { display: grid; gap: 4px; margin: auto 0 0; padding: 32px 0 0; list-style: none; }
-.hs-ways li { position: relative; padding: 0 0 14px; }
+.hs-ways > li { position: relative; padding: 0 0 14px; }
 .hs-way-head {
   display: flex;
   align-items: center;
@@ -54,6 +54,11 @@
 .hs-way-body > div { display: grid; min-height: 0; overflow: hidden; }
 .is-on > .hs-way-body { grid-template-rows: 1fr; opacity: 1; }
 .hs-way-body p { margin: 0 0 0 34px; color: #aeb0b2; font-size: 15px; line-height: 1.55; }
+/* the short path, as steps joined by arrows */
+.hs-flow { display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 10px 0 0 34px; padding: 0; list-style: none; }
+.hs-flow li { display: flex; align-items: center; gap: 6px; color: #d6d7d8; font-size: 12.5px; font-weight: 600; }
+.hs-flow li::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--red); }
+.hs-flow li:not(:last-child)::after { content: "→"; color: #666; font-weight: 400; }
 .hs-way-body a,
 .hs-link {
   justify-self: start;
@@ -70,7 +75,7 @@
 .hs-way-body a:hover,
 .hs-link:hover { color: var(--red); }
 /* a hairline under each way; the open one fills while it's shown */
-.hs-ways li::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: #26292d; }
+.hs-ways > li::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: #26292d; }
 .hs-progress { position: absolute; left: 0; bottom: 0; z-index: 1; height: 2px; width: 0; background: var(--white); }
 .is-on > .hs-progress { width: 100%; animation: hs-fill linear both; animation-play-state: paused; }
 .hs.is-running .is-on > .hs-progress { animation-play-state: running; }
@@ -161,13 +166,43 @@
   border-radius: 14px;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
-.hs-shot img {
-  display: block;
-  width: 100%;
+/* the frames and the pointer zoom together, where the pointer of the visitor is */
+.hs-shot-zoom {
+  position: relative;
+  aspect-ratio: 1800 / 1040;
   transform-origin: var(--zx) var(--zy);
   transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
-.hs-stage:hover .hs-shot img { transform: scale(1.6); }
+.hs-stage:hover .hs-shot-zoom { transform: scale(1.6); }
+.hs-frame { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; }
+.hs-f1 { opacity: 1; }
+.hs-edit.is-on .hs-f2 { animation: hs-f2 9.5s linear infinite; }
+.hs-edit.is-on .hs-f3 { animation: hs-f3 9.5s linear infinite; }
+@keyframes hs-f2 { 0%, 29% { opacity: 0; } 31%, 58% { opacity: 1; } 60%, 100% { opacity: 0; } }
+@keyframes hs-f3 { 0%, 58% { opacity: 0; } 60%, 96% { opacity: 1; } 99%, 100% { opacity: 0; } }
+/* where the pointer goes: the yellow swatch (84.9%, 16.7%), then the headline (49.1%, 55.8%) */
+.hs-pointer {
+  position: absolute;
+  left: 62%;
+  top: 88%;
+  width: 3%;
+  margin: -0.5% 0 0 -0.8%;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+.hs-edit.is-on .hs-pointer { animation: hs-point 9.5s ease-in-out infinite; }
+@keyframes hs-point {
+  0% { left: 62%; top: 88%; transform: scale(1); }
+  20% { left: 84.9%; top: 16.7%; transform: scale(1); }
+  25% { left: 84.9%; top: 16.7%; transform: scale(0.75); }
+  29%, 42% { left: 84.9%; top: 16.7%; transform: scale(1); }
+  53% { left: 49.1%; top: 55.8%; transform: scale(1); }
+  55% { left: 49.1%; top: 55.8%; transform: scale(0.75); }
+  56.5% { left: 49.1%; top: 55.8%; transform: scale(1); }
+  58% { left: 49.1%; top: 55.8%; transform: scale(0.75); }
+  59.5%, 88% { left: 49.1%; top: 55.8%; transform: scale(1); }
+  100% { left: 62%; top: 88%; transform: scale(1); }
+}
+
 .hs-chip {
   display: inline-flex;
   align-items: center;
@@ -186,14 +221,36 @@
 .hs-chip i { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3); }
 .hs-chip i:last-of-type { margin-right: 4px; }
 .hs-chip b { color: var(--red); font-weight: 700; }
-.hs-chip-a { --depth: 1.8; left: 4%; bottom: 9%; }
 .hs-chip-b { --depth: 2.2; right: 4%; top: 4%; }
 
+/* 03: the logo page, its mockups tried one after another */
+.hs-shot.is-logo { top: 12%; }
+.hs-shot.is-logo .hs-shot-zoom { aspect-ratio: 1600 / 919; }
+.hs-l1 { opacity: 1; }
+.hs-own.is-on .hs-l2 { animation: hs-l2 8s linear infinite; }
+.hs-own.is-on .hs-l3 { animation: hs-l3 8s linear infinite; }
+.hs-own.is-on .hs-l4 { animation: hs-l4 8s linear infinite; }
+@keyframes hs-l2 { 0%, 24% { opacity: 0; } 25%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes hs-l3 { 0%, 49% { opacity: 0; } 50%, 74% { opacity: 1; } 75%, 100% { opacity: 0; } }
+@keyframes hs-l4 { 0%, 74% { opacity: 0; } 75%, 97% { opacity: 1; } 99%, 100% { opacity: 0; } }
+/* the tabs sit at 4.9%, 11.2%, 19.8% and 27.9% across, 80.8% down */
+.hs-own .hs-pointer { left: 4.9%; top: 80.8%; }
+.hs-own.is-on .hs-pointer { animation: hs-tabs 8s ease-in-out infinite; }
+@keyframes hs-tabs {
+  0%, 16% { left: 4.9%; top: 82%; transform: scale(1); }
+  22% { left: 11.2%; top: 82%; transform: scale(1); }
+  24% { left: 11.2%; top: 82%; transform: scale(0.75); }
+  26%, 41% { left: 11.2%; top: 82%; transform: scale(1); }
+  47% { left: 19.8%; top: 82%; transform: scale(1); }
+  49% { left: 19.8%; top: 82%; transform: scale(0.75); }
+  51%, 66% { left: 19.8%; top: 82%; transform: scale(1); }
+  72% { left: 27.9%; top: 82%; transform: scale(1); }
+  74% { left: 27.9%; top: 82%; transform: scale(0.75); }
+  76%, 92% { left: 27.9%; top: 82%; transform: scale(1); }
+  100% { left: 4.9%; top: 82%; transform: scale(1); }
+}
+
 /* 03 */
-.hs-logo { --depth: 0.8; left: 50%; top: 50%; width: 46%; aspect-ratio: 4 / 3; margin: -17% 0 0 -23%; }
-.hs-chip-c { --depth: 1.8; left: 12%; top: 16%; }
-.hs-chip-d { --depth: 2.2; right: 8%; bottom: 14%; }
-.hs-chip-e { --depth: 1.4; left: 14%; bottom: 20%; color: #8ff0b1; }
 
 @media (max-width: 900px) {
   .hs { grid-template-columns: 1fr; }
@@ -208,5 +265,7 @@
   .hs-scene > *,
   .hs-shot img,
   .hs-way-body { transition: none; }
-  .hs-caret { animation: none; }
+  .hs-caret,
+  .hs-frame,
+  .hs-pointer { animation: none !important; }
 }
