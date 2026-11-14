@@ -37,3 +37,6 @@ public/trial-footage/*
 # Logos page shows are in git
 public/trial-logos/*
 !public/trial-logos/preview/
+
+# originals for the Home showcase stay local; only the small WebP versions ship
+public/showcase/M *

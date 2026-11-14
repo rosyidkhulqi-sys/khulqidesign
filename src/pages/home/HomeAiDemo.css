@@ -31,6 +31,10 @@
   background:
     repeating-conic-gradient(#e7e7e4 0% 25%, #ffffff 0% 50%) 0 0 / 18px 18px;
 }
+/* close in on the face, where 250 px can't hold the detail and 4× can;
+   both sides framed the same */
+.is-upscale { background: #fff; }
+.is-upscale img { object-fit: cover; transform: scale(2.3); transform-origin: 50% 54%; }
 .is-upscale .ha-after { background: #fff; }
 .ha-line {
   position: absolute;

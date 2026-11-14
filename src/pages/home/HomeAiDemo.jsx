@@ -99,7 +99,7 @@ function HomeAiDemo({ tool }) {
         className="is-upscale"
         before="/showcase/ai-upscale-before.webp"
         after="/showcase/ai-upscale-after.webp"
-        labels={["180 px", "4× · 720 px"]}
+        labels={["250 px", "4× · 1000 px"]}
       />
     );
   }
