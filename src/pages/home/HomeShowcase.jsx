@@ -82,8 +82,12 @@ async function fetchStage() {
       .order("published_at", { ascending: false })
       .limit(count)
       .then(({ data }) => (data ?? []).map((row) => publicUrl(row[field])));
-  const [vectors, icons] = await Promise.all([pick("vector", "thumb_key", 3), pick("icon", "thumb_key", 4)]);
-  return { vectors, icons };
+  const [vectors, icons, footage] = await Promise.all([
+    pick("vector", "thumb_key", 3),
+    pick("icon", "thumb_key", 6),
+    pick("footage", "thumb_key", 3),
+  ]);
+  return { vectors, icons, footage };
 }
 
 // ways: [{ n, title, text, flow, cta: [label, target] }]; covers: Home's
@@ -91,7 +95,7 @@ async function fetchStage() {
 function HomeShowcase({ ways, covers = {}, go }) {
   const [active, setActive] = useState(0);
   const [held, setHeld] = useState(false); // clicked: stays on that way
-  const [stage, setStage] = useState({ vectors: [], icons: [] });
+  const [stage, setStage] = useState({ vectors: [], icons: [], footage: [] });
   const [inView, setInView] = useState(false);
   // the Download stage's search, as an index into SEARCHES
   const [phrase, setPhrase] = useState(0);
@@ -132,6 +136,7 @@ function HomeShowcase({ ways, covers = {}, go }) {
   };
 
   const v = stage.vectors;
+  const f = stage.footage;
   const clip = covers.reel?.[0];
   const poster = covers.footage?.[0] ?? "/covers/footage.jpg";
   const run = inView && !reduced;
@@ -186,21 +191,27 @@ function HomeShowcase({ ways, covers = {}, go }) {
         {/* 01 DOWNLOAD: the store itself */}
         <div
           className={`hs-scene hs-get ${active === 0 ? "is-on" : ""}`}
-          data-kind={run ? SEARCHES[phrase][1] : undefined}
+          data-kind={run ? SEARCHES[phrase][1] : "vector"}
           aria-hidden={active !== 0}
         >
+          {/* each search shows its own results; the others are gone */}
           <img className="hs-card hs-a is-vector" src={v[0] ?? "/covers/vectors.jpg"} alt="" loading="lazy" />
+          <img className="hs-card hs-b is-vector" src={v[2] ?? v[0] ?? "/covers/vectors.jpg"} alt="" loading="lazy" />
+          <img className="hs-card hs-c is-vector" src={v[1] ?? "/covers/vectors.jpg"} alt="" loading="lazy" />
+
+          <div className="hs-card hs-icons is-icon">
+            {(stage.icons.length ? stage.icons : []).map((src) => (
+              <img key={src} src={src} alt="" loading="lazy" />
+            ))}
+          </div>
+
+          <img className="hs-card hs-a is-footage" src={f[1] ?? poster} alt="" loading="lazy" />
           {clip && run && active === 0 ? (
             <video className="hs-card hs-b is-footage" src={clip} poster={poster} autoPlay muted loop playsInline />
           ) : (
             <img className="hs-card hs-b is-footage" src={poster} alt="" loading="lazy" />
           )}
-          <img className="hs-card hs-c is-vector" src={v[1] ?? covers.templates?.[0] ?? "/covers/logos.jpg"} alt="" loading="lazy" />
-          <div className="hs-card hs-d is-icon">
-            {(stage.icons.length ? stage.icons : ["/covers/icons.jpg"]).map((src) => (
-              <img key={src} src={src} alt="" loading="lazy" />
-            ))}
-          </div>
+          <img className="hs-card hs-c is-footage" src={f[2] ?? poster} alt="" loading="lazy" />
           <Typing phrases={TYPED} run={run && active === 0} onPhrase={setPhrase} />
         </div>
 
