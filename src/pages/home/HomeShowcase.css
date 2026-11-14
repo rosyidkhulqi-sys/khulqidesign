@@ -95,22 +95,29 @@
     radial-gradient(50% 60% at 20% 90%, rgba(45, 108, 223, 0.14), transparent 70%),
     #0e1013;
 }
-.hs-scene { position: absolute; inset: 0; pointer-events: none; }
+/* scenes take turns: the old one leaves quickly, then the new one comes in,
+   so two compositions never sit half-faded on top of each other */
+.hs-scene {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0s linear 0.25s;
+}
+.hs-scene.is-on {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.5s ease 0.2s, visibility 0s linear 0s;
+}
+/* each piece drifts with the pointer by its depth, and settles in as it arrives */
 .hs-scene > * {
   position: absolute;
-  opacity: 0;
-  transform: translate(calc(var(--mx) * var(--depth, 1) * 26px), calc(var(--my) * var(--depth, 1) * 26px)) scale(0.94);
-  transition: opacity 0.5s ease, transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+  scale: 0.97;
+  transform: translate(calc(var(--mx) * var(--depth, 1) * 26px), calc(var(--my) * var(--depth, 1) * 26px));
+  transition: scale 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.2s, transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
-.hs-scene.is-on > * {
-  opacity: 1;
-  transform: translate(calc(var(--mx) * var(--depth, 1) * 26px), calc(var(--my) * var(--depth, 1) * 26px)) scale(1);
-}
-/* one after another as a scene comes in */
-.hs-scene.is-on > :nth-child(2) { transition-delay: 0.06s, 0s; }
-.hs-scene.is-on > :nth-child(3) { transition-delay: 0.12s, 0s; }
-.hs-scene.is-on > :nth-child(4) { transition-delay: 0.18s, 0s; }
-.hs-scene.is-on > :nth-child(5) { transition-delay: 0.24s, 0s; }
+.hs-scene.is-on > * { scale: 1; }
 
 .hs-card {
   border-radius: 14px;
@@ -269,16 +276,25 @@
 .hs-get.is-on[data-kind="vector"] .hs-card:not(.is-vector),
 .hs-get.is-on[data-kind="icon"] .hs-card:not(.is-icon),
 .hs-get.is-on[data-kind="footage"] .hs-card:not(.is-footage) { opacity: 0; scale: 0.94; }
-/* Icons: one white sheet of six */
+/* Icons: two white sheets, glyph and outline, each with its name */
 .hs-icons {
-  --depth: 1;
-  left: 24%;
-  top: 12%;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8%;
-  width: 46%;
-  padding: 6%;
+  gap: 10%;
+  width: 36%;
+  padding: 9% 5% 5%;
   background: #fff;
 }
 .hs-icons img { width: 100%; aspect-ratio: 1; object-fit: contain; }
+.hs-icons b {
+  position: absolute;
+  top: 6%;
+  left: 7%;
+  color: #8d939b;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.hs-icons.is-glyph { --depth: 0.8; left: 12%; top: 10%; }
+.hs-icons.is-outline { --depth: 1.5; right: 10%; top: 26%; }

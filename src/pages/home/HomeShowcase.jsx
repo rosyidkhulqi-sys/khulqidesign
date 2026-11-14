@@ -71,23 +71,25 @@ function Typing({ phrases, run, onPhrase }) {
 
 // a few real assets for the Download stage: vectors, icons and a clip
 async function fetchStage() {
-  const pick = (type, field, count) =>
+  const pick = (type, field, count, style = null) =>
     supabase
       .from("assets")
       .select(field)
       .eq("type", type)
       .eq("status", "published")
       .not(field, "is", null)
+      .match(style ? { style } : {})
       .order("downloads", { ascending: false })
       .order("published_at", { ascending: false })
       .limit(count)
       .then(({ data }) => (data ?? []).map((row) => publicUrl(row[field])));
-  const [vectors, icons, footage] = await Promise.all([
+  const [vectors, glyphs, outlines, footage] = await Promise.all([
     pick("vector", "thumb_key", 3),
-    pick("icon", "thumb_key", 6),
+    pick("icon", "thumb_key", 6, "glyph"),
+    pick("icon", "thumb_key", 6, "outline"),
     pick("footage", "thumb_key", 3),
   ]);
-  return { vectors, icons, footage };
+  return { vectors, glyphs, outlines, footage };
 }
 
 // ways: [{ n, title, text, flow, cta: [label, target] }]; covers: Home's
@@ -95,11 +97,12 @@ async function fetchStage() {
 function HomeShowcase({ ways, covers = {}, go }) {
   const [active, setActive] = useState(0);
   const [held, setHeld] = useState(false); // clicked: stays on that way
-  const [stage, setStage] = useState({ vectors: [], icons: [], footage: [] });
+  const [stage, setStage] = useState({ vectors: [], glyphs: [], outlines: [], footage: [] });
   const [inView, setInView] = useState(false);
   // the Download stage's search, as an index into SEARCHES
   const [phrase, setPhrase] = useState(0);
   const stageRef = useRef(null);
+  const clipRef = useRef(null);
   const reduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
   useEffect(() => {
@@ -134,6 +137,15 @@ function HomeShowcase({ ways, covers = {}, go }) {
     el.style.setProperty("--mx", 0);
     el.style.setProperty("--my", 0);
   };
+
+  // the clip plays only while the Download scene is on screen
+  const playClip = inView && !reduced && active === 0;
+  useEffect(() => {
+    const video = clipRef.current;
+    if (!video) return;
+    if (playClip) video.play().catch(() => {});
+    else video.pause();
+  }, [playClip]);
 
   const v = stage.vectors;
   const f = stage.footage;
@@ -199,15 +211,18 @@ function HomeShowcase({ ways, covers = {}, go }) {
           <img className="hs-card hs-b is-vector" src={v[2] ?? v[0] ?? "/covers/vectors.jpg"} alt="" loading="lazy" />
           <img className="hs-card hs-c is-vector" src={v[1] ?? "/covers/vectors.jpg"} alt="" loading="lazy" />
 
-          <div className="hs-card hs-icons is-icon">
-            {(stage.icons.length ? stage.icons : []).map((src) => (
-              <img key={src} src={src} alt="" loading="lazy" />
-            ))}
+          <div className="hs-card hs-icons is-glyph is-icon">
+            <b>Glyph</b>
+            {stage.glyphs.map((src) => <img key={src} src={src} alt="" loading="lazy" />)}
+          </div>
+          <div className="hs-card hs-icons is-outline is-icon">
+            <b>Outline</b>
+            {stage.outlines.map((src) => <img key={src} src={src} alt="" loading="lazy" />)}
           </div>
 
           <img className="hs-card hs-a is-footage" src={f[1] ?? poster} alt="" loading="lazy" />
-          {clip && run && active === 0 ? (
-            <video className="hs-card hs-b is-footage" src={clip} poster={poster} autoPlay muted loop playsInline />
+          {clip ? (
+            <video ref={clipRef} className="hs-card hs-b is-footage" src={clip} poster={poster} muted loop playsInline preload="metadata" />
           ) : (
             <img className="hs-card hs-b is-footage" src={poster} alt="" loading="lazy" />
           )}
