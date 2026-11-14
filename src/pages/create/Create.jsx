@@ -62,6 +62,7 @@ import { fetchIconCatalog, fetchPublished, toCreatePart, toVector } from "../../
 import { askLogin } from "../../lib/authGate";
 import { aiReady } from "../../lib/ai";
 import { MODELS, removeBackground, upscale } from "../../lib/aiLocal";
+import { checkCutout, countCutout, cutoutQuota as fetchCutoutQuota } from "../../lib/toolQuota";
 import NumberInput from "../../components/NumberInput";
 import { fetchMembership } from "../../lib/billing";
 import { emptyKit, fetchBrandKit, saveBrandKit } from "../../lib/brandKit";
@@ -313,6 +314,8 @@ function Create({ draft, clearDraft, user = null }) {
   const [templateSave, setTemplateSave] = useState(null);
   const [aiOperation, setAiOperation] = useState(null);
   const aiBusy = Boolean(aiOperation && !aiOperation.error);
+  // Remove background today: { used, limit } (Free 5 a day, Premium no limit)
+  const [cutoutQuota, setCutoutQuota] = useState(null);
   // templates published from Create, ahead of the built-in ones
   const [dbTemplates, setDbTemplates] = useState([]);
   // elements and backgrounds uploaded on /admin
@@ -1004,6 +1007,14 @@ function Create({ draft, clearDraft, user = null }) {
     }
   };
 
+  // today's Remove background allowance, read when the AI tab opens
+  useEffect(() => {
+    if (tab !== "ai") return;
+    let alive = true;
+    fetchCutoutQuota().then((q) => alive && setCutoutQuota(q)).catch(() => {});
+    return () => { alive = false; };
+  }, [tab, user]);
+
   const runImageAi = async (operation, scale = 2) => {
     const c = fc.current;
     const image = c?.getActiveObject();
@@ -1034,6 +1045,7 @@ function Create({ draft, clearDraft, user = null }) {
 
     setAiOperation({ operation, step: "Preparing image", progress: 0 });
     try {
+      if (operation === "cutout") await checkCutout();
       const response = await fetch(image.getSrc());
       if (!response.ok) throw new Error("Could not read this image. Try uploading it again.");
       const source = await response.blob();
@@ -1042,6 +1054,7 @@ function Create({ draft, clearDraft, user = null }) {
       const processed = operation === "cutout"
         ? await removeBackground(input, onStep, { cropToSubject: true })
         : await upscale(input, onStep, scale);
+      if (operation === "cutout") setCutoutQuota(await countCutout());
       const cropBounds = operation === "cutout" ? processed.bounds : null;
       const result = cropBounds ? processed.blob : processed;
       if (cropBounds) setAiOperation({ operation, step: "Cropping artboard", progress: 1 });
@@ -1100,7 +1113,12 @@ function Create({ draft, clearDraft, user = null }) {
       commit();
       setAiOperation(null);
     } catch (error) {
-      setAiOperation({ operation, error: error.message || "The image couldn't be processed. Try again." });
+      setAiOperation({
+        operation,
+        error: error.message || "The image couldn't be processed. Try again.",
+        limit: error.code === "daily_limit",
+      });
+      if (operation === "cutout") fetchCutoutQuota().then(setCutoutQuota).catch(() => {});
     }
   };
 
@@ -2348,6 +2366,7 @@ function Create({ draft, clearDraft, user = null }) {
                 hasSelectedImage={active instanceof FabricImage}
                 operation={aiOperation}
                 models={MODELS}
+                cutoutQuota={cutoutQuota}
                 onRun={runImageAi}
                 onUpload={handleFiles}
               />

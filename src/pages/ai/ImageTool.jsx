@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import "./ImageTool.css";
 import { askLogin } from "../../lib/authGate";
 import { forgetResult, keepResult, restoreResult } from "../../lib/aiKeep";
+import { checkCutout, countCutout, cutoutQuota, quotaLabel } from "../../lib/toolQuota";
 
 const ACCEPT = "image/png,image/jpeg,image/webp";
 
@@ -22,6 +23,16 @@ function ImageTool({ tool, run, suffix, options = null, modelMb, hint, user }) {
   const [error, setError] = useState(null);
   const [dragging, setDragging] = useState(false);
   const input = useRef(null);
+  // Remove background: today's free allowance { used, limit } (Premium: no limit)
+  const counted = tool === "cutout";
+  const [quota, setQuota] = useState(null);
+  const [limitHit, setLimitHit] = useState(false);
+  useEffect(() => {
+    if (!counted) return;
+    let alive = true;
+    cutoutQuota().then((q) => alive && setQuota(q)).catch(() => {});
+    return () => { alive = false; };
+  }, [counted, user]);
 
   // release the preview URLs when they're replaced or the page closes
   useEffect(() => () => before && URL.revokeObjectURL(before), [before]);
@@ -58,17 +69,22 @@ function ImageTool({ tool, run, suffix, options = null, modelMb, hint, user }) {
 
   const start = async () => {
     setError(null);
+    setLimitHit(false);
     setAfter(null);
     setResult(null);
     try {
+      if (counted) await checkCutout();
       const blob = await run(file, (label, p) => {
         setStep(label);
         setProgress(p);
       }, option);
+      if (counted) setQuota(await countCutout());
       setResult(blob);
       setAfter(URL.createObjectURL(blob));
     } catch (e) {
       setStep(null);
+      setLimitHit(e.code === "daily_limit");
+      if (counted) cutoutQuota().then(setQuota).catch(() => {});
       setError(e.message || "Something went wrong. Try again.");
     }
   };
@@ -148,9 +164,14 @@ function ImageTool({ tool, run, suffix, options = null, modelMb, hint, user }) {
       <input ref={input} type="file" accept={ACCEPT} hidden
              onChange={(e) => { pick(e.target.files); e.target.value = ""; }} />
 
-      {error && <p className="it-error">{error}</p>}
+      {error && (
+        <p className="it-error">
+          {error} {limitHit && <a href="/pricing">See Premium</a>}
+        </p>
+      )}
 
       <p className="it-note">
+        {quotaLabel(quota) && <strong className="it-quota">{quotaLabel(quota)}. </strong>}
         Runs on your device, free. The first time, your browser downloads the {modelMb} MB AI model
         once and keeps it. {hint}
       </p>

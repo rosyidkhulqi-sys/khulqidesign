@@ -632,6 +632,7 @@
 .cp-ai-progress > div { height: 4px; overflow: hidden; border-radius: 9px; background: rgba(255, 255, 255, 0.1); }
 .cp-ai-progress i { display: block; height: 100%; border-radius: inherit; background: #e7e9ec; transition: width 0.2s ease; }
 .cp-ai-error { margin: 0; color: #ff8a8f; font-size: 12px; line-height: 1.45; }
+.cp-ai-error a { color: white; }
 
 /* BROWSE CATEGORIES: a picture tile and the name under it */
 .cp-cat {

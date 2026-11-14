@@ -9,9 +9,15 @@ const tools = [
   ["Color ideas", "Palettes that suit the colors already in your design."],
 ];
 
-function AiPanel({ aiReady, hasSelectedImage, operation, models, onRun, onUpload }) {
+// cutoutQuota: today's Remove background use { used, limit }, limit null = no limit
+function AiPanel({ aiReady, hasSelectedImage, operation, models, cutoutQuota, onRun, onUpload }) {
   const fileInput = useRef(null);
   const busy = Boolean(operation && !operation.error);
+  const cutoutBadge = !cutoutQuota
+    ? `Free · ${models.cutout.mb} MB model`
+    : cutoutQuota.limit == null
+      ? "Unlimited"
+      : `${Math.max(0, cutoutQuota.limit - cutoutQuota.used)} of ${cutoutQuota.limit} left today`;
   return (
     <>
       <div className="cp-ai-intro">
@@ -31,7 +37,7 @@ function AiPanel({ aiReady, hasSelectedImage, operation, models, onRun, onUpload
         ) : (
           <>
             <button className="cp-ai-tool" disabled={busy} onClick={() => onRun("cutout")}>
-              <strong>Remove background <span className="ai-soon">Free · {models.cutout.mb} MB model</span></strong>
+              <strong>Remove background <span className="ai-soon">{cutoutBadge}</span></strong>
               <span>Cut out the subject, then keep editing the design on the page.</span>
             </button>
             <div className="cp-ai-tool cp-ai-upscale">
@@ -63,7 +69,11 @@ function AiPanel({ aiReady, hasSelectedImage, operation, models, onRun, onUpload
             <div><i style={{ width: `${Math.round((operation.progress || 0) * 100)}%` }} /></div>
           </div>
         )}
-        {operation?.error && <p className="cp-ai-error" role="alert">{operation.error}</p>}
+        {operation?.error && (
+          <p className="cp-ai-error" role="alert">
+            {operation.error} {operation.limit && <a href="/pricing">See Premium</a>}
+          </p>
+        )}
       </div>
 
       <p className="cp-label">More AI tools</p>
