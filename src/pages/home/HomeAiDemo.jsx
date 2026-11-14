@@ -26,6 +26,25 @@ function Compare({ before, after, labels, className = "" }) {
   );
 }
 
+// the whole picture, and a magnifier on one detail where the line sweeps
+// between the small original and the upscaled result
+function Lens({ before, after, labels }) {
+  return (
+    <span className="ha-compare is-lens" aria-hidden="true">
+      <img className="ha-whole" src={after} alt="" loading="lazy" />
+      <span className="ha-lens">
+        <span className="ha-lens-pic" style={{ backgroundImage: `url("${before}")` }} />
+        <span className="ha-after">
+          <span className="ha-lens-pic" style={{ backgroundImage: `url("${after}")` }} />
+        </span>
+        <i className="ha-line" />
+      </span>
+      <b className="ha-tag ha-tag-before">{labels[0]}</b>
+      <b className="ha-tag ha-tag-after">{labels[1]}</b>
+    </span>
+  );
+}
+
 // an icon's SVG made safe to put inline (from our own store, but scripts and
 // handlers never belong in an icon)
 function cleanSvg(text) {
@@ -95,11 +114,10 @@ function HomeAiDemo({ tool }) {
   }
   if (tool === 1) {
     return (
-      <Compare
-        className="is-upscale"
+      <Lens
         before="/showcase/ai-upscale-before.webp"
         after="/showcase/ai-upscale-after.webp"
-        labels={["250 px", "4× · 1000 px"]}
+        labels={["250 px", "4× sharper"]}
       />
     );
   }

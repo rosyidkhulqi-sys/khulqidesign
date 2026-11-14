@@ -31,11 +31,36 @@
   background:
     repeating-conic-gradient(#e7e7e4 0% 25%, #ffffff 0% 50%) 0 0 / 18px 18px;
 }
-/* close in on the face, where 250 px can't hold the detail and 4× can;
-   both sides framed the same */
-.is-upscale { background: #fff; }
-.is-upscale img { object-fit: cover; transform: scale(2.3); transform-origin: 50% 54%; }
-.is-upscale .ha-after { background: #fff; }
+/* Upscale: the whole logo, and a magnifier on the face (centre at 50%, 54%
+   of the square picture) where the line sweeps from 250 px to 4× */
+.is-lens { background: #fff; }
+/* the logo whole on the left, the magnifier on the right */
+.is-lens .ha-whole { object-fit: contain; object-position: 12% 50%; padding: 7% 0; }
+.ha-lens {
+  position: absolute;
+  left: 70%;
+  top: 45%;
+  height: 64%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 4px #fff, 0 12px 34px rgba(0, 0, 0, 0.28);
+}
+/* about 2.6 times the logo's size on the page, centred on the face */
+.ha-lens-pic {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-size: 300%;
+  background-position: 50% 56%;
+}
+.ha-lens .ha-after { background: #fff; }
+.ha-lens .ha-line::after { width: 18px; height: 18px; margin: -9px 0 0 -9px; }
+/* the two sizes, under the magnifier */
+.is-lens .ha-tag-before { left: 48%; }
+.is-lens .ha-tag-after { right: 6%; }
 .ha-line {
   position: absolute;
   top: 0;
