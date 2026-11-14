@@ -6,6 +6,7 @@ import { SERVICES_OPEN } from "../../data/services";
 import HomeServices from "./HomeServices";
 import "./Home.css";
 import { fetchCovers } from "../../lib/covers";
+import HomeWayDemo from "./HomeWayDemo";
 import HomeReel from "./HomeReel";
 
 const libraryLinks = [
@@ -264,6 +265,7 @@ function Home({ setPage, user = null }) {
         <div className="home-how-grid">
           {ways.map(({ n, title, text, flow, cta: [label, target] }) => (
             <article className="home-way" key={n}>
+              <HomeWayDemo way={n} covers={covers} />
               <span className="home-way-n">{n}</span>
               <h3>{title}</h3>
               <p>{text}</p>

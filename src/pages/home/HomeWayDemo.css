@@ -1,0 +1,269 @@
+/* HOW IT WORKS DEMOS: one small app window per way, looping */
+.hw-demo {
+  --d: 6.5s;
+  position: relative;
+  aspect-ratio: 16 / 10;
+  margin: -6px -6px 24px;
+  overflow: hidden;
+  border: 1px solid #26292d;
+  border-radius: 10px;
+  background: #111316;
+  font-family: inherit;
+}
+.hw-demo * { animation-duration: var(--d); animation-iteration-count: infinite; animation-timing-function: ease-in-out; }
+
+/* the pointer: its tip sits on (left, top) */
+.hw-cursor {
+  position: absolute;
+  z-index: 5;
+  width: 20px;
+  height: 20px;
+  margin: -3px 0 0 -5px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+}
+
+/* 01 DOWNLOAD ---------------------------------------------------------- */
+.hw-search {
+  position: absolute;
+  top: 7%;
+  left: 6%;
+  right: 6%;
+  height: 14%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #1e2124;
+  color: #d6d7d8;
+  font-size: 12px;
+}
+.hw-search svg { width: 14px; height: 14px; fill: none; stroke: #8d939b; stroke-width: 2; stroke-linecap: round; }
+.hw-typed {
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 1px solid #d6d7d8;
+  animation-name: hw-type;
+  animation-timing-function: steps(8, end);
+}
+@keyframes hw-type {
+  0%, 2% { width: 0; }
+  12%, 94% { width: 8ch; border-color: transparent; }
+  100% { width: 0; }
+}
+.hw-grid {
+  position: absolute;
+  top: 27%;
+  left: 6%;
+  right: 6%;
+  height: 46%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 6px;
+}
+.hw-tile {
+  border-radius: 6px;
+  background: #2a2d31 center / cover no-repeat;
+  animation-name: hw-dim;
+}
+.hw-tile.is-picked { position: relative; z-index: 1; animation-name: hw-pick; }
+@keyframes hw-dim {
+  0%, 22% { opacity: 1; }
+  27%, 90% { opacity: 0.35; }
+  96%, 100% { opacity: 1; }
+}
+@keyframes hw-pick {
+  0%, 22% { transform: scale(1); box-shadow: 0 0 0 0 transparent; }
+  27%, 90% { transform: scale(1.08); box-shadow: 0 0 0 2px var(--red), 0 8px 24px rgba(0, 0, 0, 0.5); }
+  96%, 100% { transform: scale(1); box-shadow: 0 0 0 0 transparent; }
+}
+.hw-get {
+  position: absolute;
+  bottom: 8%;
+  left: 30%;
+  right: 30%;
+  height: 13%;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #fff;
+  color: #0a0b0d;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.hw-get > span { position: absolute; inset: 0; display: grid; place-items: center; }
+.hw-get-label { animation-name: hw-label-out; }
+.hw-get-bar { right: auto !important; width: 0; background: var(--red); animation-name: hw-bar; }
+.hw-get-done { color: #fff; opacity: 0; animation-name: hw-done; }
+@keyframes hw-label-out { 0%, 40% { opacity: 1; } 43%, 94% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes hw-bar { 0%, 41% { width: 0; } 58%, 94% { width: 100%; } 97%, 100% { width: 0; } }
+@keyframes hw-done { 0%, 57% { opacity: 0; } 60%, 92% { opacity: 1; } 95%, 100% { opacity: 0; } }
+.hw-download .hw-cursor { animation-name: hw-path-get; }
+@keyframes hw-path-get {
+  0% { left: 80%; top: 96%; transform: scale(1); }
+  15% { left: 50%; top: 40%; transform: scale(1); }
+  20% { left: 50%; top: 40%; transform: scale(0.8); }
+  24% { left: 50%; top: 40%; transform: scale(1); }
+  34% { left: 50%; top: 86%; transform: scale(1); }
+  38% { left: 50%; top: 86%; transform: scale(0.8); }
+  42%, 80% { left: 50%; top: 86%; transform: scale(1); }
+  100% { left: 80%; top: 96%; transform: scale(1); }
+}
+
+/* 02 MAKE IT YOURS ------------------------------------------------------ */
+.hw-edit { --d: 7s; }
+.hw-board {
+  position: absolute;
+  top: 8%;
+  left: 6%;
+  width: 62%;
+  height: 84%;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #f4f1ea;
+}
+.hw-shape { position: absolute; background: #f5b700; animation-name: hw-paint; animation-timing-function: step-end; }
+.hw-circle { top: -18%; right: -14%; width: 66%; aspect-ratio: 1; border-radius: 50%; }
+.hw-quarter { bottom: 0; right: 0; width: 34%; aspect-ratio: 1; border-top-left-radius: 100%; }
+.hw-bar { top: 12%; left: 9%; width: 9%; height: 30%; background: #0a0b0d; animation: none; }
+@keyframes hw-paint {
+  0% { background: #f5b700; }
+  22% { background: #e63946; }
+  52% { background: #2d6cdf; }
+  97% { background: #f5b700; }
+}
+.hw-words { position: absolute; left: 9%; bottom: 9%; color: #0a0b0d; font-size: 17px; line-height: 0.95; letter-spacing: -0.02em; }
+.hw-words b { position: absolute; left: 0; bottom: 0; font-weight: 800; white-space: nowrap; }
+.hw-word-a { animation-name: hw-word-a; animation-timing-function: step-end; }
+.hw-word-b { opacity: 0; animation-name: hw-word-b; animation-timing-function: step-end; }
+@keyframes hw-word-a { 0% { opacity: 1; } 64% { opacity: 0; } 97% { opacity: 1; } }
+@keyframes hw-word-b { 0% { opacity: 0; } 64% { opacity: 1; } 97% { opacity: 0; } }
+.hw-caret {
+  display: inline-block;
+  width: 2px;
+  height: 0.9em;
+  margin-left: 2px;
+  vertical-align: -0.1em;
+  background: var(--red);
+  animation: hw-blink 0.9s steps(2, start) infinite !important;
+}
+@keyframes hw-blink { to { visibility: hidden; } }
+.hw-swatches {
+  position: absolute;
+  top: 8%;
+  right: 6%;
+  width: 20%;
+  height: 84%;
+  display: grid;
+  place-items: center;
+  padding: 6% 0;
+  border-radius: 8px;
+  background: #1e2124;
+}
+.hw-swatches span { width: 22px; height: 22px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18); }
+.hw-edit .hw-cursor { animation-name: hw-path-edit; }
+/* swatches sit at about 25%, 42%, 58% and 75% down, 84% across */
+@keyframes hw-path-edit {
+  0% { left: 60%; top: 96%; transform: scale(1); }
+  15% { left: 84%; top: 42%; transform: scale(1); }
+  20% { left: 84%; top: 42%; transform: scale(0.8); }
+  24% { left: 84%; top: 42%; transform: scale(1); }
+  45% { left: 84%; top: 58%; transform: scale(1); }
+  50% { left: 84%; top: 58%; transform: scale(0.8); }
+  54% { left: 84%; top: 58%; transform: scale(1); }
+  60% { left: 22%; top: 76%; transform: scale(1); }
+  62% { left: 22%; top: 76%; transform: scale(0.8); }
+  64%, 86% { left: 22%; top: 76%; transform: scale(1); }
+  100% { left: 60%; top: 96%; transform: scale(1); }
+}
+
+/* 03 OWN IT OUTRIGHT ---------------------------------------------------- */
+.hw-logo {
+  position: absolute;
+  top: 8%;
+  left: 27%;
+  width: 46%;
+  height: 58%;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #fff;
+}
+.hw-logo-pic { position: absolute; inset: 0; background: center / cover no-repeat; }
+.hw-tag {
+  position: absolute;
+  top: 7%;
+  left: 6%;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--red);
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 700;
+}
+.hw-stamp {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: 4px 10px;
+  border: 2px solid var(--red);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(-10deg) scale(1.8);
+  animation-name: hw-stamp;
+}
+@keyframes hw-stamp {
+  0%, 32% { opacity: 0; transform: translate(-50%, -50%) rotate(-10deg) scale(1.8); }
+  37%, 92% { opacity: 1; transform: translate(-50%, -50%) rotate(-10deg) scale(1); }
+  96%, 100% { opacity: 0; transform: translate(-50%, -50%) rotate(-10deg) scale(1); }
+}
+.hw-buy {
+  position: absolute;
+  bottom: 12%;
+  left: 30%;
+  right: 30%;
+  height: 13%;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #fff;
+  color: #0a0b0d;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.hw-buy > span { position: absolute; inset: 0; display: grid; place-items: center; }
+.hw-buy-label { animation-name: hw-buy-out; }
+.hw-buy-done { background: var(--red); color: #fff; opacity: 0; animation-name: hw-buy-in; }
+@keyframes hw-buy-out { 0%, 26% { opacity: 1; } 29%, 94% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes hw-buy-in { 0%, 26% { opacity: 0; } 29%, 93% { opacity: 1; } 97%, 100% { opacity: 0; } }
+.hw-offsale {
+  position: absolute;
+  bottom: 3%;
+  left: 0;
+  right: 0;
+  color: #8d939b;
+  font-size: 10.5px;
+  text-align: center;
+  opacity: 0;
+  animation-name: hw-offsale;
+}
+@keyframes hw-offsale { 0%, 40% { opacity: 0; } 45%, 92% { opacity: 1; } 96%, 100% { opacity: 0; } }
+.hw-own .hw-cursor { animation-name: hw-path-own; }
+@keyframes hw-path-own {
+  0% { left: 82%; top: 96%; transform: scale(1); }
+  18% { left: 52%; top: 82%; transform: scale(1); }
+  23% { left: 52%; top: 82%; transform: scale(0.8); }
+  27%, 84% { left: 52%; top: 82%; transform: scale(1); }
+  100% { left: 82%; top: 96%; transform: scale(1); }
+}
+
+/* less motion: each scene holds its finished moment */
+@media (prefers-reduced-motion: reduce) {
+  .hw-demo * { animation-play-state: paused !important; animation-delay: -4.4s !important; }
+  .hw-caret { animation: none !important; }
+}
