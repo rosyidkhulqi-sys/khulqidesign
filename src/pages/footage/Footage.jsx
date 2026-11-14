@@ -5,7 +5,8 @@ import "./Footage.css";
 import Breadcrumb from "../../components/Breadcrumb";
 import AiSearchButton from "../../components/AiSearchButton";
 import { ToolGlyph } from "../../components/IconControls";
-import { searchCatalog, toClip } from "../../lib/catalog";
+import { fetchAssetByCode, searchCatalog, toClip } from "../../lib/catalog";
+import { useAssetUrl } from "../../lib/useAssetUrl";
 
 const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
@@ -149,6 +150,9 @@ function Footage({ setPage, initialSearch = "", user = null }) {
   const [sort, setSort] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState(null);
+  // the open footage has its own address (shareable, and listed for search engines)
+  useAssetUrl("footage", selected, setSelected, (code) =>
+    fetchAssetByCode("footage", code).then((row) => row && toClip(row)));
   // the page of clips the database found, and how many there are in all
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);

@@ -7,7 +7,8 @@ import Breadcrumb from "../../components/Breadcrumb";
 import AiSearchButton from "../../components/AiSearchButton";
 import IconModal from "../../components/IconModal";
 import IconSetView, { SetCard } from "./IconSets";
-import { fetchIconCatalog } from "../../lib/catalog";
+import { fetchAssetByCode, fetchIconCatalog, toIcon } from "../../lib/catalog";
+import { useAssetUrl } from "../../lib/useAssetUrl";
 import { matchesSearch } from "../../lib/search";
 
 // the price filter's "paid" means a Premium license
@@ -29,6 +30,9 @@ function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState(null);
+  // the open icon has its own address (shareable, and listed for search engines)
+  useAssetUrl("icons", selected, setSelected, (code) =>
+    fetchAssetByCode("icon", code).then((row) => row && toIcon(row)));
   // color and size an icon opens with when picked from a customized set
   const [openWith, setOpenWith] = useState(null);
   // the icon set page shown in place of the library, or null

@@ -4,7 +4,8 @@ import AssetModal from "../../components/AssetModal";
 import Breadcrumb from "../../components/Breadcrumb";
 import AiSearchButton from "../../components/AiSearchButton";
 import { ToolGlyph } from "../../components/IconControls";
-import { searchCatalog, toVector } from "../../lib/catalog";
+import { fetchAssetByCode, searchCatalog, toVector } from "../../lib/catalog";
+import { useAssetUrl } from "../../lib/useAssetUrl";
 import { VECTOR_CATEGORY_OPTIONS, vectorCategoryLabel, vectorCategoryStorageValues } from "../../data/vectorCategories";
 
 const formats = ["EPS", "AI", "SVG", "PNG", "JPG"];
@@ -59,6 +60,9 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
   const [sort, setSort] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState(null);
+  // the open vector has its own address (shareable, and listed for search engines)
+  useAssetUrl("vectors", selected, setSelected, (code) =>
+    fetchAssetByCode("vector", code).then((row) => row && toVector(row)));
   // the page of vectors the database found, and how many there are in all
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);

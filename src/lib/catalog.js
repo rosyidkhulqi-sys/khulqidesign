@@ -90,6 +90,37 @@ export function toVector(row) {
   };
 }
 
+// One published asset by its code, for an asset's own address; null when
+// there's none (or it's hidden)
+export async function fetchAssetByCode(type, code) {
+  const { data, error } = await supabase
+    .from("assets")
+    .select("*")
+    .eq("type", type)
+    .eq("code", code)
+    .eq("status", "published")
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+// a database row as an Icons page item
+export function toIcon(row) {
+  return {
+    id: Date.parse(row.published_at || row.created_at),
+    dbId: row.id,
+    code: row.code,
+    name: row.title,
+    image: publicUrl(row.thumb_key),
+    keywords: row.keywords ?? [],
+    category: row.category || "other",
+    style: row.style || "glyph",
+    setId: row.set_id,
+    license: row.license,
+    downloads: row.downloads,
+  };
+}
+
 // Published icons and the sets they belong to, ready for the library pages.
 export async function fetchIconCatalog() {
   const [iconRes, setRes] = await Promise.all([
@@ -110,19 +141,7 @@ export async function fetchIconCatalog() {
   if (iconRes.error) throw iconRes.error;
   if (setRes.error) throw setRes.error;
 
-  const icons = (iconRes.data ?? []).map((row) => ({
-    id: Date.parse(row.published_at || row.created_at),
-    dbId: row.id,
-    code: row.code,
-    name: row.title,
-    image: publicUrl(row.thumb_key),
-    keywords: row.keywords ?? [],
-    category: row.category || "other",
-    style: row.style || "glyph",
-    setId: row.set_id,
-    license: row.license,
-    downloads: row.downloads,
-  }));
+  const icons = (iconRes.data ?? []).map(toIcon);
   // a set shows only once it has a published icon
   const used = new Set(icons.map((i) => i.setId));
   const sets = (setRes.data ?? [])

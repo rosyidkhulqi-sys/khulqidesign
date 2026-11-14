@@ -37,13 +37,34 @@ export function pathFor(page, query = "") {
   return query ? `${path}?q=${encodeURIComponent(query)}` : path;
 }
 
+// Every asset has its own address: /vectors/<title-words>-<code>, e.g.
+// /vectors/blue-abstract-circle-pattern-kd-vc-1329331. The words are for
+// people and search engines; the code at the end is what's looked up.
+export const ASSET_PAGES = { icons: "icon", vectors: "vector", logos: "logo", footage: "footage" };
+const CODE_AT_END = /(?:^|-)(kd-[a-z]{2}-\d{5,9})$/;
+
+export const slugify = (text = "") =>
+  text.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+
+export const assetPath = (page, asset) =>
+  `/${page}/${[slugify(asset.title ?? asset.name), asset.code.toLowerCase()].filter(Boolean).join("-")}`;
+
+// the asset code in the address ("KD-VC-1329331"), or null
+export function assetCodeOf(pathname = window.location.pathname) {
+  const [page, rest, extra] = pathname.replace(/^\/+|\/+$/g, "").toLowerCase().split("/");
+  if (!ASSET_PAGES[page] || !rest || extra) return null;
+  const m = rest.match(CODE_AT_END);
+  return m ? m[1].toUpperCase() : null;
+}
+
 // the page and search query the current address points to
 export function readLocation() {
   const { pathname, search } = window.location;
   const slug = pathname.replace(/^\/+|\/+$/g, "").toLowerCase();
   const query = new URLSearchParams(search).get("q") ?? "";
   if (slug === "" || slug === "index.html") return { page: "home", query };
-  // only one level for now; asset addresses (/logos/<id>) come later
+  // an asset address shows its library page with the asset open
+  if (assetCodeOf(pathname)) return { page: slug.split("/")[0], query };
   return { page: known.has(slug) && slug !== "home" ? slug : "notfound", query };
 }
 
@@ -90,8 +111,8 @@ const PRIVATE_PAGES = new Set(["admin", "account", "downloads", "login", "regist
 
 // the canonical address (always without www) and whether search engines may
 // list the page; called whenever the page changes
-export function updateHeadFor(page) {
-  const path = page === "home" ? "/" : `/${page}`;
+// path: an asset's own address, when one is open
+export function updateHeadFor(page, path = page === "home" ? "/" : `/${page}`) {
   let canonical = document.querySelector('link[rel="canonical"]');
   if (!canonical) {
     canonical = document.createElement("link");
@@ -111,4 +132,17 @@ export function updateHeadFor(page) {
   } else if (robots) {
     robots.remove();
   }
+}
+
+// an open asset names the tab and the canonical address; closing it restores
+// the library page's
+const KINDS = { icons: "Icon", vectors: "Vector", logos: "Logo", footage: "Stock footage" };
+export function assetHead(page, asset) {
+  if (!asset) {
+    document.title = titleFor(page);
+    updateHeadFor(page);
+    return;
+  }
+  document.title = `${asset.title ?? asset.name} · ${KINDS[page] ?? pageTitles[page]} · Khulqidesign`;
+  updateHeadFor(page, assetPath(page, asset));
 }

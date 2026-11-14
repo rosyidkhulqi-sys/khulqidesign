@@ -8,7 +8,8 @@ import Breadcrumb from "../../components/Breadcrumb";
 import AiSearchButton from "../../components/AiSearchButton";
 import LogoModal from "./LogoModal";
 import { industries, industryName, logoStyles } from "../../data/logosData";
-import { searchCatalog, toLogo } from "../../lib/catalog";
+import { fetchAssetByCode, searchCatalog, toLogo } from "../../lib/catalog";
+import { useAssetUrl } from "../../lib/useAssetUrl";
 
 const licenseLabel = { free: "Free", premium: "Premium", exclusive: "Exclusive" };
 
@@ -50,6 +51,9 @@ function Logos({ setPage, initialSearch = "", user = null }) {
   const [sort, setSort] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState(null);
+  // the open logo has its own address (shareable, and listed for search engines)
+  useAssetUrl("logos", selected, setSelected, (code) =>
+    fetchAssetByCode("logo", code).then((row) => row && toLogo(row)));
   // the page of logos the database found, and how many there are in all
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
