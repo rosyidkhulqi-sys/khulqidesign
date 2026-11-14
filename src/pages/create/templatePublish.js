@@ -147,3 +147,61 @@ export async function fetchTemplates() {
     };
   });
 }
+
+// ---------------------------------------------------------- editing a template
+
+// Saves the edited design over a published template: the design, its size
+// and new preview pictures. Files get new names each time (the CDN keeps old
+// ones cached for hours), and the asset row points to them.
+export async function updateTemplate(edit, design, onStep) {
+  const pages = structuredClone(design.pages);
+  const { w, h } = design;
+  const folder = `templates/${edit.code}`;
+  const v = Date.now().toString(36);
+
+  onStep("Moving pictures", 0);
+  const pictures = new Map();
+  for (const page of pages) for (const obj of walk(page.objects)) if (isImage(obj) && inline(obj.src)) pictures.set(obj.src, null);
+  let n = 0;
+  for (const src of pictures.keys()) {
+    const blob = await (await fetch(src)).blob();
+    const key = `${folder}/img-${v}-${++n}.${extFor(blob.type)}`;
+    await uploadToR2({ bucket: "public", key, file: blob, contentType: blob.type || "image/png" });
+    pictures.set(src, publicUrl(key));
+  }
+  for (const page of pages) {
+    for (const obj of walk(page.objects)) {
+      if (isImage(obj) && pictures.has(obj.src)) {
+        obj.src = pictures.get(obj.src);
+        obj.crossOrigin = "anonymous";
+      }
+    }
+  }
+
+  onStep("Making previews", 0);
+  const thumb = await renderPage(pages[0], w, h, 600);
+  const preview = await renderPage(pages[0], w, h, 1400);
+  const json = new Blob([JSON.stringify({ w, h, pages })], { type: "application/json" });
+  const files = [
+    { bucket: "public", key: `${folder}/design-${v}.json`, file: json, contentType: "application/json" },
+    { bucket: "public", key: `${folder}/thumb-${v}.jpg`, file: thumb, contentType: "image/jpeg" },
+    { bucket: "public", key: `${folder}/preview-${v}.jpg`, file: preview, contentType: "image/jpeg" },
+  ];
+  for (const [i, f] of files.entries()) {
+    await uploadToR2({ ...f, onProgress: (p) => onStep("Uploading", (i + p) / files.length) });
+  }
+
+  onStep("Saving", 1);
+  const { error } = await supabase
+    .from("assets")
+    .update({
+      thumb_key: files[1].key,
+      preview_key: files[2].key,
+      files: [{ format: "JSON", key: files[0].key, bytes: json.size, pages: pages.length, label: "Editable in Create" }],
+      width: w,
+      height: h,
+      orientation: w === h ? "square" : w > h ? "landscape" : "portrait",
+    })
+    .eq("id", edit.id);
+  if (error) throw new Error(error.message);
+}

@@ -53,7 +53,8 @@ import {
 import "./Create.css";
 import { supabase } from "../../lib/supabaseClient";
 import PublishTemplate from "./PublishTemplate";
-import { fetchTemplates } from "./templatePublish";
+import { fetchTemplates, updateTemplate } from "./templatePublish";
+import { clearTemplateEdit, peekTemplateEdit } from "../../lib/templateEdit";
 import { fetchIconCatalog, fetchPublished, toCreatePart, toVector } from "../../lib/catalog";
 import { askLogin } from "../../lib/authGate";
 import { aiReady } from "../../lib/ai";
@@ -296,6 +297,9 @@ function Create({ draft, clearDraft, user = null }) {
   // admins can publish the open design as a template
   const [isAdmin, setIsAdmin] = useState(false);
   const [showPublish, setShowPublish] = useState(false);
+  // a published template opened from Admin → Edit design, and how saving it goes
+  const [templateEdit, setTemplateEdit] = useState(peekTemplateEdit);
+  const [templateSave, setTemplateSave] = useState(null);
   const [aiOperation, setAiOperation] = useState(null);
   const aiBusy = Boolean(aiOperation && !aiOperation.error);
   // templates published from Create, ahead of the built-in ones
@@ -888,6 +892,22 @@ function Create({ draft, clearDraft, user = null }) {
       fill: "#1d1d1d",
     });
     place(text, point);
+  };
+
+  /* ---------- editing a published template (admins) ---------- */
+
+  const saveTemplateEdit = async () => {
+    if (!templateEdit || templateSave?.busy) return;
+    setTemplateSave({ busy: true, step: "Saving" });
+    try {
+      await updateTemplate(templateEdit, { ...boardRef.current, pages: currentPages() }, (step, p) =>
+        setTemplateSave({ busy: true, step: p > 0 && p < 1 ? `${step} ${Math.round(p * 100)}%` : step }),
+      );
+      setTemplateSave({ done: true });
+      fetchTemplates().then(setDbTemplates).catch(() => {});
+    } catch (err) {
+      setTemplateSave({ error: err.message || "The template couldn't be saved." });
+    }
   };
 
   /* ---------- brand kit ---------- */
@@ -1715,6 +1735,13 @@ function Create({ draft, clearDraft, user = null }) {
   });
 
   const start = useEffectEvent(async () => {
+    // Admin → Edit design: the published template opens as its own project
+    if (templateEdit && !draft) {
+      await openTemplate({ title: templateEdit.title, designUrl: templateEdit.designUrl }, false, true);
+      clearTemplateEdit();
+      loadedRef.current = true;
+      return;
+    }
     if (draft) {
       await openTemplate(draft, false, true);
       clearDraft();
@@ -1868,6 +1895,27 @@ function Create({ draft, clearDraft, user = null }) {
 
   return (
     <section className="create-page">
+      {/* Admin → Edit design: this design is a published template */}
+      {templateEdit && isAdmin && (
+        <div className="ct-template-edit" role="status">
+          <span className="ct-template-edit-tag">Editing template</span>
+          <strong>{templateEdit.title}</strong>
+          <span className="ct-template-edit-code">{templateEdit.code}</span>
+          <span className="ct-template-edit-state">
+            {templateSave?.busy
+              ? `${templateSave.step}…`
+              : templateSave?.done
+                ? "Updated on the site"
+                : templateSave?.error ?? "Change the size, layout or anything else, then update."}
+          </span>
+          <button className="ct-btn primary" onClick={saveTemplateEdit} disabled={Boolean(templateSave?.busy)}>
+            Update template
+          </button>
+          <button className="ct-btn" onClick={() => setTemplateEdit(null)} disabled={Boolean(templateSave?.busy)}>
+            Done
+          </button>
+        </div>
+      )}
       {/* only shown on narrow screens (see Create.css); editing still works */}
       {smallHint && (
         <div className="create-small-hint" role="status">

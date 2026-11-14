@@ -2,6 +2,7 @@
 // delete it. The search and filters run on the database, so they keep working
 // with thousands of assets. Admins see every row (RLS); visitors only ever see
 // published ones. Deleting removes the row first, then its files from R2.
+import { startTemplateEdit } from "../../lib/templateEdit";
 import { useEffect, useState } from "react";
 import { askConfirm } from "../../lib/confirm";
 import { supabase } from "../../lib/supabaseClient";
@@ -345,6 +346,19 @@ export function ManageAssetRows({ type = "vector", refreshKey, batchId = null, e
               <button onClick={() => setEditing(editing === row.id ? null : row.id)} disabled={busy === row.id}>
                 Edit
               </button>
+              {type === "template" && row.files?.[0]?.key && (
+                <button
+                  onClick={() => {
+                    // opens the design itself in Create; Update template saves it back
+                    startTemplateEdit(row);
+                    window.location.assign("/create");
+                  }}
+                  disabled={busy === row.id}
+                  title="Open the design in Create to change its size, layout or elements"
+                >
+                  Edit design
+                </button>
+              )}
               <button onClick={() => toggle(row)} disabled={busy === row.id}>
                 {row.status === "published" ? "Hide" : "Show"}
               </button>

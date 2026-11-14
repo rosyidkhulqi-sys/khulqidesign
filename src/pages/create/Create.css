@@ -2121,3 +2121,27 @@
    so a short business card leaves no gap beside a tall story */
 .cp-masonry { columns: 2; column-gap: 8px; }
 .cp-masonry .cp-template { display: block; width: 100%; margin: 0 0 8px; break-inside: avoid; }
+
+/* Admin → Edit design: a bar above the editor while a published template is open */
+.ct-template-edit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border: 1px solid rgba(91, 140, 255, 0.35);
+  border-radius: 12px;
+  background: rgba(91, 140, 255, 0.08);
+  font-size: 13px;
+}
+.ct-template-edit-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(91, 140, 255, 0.2);
+  color: #b7ccff;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.ct-template-edit-code { color: #8d939b; font-variant-numeric: tabular-nums; }
+.ct-template-edit-state { flex: 1; min-width: 160px; color: #aeb3ba; }
