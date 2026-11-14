@@ -7,6 +7,7 @@ import HomeServices from "./HomeServices";
 import "./Home.css";
 import { fetchCovers } from "../../lib/covers";
 import HomeShowcase from "./HomeShowcase";
+import HomeAiDemo from "./HomeAiDemo";
 import HomeReel from "./HomeReel";
 import AiSearchButton from "../../components/AiSearchButton";
 
@@ -322,8 +323,9 @@ function Home({ setPage, user = null }) {
           <p>Free with an account.<br />Your pictures never leave your device.</p>
         </div>
         <div className="home-ai-grid">
-          {aiTools.map(([title, text]) => (
+          {aiTools.map(([title, text], i) => (
             <button className="home-ai-card" key={title} onClick={go("ai")}>
+              <HomeAiDemo tool={i} />
               <h3>{title}</h3>
               <p>{text}</p>
               <span>Try it <Arrow /></span>
