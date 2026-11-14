@@ -39,8 +39,8 @@ const ways = [
   },
 ];
 
-// popular searches under the hero search bar: the words, and the library
-// they open in (picked from what's in the store)
+// search ideas under the hero search bar, picked by hand from what's in the
+// store (not from search data): the word, and the library it opens in
 const POPULAR = [
   ["Abstract", "vectors"],
   ["Business", "icons"],
@@ -237,9 +237,9 @@ function Home({ setPage, user = null }) {
             <button type="submit" className="home-search-go">Search</button>
           </form>
 
-          {/* popular searches: ideas of what to look for, one click to results */}
+          {/* search ideas, picked by hand: one click to results */}
           <div className="home-chips">
-            <span className="home-chips-label">Popular:</span>
+            <span className="home-chips-label">Try:</span>
             {POPULAR.map(([words, page]) => (
               <button key={words} onClick={() => { setPage(page, words); window.scrollTo(0, 0); }}>{words}</button>
             ))}
