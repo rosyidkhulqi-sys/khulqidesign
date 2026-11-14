@@ -212,7 +212,9 @@ const STD = [0.229, 0.224, 0.225];
 
 // onStep(label, 0..1). Resolves a PNG with a transparent background. When
 // cropToSubject is set, also returns the visible subject bounds for the editor.
-export async function removeBackground(file, onStep, { cropToSubject = false } = {}) {
+// options may be null: the AI page passes its (empty) tool option along
+export async function removeBackground(file, onStep, options) {
+  const cropToSubject = options?.cropToSubject ?? false;
   onStep?.("Loading the AI model", 0);
   const run = await session("cutout", (p) => onStep?.("Loading the AI model", p));
   onStep?.("Finding the subject", 0);
