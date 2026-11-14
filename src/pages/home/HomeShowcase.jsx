@@ -10,16 +10,19 @@ import { publicUrl } from "../../lib/r2";
 import "./HomeShowcase.css";
 
 // how long each way stays; Make it yours plays its whole edit first
-const STEP_MS = [7000, 9500, 8000];
+// (Download types three searches and holds the footage one while its clip plays)
+const STEP_MS = [11000, 9500, 8000];
 
-// what the Download stage's search bar types, and which cards then stand out
+// what the Download stage's search bar types, which results then show, and
+// how long the finished words stay (in 70 ms ticks; the clip needs longer)
 const SEARCHES = [
-  ["Abstract background", "vector"],
-  ["Icons", "icon"],
-  ["Abstract footage", "footage"],
+  ["Abstract background", "vector", 18],
+  ["Icons", "icon", 18],
+  ["Abstract footage", "footage", 44],
 ];
 
 const TYPED = SEARCHES.map(([words]) => words);
+const HOLDS = SEARCHES.map(([, , hold]) => hold);
 
 function WayIcon({ i }) {
   const paths = [
@@ -33,7 +36,8 @@ function WayIcon({ i }) {
 }
 
 // a search bar that types one phrase after another; onPhrase(i) tells which
-function Typing({ phrases, run, onPhrase }) {
+// holds: how long each finished phrase stays, in ticks
+function Typing({ phrases, holds = [], run, onPhrase }) {
   const [text, setText] = useState("");
   useEffect(() => {
     if (!run) return;
@@ -46,7 +50,7 @@ function Typing({ phrases, run, onPhrase }) {
       const word = phrases[phrase];
       if (!back) {
         at += 1;
-        if (at > word.length + 18) back = true; // hold the full phrase a moment
+        if (at > word.length + (holds[phrase] ?? 18)) back = true; // hold the full phrase a moment
       } else {
         at -= 2;
         if (at <= 0) {
@@ -59,7 +63,7 @@ function Typing({ phrases, run, onPhrase }) {
       setText(phrases[phrase].slice(0, Math.max(0, Math.min(at, phrases[phrase].length))));
     }, 70);
     return () => clearInterval(timer);
-  }, [phrases, run, onPhrase]);
+  }, [phrases, holds, run, onPhrase]);
   return (
     <div className="hs-search">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="M20 20l-4.2-4.2" /></svg>
@@ -138,14 +142,22 @@ function HomeShowcase({ ways, covers = {}, go }) {
     el.style.setProperty("--my", 0);
   };
 
-  // the clip plays only while the Download scene is on screen
+  // the clip plays while the Download scene is on screen, from the start each
+  // time its search comes up; muted is set on the element itself, as
+  // browsers only autoplay a video that is really muted
   const playClip = inView && !reduced && active === 0;
+  const footageUp = SEARCHES[phrase][1] === "footage";
   useEffect(() => {
     const video = clipRef.current;
     if (!video) return;
-    if (playClip) video.play().catch(() => {});
-    else video.pause();
-  }, [playClip]);
+    video.muted = true;
+    if (!playClip) {
+      video.pause();
+      return;
+    }
+    if (footageUp) video.currentTime = 0;
+    video.play().catch(() => {});
+  }, [playClip, footageUp]);
 
   const v = stage.vectors;
   const f = stage.footage;
@@ -227,7 +239,7 @@ function HomeShowcase({ ways, covers = {}, go }) {
             <img className="hs-card hs-b is-footage" src={poster} alt="" loading="lazy" />
           )}
           <img className="hs-card hs-c is-footage" src={f[2] ?? poster} alt="" loading="lazy" />
-          <Typing phrases={TYPED} run={run && active === 0} onPhrase={setPhrase} />
+          <Typing phrases={TYPED} holds={HOLDS} run={run && active === 0} onPhrase={setPhrase} />
         </div>
 
         {/* 02 MAKE IT YOURS: the editor as it is */}
