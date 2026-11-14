@@ -42,11 +42,10 @@ const ways = [
 // popular searches under the hero search bar: the words, and the library
 // they open in (picked from what's in the store)
 const POPULAR = [
-  ["Abstract background", "vectors"],
-  ["Business icons", "icons"],
-  ["Mascot logo", "logos"],
-  ["Event poster", "templates"],
-  ["Abstract footage", "footage"],
+  ["Abstract", "vectors"],
+  ["Business", "icons"],
+  ["Mascot", "logos"],
+  ["Poster", "templates"],
 ];
 
 // free with an account, running in the visitor's browser
