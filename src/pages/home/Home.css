@@ -135,7 +135,7 @@
 /* a capsule with the button inside it, like the category chips below */
 .home-search {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr auto auto auto;
   align-items: center;
   max-width: 820px;
   margin: 0 auto;
@@ -161,7 +161,18 @@
   font: inherit;
 }
 .home-search input::placeholder { color: #777; }
-.home-search button {
+.home-search .home-search-clear {
+  padding: 0 10px;
+  background: none;
+  border: 0;
+  color: #8d939b;
+  font-size: 22px;
+  line-height: 1;
+}
+.home-search .home-search-clear:hover { color: var(--white); }
+.home-search .ai-search { margin-right: 8px; }
+.home-search .home-search-go {
+  grid-column: 5;
   align-self: stretch;
   min-width: 128px;
   padding: 0 28px;
@@ -172,7 +183,7 @@
   font-weight: 700;
   transition: background 0.2s;
 }
-.home-search button:hover { background: var(--red-dark); }
+.home-search .home-search-go:hover { background: var(--red-dark); }
 
 .home-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 22px; }
 .home-chips button {
@@ -562,7 +573,8 @@
   .home-hero h1 { margin: 5vh 0 4vh; font-size: clamp(55px, 17vw, 90px); }
   .home-search { padding: 5px 5px 5px 16px; }
   .home-search input { padding: 13px 10px; }
-  .home-search button { min-width: 0; padding: 0 18px; }
+  .home-search .home-search-go { min-width: 0; padding: 0 18px; }
+  .home-search .ai-search { margin-right: 4px; }
   .home-hero-copy { font-size: 16px; }
   .home-hero-bottom { padding: 0 22px 22px; }
   .home-section-title { flex-direction: column; align-items: flex-start; }

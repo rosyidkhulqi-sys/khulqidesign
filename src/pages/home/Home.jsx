@@ -8,6 +8,7 @@ import "./Home.css";
 import { fetchCovers } from "../../lib/covers";
 import HomeShowcase from "./HomeShowcase";
 import HomeReel from "./HomeReel";
+import AiSearchButton from "../../components/AiSearchButton";
 
 const libraryLinks = [
   { page: "icons", label: "Icons" },
@@ -224,7 +225,14 @@ function Home({ setPage, user = null }) {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search icons, vectors, logos, templates..."
             />
-            <button type="submit">Search</button>
+            {/* the same helpers as the library search bars */}
+            {query && (
+              <button type="button" className="home-search-clear" onClick={() => setQuery("")} aria-label="Clear search">
+                ×
+              </button>
+            )}
+            <AiSearchButton example="minimal logo for a coffee shop" />
+            <button type="submit" className="home-search-go">Search</button>
           </form>
 
           <div className="home-chips">
