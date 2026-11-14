@@ -87,11 +87,21 @@ export function FrameTile({ frame, dragItem }) {
   );
 }
 
+// a small crown on a Premium tile: free to try in a design, Premium to download
+export function PremiumMark() {
+  return (
+    <span className="cp-crown" title="Premium: try it in your design, download with Premium">
+      <Icon name="crown" size={11} />
+    </span>
+  );
+}
+
 export function ElementTile({ el, dragItem }) {
   return (
     <button className="cp-tile" {...dragItem("element", el.id)} title={el.name}>
       {/* crossOrigin: the same CDN file is read again when it's placed */}
       <img src={el.thumb ?? el.url} alt={el.name} draggable={false} loading="lazy" crossOrigin="anonymous" />
+      {el.premium && <PremiumMark />}
     </button>
   );
 }

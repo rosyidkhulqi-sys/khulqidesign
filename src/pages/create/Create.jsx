@@ -21,7 +21,7 @@ import {
   util,
 } from "fabric";
 import Icon from "./CreateIcons";
-import ElementsPanel from "./CreateElements";
+import ElementsPanel, { PremiumMark } from "./CreateElements";
 import BackgroundPanel from "./CreateBackground";
 import CreateSearch from "./CreateSearch";
 import { SearchBox } from "./CreateElements";
@@ -95,7 +95,13 @@ const exportFormats = [
 const isLocked = (obj) => Boolean(obj?.lockMovementX);
 // saved with a design, so a locked element stays locked after undo or reload
 // saved with each object: its locks, and a basic shape's sides and corner
-const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls", "kdShape", "kdFrame"];
+const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls", "kdShape", "kdFrame", "kdPremium"];
+
+// Premium items in a saved page (inside groups too), and the page without them
+const countPremium = (objects = []) =>
+  objects.reduce((n, o) => n + (o.kdPremium ? 1 : countPremium(o.objects)), 0);
+const withoutPremium = (objects = []) =>
+  objects.filter((o) => !o.kdPremium).map((o) => (o.objects ? { ...o, objects: withoutPremium(o.objects) } : o));
 
 // what the shape bar can change on an object: corners and sides, or just its
 // outline; null for anything that isn't a basic shape
@@ -810,6 +816,12 @@ function Create({ draft, clearDraft, user = null }) {
         window.alert("This template couldn't be opened. Check your connection and try again.");
         return;
       }
+      // a Premium template's items are marked: free to try, Premium to download
+      if (t.license && t.license !== "free") {
+        for (const page of snap.pages ?? [snap.json]) {
+          for (const o of page?.objects ?? []) o.kdPremium = true;
+        }
+      }
       renameDesign(t.title[0].toUpperCase() + t.title.slice(1));
       await restore(snap, 0);
       rememberPage(0);
@@ -947,17 +959,20 @@ function Create({ draft, clearDraft, user = null }) {
     render();
   };
 
-  const addSvg = async (markup, point) => {
+  const addSvg = async (markup, point, premium = false) => {
     const { objects, options } = await loadSVGFromString(markup);
     const obj = util.groupSVGElements(objects.filter(Boolean), options);
     obj.scaleToWidth(unit() * 0.3);
+    obj.kdPremium = premium || undefined;
     place(obj, point);
   };
 
-  const addImage = async (src, point) => {
+  // premium: a Premium library item, free to try and Premium to download
+  const addImage = async (src, point, premium = false) => {
     const img = await FabricImage.fromURL(src, { crossOrigin: "anonymous" });
     const b = boardRef.current;
     img.scale(Math.min((b.w * 0.5) / img.width, (b.h * 0.5) / img.height));
+    img.kdPremium = premium || undefined;
     place(img, point);
   };
 
@@ -975,8 +990,8 @@ function Create({ draft, clearDraft, user = null }) {
     // element files: SVG stays editable vector, PNG goes in as an image
     if (kind === "element") {
       const el = dbElements.find((e) => e.id === id) ?? libraryElements.find((e) => e.id === id);
-      if (el.type !== "svg") return addImage(el.url, point);
-      return fetch(el.url).then((r) => r.text()).then((markup) => addSvg(markup, point));
+      if (el.type !== "svg") return addImage(el.url, point, el.premium);
+      return fetch(el.url).then((r) => r.text()).then((markup) => addSvg(markup, point, el.premium));
     }
     if (kind === "vector") {
       const vector = library.vectors.find((v) => v.id === id);
@@ -1825,10 +1840,30 @@ function Create({ draft, clearDraft, user = null }) {
       <div style={{ aspectRatio: `${t.w} / ${t.h}` }}>
         {t.scene ? <TemplateThumb scene={t.scene} /> : <img src={t.image} alt="" loading="lazy" />}
       </div>
+      {t.license && t.license !== "free" && <PremiumMark />}
     </button>
   );
 
+  // Premium items on every page (the open one as it is now)
+  const premiumCount = () => currentPages().reduce((n, page) => n + countPremium(page?.objects), 0);
+
+  // takes the Premium items out of every page, so a free account can download
+  const removePremium = async () => {
+    const p = pagesRef.current;
+    const pages = currentPages().map((page) => page && { ...page, objects: withoutPremium(page.objects) });
+    await restore({ w: boardRef.current.w, h: boardRef.current.h, pages }, p.index);
+    setExportNote(null);
+    commit();
+  };
+
   const exportFile = (format) => {
+    // Premium items can be tried freely; downloading them needs Premium
+    const premium = canPremium ? 0 : premiumCount();
+    if (premium > 0) {
+      setExportNote({ premium });
+      setMenu("download");
+      return;
+    }
     // the design is autosaved on this device, so nothing is lost meanwhile
     if (!user) {
       askLogin("design");
@@ -2231,7 +2266,15 @@ function Create({ draft, clearDraft, user = null }) {
                     Transparent background
                     <span className="ct-premium">Premium</span>
                   </label>
-                  {exportNote && (
+                  {exportNote?.premium ? (
+                    <div className="ct-premium-note">
+                      <p><Icon name="crown" size={13} /> {exportNote.premium} Premium item{exportNote.premium === 1 ? "" : "s"} used</p>
+                      <div>
+                        <a href="/pricing" className="is-gold">Upgrade</a>
+                        <button onClick={removePremium} title="Take the Premium items out of every page">Remove</button>
+                      </div>
+                    </div>
+                  ) : exportNote && (
                     <p className="ct-export-note">
                       {exportNote} <a href="/pricing">See plans</a>
                     </p>

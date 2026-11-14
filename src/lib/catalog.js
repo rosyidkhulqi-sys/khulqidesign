@@ -31,6 +31,7 @@ export function toCreatePart(row) {
     category: row.style === "background" ? row.category || "other" : normalizeElementCategory(row.category),
     name: row.title,
     keywords: row.keywords ?? [],
+    premium: row.license !== "free",
   };
 }
 

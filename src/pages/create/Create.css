@@ -1552,6 +1552,21 @@
 /* the one search box, and its results */
 .cp-found { margin-top: 16px; }
 .cp-found:first-child { margin-top: 0; }
+/* a Premium tile: a small gold crown in the corner */
+.cp-template { position: relative; }
+.cp-crown {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(10, 11, 13, 0.72);
+  color: #f5c94a;
+  pointer-events: none;
+}
 .cp-badge {
   position: absolute;
   right: 5px;
@@ -2058,6 +2073,27 @@
 .ct-export-note { margin: 0; color: #f5c94a; font-size: 12px; line-height: 1.4; }
 .ct-export-note a { color: white; }
 .ct-export-clear input { accent-color: var(--red); }
+/* Premium items block the download: say how many, then the two ways out */
+.ct-premium-note { display: grid; gap: 8px; }
+.ct-premium-note p { display: flex; align-items: center; gap: 6px; margin: 0; color: #f5c94a; font-size: 12px; }
+.ct-premium-note div { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.ct-dropdown .ct-premium-note a,
+.ct-dropdown .ct-premium-note button {
+  display: grid;
+  place-items: center;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 7px;
+  background: var(--surface-2);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.ct-dropdown .ct-premium-note .is-gold { border-color: transparent; background: #f5c94a; color: #0a0b0d; font-weight: 600; }
+.ct-dropdown .ct-premium-note button:hover { border-color: rgba(255, 255, 255, 0.3); }
 
 /* BRAND TAB */
 .cb { display: grid; gap: 20px; }
