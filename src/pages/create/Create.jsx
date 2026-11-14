@@ -1175,7 +1175,8 @@ function Create({ draft, clearDraft, user = null }) {
   // Adjust photo (double-click a filled frame): the whole photo shows faded
   // behind the frame as a handle to drag and resize; the frame shows the result.
   const frameAdjust = useRef(null);
-  const [adjusting, setAdjusting] = useState(false);
+  // the frame whose photo is being adjusted, or null
+  const [adjusting, setAdjusting] = useState(null);
 
   const placeGhost = (img, ghost) => {
     // the photo's full transform on the page (its own, then the frame's)
@@ -1203,7 +1204,7 @@ function Create({ draft, clearDraft, user = null }) {
     c.insertAt(c.getObjects().indexOf(frame), ghost);
     frame.set({ evented: false, selectable: false });
     frameAdjust.current = { frame, img, ghost };
-    setAdjusting(true);
+    setAdjusting(frame);
     c.setActiveObject(ghost);
     setActive(ghost);
     c.requestRenderAll();
@@ -1230,7 +1231,7 @@ function Create({ draft, clearDraft, user = null }) {
     const c = fc.current;
     c.remove(a.ghost);
     a.frame.set({ evented: true, selectable: true, dirty: true });
-    setAdjusting(false);
+    setAdjusting(null);
     c.setActiveObject(a.frame);
     setActive(a.frame);
     render();
@@ -1242,13 +1243,16 @@ function Create({ draft, clearDraft, user = null }) {
     const size = Math.min(obj.width * obj.scaleX, obj.height * obj.scaleY) || 1;
     return Math.round(Math.min(100, (obj.shadow.blur / size) * 400));
   };
-  const setFrameShadow = (amount) => {
-    const size = Math.min(active.width * active.scaleX, active.height * active.scaleY);
-    setProp({
+  // (works while adjusting the photo too, when the faded photo is selected)
+  const setFrameShadow = (frame, amount) => {
+    const size = Math.min(frame.width * frame.scaleX, frame.height * frame.scaleY);
+    frame.set({
       shadow: amount > 0
         ? new Shadow({ color: "rgba(0,0,0,0.35)", blur: (size * amount) / 400, offsetX: 0, offsetY: (size * amount) / 1200 })
         : null,
+      dirty: true,
     });
+    render();
   };
 
   // a picture dropped or picked for a frame: its address, or null for SVGs
@@ -2732,37 +2736,39 @@ function Create({ draft, clearDraft, user = null }) {
                 )}
                 <p className="cp-hint">Select an element to edit it.</p>
               </>
-            ) : adjusting ? (
-              <>
-                <p className="cp-label">Adjust photo</p>
-                <p className="cp-hint">Drag the photo to move it, drag a corner to zoom. The frame stays put.</p>
-                <button className="pp-resize" onClick={endFrameAdjust}>Done</button>
-              </>
             ) : (
               <>
-                {active.kdFrame && (
+                {/* one Frame section: its shadow, and the photo inside; while
+                    adjusting, only this shows (Done sits by the frame) */}
+                {(adjusting || active.kdFrame) && (
                   <>
                     <p className="cp-label">Frame</p>
                     <div className="pp-type">
-                      <label title="Shadow (0 to 100)">
+                      <label className="pp-type-wide" title="Shadow (0 to 100)">
                         <Icon name="shadow" size={16} />
+                        <span>Shadow</span>
                         <NumberInput
                           min="0"
                           max="100"
                           step="5"
-                          value={frameShadowAmount(active)}
-                          onChange={(e) => setFrameShadow(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                          value={frameShadowAmount(adjusting || active)}
+                          onChange={(e) => setFrameShadow(adjusting || active, Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
                           aria-label="Frame shadow"
                         />
                       </label>
                     </div>
-                    {framePhoto(active) && !locked && (
+                    {adjusting && (
+                      <p className="cp-hint">Drag the photo to move it, drag a corner to zoom. Press Done when finished.</p>
+                    )}
+                    {!adjusting && framePhoto(active) && !locked && (
                       <button className="pp-resize" onClick={() => startFrameAdjust(active)} title="Move or zoom the photo inside the frame (double-click)">
                         <Icon name="crop" size={14} /> Adjust photo
                       </button>
                     )}
                   </>
                 )}
+                {!adjusting && (
+                <>
                 {isText && (
                   <>
                     <p className="cp-label">Text</p>
@@ -3027,6 +3033,8 @@ function Create({ draft, clearDraft, user = null }) {
                     </label>
                   </div>
                 </details>
+                </>
+                )}
               </>
             )}
           </aside>

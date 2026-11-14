@@ -1924,6 +1924,10 @@
   background: var(--surface-2);
   color: #8d939b;
 }
+/* a field with its name written out, across the whole row */
+.pp-type .pp-type-wide { grid-column: 1 / -1; }
+.pp-type-wide > span { font-size: 12.5px; color: rgba(255, 255, 255, 0.7); margin-right: auto; }
+.pp-type-wide .num { flex: 0 0 84px; }
 .pp-type label:focus-within { border-color: rgba(255, 255, 255, 0.4); color: white; }
 .pp-type input {
   flex: 1;
