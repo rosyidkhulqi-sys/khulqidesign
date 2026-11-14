@@ -117,3 +117,40 @@ export const textPresets = [
 
 export const svgDataUrl = (markup) =>
   `data:image/svg+xml;utf8,${encodeURIComponent(markup)}`;
+
+// Photo frames: shapes a photo is dropped into and cut to, as Canva's Frames.
+// Each path is drawn in a w × h box (w and h are the frame's proportions).
+export const photoFrames = [
+  { id: "frame-circle", label: "Circle", w: 100, h: 100, path: "M50 0 A50 50 0 1 1 49.99 0Z" },
+  { id: "frame-rounded", label: "Rounded square", w: 100, h: 100, path: "M16 0 H84 A16 16 0 0 1 100 16 V84 A16 16 0 0 1 84 100 H16 A16 16 0 0 1 0 84 V16 A16 16 0 0 1 16 0Z" },
+  { id: "frame-square", label: "Square", w: 100, h: 100, path: "M0 0 H100 V100 H0Z" },
+  { id: "frame-portrait", label: "Portrait 4:5", w: 80, h: 100, path: "M6 0 H74 A6 6 0 0 1 80 6 V94 A6 6 0 0 1 74 100 H6 A6 6 0 0 1 0 94 V6 A6 6 0 0 1 6 0Z" },
+  { id: "frame-arch", label: "Arch", w: 80, h: 100, path: "M0 100 V40 A40 40 0 0 1 80 40 V100Z" },
+  { id: "frame-blob", label: "Blob", w: 100, h: 100, path: "M52 2 C74 0 94 14 98 36 C102 58 92 80 74 92 C56 104 30 102 14 88 C-2 74 -2 48 8 28 C16 12 32 4 52 2Z" },
+  { id: "frame-hexagon", label: "Hexagon", w: 100, h: 88, path: "M25 0 H75 L100 44 L75 88 H25 L0 44Z" },
+  {
+    id: "frame-flower",
+    label: "Scalloped",
+    w: 100,
+    h: 100,
+    // twelve round bumps around a circle
+    path: (() => {
+      const n = 12, r = 42, bump = 9;
+      let d = "";
+      for (let i = 0; i < n; i++) {
+        const a0 = (i / n) * 2 * Math.PI - Math.PI / 2;
+        const a1 = ((i + 1) / n) * 2 * Math.PI - Math.PI / 2;
+        const p0 = [50 + r * Math.cos(a0), 50 + r * Math.sin(a0)];
+        const p1 = [50 + r * Math.cos(a1), 50 + r * Math.sin(a1)];
+        d += `${i ? "" : `M${p0[0].toFixed(2)} ${p0[1].toFixed(2)} `}A${bump} ${bump} 0 0 1 ${p1[0].toFixed(2)} ${p1[1].toFixed(2)} `;
+      }
+      return `${d}Z`;
+    })(),
+  },
+];
+
+// a photo frame's look in the panel: the shape in grey with a picture sign
+export const frameArt = (frame, fill = "#d4d8de") =>
+  svgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 ${frame.w + 4} ${frame.h + 4}"><path d="${frame.path}" fill="${fill}"/>`
+    + `<g transform="translate(${frame.w / 2 - 12} ${frame.h / 2 - 9})" fill="#8a929c"><path d="M0 18 L8 8 L13 13 L17 9 L24 18Z"/><circle cx="18" cy="3.5" r="3"/></g></svg>`);
+

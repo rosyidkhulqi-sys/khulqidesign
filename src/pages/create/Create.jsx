@@ -25,7 +25,7 @@ import { SearchBox } from "./CreateElements";
 import TemplateThumb from "../../components/TemplateThumb";
 import { elements as libraryElements } from "../../data/elementsData";
 import { basicIcons } from "./basicIcons";
-import { artboardPresets, shapes, svgDataUrl, textPresets } from "./createLibrary";
+import { artboardPresets, photoFrames, shapes, svgDataUrl, textPresets } from "./createLibrary";
 import { loadFont, loadFontsOf, loadSiteFonts } from "./createFonts";
 import FontPicker from "./FontPicker";
 import { pageThumbs } from "./pageThumbs";
@@ -92,7 +92,7 @@ const exportFormats = [
 const isLocked = (obj) => Boolean(obj?.lockMovementX);
 // saved with a design, so a locked element stays locked after undo or reload
 // saved with each object: its locks, and a basic shape's sides and corner
-const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls", "kdShape"];
+const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls", "kdShape", "kdFrame"];
 
 // what the shape bar can change on an object: corners and sides, or just its
 // outline; null for anything that isn't a basic shape
@@ -182,6 +182,8 @@ function Create({ draft, clearDraft, user = null }) {
   const cropRef = useRef(null);
   const [cropping, setCropping] = useState(false);
   const fileInput = useRef(null);
+  // the file picker behind a photo frame's Add photo / Replace photo
+  const frameInput = useRef(null);
 
   // phones get a one-time hint that the editor is built for bigger screens
   const [smallHint, setSmallHint] = useState(true);
@@ -958,6 +960,7 @@ function Create({ draft, clearDraft, user = null }) {
 
   const addItem = ({ kind, id }, point) => {
     if (kind === "shape") return addShape(id, point);
+    if (kind === "frame") return addFrame(id, point);
     if (kind === "text") return addText(textPresets.find((t) => t.id === id), point);
     if (kind === "basic") return addSvg(basicIcons.find((i) => i.id === id).svg, point);
     // the same SVG files as the Icons page, so their colors stay editable
@@ -1093,6 +1096,82 @@ function Create({ draft, clearDraft, user = null }) {
       else reader.readAsDataURL(file);
     });
 
+  /* ---------- photo frames ---------- */
+
+  // An empty frame is a group: the shape in grey and a small picture sign.
+  // A filled one is a group holding the photo, cut to the shape (clipPath).
+  // kdFrame (saved with the design) says which shape it is.
+  const addFrame = (id, point) => {
+    const f = photoFrames.find((x) => x.id === id);
+    if (!f) return;
+    const k = (unit() * 0.45) / Math.max(f.w, f.h);
+    const w = f.w * k;
+    const h = f.h * k;
+    const shape = new Path(f.path, { fill: "#d4d8de", strokeWidth: 0, scaleX: k, scaleY: k, left: 0, top: 0 });
+    const m = w / 100;
+    const sign = [
+      new Path("M0 18 L8 8 L13 13 L17 9 L24 18Z", { fill: "#8a929c", strokeWidth: 0, scaleX: m * 1.4, scaleY: m * 1.4, left: w / 2 - 17 * m, top: h / 2 - 12 * m }),
+      new Circle({ radius: 3 * m * 1.4, fill: "#8a929c", left: w / 2 + 3 * m, top: h / 2 - 14 * m }),
+    ];
+    const frame = new Group([shape, ...sign], { kdFrame: id });
+    place(frame, point);
+  };
+
+  // the frame under a point on the page, topmost first
+  const frameAt = (point) =>
+    [...fc.current.getObjects()].reverse().find((o) => o.kdFrame && o.visible && o.containsPoint(point));
+
+  // puts a photo into a frame: it covers the frame's box and is cut to its shape
+  const fillFrame = async (frame, src) => {
+    const c = fc.current;
+    const f = photoFrames.find((x) => x.id === frame.kdFrame);
+    if (!f) return;
+    const w = frame.width;
+    const h = frame.height;
+    const k = Math.min(w / f.w, h / f.h);
+    const img = await imageCover(src, w, h);
+    img.set({ left: 0, top: 0 });
+    const filled = new Group([img], { kdFrame: frame.kdFrame });
+    filled.clipPath = new Path(f.path, { scaleX: k, scaleY: k, left: -w / 2, top: -h / 2 });
+    filled.set({
+      left: frame.left, top: frame.top, scaleX: frame.scaleX, scaleY: frame.scaleY,
+      angle: frame.angle, flipX: frame.flipX, flipY: frame.flipY, opacity: frame.opacity,
+    });
+    const index = c.getObjects().indexOf(frame);
+    c.remove(frame);
+    c.insertAt(index, filled);
+    filled.setCoords();
+    c.setActiveObject(filled);
+    setActive(filled);
+    render();
+  };
+
+  // a picture dropped or picked for a frame: its address, or null for SVGs
+  const pictureOf = async ({ kind, id }) => {
+    if (kind === "upload") {
+      const u = uploads.find((x) => x.id === id);
+      return u && u.type !== "svg" ? u.data : null;
+    }
+    if (kind === "vector") {
+      const v = library.vectors.find((x) => x.id === id);
+      return v ? v.previewImage ?? v.image : null;
+    }
+    if (kind === "element") {
+      const el = dbElements.find((e) => e.id === id) ?? libraryElements.find((e) => e.id === id);
+      return el?.url && !/\.svg(\?|$)/i.test(el.url) ? el.url : null;
+    }
+    return null;
+  };
+
+  const pickFramePhoto = async (file) => {
+    const frame = fc.current.getActiveObject();
+    if (!file || !frame?.kdFrame) return;
+    const u = await readFile(file);
+    if (u.type === "svg") return;
+    setUploads((list) => [u, ...list]);
+    await fillFrame(frame, u.data);
+  };
+
   const handleFiles = async (files, point) => {
     const list = await Promise.all(
       [...files].filter((f) => /svg|png|jpe?g|webp/i.test(f.type || f.name)).map(readFile)
@@ -1109,11 +1188,26 @@ function Create({ draft, clearDraft, user = null }) {
     onClick: () => addItem({ kind, id }),
   });
 
-  const onDrop = (e) => {
+  const onDrop = async (e) => {
     e.preventDefault();
     const point = fc.current.getScenePoint(e.nativeEvent);
-    if (e.dataTransfer.files.length) return handleFiles(e.dataTransfer.files, point);
     const data = e.dataTransfer.getData(DRAG_TYPE);
+    const files = [...e.dataTransfer.files];
+    // a photo dropped on a frame goes into the frame
+    const frame = frameAt(point);
+    if (frame) {
+      const photo = files.find((f) => /png|jpe?g|webp/i.test(f.type || f.name));
+      if (photo) {
+        const u = await readFile(photo);
+        setUploads((list) => [u, ...list]);
+        return fillFrame(frame, u.data);
+      }
+      if (data) {
+        const src = await pictureOf(JSON.parse(data));
+        if (src) return fillFrame(frame, src);
+      }
+    }
+    if (files.length) return handleFiles(e.dataTransfer.files, point);
     if (data) addItem(JSON.parse(data), point);
   };
 
@@ -1872,7 +1966,8 @@ function Create({ draft, clearDraft, user = null }) {
   const isText = active instanceof Textbox;
   const isSelection = active instanceof ActiveSelection;
   const shapeBar = shapeInfo(active);
-  const isGroup = active instanceof Group && !isSelection;
+  // a photo frame is a group too, but splitting it would lose the cut-out
+  const isGroup = active instanceof Group && !isSelection && !active.kdFrame;
   const isLine = active instanceof Line;
   const lineStyle = !active?.strokeDashArray?.length
     ? "solid"
@@ -2284,6 +2379,11 @@ function Create({ draft, clearDraft, user = null }) {
 
               {floatPos && !cropping && (
                 <div className="ct-float" style={floatPos}>
+                  {active?.kdFrame && !locked && (
+                    <button onClick={() => frameInput.current?.click()} title={active.getObjects?.()[0] instanceof FabricImage ? "Replace photo" : "Add photo"}>
+                      <Icon name="uploads" />
+                    </button>
+                  )}
                   {active instanceof FabricImage && !locked && (
                     <>
                       <button onClick={startCrop} title="Crop (double-click)"><Icon name="crop" /></button>
@@ -2921,6 +3021,17 @@ function Create({ draft, clearDraft, user = null }) {
           </div>
         </div>
       )}
+      {/* the photo for a frame's Add photo / Replace photo */}
+      <input
+        ref={frameInput}
+        type="file"
+        accept=".png,.jpg,.jpeg,.webp"
+        hidden
+        onChange={(e) => {
+          pickFramePhoto(e.target.files[0]);
+          e.target.value = "";
+        }}
+      />
       {showPublish && (
         <PublishTemplate
           getDesign={() => ({ ...boardRef.current, pages: currentPages() })}

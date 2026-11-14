@@ -7,7 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { askConfirm } from "../../lib/confirm";
 import Icon from "./CreateIcons";
 import { basicIcons } from "./basicIcons";
-import { shapeGroups, shapes, svgDataUrl } from "./createLibrary";
+import { frameArt, photoFrames, shapeGroups, shapes, svgDataUrl } from "./createLibrary";
 import { clearRecent as forgetRecent, loadRecent, saveRecent, withRecent } from "./createRecent";
 import { elementCategories, elements as trialElements } from "../../data/elementsData";
 import { elementCategoryLabel, normalizeElementCategory } from "../../data/elementCategories";
@@ -76,6 +76,14 @@ function ShapeTiles({ list, dragItem }) {
         </section>
       )}
     </>
+  );
+}
+
+export function FrameTile({ frame, dragItem }) {
+  return (
+    <button className="cp-tile" {...dragItem("frame", frame.id)} title={`${frame.label} photo frame`}>
+      <img src={frameArt(frame)} alt="" draggable={false} />
+    </button>
   );
 }
 
@@ -150,6 +158,10 @@ function recentTile({ kind, id }, dragItem, elements, icons) {
     const s = shapes.find((x) => x.id === id);
     return s && <ShapeTile key={key} shape={s} dragItem={dragItem} />;
   }
+  if (kind === "frame") {
+    const f = photoFrames.find((x) => x.id === id);
+    return f && <FrameTile key={key} frame={f} dragItem={dragItem} />;
+  }
   if (kind === "element") {
     const el = elements.find((x) => x.id === id);
     return el && <ElementTile key={key} el={el} dragItem={dragItem} />;
@@ -211,6 +223,13 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [] }) {
       picture: shapeCategory?.cover ?? SHAPES_PREVIEW,
       onOpen: () => setView("shapes"),
     },
+    {
+      id: "photo-frames",
+      name: "Photo frames",
+      count: photoFrames.length,
+      picture: frameArt(photoFrames[4]),
+      onOpen: () => setView("photo-frames"),
+    },
     ...browsableCategories.filter((c) => c.id === "frames" || c.id === "photos").map((c) => ({
       ...c,
       picture: c.cover,
@@ -246,12 +265,21 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [] }) {
       <>
         <button className="cp-back" onClick={() => setView(null)}>
           <Icon name="arrowLeft" size={16} />
-          {category?.name ?? (view === "recent" ? "Recently used" : view === "shapes" ? "Shapes" : "Icons")}
+          {category?.name ?? (view === "recent" ? "Recently used" : view === "shapes" ? "Shapes" : view === "photo-frames" ? "Photo frames" : "Icons")}
         </button>
 
         {category && view !== "shapes" && <PagedGrid items={category.items} renderTile={elementTile} />}
 
         {view === "shapes" && <ShapeTiles list={shapeCategory?.items ?? []} dragItem={dragItem} />}
+
+        {view === "photo-frames" && (
+          <>
+            <div className="cp-grid three">
+              {photoFrames.map((f) => <FrameTile key={f.id} frame={f} dragItem={dragItem} />)}
+            </div>
+            <p className="cp-hint">Add a frame, then drag a photo onto it. The photo is cut to the frame's shape.</p>
+          </>
+        )}
 
         {view === "recent" && (
           <>
