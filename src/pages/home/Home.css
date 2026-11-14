@@ -146,10 +146,8 @@
   text-align: left;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-.home-search:focus-within {
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05);
-}
+/* typing: the edge only brightens a little */
+.home-search:focus-within { border-color: rgba(255, 255, 255, 0.2); }
 .home-search > .home-icon { color: var(--muted); }
 .home-search input {
   min-width: 0;
