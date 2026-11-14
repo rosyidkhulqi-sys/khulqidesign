@@ -2234,3 +2234,8 @@
 .cq-add:disabled { opacity: 0.4; cursor: default; }
 .cq-edit { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-bottom: 12px; }
 .cq-edit .pp-type-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* TABLE: rows, columns and size in one row; the style choice across the panel */
+.pp-type.is-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pp-table-style { display: flex; width: 100%; margin-bottom: 10px; }
+.pp-table-style button { flex: 1; }

@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import Icon from "./CreateIcons";
 import { basicIcons } from "./basicIcons";
 import { shapes } from "./createLibrary";
-import { BasicTile, ElementTile, PagedGrid, SetIconTile, ShapeTile } from "./CreateElements";
+import { BasicTile, ElementTile, PagedGrid, SetIconTile, ShapeTile, TableTiles } from "./CreateElements";
 import { saveRecent, withRecent } from "./createRecent";
 import { PhotoTile } from "./CreateBackground";
 import { QrPanel } from "./CreateQr";
@@ -52,6 +52,8 @@ function VectorTile({ vector, dragItem }) {
 
 // searches that mean "make a QR code": the maker itself comes first
 const QR_SEARCH = /\b(qr|qrcode|barcode)\b/i;
+// and "table": the table styles come first
+const TABLE_SEARCH = /\b(tables?|tabel|grid table|spreadsheet)\b/i;
 
 function CreateSearch({ query, tab, templates, uploaded, backgrounds, photo, library, dragItem: placeItem, templateTile, onAddQr }) {
   // the section open in full ("See all")
@@ -111,6 +113,7 @@ function CreateSearch({ query, tab, templates, uploaded, backgrounds, photo, lib
 
   const term = query.trim();
   const wantsQr = QR_SEARCH.test(term) && onAddQr;
+  const wantsTable = TABLE_SEARCH.test(term);
   return (
     <>
       {wantsQr && (
@@ -118,7 +121,13 @@ function CreateSearch({ query, tab, templates, uploaded, backgrounds, photo, lib
           <QrPanel onAdd={onAddQr} focus={false} />
         </div>
       )}
-      {sections.length === 0 && !wantsQr && <p className="cp-hint">Nothing found for “{term}”.</p>}
+      {wantsTable && (
+        <div className="cp-found">
+          <p className="cp-label">Tables</p>
+          <TableTiles dragItem={dragItem} />
+        </div>
+      )}
+      {sections.length === 0 && !wantsQr && !wantsTable && <p className="cp-hint">Nothing found for “{term}”.</p>}
 
       {sections.map((s) => {
         const short = s.items.slice(0, s.columns === "three" ? 6 : 4);

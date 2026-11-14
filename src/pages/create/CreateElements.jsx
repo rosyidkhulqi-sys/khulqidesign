@@ -9,6 +9,7 @@ import Icon from "./CreateIcons";
 import { basicIcons } from "./basicIcons";
 import { QrPanel } from "./CreateQr";
 import { qrSvg } from "./qrCode";
+import { TABLE_STYLES, tableArt } from "./createTable";
 import { frameArt, photoFrames, shapeGroups, shapes, svgDataUrl } from "./createLibrary";
 import { clearRecent as forgetRecent, loadRecent, saveRecent, withRecent } from "./createRecent";
 import { elementCategories, elements as trialElements } from "../../data/elementsData";
@@ -89,6 +90,26 @@ export function FrameTile({ frame, dragItem }) {
     <button className="cp-tile" {...dragItem("frame", frame.id)} title={`${frame.label} photo frame`}>
       <img src={frameArt(frame)} alt="" draggable={false} />
     </button>
+  );
+}
+
+export function TableTile({ style, label, dragItem }) {
+  return (
+    <button className="cp-tile" {...dragItem("table", style)} title={`${label} table`}>
+      <img src={tableArt(style)} alt="" draggable={false} />
+    </button>
+  );
+}
+
+// the three table styles, with a line on how to type in them
+export function TableTiles({ dragItem }) {
+  return (
+    <>
+      <div className="cp-grid three">
+        {TABLE_STYLES.map(([style, label]) => <TableTile key={style} style={style} label={label} dragItem={dragItem} />)}
+      </div>
+      <p className="cp-hint">Add a table, then double-click a cell to type.</p>
+    </>
   );
 }
 
@@ -174,6 +195,10 @@ function recentTile({ kind, id }, dragItem, elements, icons) {
     const s = shapes.find((x) => x.id === id);
     return s && <ShapeTile key={key} shape={s} dragItem={dragItem} />;
   }
+  if (kind === "table") {
+    const t = TABLE_STYLES.find(([style]) => style === id);
+    return t && <TableTile key={key} style={t[0]} label={t[1]} dragItem={dragItem} />;
+  }
   if (kind === "frame") {
     const f = photoFrames.find((x) => x.id === id);
     return f && <FrameTile key={key} frame={f} dragItem={dragItem} />;
@@ -249,6 +274,13 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [], onAddQr }) {
       onOpen: () => setView("photo-frames"),
     },
     {
+      id: "tables",
+      name: "Tables",
+      count: TABLE_STYLES.length,
+      picture: tableArt("header"),
+      onOpen: () => setView("tables"),
+    },
+    {
       id: "qr",
       name: "QR code",
       count: 1,
@@ -292,7 +324,7 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [], onAddQr }) {
       <>
         <button className="cp-back" onClick={() => setView(null)}>
           <Icon name="arrowLeft" size={16} />
-          {category?.name ?? (view === "recent" ? "Recently used" : view === "shapes" ? "Shapes" : view === "photo-frames" ? "Photo frames" : view === "qr" ? "QR code" : "Icons")}
+          {category?.name ?? (view === "recent" ? "Recently used" : view === "shapes" ? "Shapes" : view === "photo-frames" ? "Photo frames" : view === "qr" ? "QR code" : view === "tables" ? "Tables" : "Icons")}
         </button>
 
         {category && view !== "shapes" && <PagedGrid items={category.items} renderTile={elementTile} />}
@@ -309,6 +341,8 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [], onAddQr }) {
         )}
 
         {view === "qr" && <QrPanel onAdd={(text) => onAddQr?.(text)} />}
+
+        {view === "tables" && <TableTiles dragItem={dragItem} />}
 
         {view === "recent" && (
           <>

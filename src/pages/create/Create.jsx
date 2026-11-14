@@ -24,6 +24,8 @@ import Icon from "./CreateIcons";
 import ElementsPanel, { PremiumMark } from "./CreateElements";
 import { qrSvg, qrText } from "./qrCode";
 import { QrEdit } from "./CreateQr";
+import { buildTable, cellAt, newTable, resizeTable, tableColors } from "./createTable";
+import CreateTableEdit from "./CreateTableEdit";
 import BackgroundPanel from "./CreateBackground";
 import CreateSearch from "./CreateSearch";
 import { SearchBox } from "./CreateElements";
@@ -98,7 +100,7 @@ const exportFormats = [
 const isLocked = (obj) => Boolean(obj?.lockMovementX);
 // saved with a design, so a locked element stays locked after undo or reload
 // saved with each object: its locks, and a basic shape's sides and corner
-const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls", "kdShape", "kdFrame", "kdPremium", "kdQr"];
+const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls", "kdShape", "kdFrame", "kdPremium", "kdQr", "kdTable", "kdRole"];
 
 // Premium items in a saved page (inside groups too), and the page without them
 const countPremium = (objects = []) =>
@@ -1005,6 +1007,114 @@ function Create({ draft, clearDraft, user = null }) {
     render();
   };
 
+  /* ---------- tables ---------- */
+
+  // (re)builds a table from its data; with \`replace\`, it takes that table's
+  // place (top-left corner, scale, angle) and keeps its colors
+  const placeTable = (data, replace = null, point = null) => {
+    const c = fc.current;
+    const { group, tops } = buildTable(data, tableColors(replace));
+    group.kdTable = { ...data, tops };
+    if (!replace) {
+      place(group, point);
+      return group;
+    }
+    group.set({ scaleX: replace.scaleX, scaleY: replace.scaleY, angle: replace.angle, opacity: replace.opacity });
+    // grows downward and to the right: the top-left corner stays put
+    const corner = replace.getCoords()[0];
+    group.setPositionByOrigin(corner, "left", "top");
+    const index = c.getObjects().indexOf(replace);
+    c.remove(replace);
+    c.insertAt(index, group);
+    group.setCoords();
+    return group;
+  };
+
+  const addTable = (style, point) => placeTable(newTable(style, unit()), null, point);
+
+  // changes a selected table's data (rows, columns, style, font)
+  const updateTable = (patch) => {
+    if (!active?.kdTable) return;
+    const next = placeTable({ ...active.kdTable, ...patch }, active);
+    fc.current.setActiveObject(next);
+    setActive(next);
+    render();
+  };
+
+  // Typing in a cell: a Textbox laid over the cell while it's edited, then
+  // written back into the table. Tab goes to the next cell, Shift+Tab back.
+  const cellEdit = useRef(null);
+  const editCell = (table, r, c) => {
+    const canvas = fc.current;
+    const cell = table.getObjects().find((o) => o.kdCell?.[0] === r && o.kdCell?.[1] === c);
+    if (!cell) return;
+    const d = util.qrDecompose(cell.calcTransformMatrix());
+    const box = new Textbox(table.kdTable.rows[r][c], {
+      width: cell.width,
+      fontFamily: cell.fontFamily,
+      fontSize: cell.fontSize,
+      fontWeight: cell.fontWeight,
+      lineHeight: cell.lineHeight,
+      fill: cell.fill,
+      scaleX: d.scaleX,
+      scaleY: d.scaleY,
+      angle: d.angle,
+      excludeFromExport: true,
+      kdCellEditor: true,
+      hasControls: false,
+      lockMovementX: true,
+      lockMovementY: true,
+    });
+    box.setPositionByOrigin(cell.getCenterPoint(), "center", "center");
+    // centered rows: the editor grows from the cell's top as lines are added
+    const top = box.top;
+    box.on("changed", () => box.set({ top }));
+    cell.set({ opacity: 0 });
+    table.set({ dirty: true });
+    canvas.add(box);
+    canvas.setActiveObject(box);
+    cellEdit.current = { table, r, c, box, cell };
+    box.enterEditing();
+    box.selectAll();
+    // capture: Fabric would take Tab as "stop editing" before this sees it
+    box.hiddenTextarea?.addEventListener("keydown", (e) => {
+      if (e.key !== "Tab") return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const cols = table.kdTable.rows[0].length;
+      const count = table.kdTable.rows.length * cols;
+      const at = (r * cols + c + (e.shiftKey ? count - 1 : 1)) % count;
+      finishCell({ next: [Math.floor(at / cols), at % cols] });
+    }, true);
+    box.on("editing:exited", () => finishCell());
+    canvas.requestRenderAll();
+  };
+
+  const finishCell = ({ next = null } = {}) => {
+    const edit = cellEdit.current;
+    if (!edit) return;
+    cellEdit.current = null;
+    const canvas = fc.current;
+    const { table, r, c, box } = edit;
+    const rows = table.kdTable.rows.map((row) => [...row]);
+    rows[r][c] = box.text;
+    if (box.isEditing) box.exitEditing();
+    canvas.remove(box);
+    const rebuilt = placeTable({ ...table.kdTable, rows }, table);
+    if (next) {
+      editCell(rebuilt, next[0], next[1]);
+      return;
+    }
+    // keep the table picked, unless something else was just clicked
+    setTimeout(() => {
+      if (canvas.getActiveObject()) return;
+      canvas.setActiveObject(rebuilt);
+      setActive(rebuilt);
+      canvas.requestRenderAll();
+    });
+    render();
+  };
+
   // premium: a Premium library item, free to try and Premium to download
   const addImage = async (src, point, premium = false) => {
     const img = await FabricImage.fromURL(src, { crossOrigin: "anonymous" });
@@ -1017,6 +1127,7 @@ function Create({ draft, clearDraft, user = null }) {
   const addItem = ({ kind, id }, point) => {
     if (kind === "shape") return addShape(id, point);
     if (kind === "frame") return addFrame(id, point);
+    if (kind === "table") return addTable(id, point);
     if (kind === "text") return addText(textPresets.find((t) => t.id === id), point);
     if (kind === "basic") return addSvg(basicIcons.find((i) => i.id === id).svg, point);
     // the same SVG files as the Icons page, so their colors stay editable
@@ -1997,7 +2108,13 @@ function Create({ draft, clearDraft, user = null }) {
     refresh();
   });
 
-  const onDoubleClick = useEffectEvent(({ target }) => {
+  const onDoubleClick = useEffectEvent(({ target, scenePoint }) => {
+    if (target?.kdTable && scenePoint) {
+      const local = util.transformPoint(scenePoint, util.invertTransform(target.calcTransformMatrix()));
+      const cell = cellAt(target.kdTable, target.kdTable.tops, target, local);
+      if (cell) editCell(target, cell[0], cell[1]);
+      return;
+    }
     if (framePhoto(target)) startFrameAdjust(target);
     else if (target instanceof FabricImage && !target.kdGhost) startCrop();
   });
@@ -2175,7 +2292,7 @@ function Create({ draft, clearDraft, user = null }) {
   const isSelection = active instanceof ActiveSelection;
   const shapeBar = shapeInfo(active);
   // a photo frame is a group too, but splitting it would lose the cut-out
-  const isGroup = active instanceof Group && !isSelection && !active.kdFrame && !active.kdQr;
+  const isGroup = active instanceof Group && !isSelection && !active.kdFrame && !active.kdQr && !active.kdTable;
   const isLine = active instanceof Line;
   const lineStyle = !active?.strokeDashArray?.length
     ? "solid"
@@ -2837,6 +2954,13 @@ function Create({ draft, clearDraft, user = null }) {
             ) : (
               <>
                 {active.kdQr && !adjusting && <QrEdit key={active.kdQr} value={active.kdQr} onSave={(text) => addQr(text, active)} />}
+                {active.kdTable && (
+                  <CreateTableEdit
+                    data={active.kdTable}
+                    onChange={updateTable}
+                    onResize={(rows, cols) => updateTable(resizeTable(active.kdTable, rows, cols))}
+                  />
+                )}
                 {/* one Frame section: its shadow, and the photo inside; while
                     adjusting, only this shows (Done sits by the frame) */}
                 {(adjusting || active.kdFrame) && (

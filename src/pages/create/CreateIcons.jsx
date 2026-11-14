@@ -48,6 +48,9 @@ const paths = {
   // aligning elements: a guide line and two bars that meet it
   // a palette: the Brand tab
   brand: <><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-1.4-1.2-1.6-1.2-2.9 0-.9.7-1.5 1.6-1.5H16a5 5 0 0 0 5-5C21 6.4 17 3 12 3z" /><circle cx="7.5" cy="11" r="1.2" fill="currentColor" /><circle cx="10" cy="7" r="1.2" fill="currentColor" /><circle cx="15" cy="7.2" r="1.2" fill="currentColor" /></>,
+  rows: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M3 9.5h18M3 14.5h18" /></>,
+  cols: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16M15 4v16" /></>,
+  table: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M3 9h18M3 14.5h18M9.5 9v11" /></>,
   crown: <path d="M4 18h16M5 15l-1.5-8 5 3.5L12 5l3.5 5.5 5-3.5-1.5 8z" />,
   rotate: <><path d="M20 12a8 8 0 1 1-2.3-5.6" /><path d="M20 4v4h-4" /></>,
   objCenter: <><path d="M12 2v20M2 12h20" /><rect x="7" y="7" width="10" height="10" rx="1.5" /></>,
