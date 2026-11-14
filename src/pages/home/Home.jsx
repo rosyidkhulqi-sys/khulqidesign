@@ -39,13 +39,14 @@ const ways = [
   },
 ];
 
-// search ideas under the hero search bar, picked by hand from what's in the
-// store (not from search data): the word, and the library it opens in
+// ideas under the hero search bar, picked by hand (not from search data):
+// the label, the page it opens, and the search it starts with ("" = all)
 const POPULAR = [
-  ["Abstract", "vectors"],
-  ["Business", "icons"],
-  ["Mascot", "logos"],
-  ["Poster", "templates"],
+  ["Abstract", "vectors", "Abstract"],
+  ["Icons", "icons", ""],
+  ["Mascot", "logos", "Mascot"],
+  ["Poster", "templates", "Poster"],
+  ["Create", "create", ""],
 ];
 
 // free with an account, running in the visitor's browser
@@ -240,8 +241,8 @@ function Home({ setPage, user = null }) {
           {/* search ideas, picked by hand: one click to results */}
           <div className="home-chips">
             <span className="home-chips-label">Try:</span>
-            {POPULAR.map(([words, page]) => (
-              <button key={words} onClick={() => { setPage(page, words); window.scrollTo(0, 0); }}>{words}</button>
+            {POPULAR.map(([label, page, search]) => (
+              <button key={label} onClick={() => { setPage(page, search); window.scrollTo(0, 0); }}>{label}</button>
             ))}
           </div>
 
