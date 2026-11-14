@@ -214,8 +214,9 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [] }) {
   // the open category, the existing icon catalog, built-in shapes, or recent items
   const [view, setView] = useState(null);
   const browseTiles = [
-    ...browsableCategories.filter((c) => c.id === "graphics" || c.id === "grids").map((c) => ({
+    ...browsableCategories.filter((c) => ["graphics", "infographics", "grids"].includes(c.id)).map((c) => ({
       ...c,
+      count: c.items.length,
       picture: c.cover,
       onOpen: () => setView(c.id),
     })),
@@ -242,12 +243,13 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [] }) {
     },
     ...browsableCategories.filter((c) => c.id === "frames" || c.id === "photos").map((c) => ({
       ...c,
+      count: c.items.length,
       picture: c.cover,
       onOpen: () => setView(c.id),
     })),
     ...browsableCategories
-      .filter((c) => !["graphics", "grids", "frames", "photos"].includes(c.id))
-      .map((c) => ({ ...c, picture: c.cover, onOpen: () => setView(c.id) })),
+      .filter((c) => !["graphics", "infographics", "grids", "frames", "photos"].includes(c.id))
+      .map((c) => ({ ...c, count: c.items.length, picture: c.cover, onOpen: () => setView(c.id) })),
   ];
   const [recent, setRecent] = useState(loadRecent);
 

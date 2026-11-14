@@ -1,7 +1,7 @@
 // Categories for assets that can be placed directly onto a Create design.
 // Icons have their own managed catalog and are surfaced in Elements without
 // uploading or storing a second copy here.
-export const ELEMENT_CATEGORIES = ["graphics", "grids", "shapes", "frames", "photos"];
+export const ELEMENT_CATEGORIES = ["graphics", "infographics", "grids", "shapes", "frames", "photos"];
 
 export const BACKGROUND_CATEGORIES = [
   "abstract", "gradient", "nature", "pattern", "texture", "holiday", "business", "other",
@@ -9,6 +9,7 @@ export const BACKGROUND_CATEGORIES = [
 
 export const ELEMENT_CATEGORY_LABELS = {
   graphics: "Graphics",
+  infographics: "Infographics",
   grids: "Grids",
   shapes: "Shapes",
   frames: "Frames",
@@ -21,6 +22,7 @@ const ELEMENT_CATEGORY_ALIASES = {
     "graphics", "graphic", "graphic-resource", "graphic-resources", "illustration",
     "illustrations", "sticker", "stickers", "badge", "badges", "line", "lines", "other",
   ],
+  infographics: ["infographic", "infographics", "chart", "charts", "diagram", "diagrams"],
   grids: ["grid", "grids"],
   shapes: ["shape", "shapes"],
   frames: ["frame", "frames"],
