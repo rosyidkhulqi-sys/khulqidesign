@@ -14,6 +14,9 @@ import {
   Shadow,
   Textbox,
   Triangle,
+  FixedLayout,
+  LayoutManager,
+  Point,
   loadSVGFromString,
   util,
 } from "fabric";
@@ -1131,11 +1134,12 @@ function Create({ draft, clearDraft, user = null }) {
     const k = Math.min(w / f.w, h / f.h);
     const img = await imageCover(src, w, h);
     img.set({ left: 0, top: 0 });
-    const filled = new Group([img], { kdFrame: frame.kdFrame });
+    // a fixed layout: zooming or moving the photo inside never resizes the frame
+    const filled = new Group([img], { kdFrame: frame.kdFrame, layoutManager: new LayoutManager(new FixedLayout()) });
     filled.clipPath = new Path(f.path, { scaleX: k, scaleY: k, left: -w / 2, top: -h / 2 });
     filled.set({
       left: frame.left, top: frame.top, scaleX: frame.scaleX, scaleY: frame.scaleY,
-      angle: frame.angle, flipX: frame.flipX, flipY: frame.flipY, opacity: frame.opacity,
+      angle: frame.angle, flipX: frame.flipX, flipY: frame.flipY, opacity: frame.opacity, shadow: frame.shadow,
     });
     const index = c.getObjects().indexOf(frame);
     c.remove(frame);
@@ -1144,6 +1148,107 @@ function Create({ draft, clearDraft, user = null }) {
     c.setActiveObject(filled);
     setActive(filled);
     render();
+  };
+
+  // the photo inside a filled frame, or null
+  const framePhoto = (frame) => {
+    const inner = frame?.kdFrame && frame.getObjects?.()[0];
+    return inner instanceof FabricImage ? inner : null;
+  };
+
+  // the photo always covers its frame: never smaller, never pulled off an edge
+  // (the photo's left/top sit in the frame's plane, around its center)
+  const coverFrame = (frame, img) => {
+    const w = frame.width;
+    const h = frame.height;
+    const s = Math.max(img.scaleX, w / img.width, h / img.height);
+    const iw = img.width * s;
+    const ih = img.height * s;
+    img.set({
+      scaleX: s,
+      scaleY: s,
+      left: Math.min(-w / 2, Math.max(w / 2 - iw, img.left)),
+      top: Math.min(-h / 2, Math.max(h / 2 - ih, img.top)),
+    });
+  };
+
+  // Adjust photo (double-click a filled frame): the whole photo shows faded
+  // behind the frame as a handle to drag and resize; the frame shows the result.
+  const frameAdjust = useRef(null);
+  const [adjusting, setAdjusting] = useState(false);
+
+  const placeGhost = (img, ghost) => {
+    // the photo's full transform on the page (its own, then the frame's)
+    const d = util.qrDecompose(img.calcTransformMatrix());
+    ghost.set({ scaleX: d.scaleX, scaleY: d.scaleY, angle: d.angle, skewX: 0, skewY: 0 });
+    ghost.setPositionByOrigin(new Point(d.translateX, d.translateY), "center", "center");
+    ghost.setCoords();
+  };
+
+  const startFrameAdjust = async (frame) => {
+    const img = framePhoto(frame);
+    if (!img || frameAdjust.current) return;
+    const c = fc.current;
+    const ghost = await img.clone();
+    ghost.set({
+      opacity: 0.45,
+      lockRotation: true,
+      lockSkewingX: true,
+      lockSkewingY: true,
+      excludeFromExport: true,
+      kdGhost: true,
+    });
+    ghost.setControlsVisibility({ mtr: false, ml: false, mr: false, mt: false, mb: false });
+    placeGhost(img, ghost);
+    c.insertAt(c.getObjects().indexOf(frame), ghost);
+    frame.set({ evented: false, selectable: false });
+    frameAdjust.current = { frame, img, ghost };
+    setAdjusting(true);
+    c.setActiveObject(ghost);
+    setActive(ghost);
+    c.requestRenderAll();
+  };
+
+  // moving or resizing the faded photo moves the photo inside the frame
+  const syncFrameAdjust = () => {
+    const a = frameAdjust.current;
+    if (!a) return;
+    const m = util.multiplyTransformMatrices(util.invertTransform(a.frame.calcTransformMatrix()), a.ghost.calcTransformMatrix());
+    const d = util.qrDecompose(m);
+    a.img.set({ scaleX: d.scaleX, scaleY: d.scaleY });
+    a.img.setPositionByOrigin(new Point(d.translateX, d.translateY), "center", "center");
+    coverFrame(a.frame, a.img);
+    placeGhost(a.img, a.ghost);
+    a.frame.set({ dirty: true });
+    fc.current.requestRenderAll();
+  };
+
+  const endFrameAdjust = () => {
+    const a = frameAdjust.current;
+    if (!a) return;
+    frameAdjust.current = null;
+    const c = fc.current;
+    c.remove(a.ghost);
+    a.frame.set({ evented: true, selectable: true, dirty: true });
+    setAdjusting(false);
+    c.setActiveObject(a.frame);
+    setActive(a.frame);
+    render();
+  };
+
+  // a soft drop shadow for a frame, 0 to 100, sized to the frame
+  const frameShadowAmount = (obj) => {
+    if (!obj?.shadow) return 0;
+    const size = Math.min(obj.width * obj.scaleX, obj.height * obj.scaleY) || 1;
+    return Math.round(Math.min(100, (obj.shadow.blur / size) * 400));
+  };
+  const setFrameShadow = (amount) => {
+    const size = Math.min(active.width * active.scaleX, active.height * active.scaleY);
+    setProp({
+      shadow: amount > 0
+        ? new Shadow({ color: "rgba(0,0,0,0.35)", blur: (size * amount) / 400, offsetX: 0, offsetY: (size * amount) / 1200 })
+        : null,
+    });
   };
 
   // a picture dropped or picked for a frame: its address, or null for SVGs
@@ -1791,12 +1896,18 @@ function Create({ draft, clearDraft, user = null }) {
   /* ---------- canvas lifecycle ---------- */
 
   const syncSelection = useEffectEvent(() => {
+    // picking anything else (or nothing) ends Adjust photo
+    if (frameAdjust.current && fc.current.getActiveObject() !== frameAdjust.current.ghost) {
+      endFrameAdjust();
+      return;
+    }
     setActive(fc.current.getActiveObject() || null);
     refresh();
   });
 
   const onDoubleClick = useEffectEvent(({ target }) => {
-    if (target instanceof FabricImage) startCrop();
+    if (framePhoto(target)) startFrameAdjust(target);
+    else if (target instanceof FabricImage && !target.kdGhost) startCrop();
   });
 
   const onModified = useEffectEvent(() => {
@@ -1811,7 +1922,10 @@ function Create({ draft, clearDraft, user = null }) {
   });
 
   // hide the floating toolbar while an element is being dragged or resized
-  const onTransform = useEffectEvent(() => setDragging(true));
+  const onTransform = useEffectEvent((opt) => {
+    if (opt?.target?.kdGhost) syncFrameAdjust();
+    setDragging(true);
+  });
   // while turning: Shift steps by 15°, and the angle shows by the pointer
   const onRotating = useEffectEvent((opt) => {
     const target = opt.target;
@@ -1899,6 +2013,8 @@ function Create({ draft, clearDraft, user = null }) {
       const step = e.shiftKey ? 10 : 1;
       const [dx, dy] = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
       nudge(dx, dy);
+    } else if (e.key === "Escape" && frameAdjust.current) {
+      endFrameAdjust();
     } else if (e.key === "Escape" && obj) {
       fc.current.discardActiveObject();
       fc.current.requestRenderAll();
@@ -2377,12 +2493,21 @@ function Create({ draft, clearDraft, user = null }) {
                 </div>
               )}
 
-              {floatPos && !cropping && (
+              {floatPos && adjusting && (
+                <div className="ct-float ct-float-crop" style={floatPos}>
+                  <button className="on" onClick={endFrameAdjust}>Done</button>
+                </div>
+              )}
+
+              {floatPos && !cropping && !adjusting && (
                 <div className="ct-float" style={floatPos}>
                   {active?.kdFrame && !locked && (
                     <button onClick={() => frameInput.current?.click()} title={active.getObjects?.()[0] instanceof FabricImage ? "Replace photo" : "Add photo"}>
                       <Icon name="uploads" />
                     </button>
+                  )}
+                  {framePhoto(active) && !locked && (
+                    <button onClick={() => startFrameAdjust(active)} title="Adjust photo (double-click)"><Icon name="crop" /></button>
                   )}
                   {active instanceof FabricImage && !locked && (
                     <>
@@ -2607,8 +2732,37 @@ function Create({ draft, clearDraft, user = null }) {
                 )}
                 <p className="cp-hint">Select an element to edit it.</p>
               </>
+            ) : adjusting ? (
+              <>
+                <p className="cp-label">Adjust photo</p>
+                <p className="cp-hint">Drag the photo to move it, drag a corner to zoom. The frame stays put.</p>
+                <button className="pp-resize" onClick={endFrameAdjust}>Done</button>
+              </>
             ) : (
               <>
+                {active.kdFrame && (
+                  <>
+                    <p className="cp-label">Frame</p>
+                    <div className="pp-type">
+                      <label title="Shadow (0 to 100)">
+                        <Icon name="shadow" size={16} />
+                        <NumberInput
+                          min="0"
+                          max="100"
+                          step="5"
+                          value={frameShadowAmount(active)}
+                          onChange={(e) => setFrameShadow(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                          aria-label="Frame shadow"
+                        />
+                      </label>
+                    </div>
+                    {framePhoto(active) && !locked && (
+                      <button className="pp-resize" onClick={() => startFrameAdjust(active)} title="Move or zoom the photo inside the frame (double-click)">
+                        <Icon name="crop" size={14} /> Adjust photo
+                      </button>
+                    )}
+                  </>
+                )}
                 {isText && (
                   <>
                     <p className="cp-label">Text</p>
