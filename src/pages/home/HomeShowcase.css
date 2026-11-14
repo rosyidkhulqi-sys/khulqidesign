@@ -1,0 +1,212 @@
+/* HOW IT WORKS: the ways on the left, the real thing on a stage on the right */
+.hs {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.6fr);
+  min-height: clamp(520px, 46vw, 680px);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+/* LEFT */
+.hs-side {
+  display: flex;
+  flex-direction: column;
+  padding: clamp(28px, 3.4vw, 48px);
+}
+.hs-side h2 {
+  margin: 10px 0 0;
+  font-size: clamp(30px, 3vw, 44px);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+.hs-side h2 em { color: var(--red); font-family: "Instrument Serif", serif; font-weight: 400; letter-spacing: -0.02em; }
+.hs-ways { display: grid; gap: 4px; margin: auto 0 0; padding: 32px 0 0; list-style: none; }
+.hs-ways li { position: relative; padding: 0 0 14px; }
+.hs-way-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 0;
+  border: 0;
+  background: none;
+  color: #8d939b;
+  font: inherit;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.hs-way-head:hover,
+.is-on > .hs-way-head { color: var(--white); }
+.hs-way-icon { flex: none; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.hs-way-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 0.45s ease, opacity 0.35s ease;
+}
+.hs-way-body > div { display: grid; min-height: 0; overflow: hidden; }
+.is-on > .hs-way-body { grid-template-rows: 1fr; opacity: 1; }
+.hs-way-body p { margin: 0 0 0 34px; color: #aeb0b2; font-size: 15px; line-height: 1.55; }
+.hs-way-body a,
+.hs-link {
+  justify-self: start;
+  margin: 10px 0 4px 34px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--white);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.hs-way-body a:hover,
+.hs-link:hover { color: var(--red); }
+/* a hairline under each way; the open one fills while it's shown */
+.hs-ways li::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: #26292d; }
+.hs-progress { position: absolute; left: 0; bottom: 0; z-index: 1; height: 2px; width: 0; background: var(--white); }
+.is-on > .hs-progress { width: 100%; animation: hs-fill linear both; animation-play-state: paused; }
+.hs.is-running .is-on > .hs-progress { animation-play-state: running; }
+@keyframes hs-fill { from { width: 0; } to { width: 100%; } }
+
+/* RIGHT: the stage */
+.hs-stage {
+  --mx: 0;
+  --my: 0;
+  --zx: 50%;
+  --zy: 50%;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(60% 70% at 70% 40%, rgba(229, 35, 52, 0.16), transparent 70%),
+    radial-gradient(50% 60% at 20% 90%, rgba(45, 108, 223, 0.14), transparent 70%),
+    #0e1013;
+}
+.hs-scene { position: absolute; inset: 0; pointer-events: none; }
+.hs-scene > * {
+  position: absolute;
+  opacity: 0;
+  transform: translate(calc(var(--mx) * var(--depth, 1) * 26px), calc(var(--my) * var(--depth, 1) * 26px)) scale(0.94);
+  transition: opacity 0.5s ease, transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.hs-scene.is-on > * {
+  opacity: 1;
+  transform: translate(calc(var(--mx) * var(--depth, 1) * 26px), calc(var(--my) * var(--depth, 1) * 26px)) scale(1);
+}
+/* one after another as a scene comes in */
+.hs-scene.is-on > :nth-child(2) { transition-delay: 0.06s, 0s; }
+.hs-scene.is-on > :nth-child(3) { transition-delay: 0.12s, 0s; }
+.hs-scene.is-on > :nth-child(4) { transition-delay: 0.18s, 0s; }
+.hs-scene.is-on > :nth-child(5) { transition-delay: 0.24s, 0s; }
+
+.hs-card {
+  border-radius: 14px;
+  object-fit: cover;
+  background: #1e2124;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+/* 01 */
+.hs-a { --depth: 0.6; left: 10%; top: 10%; width: 44%; aspect-ratio: 4 / 3; }
+.hs-b { --depth: 1.2; right: 7%; top: 20%; width: 42%; aspect-ratio: 16 / 9; }
+.hs-c { --depth: 1.6; left: 34%; bottom: 8%; width: 34%; aspect-ratio: 4 / 3; }
+.hs-d {
+  --depth: 2;
+  right: 10%;
+  bottom: 12%;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 17%;
+  padding: 16px;
+  background: #fff;
+}
+.hs-d img { width: 100%; aspect-ratio: 1; object-fit: contain; }
+.hs-search {
+  --depth: 2.4;
+  left: 6%;
+  bottom: 27%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 50%;
+  height: 54px;
+  padding: 0 20px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(40, 43, 48, 0.55);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  color: #e9eaeb;
+  font-size: 17px;
+}
+.hs-search svg { flex: none; width: 20px; height: 20px; fill: none; stroke: #c9ccd0; stroke-width: 2; stroke-linecap: round; }
+.hs-caret { width: 2px; height: 20px; margin-left: -10px; background: var(--red); animation: hs-blink 1s steps(2, start) infinite; }
+@keyframes hs-blink { to { visibility: hidden; } }
+
+/* 02: the editor fills the stage and zooms where the pointer is */
+.hs-shot {
+  --depth: 0.4;
+  left: 6%;
+  right: 6%;
+  top: 9%;
+  overflow: hidden;
+  border-radius: 14px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.hs-shot img {
+  display: block;
+  width: 100%;
+  transform-origin: var(--zx) var(--zy);
+  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.hs-stage:hover .hs-shot img { transform: scale(1.6); }
+.hs-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(40, 43, 48, 0.6);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  color: #e9eaeb;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.hs-chip i { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3); }
+.hs-chip i:last-of-type { margin-right: 4px; }
+.hs-chip b { color: var(--red); font-weight: 700; }
+.hs-chip-a { --depth: 1.8; left: 4%; bottom: 9%; }
+.hs-chip-b { --depth: 2.2; right: 4%; top: 4%; }
+
+/* 03 */
+.hs-logo { --depth: 0.8; left: 50%; top: 50%; width: 46%; aspect-ratio: 4 / 3; margin: -17% 0 0 -23%; }
+.hs-chip-c { --depth: 1.8; left: 12%; top: 16%; }
+.hs-chip-d { --depth: 2.2; right: 8%; bottom: 14%; }
+.hs-chip-e { --depth: 1.4; left: 14%; bottom: 20%; color: #8ff0b1; }
+
+@media (max-width: 900px) {
+  .hs { grid-template-columns: 1fr; }
+  /* the real thing first, then the words */
+  .hs-stage { order: -1; aspect-ratio: 4 / 3; }
+  .hs-ways { margin-top: 0; }
+  .hs-search { height: 44px; font-size: 14px; width: 62%; }
+  .hs-chip { font-size: 12px; padding: 8px 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hs-scene > *,
+  .hs-shot img,
+  .hs-way-body { transition: none; }
+  .hs-caret { animation: none; }
+}

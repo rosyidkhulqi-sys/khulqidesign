@@ -6,7 +6,7 @@ import { SERVICES_OPEN } from "../../data/services";
 import HomeServices from "./HomeServices";
 import "./Home.css";
 import { fetchCovers } from "../../lib/covers";
-import HomeWayDemo from "./HomeWayDemo";
+import HomeShowcase from "./HomeShowcase";
 import HomeReel from "./HomeReel";
 
 const libraryLinks = [
@@ -118,7 +118,7 @@ function Arrow() {
 // screen, so it isn't here
 const REVEAL = [
   ".home-section-title",
-  ".home-way",
+  ".home-how-stage",
   ".home-asset-card",
   ".home-asset-more",
   ".home-ai-card",
@@ -254,31 +254,9 @@ function Home({ setPage, user = null }) {
 
       {/* HOW IT WORKS — what a first-time visitor can do here, and the path */}
       <section className="home-how" id="how">
-        <div className="home-section-title is-dark">
-          <div>
-            <p className="home-label">How it works</p>
-            <h2>Three ways to<br /><em>get it done.</em></h2>
-          </div>
-          <p>Use it as it is, make it yours,<br />or own it outright.</p>
-        </div>
-
-        <div className="home-how-grid">
-          {ways.map(({ n, title, text, flow, cta: [label, target] }) => (
-            <article className="home-way" key={n}>
-              <HomeWayDemo way={n} covers={covers} />
-              <span className="home-way-n">{n}</span>
-              <h3>{title}</h3>
-              <p>{text}</p>
-              <ol className="home-way-flow">
-                {flow.map((step) => <li key={step}>{step}</li>)}
-              </ol>
-              {target.startsWith("#") ? (
-                <a href={target}>{label} <Arrow /></a>
-              ) : (
-                <button onClick={go(target)}>{label} <Arrow /></button>
-              )}
-            </article>
-          ))}
+        {/* the wrapper fades in; the showcase inside keeps its own classes */}
+        <div className="home-how-stage">
+          <HomeShowcase ways={ways} covers={covers} go={go} />
         </div>
       </section>
 
