@@ -1941,7 +1941,8 @@
   color: #8d939b;
 }
 /* a button sitting in a field row: same box as the fields beside it */
-.pp-type .pp-type-btn {
+.pp-type .pp-type-btn,
+.cq-edit .pp-type-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1958,7 +1959,8 @@
   white-space: nowrap;
   cursor: pointer;
 }
-.pp-type .pp-type-btn:hover { border-color: rgba(255, 255, 255, 0.3); color: white; }
+.pp-type .pp-type-btn:hover,
+.cq-edit .pp-type-btn:not(:disabled):hover { border-color: rgba(255, 255, 255, 0.3); color: white; }
 .pp-type label:focus-within { border-color: rgba(255, 255, 255, 0.4); color: white; }
 .pp-type input {
   flex: 1;
@@ -2201,3 +2203,34 @@
 }
 .ct-template-edit-code { color: #8d939b; font-variant-numeric: tabular-nums; }
 .ct-template-edit-state { flex: 1; min-width: 160px; color: #aeb3ba; }
+
+/* QR CODE: one field and one button; editing sits in a single row */
+.cq { display: grid; gap: 8px; }
+.cq .cp-label { margin: 0; }
+.cq-input {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 7px;
+  background: var(--surface-2);
+  color: var(--white);
+  font: inherit;
+  font-size: 13px;
+}
+.cq-input:focus { border-color: rgba(255, 255, 255, 0.4); outline: 0; }
+.cq-add {
+  height: 34px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--white);
+  color: var(--black);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cq-add:disabled { opacity: 0.4; cursor: default; }
+.cq-edit { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-bottom: 12px; }
+.cq-edit .pp-type-btn:disabled { opacity: 0.4; cursor: default; }

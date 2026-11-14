@@ -7,6 +7,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { askConfirm } from "../../lib/confirm";
 import Icon from "./CreateIcons";
 import { basicIcons } from "./basicIcons";
+import { QrPanel } from "./CreateQr";
+import { qrSvg } from "./qrCode";
 import { frameArt, photoFrames, shapeGroups, shapes, svgDataUrl } from "./createLibrary";
 import { clearRecent as forgetRecent, loadRecent, saveRecent, withRecent } from "./createRecent";
 import { elementCategories, elements as trialElements } from "../../data/elementsData";
@@ -15,6 +17,9 @@ import { fetchIconCatalog } from "../../lib/catalog";
 
 // how many tiles a category grid adds each time the list scrolls to its end
 const PAGE = 60;
+// the QR code tile: a real code for the site's address
+const QR_PREVIEW = svgDataUrl(qrSvg("https://khulqidesign.com"));
+
 const SHAPES_PREVIEW = svgDataUrl(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect x="12" y="18" width="28" height="28" fill="#000000"/><circle cx="67" cy="32" r="15" fill="#000000"/><path d="M28 78l18-28 18 28z" fill="#000000"/></svg>'
 );
@@ -123,11 +128,12 @@ export function SetIconTile({ icon, dragItem }) {
 }
 
 // a category in Browse categories: its picture, name and count
-function CategoryTile({ name, count, picture, onOpen }) {
+function CategoryTile({ name, count, picture, onOpen, premium = false }) {
   return (
     <button className="cp-cat" onClick={onOpen} title={`${name} (${count})`}>
       <span className="cp-cat-pic">
         <img src={picture} alt="" draggable={false} loading="lazy" crossOrigin="anonymous" />
+        {premium && <PremiumMark />}
       </span>
       <span className="cp-cat-name">{name}</span>
     </button>
@@ -189,7 +195,8 @@ function recentTile({ kind, id }, dragItem, elements, icons) {
 
 /* ---------- panel ---------- */
 
-function ElementsPanel({ dragItem: placeItem, uploaded = [] }) {
+// onAddQr(text): puts a new QR code on the page
+function ElementsPanel({ dragItem: placeItem, uploaded = [], onAddQr }) {
   const elements = useMemo(() => [...uploaded, ...trialElements], [uploaded]);
   const categories = useMemo(() => mergeCategories(uploaded), [uploaded]);
   const [iconCatalog, setIconCatalog] = useState({ icons: [], sets: [] });
@@ -241,6 +248,14 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [] }) {
       picture: frameArt(photoFrames[4]),
       onOpen: () => setView("photo-frames"),
     },
+    {
+      id: "qr",
+      name: "QR code",
+      count: 1,
+      premium: true,
+      picture: QR_PREVIEW,
+      onOpen: () => setView("qr"),
+    },
     ...browsableCategories.filter((c) => c.id === "frames" || c.id === "photos").map((c) => ({
       ...c,
       count: c.items.length,
@@ -277,7 +292,7 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [] }) {
       <>
         <button className="cp-back" onClick={() => setView(null)}>
           <Icon name="arrowLeft" size={16} />
-          {category?.name ?? (view === "recent" ? "Recently used" : view === "shapes" ? "Shapes" : view === "photo-frames" ? "Photo frames" : "Icons")}
+          {category?.name ?? (view === "recent" ? "Recently used" : view === "shapes" ? "Shapes" : view === "photo-frames" ? "Photo frames" : view === "qr" ? "QR code" : "Icons")}
         </button>
 
         {category && view !== "shapes" && <PagedGrid items={category.items} renderTile={elementTile} />}
@@ -292,6 +307,8 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [] }) {
             <p className="cp-hint">Add a frame, then drag a photo onto it. The photo is cut to the frame's shape.</p>
           </>
         )}
+
+        {view === "qr" && <QrPanel onAdd={(text) => onAddQr?.(text)} />}
 
         {view === "recent" && (
           <>
@@ -358,6 +375,7 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [] }) {
             count={category.count}
             picture={category.picture}
             onOpen={category.onOpen}
+            premium={category.premium}
           />
         ))}
       </div>

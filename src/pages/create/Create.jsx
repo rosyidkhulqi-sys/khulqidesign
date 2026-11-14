@@ -22,6 +22,8 @@ import {
 } from "fabric";
 import Icon from "./CreateIcons";
 import ElementsPanel, { PremiumMark } from "./CreateElements";
+import { qrSvg, qrText } from "./qrCode";
+import { QrEdit } from "./CreateQr";
 import BackgroundPanel from "./CreateBackground";
 import CreateSearch from "./CreateSearch";
 import { SearchBox } from "./CreateElements";
@@ -96,7 +98,7 @@ const exportFormats = [
 const isLocked = (obj) => Boolean(obj?.lockMovementX);
 // saved with a design, so a locked element stays locked after undo or reload
 // saved with each object: its locks, and a basic shape's sides and corner
-const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls", "kdShape", "kdFrame", "kdPremium"];
+const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls", "kdShape", "kdFrame", "kdPremium", "kdQr"];
 
 // Premium items in a saved page (inside groups too), and the page without them
 const countPremium = (objects = []) =>
@@ -968,6 +970,39 @@ function Create({ draft, clearDraft, user = null }) {
     obj.scaleToWidth(unit() * 0.3);
     obj.kdPremium = premium || undefined;
     place(obj, point);
+  };
+
+  // a QR code for a link or text; with \`replace\`, it takes that QR's place,
+  // size and colors (editing what the code says)
+  const addQr = async (input, replace = null) => {
+    const text = qrText(input);
+    if (!text) return;
+    const [bg, fg] = replace?.getObjects?.() ?? [];
+    const markup = qrSvg(text, {
+      color: typeof fg?.fill === "string" ? fg.fill : undefined,
+      background: typeof bg?.fill === "string" ? bg.fill : undefined,
+    });
+    const { objects, options } = await loadSVGFromString(markup);
+    const obj = util.groupSVGElements(objects.filter(Boolean), options);
+    obj.kdQr = text;
+    // QR codes are a Premium tool: free to try, Premium to download
+    obj.kdPremium = true;
+    if (!replace) {
+      obj.scaleToWidth(unit() * 0.35);
+      place(obj, null);
+      return;
+    }
+    const c = fc.current;
+    obj.scaleToWidth(replace.getScaledWidth());
+    obj.set({ angle: replace.angle, opacity: replace.opacity });
+    obj.setPositionByOrigin(replace.getCenterPoint(), "center", "center");
+    const index = c.getObjects().indexOf(replace);
+    c.remove(replace);
+    c.insertAt(index, obj);
+    obj.setCoords();
+    c.setActiveObject(obj);
+    setActive(obj);
+    render();
   };
 
   // premium: a Premium library item, free to try and Premium to download
@@ -2140,7 +2175,7 @@ function Create({ draft, clearDraft, user = null }) {
   const isSelection = active instanceof ActiveSelection;
   const shapeBar = shapeInfo(active);
   // a photo frame is a group too, but splitting it would lose the cut-out
-  const isGroup = active instanceof Group && !isSelection && !active.kdFrame;
+  const isGroup = active instanceof Group && !isSelection && !active.kdFrame && !active.kdQr;
   const isLine = active instanceof Line;
   const lineStyle = !active?.strokeDashArray?.length
     ? "solid"
@@ -2348,7 +2383,7 @@ function Create({ draft, clearDraft, user = null }) {
 
             {!searching && tab === "templates" && <div className="cp-masonry">{allDesigns.map(templateTile)}</div>}
 
-            {!searching && tab === "elements" && <ElementsPanel dragItem={dragItem} uploaded={dbElements} />}
+            {!searching && tab === "elements" && <ElementsPanel dragItem={dragItem} uploaded={dbElements} onAddQr={addQr} />}
             {!searching && tab === "background" && (
               <BackgroundPanel
                 color={toHex(bg)}
@@ -2800,6 +2835,7 @@ function Create({ draft, clearDraft, user = null }) {
               </>
             ) : (
               <>
+                {active.kdQr && !adjusting && <QrEdit key={active.kdQr} value={active.kdQr} onSave={(text) => addQr(text, active)} />}
                 {/* one Frame section: its shadow, and the photo inside; while
                     adjusting, only this shows (Done sits by the frame) */}
                 {(adjusting || active.kdFrame) && (
