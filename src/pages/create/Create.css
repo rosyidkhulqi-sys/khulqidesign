@@ -1924,10 +1924,25 @@
   background: var(--surface-2);
   color: #8d939b;
 }
-/* a field with its name written out, across the whole row */
-.pp-type .pp-type-wide { grid-column: 1 / -1; }
-.pp-type-wide > span { font-size: 12.5px; color: rgba(255, 255, 255, 0.7); margin-right: auto; }
-.pp-type-wide .num { flex: 0 0 84px; }
+/* a button sitting in a field row: same box as the fields beside it */
+.pp-type .pp-type-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 7px;
+  background: var(--surface-2);
+  color: rgba(255, 255, 255, 0.85);
+  font: inherit;
+  font-size: 12.5px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.pp-type .pp-type-btn:hover { border-color: rgba(255, 255, 255, 0.3); color: white; }
 .pp-type label:focus-within { border-color: rgba(255, 255, 255, 0.4); color: white; }
 .pp-type input {
   flex: 1;

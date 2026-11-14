@@ -2743,10 +2743,10 @@ function Create({ draft, clearDraft, user = null }) {
                 {(adjusting || active.kdFrame) && (
                   <>
                     <p className="cp-label">Frame</p>
+                    {/* shadow and Adjust photo share one row */}
                     <div className="pp-type">
-                      <label className="pp-type-wide" title="Shadow (0 to 100)">
+                      <label title="Frame shadow (0 to 100)">
                         <Icon name="shadow" size={16} />
-                        <span>Shadow</span>
                         <NumberInput
                           min="0"
                           max="100"
@@ -2756,14 +2756,14 @@ function Create({ draft, clearDraft, user = null }) {
                           aria-label="Frame shadow"
                         />
                       </label>
+                      {!adjusting && framePhoto(active) && !locked && (
+                        <button className="pp-type-btn" onClick={() => startFrameAdjust(active)} title="Move or zoom the photo inside the frame (double-click)">
+                          <Icon name="crop" size={14} /> Adjust photo
+                        </button>
+                      )}
                     </div>
                     {adjusting && (
                       <p className="cp-hint">Drag the photo to move it, drag a corner to zoom. Press Done when finished.</p>
-                    )}
-                    {!adjusting && framePhoto(active) && !locked && (
-                      <button className="pp-resize" onClick={() => startFrameAdjust(active)} title="Move or zoom the photo inside the frame (double-click)">
-                        <Icon name="crop" size={14} /> Adjust photo
-                      </button>
                     )}
                   </>
                 )}
