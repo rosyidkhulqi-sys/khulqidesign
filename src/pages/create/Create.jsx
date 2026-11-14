@@ -23,7 +23,6 @@ import BackgroundPanel from "./CreateBackground";
 import CreateSearch from "./CreateSearch";
 import { SearchBox } from "./CreateElements";
 import TemplateThumb from "../../components/TemplateThumb";
-import { allTemplates } from "../../data/templatesData";
 import { elements as libraryElements } from "../../data/elementsData";
 import { basicIcons } from "./basicIcons";
 import { artboardPresets, shapes, svgDataUrl, textPresets } from "./createLibrary";
@@ -307,7 +306,7 @@ function Create({ draft, clearDraft, user = null }) {
   const [query, setQuery] = useState("");
   const [library, setLibrary] = useState({ icons: [], vectors: [] });
   const libraryAsked = useRef(false);
-  const allDesigns = useMemo(() => [...dbTemplates, ...allTemplates], [dbTemplates]);
+  const allDesigns = dbTemplates;
   const dbElements = useMemo(() => dbParts.filter((p) => p.kind === "element"), [dbParts]);
   const dbBackgrounds = useMemo(() => dbParts.filter((p) => p.kind === "background"), [dbParts]);
 

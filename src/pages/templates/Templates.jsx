@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import TemplateThumb from "../../components/TemplateThumb";
-import { allTemplates as builtIn, templateCategories as builtInCategories } from "../../data/templatesData";
 import { fetchTemplates } from "../create/templatePublish";
 import "../vectors/Vectors.css";
 import "./Templates.css";
@@ -23,14 +22,15 @@ function Templates({ setPage, onCustomize, initialSearch = "" }) {
     fetchTemplates()
       .then((list) => alive && setPublished(list))
       .catch(() => {
-        /* the built-in templates still show */
+        /* the list stays empty until the catalog loads */
       });
     return () => {
       alive = false;
     };
   }, []);
-  const allTemplates = [...published, ...builtIn];
-  const templateCategories = [...new Set([...published.map((t) => t.category), ...builtInCategories])];
+  // every template is a published one: built in Create and kept in the catalog
+  const allTemplates = published;
+  const templateCategories = [...new Set(published.map((t) => t.category))];
 
   const perPage = 24;
 

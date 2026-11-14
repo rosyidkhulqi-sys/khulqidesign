@@ -24,7 +24,7 @@ export const categories = [
     meta: "4K · Full HD · MP4",
   },
   {
-    key: "templates", title: "Templates", image: "/preview3.jpg", page: "templates", ready: true, count: "32+ templates",
+    key: "templates", title: "Templates", image: "/preview3.jpg", page: "templates", ready: true, count: "20+ templates",
     desc: "Posters, flyers, stories, thumbnails and slides.",
     meta: "Edit text & colors in Create",
   },
