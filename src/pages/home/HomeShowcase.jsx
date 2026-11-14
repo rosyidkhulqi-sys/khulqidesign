@@ -12,8 +12,14 @@ import "./HomeShowcase.css";
 // how long each way stays; Make it yours plays its whole edit first
 const STEP_MS = [7000, 9500, 8000];
 
-// words typed into the Download stage's search bar
-const SEARCHES = ["Abstract background", "Business icons", "Ocean footage"];
+// what the Download stage's search bar types, and which cards then stand out
+const SEARCHES = [
+  ["Abstract background", "vector"],
+  ["Icons", "icon"],
+  ["Abstract footage", "footage"],
+];
+
+const TYPED = SEARCHES.map(([words]) => words);
 
 function WayIcon({ i }) {
   const paths = [
@@ -26,11 +32,13 @@ function WayIcon({ i }) {
   );
 }
 
-// a search bar that types one phrase after another
-function Typing({ phrases, run }) {
+// a search bar that types one phrase after another; onPhrase(i) tells which
+function Typing({ phrases, run, onPhrase }) {
   const [text, setText] = useState("");
   useEffect(() => {
     if (!run) return;
+    // typing starts again from the first phrase, and the cards follow
+    onPhrase?.(0);
     let phrase = 0;
     let at = 0;
     let back = false;
@@ -45,12 +53,13 @@ function Typing({ phrases, run }) {
           back = false;
           phrase = (phrase + 1) % phrases.length;
           at = 0;
+          onPhrase?.(phrase);
         }
       }
       setText(phrases[phrase].slice(0, Math.max(0, Math.min(at, phrases[phrase].length))));
     }, 70);
     return () => clearInterval(timer);
-  }, [phrases, run]);
+  }, [phrases, run, onPhrase]);
   return (
     <div className="hs-search">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="M20 20l-4.2-4.2" /></svg>
@@ -84,6 +93,8 @@ function HomeShowcase({ ways, covers = {}, go }) {
   const [held, setHeld] = useState(false); // clicked: stays on that way
   const [stage, setStage] = useState({ vectors: [], icons: [] });
   const [inView, setInView] = useState(false);
+  // the Download stage's search, as an index into SEARCHES
+  const [phrase, setPhrase] = useState(0);
   const stageRef = useRef(null);
   const reduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
@@ -173,20 +184,24 @@ function HomeShowcase({ ways, covers = {}, go }) {
 
       <div className="hs-stage" ref={stageRef} onMouseMove={onMove} onMouseLeave={onLeave}>
         {/* 01 DOWNLOAD: the store itself */}
-        <div className={`hs-scene hs-get ${active === 0 ? "is-on" : ""}`} aria-hidden={active !== 0}>
-          <img className="hs-card hs-a" src={v[0] ?? "/covers/vectors.jpg"} alt="" loading="lazy" />
+        <div
+          className={`hs-scene hs-get ${active === 0 ? "is-on" : ""}`}
+          data-kind={run ? SEARCHES[phrase][1] : undefined}
+          aria-hidden={active !== 0}
+        >
+          <img className="hs-card hs-a is-vector" src={v[0] ?? "/covers/vectors.jpg"} alt="" loading="lazy" />
           {clip && run && active === 0 ? (
-            <video className="hs-card hs-b" src={clip} poster={poster} autoPlay muted loop playsInline />
+            <video className="hs-card hs-b is-footage" src={clip} poster={poster} autoPlay muted loop playsInline />
           ) : (
-            <img className="hs-card hs-b" src={poster} alt="" loading="lazy" />
+            <img className="hs-card hs-b is-footage" src={poster} alt="" loading="lazy" />
           )}
-          <img className="hs-card hs-c" src={v[1] ?? covers.templates?.[0] ?? "/covers/logos.jpg"} alt="" loading="lazy" />
-          <div className="hs-card hs-d">
+          <img className="hs-card hs-c is-vector" src={v[1] ?? covers.templates?.[0] ?? "/covers/logos.jpg"} alt="" loading="lazy" />
+          <div className="hs-card hs-d is-icon">
             {(stage.icons.length ? stage.icons : ["/covers/icons.jpg"]).map((src) => (
               <img key={src} src={src} alt="" loading="lazy" />
             ))}
           </div>
-          <Typing phrases={SEARCHES} run={run && active === 0} />
+          <Typing phrases={TYPED} run={run && active === 0} onPhrase={setPhrase} />
         </div>
 
         {/* 02 MAKE IT YOURS: the editor as it is */}
