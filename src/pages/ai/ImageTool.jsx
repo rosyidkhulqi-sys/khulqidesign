@@ -7,6 +7,15 @@ import "./ImageTool.css";
 import { askLogin } from "../../lib/authGate";
 import { forgetResult, keepResult, restoreResult } from "../../lib/aiKeep";
 import { checkCutout, countCutout, cutoutQuota, quotaLabel } from "../../lib/toolQuota";
+import { composeBackground } from "../../lib/backgroundCompose";
+
+// after Remove background: what goes behind the subject
+const BACKGROUNDS = [
+  ["transparent", "Transparent"],
+  ["color", "Color"],
+  ["blur", "Blur"],
+];
+const SWATCHES = ["#ffffff", "#f4f1ea", "#0a0b0d", "#e5233a", "#2d6cdf", "#17a398"];
 
 const ACCEPT = "image/png,image/jpeg,image/webp";
 
@@ -27,6 +36,9 @@ function ImageTool({ tool, run, suffix, options = null, modelMb, hint, user }) {
   const counted = tool === "cutout";
   const [quota, setQuota] = useState(null);
   const [limitHit, setLimitHit] = useState(false);
+  // Remove background: the new background (the cut itself is kept in result)
+  const [bgMode, setBgMode] = useState("transparent");
+  const [bgColor, setBgColor] = useState("#ffffff");
   useEffect(() => {
     if (!counted) return;
     let alive = true;
@@ -52,6 +64,17 @@ function ImageTool({ tool, run, suffix, options = null, modelMb, hint, user }) {
   }, [tool]);
 
   const busy = step && step !== "Done";
+
+  // the subject on its new background, made again whenever it changes; the
+  // cut is reused, so this costs no allowance
+  useEffect(() => {
+    if (!counted || !result || !file) return;
+    let alive = true;
+    composeBackground(result, file, { mode: bgMode, color: bgColor })
+      .then((blob) => alive && setAfter(URL.createObjectURL(blob)))
+      .catch((e) => alive && setError(e.message));
+    return () => { alive = false; };
+  }, [counted, result, file, bgMode, bgColor]);
 
   const pick = (list) => {
     const f = [...list].find((x) => /^image\/(png|jpeg|webp)$/.test(x.type));
@@ -98,7 +121,8 @@ function ImageTool({ tool, run, suffix, options = null, modelMb, hint, user }) {
     forgetResult();
     const a = document.createElement("a");
     a.href = after;
-    a.download = `${file.name.replace(/\.[^.]+$/, "")}-${suffix}${option ? `-${option}x` : ""}.png`;
+    const look = counted && bgMode !== "transparent" ? `-${bgMode}-background` : "";
+    a.download = `${file.name.replace(/\.[^.]+$/, "")}-${suffix}${look}${option ? `-${option}x` : ""}.png`;
     a.click();
   };
 
@@ -124,7 +148,7 @@ function ImageTool({ tool, run, suffix, options = null, modelMb, hint, user }) {
             </figure>
             <figure>
               <figcaption>After</figcaption>
-              <div className="it-frame is-checker">
+              <div className={`it-frame ${counted && bgMode !== "transparent" ? "" : "is-checker"}`}>
                 {after ? <img src={after} alt="After" /> : <span className="it-wait">{busy ? step : "Ready when you are"}</span>}
               </div>
             </figure>
@@ -138,6 +162,31 @@ function ImageTool({ tool, run, suffix, options = null, modelMb, hint, user }) {
           )}
 
           <div className="it-actions">
+            {counted && result && (
+              <div className="it-bg">
+                <div className="it-options" role="radiogroup" aria-label="Background">
+                  {BACKGROUNDS.map(([value, label]) => (
+                    <button key={value} role="radio" aria-checked={bgMode === value}
+                            className={bgMode === value ? "active" : ""}
+                            onClick={() => setBgMode(value)}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {bgMode === "color" && (
+                  <div className="it-swatches" role="radiogroup" aria-label="Background color">
+                    {SWATCHES.map((c) => (
+                      <button key={c} role="radio" aria-checked={bgColor === c} aria-label={c}
+                              className={bgColor === c ? "active" : ""}
+                              style={{ background: c }} onClick={() => setBgColor(c)} />
+                    ))}
+                    <label className="it-swatch-pick" title="Any color">
+                      <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} aria-label="Pick any color" />
+                    </label>
+                  </div>
+                )}
+              </div>
+            )}
             {options && (
               <div className="it-options" role="radiogroup" aria-label="Size">
                 {options.map(([value, label]) => (
