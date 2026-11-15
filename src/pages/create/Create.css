@@ -1816,6 +1816,15 @@
   .cs-toolbar-controls { flex-wrap: wrap; row-gap: 6px; overflow: visible; }
 }
 
+/* drag to select, started around the page: the same gray box as inside it */
+.ct-marquee {
+  position: fixed;
+  z-index: 7;
+  border: 1px solid #8a8f98;
+  background: rgba(138, 143, 152, 0.14);
+  pointer-events: none;
+}
+
 /* eyedropper over the page */
 .ct-picker { position: absolute; inset: 0; z-index: 8; cursor: crosshair; }
 .ct-picker-chip {

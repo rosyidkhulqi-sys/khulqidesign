@@ -106,11 +106,11 @@ function poseAt(anim, t, size) {
   return pose;
 }
 
-// every animated element in its pose at time `seconds`; returns a function
-// that puts them all back
-export function frameAt(objects, seconds, onlyThis = null) {
+// every animated element in its pose at time `seconds` (or only those in
+// `only`, one element or a list); returns a function that puts them all back
+export function frameAt(objects, seconds, only = null) {
   patchRender();
-  const starts = scheduleOf(onlyThis ? [onlyThis] : objects);
+  const starts = scheduleOf(only ? [].concat(only) : objects);
   const saved = [];
   for (const [obj, start] of starts) {
     const base = {
@@ -127,7 +127,9 @@ export function frameAt(objects, seconds, onlyThis = null) {
     const pose = t < 0
       ? { dx: 0, dy: 0, scale: 1, angle: 0, opacity: obj.kdAnim.in ? 0 : 1, wipe: null, blur: 0 }
       : poseAt(obj.kdAnim, t, Math.max(b.width, b.height));
-    const center = obj.getCenterPoint();
+    // in the element's own parent plane: inside a selection of several,
+    // positions are relative to the selection, not the page
+    const center = obj.getRelativeCenterPoint();
     obj.set({
       scaleX: base.scaleX * pose.scale,
       scaleY: base.scaleY * pose.scale,
@@ -151,7 +153,7 @@ export function frameAt(objects, seconds, onlyThis = null) {
 // Plays the page (or one element) on the canvas. Returns stop().
 export function playPage(canvas, { only = null, onEnd } = {}) {
   const objects = canvas.getObjects();
-  const length = only ? pageLength([only]) : pageLength(objects);
+  const length = pageLength(only ? [].concat(only) : objects);
   if (!length) {
     onEnd?.();
     return () => {};
@@ -160,9 +162,12 @@ export function playPage(canvas, { only = null, onEnd } = {}) {
   // the page can't be touched until the preview ends; a key or a click ends it
   const top = canvas.upperCanvasEl;
   top.style.visibility = "hidden";
+  // the selection's outline and handles hide too, and in a selection of
+  // several, each element's own outline
   const picked = canvas.getActiveObject();
-  const frame0 = picked && { hasBorders: picked.hasBorders, hasControls: picked.hasControls };
-  picked?.set({ hasBorders: false, hasControls: false });
+  const outlined = picked ? [picked, ...(picked.getObjects?.() ?? [])] : [];
+  const shown = outlined.map((o) => ({ hasBorders: o.hasBorders, hasControls: o.hasControls }));
+  outlined.forEach((o) => o.set({ hasBorders: false, hasControls: false }));
   const started = performance.now();
   let frame = 0;
   let undo = null;
@@ -174,7 +179,7 @@ export function playPage(canvas, { only = null, onEnd } = {}) {
     cancelAnimationFrame(frame);
     undo?.();
     top.style.visibility = "";
-    picked?.set(frame0);
+    outlined.forEach((o, i) => o.set(shown[i]));
     window.removeEventListener("keydown", finish, true);
     window.removeEventListener("pointerdown", finish, true);
     canvas.requestRenderAll();

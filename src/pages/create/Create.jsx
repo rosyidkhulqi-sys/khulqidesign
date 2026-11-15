@@ -1515,6 +1515,49 @@ function Create({ draft, clearDraft, user = null }) {
     render();
   };
 
+  /* ---------- drag to select from around the page ---------- */
+
+  // Inside the page Fabric draws the box; a drag that starts on the gray
+  // around the page draws the same box here and selects everything it
+  // touches, as in Canva. { x0, y0, x1, y1 } in screen pixels while dragging.
+  const [marquee, setMarquee] = useState(null);
+
+  const startMarquee = (e) => {
+    if (e.button !== 0 || e.target.closest(".create-artboard, button, input, .ct-pagebar, .ct-float")) return;
+    const c = fc.current;
+    if (!c || cropping || adjusting) return;
+    const from = { x0: e.clientX, y0: e.clientY, x1: e.clientX, y1: e.clientY };
+    let box = from;
+    const move = (ev) => {
+      box = { ...from, x1: ev.clientX, y1: ev.clientY };
+      if (Math.abs(box.x1 - box.x0) + Math.abs(box.y1 - box.y0) > 4) setMarquee(box);
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      setMarquee(null);
+      if (Math.abs(box.x1 - box.x0) + Math.abs(box.y1 - box.y0) <= 4) return;
+      // the box in page coordinates
+      const r = c.lowerCanvasEl.getBoundingClientRect();
+      const css = r.width / c.getWidth();
+      const v = c.viewportTransform;
+      const toPage = (x, y) => ({ x: ((x - r.left) / css - v[4]) / v[0], y: ((y - r.top) / css - v[5]) / v[3] });
+      const a = toPage(Math.min(box.x0, box.x1), Math.min(box.y0, box.y1));
+      const b = toPage(Math.max(box.x0, box.x1), Math.max(box.y0, box.y1));
+      const hit = c.getObjects().filter((o) => {
+        if (!o.visible || o.selectable === false || o.evented === false) return false;
+        const k = o.getBoundingRect();
+        return k.left < b.x && k.left + k.width > a.x && k.top < b.y && k.top + k.height > a.y;
+      });
+      if (!hit.length) return;
+      c.discardActiveObject();
+      c.setActiveObject(hit.length === 1 ? hit[0] : new ActiveSelection(hit, { canvas: c }));
+      c.requestRenderAll();
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+
   /* ---------- Animate ---------- */
 
   // stop() of the preview that's playing, if any
@@ -1543,7 +1586,8 @@ function Create({ draft, clearDraft, user = null }) {
     }
     refresh();
     commit();
-    if (value) play(targets.length === 1 ? targets[0] : null);
+    // only the chosen elements play, together, in their top-to-bottom order
+    if (value) play(targets);
   };
 
   /* ---------- picking a color from the page ---------- */
@@ -2271,6 +2315,11 @@ function Create({ draft, clearDraft, user = null }) {
     const c = new Canvas(canvasEl.current, {
       preserveObjectStacking: true,
       backgroundColor: "#ffffff",
+      // the box drawn when dragging to select: a quiet gray that shows on
+      // the white page and on the dark around it
+      selectionColor: "rgba(138, 143, 152, 0.14)",
+      selectionBorderColor: "#8a8f98",
+      selectionLineWidth: 1,
     });
     fc.current = c;
     c.on("selection:created", syncSelection);
@@ -2693,7 +2742,19 @@ function Create({ draft, clearDraft, user = null }) {
             ref={stageRef}
             onDragOver={(e) => e.preventDefault()}
             onDrop={onDrop}
+            onPointerDown={startMarquee}
           >
+            {marquee && (
+              <div
+                className="ct-marquee"
+                style={{
+                  left: Math.min(marquee.x0, marquee.x1),
+                  top: Math.min(marquee.y0, marquee.y1),
+                  width: Math.abs(marquee.x1 - marquee.x0),
+                  height: Math.abs(marquee.y1 - marquee.y0),
+                }}
+              />
+            )}
             <div className="create-pages">
             {/* the open page: number, duplicate and delete, as in Canva */}
             <div className="ct-pagebar" inert={cropping} style={{ width: Math.round(board.w * zoom) }}>
