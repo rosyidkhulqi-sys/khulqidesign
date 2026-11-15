@@ -71,7 +71,8 @@ import NumberInput from "../../components/NumberInput";
 import { fetchMembership } from "../../lib/billing";
 import { emptyKit, fetchBrandKit, saveBrandKit } from "../../lib/brandKit";
 import CreateBrand from "./CreateBrand";
-import { ENTRANCES, LOOPS, playPage } from "./createAnimate";
+import { playPage } from "./createAnimate";
+import CreateAnimate from "./CreateAnimatePanel";
 
 const PANEL_KEY = "kd-create-panel";
 const PAGE_KEY = "kd-create-page";
@@ -3265,27 +3266,12 @@ function Create({ draft, clearDraft, user = null }) {
 
                 {/* Animate: an entrance and a loop, each one row of chips;
                     choosing one plays it, Preview plays the whole page */}
-                <details className="pp-more pp-anim" open={Boolean(animOf(active))}>
-                  <summary>Animate</summary>
-                  {[["in", "In", ENTRANCES], ["loop", "Loop", LOOPS]].map(([kind, label, list]) => (
-                    <div className="pp-anim-row" key={kind}>
-                      <span>{label}</span>
-                      <div className="pp-chips" role="radiogroup" aria-label={label}>
-                        {[["", "None"], ...list].map(([value, name]) => {
-                          const on = (animOf(active)?.[kind] ?? "") === value;
-                          return (
-                            <button key={value || "none"} role="radio" aria-checked={on} className={on ? "on" : ""} onClick={() => setAnim(kind, value)}>
-                              {name}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                  <button className="pp-play" onClick={() => (playing ? stopPlay.current?.() : play())}>
-                    <Icon name={playing ? "stop" : "play"} size={14} /> {playing ? "Stop" : "Preview page"}
-                  </button>
-                </details>
+                <CreateAnimate
+                  anim={animOf(active)}
+                  playing={playing}
+                  onPick={setAnim}
+                  onPlay={() => (playing ? stopPlay.current?.() : play())}
+                />
 
                 {/* layer order, flip and rotation, folded away until needed;
                     duplicate, lock and delete are on the toolbar by the element */}
