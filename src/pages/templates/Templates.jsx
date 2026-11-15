@@ -6,6 +6,7 @@ import "./Templates.css";
 import Breadcrumb from "../../components/Breadcrumb";
 import AiSearchButton from "../../components/AiSearchButton";
 import { matchesSearch } from "../../lib/search";
+import SkeletonCards from "../../components/SkeletonCards";
 
 function Templates({ setPage, onCustomize, initialSearch = "" }) {
   const [search, setSearch] = useState(initialSearch);
@@ -17,13 +18,15 @@ function Templates({ setPage, onCustomize, initialSearch = "" }) {
 
   // templates published from Create, newest first, ahead of the built-in ones
   const [published, setPublished] = useState([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
   useEffect(() => {
     let alive = true;
     fetchTemplates()
       .then((list) => alive && setPublished(list))
       .catch(() => {
         /* the list stays empty until the catalog loads */
-      });
+      })
+      .finally(() => alive && setCatalogLoading(false));
     return () => {
       alive = false;
     };
@@ -71,7 +74,7 @@ function Templates({ setPage, onCustomize, initialSearch = "" }) {
         <Breadcrumb setPage={setPage} current="Templates" />
         {/* the count sits by the title, so results start higher */}
         <h1>
-          Templates <span className="library-count">{filtered.length} {filtered.length === 1 ? "template" : "templates"}</span>
+          Templates {!catalogLoading && <span className="library-count">{filtered.length} {filtered.length === 1 ? "template" : "templates"}</span>}
         </h1>
       </div>
 
@@ -139,7 +142,7 @@ function Templates({ setPage, onCustomize, initialSearch = "" }) {
 
       {/* GRID */}
       <div className="vector-grid">
-        {items.length > 0 ? (
+        {catalogLoading ? <SkeletonCards count={12} cardClass="vector-card" ratios={["1 / 1", "4 / 5", "9 / 16", "16 / 9"]} /> : items.length > 0 ? (
           items.map((t) => (
             <div className="vector-card template-card" key={t.dbId ?? t.id} onClick={() => onCustomize(t)}>
               <div className="vector-thumb" style={{ aspectRatio: `${t.w} / ${t.h}` }}>

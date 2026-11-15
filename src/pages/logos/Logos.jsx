@@ -10,6 +10,7 @@ import LogoModal from "./LogoModal";
 import { industries, industryName, logoStyles } from "../../data/logosData";
 import { fetchAssetByCode, searchCatalog, toLogo } from "../../lib/catalog";
 import { useAssetUrl } from "../../lib/useAssetUrl";
+import SkeletonCards from "../../components/SkeletonCards";
 
 const licenseLabel = { free: "Free", premium: "Premium", exclusive: "Exclusive" };
 
@@ -56,6 +57,8 @@ function Logos({ setPage, initialSearch = "", user = null }) {
     fetchAssetByCode("logo", code).then((row) => row && toLogo(row)));
   // the page of logos the database found, and how many there are in all
   const [items, setItems] = useState([]);
+  // the first answer from the catalog hasn't come yet
+  const [catalogLoading, setCatalogLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [related, setRelated] = useState([]);
 
@@ -94,7 +97,8 @@ function Logos({ setPage, initialSearch = "", user = null }) {
         })
         .catch(() => {
           /* the page shows its empty state if the catalogue can't be reached */
-        });
+        })
+        .finally(() => alive && setCatalogLoading(false));
     }, search ? 250 : 0);
     return () => {
       alive = false;
@@ -147,7 +151,7 @@ function Logos({ setPage, initialSearch = "", user = null }) {
       <div className="library-head">
         <Breadcrumb setPage={setPage} current="Logos" />
         <h1>
-          Logos <span className="library-count">{total} {total === 1 ? "logo" : "logos"}</span>
+          Logos {!catalogLoading && <span className="library-count">{total} {total === 1 ? "logo" : "logos"}</span>}
         </h1>
       </div>
 
@@ -235,7 +239,7 @@ function Logos({ setPage, initialSearch = "", user = null }) {
 
       {/* GRID */}
       <div className="logo-grid">
-        {items.length > 0 ? (
+        {catalogLoading ? <SkeletonCards count={12} cardClass="logo-card" /> : items.length > 0 ? (
           items.map((l) => <LogoCard key={l.id} logo={l} onOpen={() => setSelected(l)} />)
         ) : (
           <div className="no-results">

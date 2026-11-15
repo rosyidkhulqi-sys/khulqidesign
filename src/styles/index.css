@@ -108,3 +108,15 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
   .asset-overlay, .hs-search, .hs-chip { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
   .hs-search, .hs-chip { background: rgba(32, 35, 39, 0.94) !important; }
 }
+
+/* SKELETON: grey shimmering cards while a library loads (SkeletonCards) */
+.skel-card { pointer-events: none; }
+.skel {
+  border-radius: 10px;
+  background: linear-gradient(100deg, #17191c 30%, #22252a 50%, #17191c 70%) 0 0 / 300% 100%;
+  animation: skel-shine 1.4s ease-in-out infinite;
+}
+.skel-line { height: 12px; margin-top: 12px; border-radius: 6px; }
+@keyframes skel-shine { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

@@ -7,6 +7,7 @@ import { ToolGlyph } from "../../components/IconControls";
 import { fetchAssetByCode, searchCatalog, toVector } from "../../lib/catalog";
 import { useAssetUrl } from "../../lib/useAssetUrl";
 import { VECTOR_CATEGORY_OPTIONS, vectorCategoryLabel, vectorCategoryStorageValues } from "../../data/vectorCategories";
+import SkeletonCards from "../../components/SkeletonCards";
 
 const formats = ["EPS", "AI", "SVG", "PNG", "JPG"];
 
@@ -153,7 +154,7 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
         <Breadcrumb setPage={setPage} current="Vectors" />
         {/* the count sits by the title, so results start higher */}
         <h1>
-          Vectors <span className="library-count">{total} {total === 1 ? "vector" : "vectors"}</span>
+          Vectors {!catalogLoading && <span className="library-count">{total} {total === 1 ? "vector" : "vectors"}</span>}
         </h1>
       </div>
 
@@ -227,11 +228,10 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
       </div>
 
       {catalogError && <p className="no-results" role="alert">{catalogError}</p>}
-      {catalogLoading && <p className="no-results" role="status">Loading vectors…</p>}
 
       {/* GRID */}
       <div className="vector-grid">
-        {catalogLoading ? null : items.length > 0 ? (
+        {catalogLoading ? <SkeletonCards count={12} cardClass="vector-card" ratios={["4 / 3", "3 / 4", "16 / 9", "1 / 1"]} /> : items.length > 0 ? (
           items.map((v) => (
             <div
               className="vector-card"

@@ -7,6 +7,7 @@ import AiSearchButton from "../../components/AiSearchButton";
 import { ToolGlyph } from "../../components/IconControls";
 import { fetchAssetByCode, searchCatalog, toClip } from "../../lib/catalog";
 import { useAssetUrl } from "../../lib/useAssetUrl";
+import SkeletonCards from "../../components/SkeletonCards";
 
 const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
@@ -247,7 +248,7 @@ function Footage({ setPage, initialSearch = "", user = null }) {
         <Breadcrumb setPage={setPage} current="Footage" />
         {/* the count sits by the title, so results start higher */}
         <h1>
-          Footage <span className="library-count">{total} {total === 1 ? "clip" : "clips"}</span>
+          Footage {!catalogLoading && <span className="library-count">{total} {total === 1 ? "clip" : "clips"}</span>}
         </h1>
       </div>
 
@@ -327,11 +328,10 @@ function Footage({ setPage, initialSearch = "", user = null }) {
       </div>
 
       {catalogError && <p className="no-results" role="alert">{catalogError}</p>}
-      {catalogLoading && <p className="no-results" role="status">Loading footage…</p>}
 
       {/* GRID */}
       <div className="footage-grid">
-        {catalogLoading ? null : items.length > 0 ? (
+        {catalogLoading ? <SkeletonCards count={12} cardClass="footage-card" ratios={["16 / 9", "16 / 9", "9 / 16", "16 / 9", "1 / 1"]} /> : items.length > 0 ? (
           items.map((c) => (
             <FootageCard key={c.id} clip={c} onOpen={() => setSelected(c)} />
           ))

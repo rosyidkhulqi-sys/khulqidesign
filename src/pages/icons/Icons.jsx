@@ -10,6 +10,7 @@ import IconSetView, { SetCard } from "./IconSets";
 import { fetchAssetByCode, fetchIconCatalog, toIcon } from "../../lib/catalog";
 import { useAssetUrl } from "../../lib/useAssetUrl";
 import { matchesSearch } from "../../lib/search";
+import SkeletonCards from "../../components/SkeletonCards";
 
 // the price filter's "paid" means a Premium license
 const matchesPrice = (price, license) =>
@@ -214,16 +215,17 @@ function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
         {/* the count sits by the title, so results start higher */}
         <h1>
           Icons{" "}
+          {!catalogLoading && (
           <span className="library-count">
             {showSets
               ? `${filteredSets.length} icon ${filteredSets.length === 1 ? "set" : "sets"}`
               : `${filteredIcons.length} ${filteredIcons.length === 1 ? "icon" : "icons"}`}
           </span>
+          )}
         </h1>
       </div>
 
       {catalogError && <p className="no-results" role="alert">{catalogError}</p>}
-      {catalogLoading && <p className="no-results" role="status">Loading icons…</p>}
 
       {/* SEARCH */}
       <div className="icon-search">
@@ -323,7 +325,7 @@ function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
         <>
           {/* ICON GRID */}
           <div className="results-grid">
-            {catalogLoading ? null : currentIcons.length > 0 ? (
+            {catalogLoading ? <SkeletonCards count={28} caption={false} /> : currentIcons.length > 0 ? (
               currentIcons.map((icon) => (
                 <div
                   className="icon-card"
