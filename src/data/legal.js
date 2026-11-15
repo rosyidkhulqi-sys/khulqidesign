@@ -109,6 +109,18 @@ export const privacy = [
     "Activity: what you download, save and create, and your download history, so we can show it to you and prove your licenses.",
     "Payments: your plan, invoices and payment status. Card details go to our payment provider, not to us.",
     "Technical data: browser, device and rough location from your IP address, to keep the site secure and working.",
+    "AI tools: what you type and the files you send to the AI tools that run on our servers, with the result, so you can see your history and we can keep the tools working and fairly limited.",
+  ]],
+  ["ai", "AI tools", [
+    "Remove background, Upscale and Recolor run on your own device. Your pictures stay in your browser and are never uploaded to us.",
+    "Tools that run on our servers, such as Template from text and AI edit, send your text and file to the AI provider that makes the result: Anthropic (Claude). If we add another provider, we'll name it here first. Providers use this data only to answer the request and don't train their models on it under their business terms.",
+    "We keep the request and result for up to 12 months, then delete them. You can ask us to delete them sooner.",
+  ]],
+  ["basis", "Why we're allowed to", [
+    "To provide what you signed up for: your account, downloads, licenses, plan and AI tools (contract).",
+    "To keep the site secure and stop misuse, and to improve it (our legitimate interest, balanced against your rights).",
+    "To keep payment and tax records (legal obligation).",
+    "Anything else, such as marketing emails, only with your consent, which you can withdraw at any time.",
   ]],
   ["use", "How we use it", [
     "To run your account, deliver downloads, record licenses, bill your plan and answer your questions.",
@@ -116,14 +128,15 @@ export const privacy = [
     "To improve the site. We don't sell your personal data, and we don't use your designs to train AI.",
   ]],
   ["share", "Who we share it with", [
-    "Only the services that help us run Khulqidesign: sign-in and database (Supabase), hosting and file storage, font delivery (Google Fonts, which sees your IP address when it sends a font), our payment provider, and email delivery. They may only use your data to provide that service.",
+    "Only the services that help us run Khulqidesign: sign-in and database (Supabase), hosting (Vercel), file storage and delivery (Cloudflare), sign-in with Google, font delivery (Google Fonts, which sees your IP address when it sends a font), payments (Dodo Payments, which handles your card), AI (Anthropic, see AI tools above), and email delivery. They may only use your data to provide that service.",
+    "Some of these services process data outside the EU and UK, for example in the United States, and we're based in Indonesia. Where that happens, transfers rely on safeguards such as the European Commission's Standard Contractual Clauses.",
     "We also share data when the law requires it.",
   ]],
   ["cookies", "Cookies and local storage", [
     "We use cookies and your browser's storage to keep you signed in and to remember things like your download history and editor projects on this device. We don't use advertising cookies.",
   ]],
   ["keep", "How long we keep it", [
-    "We keep your account data while your account is open. Download and payment records are kept as long as needed for your licenses and for tax and accounting rules.",
+    "We keep your account data while your account is open. Download and payment records are kept as long as needed for your licenses and for tax and accounting rules. AI requests are kept for up to 12 months.",
   ]],
   ["rights", "Your rights", [
     `You can ask to see, correct, export or delete your data at any time by emailing ${CONTACT}. Deleting your account removes your personal data, except records we must keep by law.`,
