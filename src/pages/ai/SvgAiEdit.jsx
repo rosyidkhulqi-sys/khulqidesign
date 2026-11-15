@@ -3,7 +3,7 @@
 // side by side, what it cost, and "Keep editing" to change the result again.
 import { useEffect, useRef, useState } from "react";
 import "./ImageTool.css";
-import { editSvg, safeSvg } from "../../lib/aiSvg";
+import { drawSvg, editSvg, problemsOf, safeSvg } from "../../lib/aiSvg";
 
 const IDEAS = ["Make the main shape red", "Replace the star with a heart", "Remove the background", "Extend to 16:9 with matching shapes"];
 
@@ -61,11 +61,42 @@ function SvgAiEdit() {
     setSeconds(0);
     setError(null);
     try {
-      const made = await editSvg(source, instruction.trim());
-      const safe = safeSvg(made.svg);
-      if (!safe) throw new Error("The AI didn't send back a valid SVG. Try again.");
-      setResult({ ...made, svg: safe });
-      setAfterUrl(urlOf(safe));
+      const asked = instruction.trim();
+      // Claude sees the artwork, not only its code
+      const look = await drawSvg(source);
+      const made = await editSvg(source, asked, { image: look.png });
+      let svg = safeSvg(made.svg);
+      if (!svg) throw new Error("The AI didn't send back a valid SVG. Try again.");
+      let usage = made.usage;
+      let summary = made.summary;
+      // the result is checked: an empty band the original didn't have gets
+      // one fix, sent back with the problems and a picture of the result
+      let checked = await drawSvg(svg);
+      const found = problemsOf(look, checked);
+      let fixed = false;
+      if (found.length) {
+        const second = await editSvg(svg, `Fix these problems in this result: ${found.join("; ")}. The original request was: "${asked}". Keep everything else.`, { image: checked.png, fix: true });
+        const svg2 = safeSvg(second.svg);
+        if (svg2) {
+          const checked2 = await drawSvg(svg2);
+          if (problemsOf(look, checked2).length < found.length) {
+            svg = svg2;
+            summary = second.summary;
+            fixed = true;
+            checked = checked2;
+          }
+        }
+        usage = {
+          ...usage,
+          model: `${usage.model} > ${second.usage.model}`,
+          input: usage.input + second.usage.input,
+          output: usage.output + second.usage.output,
+          costUsd: Math.round((usage.costUsd + second.usage.costUsd) * 1e4) / 1e4,
+          seconds: Math.round((usage.seconds + second.usage.seconds) * 10) / 10,
+        };
+      }
+      setResult({ svg, summary, usage, found, fixed, left: problemsOf(look, checked) });
+      setAfterUrl(urlOf(svg));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -142,6 +173,9 @@ function SvgAiEdit() {
           {result && (
             <p className="sa-done">
               {result.summary}
+              {result.found.length > 0 && (
+                <em>{result.fixed ? "Checked: an empty area was found and fixed." : `Checked: ${result.left.join("; ")}.`}</em>
+              )}
               <span>
                 {result.usage.model} · {result.usage.input.toLocaleString()} in / {result.usage.output.toLocaleString()} out
                 · ${result.usage.costUsd} · {result.usage.seconds}s

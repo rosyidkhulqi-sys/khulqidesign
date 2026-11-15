@@ -87,7 +87,8 @@ export const costOf = (t: Tally) => t.cost;
 export async function askJson(
   // deno-lint-ignore no-explicit-any
   client: any,
-  { model, effort, system, message, schema }: { model: string; effort: string; system: string; message: string; schema: unknown },
+  // message: text, or content blocks (text and images) for a model that should see a picture
+  { model, effort, system, message, schema }: { model: string; effort: string; system: string; message: string | unknown[]; schema: unknown },
   tally: Tally,
 ) {
   const response = await client.beta.messages.create({

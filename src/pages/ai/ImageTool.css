@@ -165,6 +165,7 @@
 .sa-ideas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .sa-done { display: grid; gap: 4px; margin: 14px 0 0; color: #d6d7d8; font-size: 14px; }
 .sa-done span { color: #8d939b; font-size: 12px; }
+.sa-done em { color: #f5c94a; font-size: 12.5px; font-style: normal; }
 /* Edit an image: Recolor or AI edit, for admins */
 .ed-modes { display: inline-flex; gap: 4px; margin-bottom: 18px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; }
 .ed-modes button { height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: #aeb0b2; font: inherit; font-size: 14px; cursor: pointer; }
