@@ -52,6 +52,33 @@
 .lc-notes h3 { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
 .lc-notes p { margin: 0; color: #aeb0b2; font-size: 14px; line-height: 1.65; }
 
+/* third-party licenses: one quiet row per tool */
+.lc-credits { margin-top: 52px; }
+.lc-credits h2 { margin: 0 0 6px; font-size: 18px; font-weight: 600; }
+.lc-credits-intro { margin: 0 0 16px; color: #aeb0b2; font-size: 14px; }
+.lc-credits dl { margin: 0; border-top: 1px solid var(--line); }
+.lc-credits dl > div {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.lc-credits dt { font-size: 14px; font-weight: 600; }
+.lc-credits dd { margin: 0; color: #aeb0b2; font-size: 14px; line-height: 1.55; }
+.lc-credits dd span {
+  margin-left: 6px;
+  padding: 1px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: #d6d7d8;
+  font-size: 12px;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .lc-credits dl > div { grid-template-columns: 1fr; gap: 4px; }
+}
+
 .lc-foot {
   display: flex;
   align-items: center;

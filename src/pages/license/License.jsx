@@ -63,6 +63,15 @@ const notes = [
   ],
 ];
 
+// open-source models and software inside the AI tools, with the notices
+// their licenses (Apache-2.0, BSD-3-Clause, MIT) ask for
+const credits = [
+  ["Remove background", "Silueta, a compact U²-Net by Xuebin Qin et al., distributed through rembg.", "Apache-2.0"],
+  ["Upscale", "Real-ESRGAN (realesr-general-x4v3) by Xintao Wang et al. Copyright © 2021, Xintao Wang.", "BSD-3-Clause"],
+  ["Model runtime", "ONNX Runtime Web by Microsoft, which runs the models above in your browser.", "MIT"],
+  ["Text and SVG tools", "Claude by Anthropic, used through its API under Anthropic's commercial terms.", "Commercial API"],
+];
+
 function License({ setPage }) {
   return (
     <section className="vectors-page license-page">
@@ -126,6 +135,20 @@ function License({ setPage }) {
             <p>{text}</p>
           </div>
         ))}
+      </div>
+
+      {/* THIRD-PARTY */}
+      <div className="lc-credits">
+        <h2>Third-party licenses</h2>
+        <p className="lc-credits-intro">Our AI tools are built with these models and software. Thank you to their authors.</p>
+        <dl>
+          {credits.map(([tool, text, license]) => (
+            <div key={tool}>
+              <dt>{tool}</dt>
+              <dd>{text} <span>{license}</span></dd>
+            </div>
+          ))}
+        </dl>
       </div>
 
       <div className="lc-foot">
