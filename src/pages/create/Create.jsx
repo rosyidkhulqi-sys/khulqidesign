@@ -71,6 +71,7 @@ import NumberInput from "../../components/NumberInput";
 import { fetchMembership } from "../../lib/billing";
 import { emptyKit, fetchBrandKit, saveBrandKit } from "../../lib/brandKit";
 import CreateBrand from "./CreateBrand";
+import { ENTRANCES, LOOPS, playPage } from "./createAnimate";
 
 const PANEL_KEY = "kd-create-panel";
 const PAGE_KEY = "kd-create-page";
@@ -100,7 +101,7 @@ const exportFormats = [
 const isLocked = (obj) => Boolean(obj?.lockMovementX);
 // saved with a design, so a locked element stays locked after undo or reload
 // saved with each object: its locks, and a basic shape's sides and corner
-const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls", "kdShape", "kdFrame", "kdPremium", "kdQr", "kdTable", "kdRole"];
+const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls", "kdShape", "kdFrame", "kdPremium", "kdQr", "kdTable", "kdRole", "kdAnim"];
 
 // Premium items in a saved page (inside groups too), and the page without them
 const countPremium = (objects = []) =>
@@ -1513,6 +1514,37 @@ function Create({ draft, clearDraft, user = null }) {
     render();
   };
 
+  /* ---------- Animate ---------- */
+
+  // stop() of the preview that's playing, if any
+  const stopPlay = useRef(null);
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => () => stopPlay.current?.(), []);
+
+  const play = (only = null) => {
+    stopPlay.current?.();
+    setPlaying(true);
+    stopPlay.current = playPage(fc.current, {
+      only,
+      onEnd: () => {
+        stopPlay.current = null;
+        setPlaying(false);
+      },
+    });
+  };
+
+  // sets the entrance or the loop of the selected element(s), then shows it
+  const setAnim = (kind, value) => {
+    const targets = active instanceof ActiveSelection ? active.getObjects() : [active];
+    for (const obj of targets) {
+      const next = { ...obj.kdAnim, [kind]: value || undefined };
+      obj.kdAnim = next.in || next.loop ? next : undefined;
+    }
+    refresh();
+    commit();
+    if (value) play(targets.length === 1 ? targets[0] : null);
+  };
+
   /* ---------- picking a color from the page ---------- */
 
   // the angle shown while an element is being turned: { angle, x, y }
@@ -2290,6 +2322,14 @@ function Create({ draft, clearDraft, user = null }) {
 
   const isText = active instanceof Textbox;
   const isSelection = active instanceof ActiveSelection;
+  // the animation shown in the panel: the element's, or, for several, the
+  // one they share (none when they differ)
+  const animOf = (obj) => {
+    if (!(obj instanceof ActiveSelection)) return obj?.kdAnim;
+    const [first, ...rest] = obj.getObjects();
+    const same = rest.every((o) => o.kdAnim?.in === first?.kdAnim?.in && o.kdAnim?.loop === first?.kdAnim?.loop);
+    return same ? first?.kdAnim : undefined;
+  };
   const shapeBar = shapeInfo(active);
   // a photo frame is a group too, but splitting it would lose the cut-out
   const isGroup = active instanceof Group && !isSelection && !active.kdFrame && !active.kdQr && !active.kdTable;
@@ -2718,7 +2758,7 @@ function Create({ draft, clearDraft, user = null }) {
                 </div>
               )}
 
-              {floatPos && !cropping && !adjusting && (
+              {floatPos && !cropping && !adjusting && !playing && (
                 <div className="ct-float" style={floatPos}>
                   {active?.kdFrame && !locked && (
                     <button onClick={() => frameInput.current?.click()} title={active.getObjects?.()[0] instanceof FabricImage ? "Replace photo" : "Add photo"}>
@@ -3222,6 +3262,30 @@ function Create({ draft, clearDraft, user = null }) {
                     {isGroup && <button onClick={ungroup}><Icon name="ungroup" size={16} /><span>Ungroup</span></button>}
                   </div>
                 )}
+
+                {/* Animate: an entrance and a loop, each one row of chips;
+                    choosing one plays it, Preview plays the whole page */}
+                <details className="pp-more pp-anim" open={Boolean(animOf(active))}>
+                  <summary>Animate</summary>
+                  {[["in", "In", ENTRANCES], ["loop", "Loop", LOOPS]].map(([kind, label, list]) => (
+                    <div className="pp-anim-row" key={kind}>
+                      <span>{label}</span>
+                      <div className="pp-chips" role="radiogroup" aria-label={label}>
+                        {[["", "None"], ...list].map(([value, name]) => {
+                          const on = (animOf(active)?.[kind] ?? "") === value;
+                          return (
+                            <button key={value || "none"} role="radio" aria-checked={on} className={on ? "on" : ""} onClick={() => setAnim(kind, value)}>
+                              {name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                  <button className="pp-play" onClick={() => (playing ? stopPlay.current?.() : play())}>
+                    <Icon name={playing ? "stop" : "play"} size={14} /> {playing ? "Stop" : "Preview page"}
+                  </button>
+                </details>
 
                 {/* layer order, flip and rotation, folded away until needed;
                     duplicate, lock and delete are on the toolbar by the element */}

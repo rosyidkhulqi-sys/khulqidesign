@@ -1733,6 +1733,42 @@
 .pp-more summary:hover { color: var(--white); }
 .pp-more .pp-row { margin-top: 10px; }
 
+/* Animate: In and Loop, one row of chips each, then Preview */
+.pp-anim-row { display: grid; grid-template-columns: 38px 1fr; gap: 8px; align-items: start; margin-bottom: 10px; }
+.pp-anim-row > span { padding-top: 6px; color: #9aa0a8; font-size: 12px; }
+.pp-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.pp-chips button {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: transparent;
+  color: #c9ced6;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.pp-chips button:hover { border-color: rgba(255, 255, 255, 0.22); color: var(--white); }
+.pp-chips button.on { border-color: rgba(255, 255, 255, 0.5); background: rgba(255, 255, 255, 0.08); color: var(--white); }
+.pp-play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 32px;
+  margin: 2px 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #d6d9de;
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.pp-play:hover { border-color: rgba(255, 255, 255, 0.22); color: var(--white); }
+.pp-play svg { fill: currentColor; }
+
 /* when the canvas area is narrow, everything gets a little smaller so the
    numbers can stay */
 .create-center { container-type: inline-size; }
