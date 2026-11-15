@@ -45,6 +45,7 @@
   text-transform: uppercase;
 }
 .it-frame {
+  position: relative;
   display: grid;
   place-items: center;
   aspect-ratio: 4 / 3;
@@ -53,7 +54,10 @@
   border-radius: 12px;
   background: #1c1e21;
 }
-.it-frame img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+/* the whole picture always shows: it fills the box and keeps its shape (a
+   percentage max-height doesn't hold in a box sized by aspect-ratio, so tall
+   pictures were cut off at the bottom; the file itself was never cut) */
+.it-frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
 /* checkerboard behind the result shows what became transparent */
 .it-frame.is-checker {
   background-color: #f4f4f5;
