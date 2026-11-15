@@ -109,3 +109,39 @@
   cursor: pointer;
 }
 .it-swatch-pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+/* Recolor: the picture's colors in one row; each opens a color picker */
+.rc-colors { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 16px; }
+.rc-label { margin-right: 4px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.rc-swatch {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+}
+.rc-swatch.is-changed { box-shadow: 0 0 0 2px var(--black), 0 0 0 4px var(--white); }
+.rc-new { position: absolute; inset: 0; border-radius: 50%; }
+/* the original, small in the corner, once it's been changed */
+.rc-old {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--black);
+}
+.rc-swatch input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.it .rc-link {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid #3a3c3f;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 600;
+}
+.it .rc-link:hover { border-color: #6a6d72; }

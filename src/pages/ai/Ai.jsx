@@ -15,11 +15,12 @@ import TemplateThumb from "../../components/TemplateThumb";
 import TemplateBrief from "./TemplateBrief";
 import AnimateIcon from "./AnimateIcon";
 import ImageTool from "./ImageTool";
+import RecolorTool from "./RecolorTool";
 import { keptAnimate, keptTool } from "../../lib/aiKeep";
 import { MODELS, UPSCALE_MAX_SIDE, removeBackground, upscale } from "../../lib/aiLocal";
 
 // tools that already work in the browser, without the AI backend
-const ready = new Set(["animate", "cutout", "upscale"]);
+const ready = new Set(["animate", "cutout", "upscale", "edit"]);
 
 // in-browser image tools: free to run, no account needed
 const imageTools = {
@@ -65,7 +66,7 @@ const tools = [
   ["template", "Template from text", "Describe a post or poster; AI fills one of our templates with your words and colors.", ["Templates"]],
   ["video", "Image to video", "Bring a vector or still frame to life as a short clip.", ["Vectors", "Footage"]],
   ["image", "Generate an image", "New artwork in the style of our vector collections.", ["Vectors"]],
-  ["edit", "Edit an image", "Change colors, swap parts or extend a picture.", ["Vectors"]],
+  ["edit", "Edit an image", "Recolor a picture: click a color, choose a new one. Free, on your device. Swapping parts and extending come next.", ["Vectors", "Your pictures"]],
   ["cutout", "Remove background", "Cut the subject out of a photo or illustration. Free, on your device.", ["Your pictures"]],
   ["upscale", "Upscale", "Enlarge a picture 2× or 4× without losing sharpness. Free, on your device.", ["Your pictures"]],
 ];
@@ -134,6 +135,20 @@ function Ai({ setPage, user = null, animateIcon = null, openInCreate }) {
         </div>
         <ImageTool key={tool} tool={tool} run={t.run} suffix={t.suffix} options={t.options} modelMb={t.modelMb} hint={t.hint}
                    user={user} />
+      </section>
+    );
+  }
+
+  if (tool === "edit") {
+    return (
+      <section className="vectors-page ai-page">
+        <div className="library-head">
+          <Breadcrumb setPage={setPage} parent={{ label: "AI", onClick: () => setTool(null) }} current="Edit an image" />
+          <h1>
+            Edit an image <span className="library-count">Recolor, on your device</span>
+          </h1>
+        </div>
+        <RecolorTool user={user} />
       </section>
     );
   }
