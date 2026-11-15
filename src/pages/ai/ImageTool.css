@@ -17,7 +17,7 @@
   transition: border-color 0.2s, background 0.2s;
 }
 /* a file held over the box: the edge brightens, quietly (red is for actions) */
-.it-drop.is-over { border-color: rgba(255, 255, 255, 0.5); border-style: solid; background: #1f2125; }
+.it-drop.is-over { border-color: rgba(255, 255, 255, 0.24); background: #1d1f23; }
 .it-drop strong { font-size: 18px; }
 .it-drop span { color: #8d939b; font-size: 14px; }
 .it-drop button,
