@@ -287,12 +287,17 @@ function Ai({ setPage, user = null, animateIcon = null, openInCreate }) {
       <p className="ai-section">AI tools</p>
       <div className="ai-tools">
         {tools.map(([id, name, text, from]) => {
-          const open = ready.has(id);
+          // Template from text is an admin trial: for admins the card opens it
+          // in the prompt box above; everyone else still sees Coming soon
+          const trial = id === "template" && isAdmin;
+          const open = ready.has(id) || trial;
           const body = (
             <>
               <span className="ai-tool-icon"><Glyph name={id} /></span>
               <strong>{name}</strong>
-              {open ? (
+              {trial ? (
+                <span className="ai-soon ai-try">Admin trial</span>
+              ) : open ? (
                 <span className="ai-soon ai-try">Try it</span>
               ) : (
                 !aiReady && <span className="ai-soon">Coming soon</span>
@@ -302,8 +307,11 @@ function Ai({ setPage, user = null, animateIcon = null, openInCreate }) {
             </>
           );
           // tools that work now open; the rest are a description for now
+          const go = trial
+            ? () => { setKind("template"); document.querySelector(".ai-prompt")?.scrollIntoView({ behavior: "smooth", block: "center" }); }
+            : () => { setTool(id); window.scrollTo(0, 0); };
           return open ? (
-            <button key={id} className="ai-tool is-open" onClick={() => { setTool(id); window.scrollTo(0, 0); }}>
+            <button key={id} className="ai-tool is-open" onClick={go}>
               {body}
             </button>
           ) : (
