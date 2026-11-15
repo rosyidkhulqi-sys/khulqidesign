@@ -99,3 +99,12 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
   outline: 2px solid rgba(255, 255, 255, 0.55);
   outline-offset: 2px;
 }
+
+/* TOUCH DEVICES: no live blur behind sticky or floating parts. Phones redraw
+   a backdrop blur on every scroll frame, and low-end GPUs (e.g. Galaxy A04e)
+   give up and show white or black. A near-solid fill looks the same there. */
+@media (hover: none) and (pointer: coarse) {
+  .site-header { background: rgba(10, 11, 13, 0.98) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  .asset-overlay, .hs-search, .hs-chip { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  .hs-search, .hs-chip { background: rgba(32, 35, 39, 0.94) !important; }
+}

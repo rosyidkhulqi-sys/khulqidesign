@@ -161,7 +161,10 @@ function HomeShowcase({ ways, covers = {}, go }) {
 
   const v = stage.vectors;
   const f = stage.footage;
-  const clip = covers.reel?.[0];
+  // phones with little memory (2 GB or less, as the browser reports it)
+  // show the clip's still picture instead of playing it
+  const lowMemory = typeof navigator !== "undefined" && navigator.deviceMemory > 0 && navigator.deviceMemory <= 2;
+  const clip = lowMemory ? null : covers.reel?.[0];
   const poster = covers.footage?.[0] ?? "/covers/footage.jpg";
   const run = inView && !reduced;
 

@@ -585,3 +585,12 @@
   .home-asset-details p { font-size: 14px; }
   .home-asset-more { flex-direction: column; align-items: flex-start; }
 }
+
+/* touch devices: the room's walls and floor are big 3D-rotated layers with a
+   soft mask, heavy for phone GPUs; one flat, faint grid gives the same feel */
+@media (hover: none) and (pointer: coarse) {
+  .home-grid-room { perspective: none; -webkit-mask-image: none; mask-image: none; opacity: 0.35; }
+  .home-grid-room::before,
+  .home-grid-room::after { display: none; }
+  .home-grid-room div { inset: 0; transform: none; }
+}
