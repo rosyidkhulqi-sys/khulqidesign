@@ -71,7 +71,13 @@ import NumberInput from "../../components/NumberInput";
 import { fetchMembership } from "../../lib/billing";
 import { emptyKit, fetchBrandKit, saveBrandKit } from "../../lib/brandKit";
 import CreateBrand from "./CreateBrand";
-import { playPage } from "./createAnimate";
+import { hasAnimation, playPage } from "./createAnimate";
+
+// shown in Download when the open page is animated
+const motionFormats = [
+  ["mp4", "MP4", "Video of this page, animated"],
+  ["gif", "GIF", "Looping animation of this page"],
+];
 import CreateAnimate from "./CreateAnimatePanel";
 
 const PANEL_KEY = "kd-create-panel";
@@ -279,6 +285,10 @@ function Create({ draft, clearDraft, user = null }) {
   // background (Premium, as in Canva); exportNote explains a refusal
   const [exportScale, setExportScale] = useState(1);
   const [exportClear, setExportClear] = useState(false);
+  // 0..1 while an MP4 or GIF of the page is being made
+  const [motionProgress, setMotionProgress] = useState(null);
+  // whether the open page has animation, checked when Download opens
+  const [pageAnimated, setPageAnimated] = useState(false);
   const [exportNote, setExportNote] = useState(null);
   const [canPremium, setCanPremium] = useState(false);
   // the member's brand kit (Premium), saved to their account a moment after a change
@@ -2130,6 +2140,23 @@ function Create({ draft, clearDraft, user = null }) {
       a.click();
     };
 
+    // the open page with its animation, as a video or a GIF
+    if (format === "mp4" || format === "gif") {
+      if (motionProgress !== null) return;
+      setMotionProgress(0);
+      import("./exportMotion")
+        .then(({ buildPageMp4, buildPageGif }) => (format === "mp4" ? buildPageMp4 : buildPageGif)(c, b, setMotionProgress))
+        .then((blob) => {
+          const { index, list } = pagesRef.current;
+          const href = URL.createObjectURL(blob);
+          save(href, `${slug || "khulqidesign"}-${b.w}x${b.h}${list.length > 1 ? `-page-${index + 1}` : ""}.${format}`);
+          setTimeout(() => URL.revokeObjectURL(href), 10000);
+        })
+        .catch((e) => window.alert(e.message || "The file couldn't be made. Try again."))
+        .finally(() => setMotionProgress(null));
+      return;
+    }
+
     // every page in one file; the open page's latest edits included
     if (format === "pdf") {
       if (pdfProgress !== null) return;
@@ -2322,6 +2349,8 @@ function Create({ draft, clearDraft, user = null }) {
       selectionLineWidth: 1,
     });
     fc.current = c;
+    // reachable from the console while developing, for tests; never in production
+    if (import.meta.env.DEV) window.__kdCanvas = c;
     c.on("selection:created", syncSelection);
     c.on("selection:updated", syncSelection);
     c.on("selection:cleared", syncSelection);
@@ -2494,9 +2523,19 @@ function Create({ draft, clearDraft, user = null }) {
           <span className="ct-size">{board.w} × {board.h} px</span>
 
           <div className="ct-menu ct-export">
-            <button className="ct-btn primary" onClick={() => setMenu(menu === "download" ? null : "download")}>
+            <button
+              className="ct-btn primary"
+              onClick={() => {
+                setPageAnimated(hasAnimation(fc.current?.getObjects() ?? []));
+                setMenu(menu === "download" ? null : "download");
+              }}
+            >
               <Icon name="download" />
-              {pdfProgress === null ? "Download" : `PDF ${Math.round(pdfProgress * 100)}%`}
+              {pdfProgress !== null
+                ? `PDF ${Math.round(pdfProgress * 100)}%`
+                : motionProgress !== null
+                  ? `Video ${Math.round(motionProgress * 100)}%`
+                  : "Download"}
               <Icon name="chevron" size={14} />
             </button>
             {menu === "download" && (
@@ -2541,7 +2580,7 @@ function Create({ draft, clearDraft, user = null }) {
                   )}
                 </div>
                 <hr />
-                {exportFormats.map(([format, label, hint]) => (
+                {[...exportFormats, ...(pageAnimated ? motionFormats : [])].map(([format, label, hint]) => (
                   <button key={format} onClick={() => { setMenu(null); setExportNote(null); exportFile(format); }}>
                     <strong>{label}</strong>
                     <small>{hint}</small>
