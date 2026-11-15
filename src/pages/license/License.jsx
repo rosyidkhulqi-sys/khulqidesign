@@ -64,12 +64,13 @@ const notes = [
 ];
 
 // open-source models and software inside the AI tools, with the notices
-// their licenses (Apache-2.0, BSD-3-Clause, MIT) ask for
+// their licenses (Apache-2.0, BSD-3-Clause, MIT) ask for; each badge links
+// to the full license text with its copyright notice
 const credits = [
-  ["Remove background", "Silueta, a compact U²-Net by Xuebin Qin et al., distributed through rembg.", "Apache-2.0"],
-  ["Upscale", "Real-ESRGAN (realesr-general-x4v3) by Xintao Wang et al. Copyright © 2021, Xintao Wang.", "BSD-3-Clause"],
-  ["Model runtime", "ONNX Runtime Web by Microsoft, which runs the models above in your browser.", "MIT"],
-  ["Text and SVG tools", "Claude by Anthropic, used through its API under Anthropic's commercial terms.", "Commercial API"],
+  ["Remove background", "Silueta, a compact U²-Net by Xuebin Qin et al., distributed through rembg.", "Apache-2.0", "https://github.com/xuebinqin/U-2-Net/blob/master/LICENSE"],
+  ["Upscale", "Real-ESRGAN (realesr-general-x4v3) by Xintao Wang et al. Copyright © 2021, Xintao Wang.", "BSD-3-Clause", "https://github.com/xinntao/Real-ESRGAN/blob/master/LICENSE"],
+  ["Model runtime", "ONNX Runtime Web by Microsoft, which runs the models above in your browser.", "MIT", "https://github.com/microsoft/onnxruntime/blob/main/LICENSE"],
+  ["Text and SVG tools", "Claude by Anthropic, used through its API under Anthropic's commercial terms.", "Commercial API", "https://www.anthropic.com/legal/commercial-terms"],
 ];
 
 function License({ setPage }) {
@@ -142,10 +143,13 @@ function License({ setPage }) {
         <h2>Third-party licenses</h2>
         <p className="lc-credits-intro">Our AI tools are built with these models and software. Thank you to their authors.</p>
         <dl>
-          {credits.map(([tool, text, license]) => (
+          {credits.map(([tool, text, license, url]) => (
             <div key={tool}>
               <dt>{tool}</dt>
-              <dd>{text} <span>{license}</span></dd>
+              <dd>
+                {text}{" "}
+                <a href={url} target="_blank" rel="noopener noreferrer" title={`Read the ${license} text`}>{license}</a>
+              </dd>
             </div>
           ))}
         </dl>

@@ -66,15 +66,18 @@
 }
 .lc-credits dt { font-size: 14px; font-weight: 600; }
 .lc-credits dd { margin: 0; color: #aeb0b2; font-size: 14px; line-height: 1.55; }
-.lc-credits dd span {
+.lc-credits dd a {
   margin-left: 6px;
   padding: 1px 8px;
   border: 1px solid var(--line);
   border-radius: 999px;
   color: #d6d7d8;
   font-size: 12px;
+  text-decoration: none;
   white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
 }
+.lc-credits dd a:hover { border-color: rgba(255, 255, 255, 0.35); color: var(--white); }
 @media (max-width: 640px) {
   .lc-credits dl > div { grid-template-columns: 1fr; gap: 4px; }
 }
