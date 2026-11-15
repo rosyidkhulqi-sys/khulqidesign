@@ -145,3 +145,28 @@
   font-weight: 600;
 }
 .it .rc-link:hover { border-color: #6a6d72; }
+
+/* AI edit (SVG): one line to say what to change, ideas under it */
+.sa-ask { display: flex; gap: 10px; margin-top: 16px; }
+.sa-ask input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid #3a3c3f;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--white);
+  font: inherit;
+  font-size: 14px;
+}
+.sa-ask input:focus { border-color: #6a6d72; outline: 0; }
+.sa-ask .it-primary { height: 42px; padding: 0 18px; border: 0; border-radius: 10px; background: var(--red); color: #fff; font-weight: 600; }
+.sa-ideas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.sa-done { display: grid; gap: 4px; margin: 14px 0 0; color: #d6d7d8; font-size: 14px; }
+.sa-done span { color: #8d939b; font-size: 12px; }
+/* Edit an image: Recolor or AI edit, for admins */
+.ed-modes { display: inline-flex; gap: 4px; margin-bottom: 18px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; }
+.ed-modes button { height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: #aeb0b2; font: inherit; font-size: 14px; cursor: pointer; }
+.ed-modes button.active { background: rgba(255, 255, 255, 0.12); color: var(--white); }
+.ed-modes small { margin-left: 6px; color: var(--red); font-size: 11px; font-weight: 700; }

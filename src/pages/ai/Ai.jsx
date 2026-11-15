@@ -16,6 +16,7 @@ import TemplateBrief from "./TemplateBrief";
 import AnimateIcon from "./AnimateIcon";
 import ImageTool from "./ImageTool";
 import RecolorTool from "./RecolorTool";
+import SvgAiEdit from "./SvgAiEdit";
 import { keptAnimate, keptTool } from "../../lib/aiKeep";
 import { MODELS, UPSCALE_MAX_SIDE, removeBackground, upscale } from "../../lib/aiLocal";
 
@@ -91,6 +92,8 @@ function Ai({ setPage, user = null, animateIcon = null, openInCreate }) {
   // { busy } while Claude designs, then { template, usage } or { error }
   const [made, setMade] = useState(null);
   const [brief, setBrief] = useState(emptyBrief);
+  // Edit an image: Recolor for everyone; AI edit (SVG) for admins
+  const [editMode, setEditMode] = useState("recolor");
 
   useEffect(() => {
     if (!user) return;
@@ -148,7 +151,14 @@ function Ai({ setPage, user = null, animateIcon = null, openInCreate }) {
             Edit an image <span className="library-count">Recolor, on your device</span>
           </h1>
         </div>
-        <RecolorTool user={user} />
+        {/* admins also try step two: Claude edits an SVG */}
+        {isAdmin && (
+          <div className="ed-modes" role="tablist">
+            <button role="tab" aria-selected={editMode === "recolor"} className={editMode === "recolor" ? "active" : ""} onClick={() => setEditMode("recolor")}>Recolor</button>
+            <button role="tab" aria-selected={editMode === "ai"} className={editMode === "ai" ? "active" : ""} onClick={() => setEditMode("ai")}>AI edit (SVG)<small>ADMIN</small></button>
+          </div>
+        )}
+        {isAdmin && editMode === "ai" ? <SvgAiEdit /> : <RecolorTool user={user} />}
       </section>
     );
   }
