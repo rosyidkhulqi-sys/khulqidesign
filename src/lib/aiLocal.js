@@ -206,6 +206,94 @@ async function bitmapOf(file, maxSide) {
 
 // ------------------------------------------------------- remove background
 
+// A logo or graphic on a plain background (the whole border one color, like
+// cream or white) is cut by color instead of by the model: the model keeps
+// background-colored areas inside the subject (the cream in a logo), while a
+// color key clears them everywhere, as a designer would. It also needs no
+// model download. Returns the background color, or null for a photo.
+function flatBackgroundOf(bitmap) {
+  const side = 256;
+  const scale = Math.min(1, side / Math.max(bitmap.width, bitmap.height));
+  const w = Math.max(8, Math.round(bitmap.width * scale));
+  const h = Math.max(8, Math.round(bitmap.height * scale));
+  const ctx = canvasOf(w, h).getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  const { data } = ctx.getImageData(0, 0, w, h);
+  const border = [];
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (x > 1 && x < w - 2 && y > 1 && y < h - 2) continue;
+      const i = (y * w + x) * 4;
+      if (data[i + 3] < 250) return null; // already transparent: leave it to the model
+      border.push([data[i], data[i + 1], data[i + 2]]);
+    }
+  }
+  const median = (c) => border.map((p) => p[c]).sort((a, b) => a - b)[border.length >> 1];
+  const bg = [median(0), median(1), median(2)];
+  const close = border.filter((p) => Math.hypot(p[0] - bg[0], p[1] - bg[1], p[2] - bg[2]) < 24).length;
+  return close / border.length >= 0.92 ? bg : null;
+}
+
+// alpha from the distance to the background color: up to NEAR it's background,
+// from FAR it's subject, a soft edge in between
+const KEY_NEAR = 20;
+const KEY_FAR = 64;
+
+async function keyOutBackground(bitmap, bg, onStep, cropToSubject) {
+  const { width: w, height: h } = bitmap;
+  const full = canvasOf(w, h);
+  const output = full.getContext("2d", { willReadFrequently: true });
+  output.drawImage(bitmap, 0, 0);
+  bitmap.close();
+  let minX = w;
+  let minY = h;
+  let maxX = -1;
+  let maxY = -1;
+  const strip = 64;
+  for (let y = 0; y < h; y += strip) {
+    const rows = Math.min(strip, h - y);
+    const img = output.getImageData(0, y, w, rows);
+    const d = img.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const dist = Math.hypot(d[i] - bg[0], d[i + 1] - bg[1], d[i + 2] - bg[2]);
+      const a = Math.max(0, Math.min(1, (dist - KEY_NEAR) / (KEY_FAR - KEY_NEAR)));
+      // an edge pixel mixes subject and background: take the background out
+      if (a > 0 && a < 1) {
+        for (let c = 0; c < 3; c++) d[i + c] = clampByte((d[i + c] - (1 - a) * bg[c]) / Math.max(a, 0.08));
+      }
+      d[i + 3] = Math.round(a * (d[i + 3] / 255) * 255);
+      if (cropToSubject && d[i + 3] > 8) {
+        const pixel = i >> 2;
+        const x = pixel % w;
+        const py = y + ((pixel / w) | 0);
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, py);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, py);
+      }
+    }
+    output.putImageData(img, 0, y);
+    onStep?.("Cleaning image edges", (y + rows) / h);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  onStep?.("Done", 1);
+  return finishCutout(full, w, h, cropToSubject, { minX, minY, maxX, maxY });
+}
+
+// the cut as a PNG; for the editor, cropped to the subject with its bounds
+async function finishCutout(full, w, h, cropToSubject, { minX, minY, maxX, maxY }) {
+  if (cropToSubject) {
+    if (maxX < minX || maxY < minY) {
+      throw new Error("No visible subject was found. Try another image.");
+    }
+    const bounds = { left: minX, top: minY, width: maxX - minX + 1, height: maxY - minY + 1, sourceWidth: w, sourceHeight: h };
+    const cropped = canvasOf(bounds.width, bounds.height);
+    cropped.getContext("2d").drawImage(full, minX, minY, bounds.width, bounds.height, 0, 0, bounds.width, bounds.height);
+    return { blob: await toBlob(cropped), bounds };
+  }
+  return toBlob(full);
+}
+
 const SIZE = 320;
 const MEAN = [0.485, 0.456, 0.406];
 const STD = [0.229, 0.224, 0.225];
@@ -215,12 +303,19 @@ const STD = [0.229, 0.224, 0.225];
 // options may be null: the AI page passes its (empty) tool option along
 export async function removeBackground(file, onStep, options) {
   const cropToSubject = options?.cropToSubject ?? false;
+  const bitmap = await bitmapOf(file, 4096);
+  const { width: w, height: h } = bitmap;
+
+  // a logo or graphic on a plain background: cut by color, no model needed
+  const flat = flatBackgroundOf(bitmap);
+  if (flat) {
+    onStep?.("Finding the subject", 0);
+    return keyOutBackground(bitmap, flat, onStep, cropToSubject);
+  }
+
   onStep?.("Loading the AI model", 0);
   const run = await session("cutout", (p) => onStep?.("Loading the AI model", p));
   onStep?.("Finding the subject", 0);
-
-  const bitmap = await bitmapOf(file, 4096);
-  const { width: w, height: h } = bitmap;
 
   // the model sees a 320 x 320 copy, normalized as it was trained
   const small = canvasOf(SIZE, SIZE).getContext("2d", { willReadFrequently: true });
@@ -324,16 +419,7 @@ export async function removeBackground(file, onStep, options) {
 
   bitmap.close();
   onStep?.("Done", 1);
-  if (cropToSubject) {
-    if (maxX < minX || maxY < minY) {
-      throw new Error("No visible subject was found. Try another image.");
-    }
-    const bounds = { left: minX, top: minY, width: maxX - minX + 1, height: maxY - minY + 1, sourceWidth: w, sourceHeight: h };
-    const cropped = canvasOf(bounds.width, bounds.height);
-    cropped.getContext("2d").drawImage(full, minX, minY, bounds.width, bounds.height, 0, 0, bounds.width, bounds.height);
-    return { blob: await toBlob(cropped), bounds };
-  }
-  return toBlob(full);
+  return finishCutout(full, w, h, cropToSubject, { minX, minY, maxX, maxY });
 }
 
 // ---------------------------------------------------------------- upscale
