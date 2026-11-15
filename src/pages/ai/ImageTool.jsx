@@ -112,6 +112,20 @@ function ImageTool({ tool, run, suffix, options = null, modelMb, hint, user }) {
     }
   };
 
+  // throw the picture and its result away and start again from the drop box
+  // (the day's allowance isn't given back: the cut was already made)
+  const clear = () => {
+    forgetResult();
+    setFile(null);
+    setBefore(null);
+    setAfter(null);
+    setResult(null);
+    setStep(null);
+    setError(null);
+    setLimitHit(false);
+    setBgMode("transparent");
+  };
+
   const download = async () => {
     if (!user) {
       await keepResult(tool, file, result, option);
@@ -198,6 +212,7 @@ function ImageTool({ tool, run, suffix, options = null, modelMb, hint, user }) {
                 ))}
               </div>
             )}
+            <button onClick={clear} disabled={busy} title="Remove this picture and start again">Remove</button>
             <button onClick={() => input.current?.click()} disabled={busy}>Choose another</button>
             {result ? (
               <button className="it-primary" onClick={download}>Download PNG</button>
