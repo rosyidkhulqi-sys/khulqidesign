@@ -8,6 +8,9 @@ import AiSearchButton from "../../components/AiSearchButton";
 import { matchesSearch } from "../../lib/search";
 import SkeletonCards from "../../components/SkeletonCards";
 
+// the width in pixels of a template picture made `longSide` on its longer edge
+const pxWide = (t, longSide) => Math.round(t.w * Math.min(1, longSide / Math.max(t.w, t.h)));
+
 function Templates({ setPage, onCustomize, initialSearch = "" }) {
   const [search, setSearch] = useState(initialSearch);
   const [category, setCategory] = useState("all");
@@ -146,7 +149,19 @@ function Templates({ setPage, onCustomize, initialSearch = "" }) {
           items.map((t) => (
             <div className="vector-card template-card" key={t.dbId ?? t.id} onClick={() => onCustomize(t)}>
               <div className="vector-thumb" style={{ aspectRatio: `${t.w} / ${t.h}` }}>
-                {t.scene ? <TemplateThumb scene={t.scene} /> : <img src={t.image} alt="" loading="lazy" />}
+                {t.scene ? (
+                  <TemplateThumb scene={t.scene} />
+                ) : (
+                  // the 600 px thumb is soft on Retina screens and in wide
+                  // cards: the browser takes the 1400 px preview there
+                  <img
+                    src={t.image}
+                    srcSet={t.previewImage ? `${t.image} ${pxWide(t, 600)}w, ${t.previewImage} ${pxWide(t, 1400)}w` : undefined}
+                    sizes="(max-width: 700px) 50vw, (max-width: 1100px) 33vw, 25vw"
+                    alt=""
+                    loading="lazy"
+                  />
+                )}
                 <span className={`vector-badge ${t.license}`}>
                   {t.license === "free" ? "Free" : "Premium"}
                 </span>
