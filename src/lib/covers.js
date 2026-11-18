@@ -15,6 +15,9 @@ const TYPES = { vectors: "vector", logos: "logo", footage: "footage", templates:
 const PINNED = {
   vectors: ["KD-VC-2323081"],
   footage: ["KD-FT-4346269"],
+  // the best square templates: the card shows the first and fades through
+  // the others while the pointer is on it
+  templates: ["KD-TP-3010347", "KD-TP-5752739", "KD-TP-7473121", "KD-TP-3725284"],
 };
 
 // clips the Footage card plays in turn on hover, chosen by hand; the

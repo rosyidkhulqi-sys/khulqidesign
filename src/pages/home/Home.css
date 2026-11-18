@@ -334,6 +334,17 @@
 .home-reel-dots i.is-current { background: #fff; }
 @media (prefers-reduced-motion: reduce) { .home-reel video { animation: none; } }
 
+/* Templates card: the pictures sit on top of each other and fade in turn */
+.home-flip { position: absolute; inset: 0; display: block; }
+.home-flip img {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.home-flip img.is-current { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .home-flip img { transition: none; } }
+
 
 .home-asset-count {
   position: absolute;

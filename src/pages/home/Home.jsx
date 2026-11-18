@@ -9,6 +9,7 @@ import { fetchCovers } from "../../lib/covers";
 import HomeShowcase from "./HomeShowcase";
 import HomeAiDemo from "./HomeAiDemo";
 import HomeReel from "./HomeReel";
+import HomeFlip from "./HomeFlip";
 import AiSearchButton from "../../components/AiSearchButton";
 
 
@@ -294,6 +295,8 @@ function Home({ setPage, user = null }) {
               >
                 {cat.key === "footage" && covers.reel ? (
                   <HomeReel cover={covers.footage?.[0] ?? cat.image} clips={covers.reel} />
+                ) : cat.key === "templates" && covers.templates?.length > 1 ? (
+                  <HomeFlip images={covers.templates} />
                 ) : (
                   <img src={covers[cat.key]?.[0] ?? cat.image} alt="" loading="lazy" />
                 )}
