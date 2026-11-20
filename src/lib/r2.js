@@ -101,15 +101,31 @@ async function uploadInParts({ bucket, key, file, type, onProgress }) {
   }
 }
 
-export async function uploadToR2({ bucket, key, file, contentType, onProgress }) {
+// Signed upload links for many files in one call: { key: url }. Saves one
+// round trip (and one sign-in check) per file when a batch goes up.
+export async function signUploads(files) {
+  const urls = {};
+  for (let i = 0; i < files.length; i += 200) {
+    const part = files.slice(i, i + 200).map(({ bucket, key, contentType }) => ({ bucket, key, contentType }));
+    const answer = await withRetries(() => sign({ action: "upload-many", files: part }));
+    Object.assign(urls, answer.urls);
+  }
+  return urls;
+}
+
+// signedUrl: a link from signUploads, used for the first try; a retry asks
+// for a fresh one (the first may have expired)
+export async function uploadToR2({ bucket, key, file, contentType, onProgress, signedUrl }) {
   const type = contentType || file.type || "application/octet-stream";
   if (file.size > MULTIPART_FROM) {
     await uploadInParts({ bucket, key, file, type, onProgress });
   } else {
+    let ready = signedUrl;
     await withRetries(
       async () => {
-        const signed = await sign({ action: "upload", bucket, key, contentType: type });
-        await put(signed.url, file, type, (bytes) => onProgress?.(bytes / file.size));
+        const url = ready ?? (await sign({ action: "upload", bucket, key, contentType: type })).url;
+        ready = null;
+        await put(url, file, type, (bytes) => onProgress?.(bytes / file.size));
       },
       () => onProgress?.(0),
     );

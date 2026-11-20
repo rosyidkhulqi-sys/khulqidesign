@@ -5,7 +5,7 @@
 // then the original goes to private-files and the cleaned copy, which the
 // editor and the grid read, to public-files.
 import { supabase } from "../../lib/supabaseClient";
-import { uploadToR2 } from "../../lib/r2";
+import { signUploads, uploadToR2 } from "../../lib/r2";
 import { loadIconSvg } from "../../lib/iconEditor";
 
 export const ICON_STYLES = ["outline", "glyph", "flat", "gradient", "hand-drawn"];
@@ -74,6 +74,27 @@ export async function listIconSets() {
 
 const newCode = (prefix) => `${prefix}-${String(Math.floor(1_000_000 + Math.random() * 9_000_000))}`;
 
+// where an icon's two files go in R2
+const iconKeys = (code, name) => ({ original: `icons/${code}/${slug(name)}.svg`, shown: `icons/${code}/icon.svg` });
+
+// Codes and signed upload links for a whole batch at once, before the
+// icons go up: one call to r2-sign instead of two per icon. Returns a plan
+// per item key ({ code, urls }); an icon without one signs its own links.
+export async function planIcons(items) {
+  const plans = {};
+  const files = [];
+  for (const item of items) {
+    const code = newCode("KD-IC");
+    const keys = iconKeys(code, item.name.trim() || "Icon");
+    plans[item.key] = { code, urls: {} };
+    files.push({ bucket: "private", key: keys.original, contentType: "image/svg+xml", item: item.key });
+    files.push({ bucket: "public", key: keys.shown, contentType: "image/svg+xml", item: item.key });
+  }
+  const urls = await signUploads(files);
+  for (const f of files) plans[f.item].urls[f.key] = urls[f.key];
+  return plans;
+}
+
 export async function createIconSet(set) {
   for (let attempt = 0; attempt < 3; attempt++) {
     const { data, error } = await supabase
@@ -106,11 +127,12 @@ export async function publishIcon(item, set, onStep) {
   const keywords = [...new Set([...item.keywords, ...(set.keywords ?? [])])].filter((k) => !GENERIC_ICON_WORDS.has(k.toLowerCase()));
 
   for (let attempt = 0; attempt < 3; attempt++) {
-    const code = newCode("KD-IC");
-    const folder = `icons/${code}`;
-    const name = slug(item.name);
-    const original = { bucket: "private", key: `${folder}/${name}.svg`, file: item.file, contentType: "image/svg+xml" };
-    const shown = { bucket: "public", key: `${folder}/icon.svg`, file: cleanBlob, contentType: "image/svg+xml" };
+    // the first try uses the code and links prepared for the whole batch
+    const planned = attempt === 0 ? item.plan : null;
+    const code = planned?.code ?? newCode("KD-IC");
+    const { original: originalKey, shown: shownKey } = iconKeys(code, item.name);
+    const original = { bucket: "private", key: originalKey, file: item.file, contentType: "image/svg+xml", signedUrl: planned?.urls?.[originalKey] };
+    const shown = { bucket: "public", key: shownKey, file: cleanBlob, contentType: "image/svg+xml", signedUrl: planned?.urls?.[shownKey] };
 
     // both files at once
     onStep("Uploading", 0);

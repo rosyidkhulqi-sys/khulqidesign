@@ -142,6 +142,28 @@ Deno.serve(async (req) => {
     return reply({ error: roleRes.ok ? "admins only" : `role check failed (${roleRes.status})` }, 403, origin);
   }
 
+  // UPLOAD-MANY: signed PUT links for a whole batch in one call (one sign-in
+  // and admin check instead of one per file)
+  //   { action: "upload-many", files: [{ bucket, key, contentType }] } -> { urls: { key: url } }
+  if (body.action === "upload-many") {
+    const files = (body as { files?: unknown }).files;
+    if (!Array.isArray(files) || !files.length || files.length > 200) {
+      return reply({ error: "files must hold 1 to 200 files" }, 400, origin);
+    }
+    const urls: Record<string, string> = {};
+    for (const f of files as { bucket?: string; key?: unknown; contentType?: unknown }[]) {
+      const b = f?.bucket === "public" ? env("R2_PUBLIC_BUCKET") : f?.bucket === "private" ? env("R2_PRIVATE_BUCKET") : null;
+      if (!b || !validKey(f.key)) return reply({ error: "every file needs a bucket and a valid key" }, 400, origin);
+      const type = typeof f.contentType === "string" && f.contentType.length < 100 ? f.contentType : "application/octet-stream";
+      const signed = await r2.sign(
+        new Request(`${objectUrlFor(b, f.key)}?X-Amz-Expires=${EXPIRES}`, { method: "PUT", headers: { "Content-Type": type } }),
+        { aws: { signQuery: true } },
+      );
+      urls[f.key] = signed.url;
+    }
+    return reply({ urls, expiresIn: EXPIRES }, 200, origin);
+  }
+
   const bucket = body.bucket === "public" ? env("R2_PUBLIC_BUCKET")
     : body.bucket === "private" ? env("R2_PRIVATE_BUCKET")
     : null;

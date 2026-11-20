@@ -13,6 +13,7 @@ import {
   nameFromFile,
   publishIcon,
   iconsOfSet,
+  planIcons,
   readSvg,
   splitKeywords,
 } from "./iconPublish";
@@ -215,6 +216,9 @@ function IconUpload({ onPublished }) {
     // its own progress and failure
     const queue = items.filter((it) => it.status === "ready" || it.status === "failed");
     queue.forEach((it) => update(it.key, { status: "uploading", progress: 0, message: "Waiting" }));
+    // every upload link of the batch in one call; if that fails, each icon
+    // simply signs its own links as before
+    const plans = await planIcons(queue).catch(() => ({}));
     let next = 0;
     const worker = async () => {
       while (next < queue.length) {
@@ -222,7 +226,7 @@ function IconUpload({ onPublished }) {
         update(item.key, { message: "Preparing" });
         try {
           const code = await publishIcon(
-            { ...item, batchId, keywords: splitKeywords(item.keywords), name: item.name.trim() || "Icon" },
+            { ...item, batchId, keywords: splitKeywords(item.keywords), name: item.name.trim() || "Icon", plan: plans[item.key] },
             set,
             (message, progress) => update(item.key, { message, progress })
           );
