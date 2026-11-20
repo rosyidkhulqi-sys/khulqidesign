@@ -168,9 +168,19 @@ function ManageIconSets({ refreshKey }) {
         setError(sampleError.message);
         return;
       }
+      // each set's batch name (the owner's own label, such as M 1026), from its icons
+      const batches = {};
+      if (data?.length) {
+        const { data: rows } = await supabase
+          .from("assets")
+          .select("set_id, batch:upload_batches(name)")
+          .in("set_id", data.map((set) => set.id))
+          .not("batch_id", "is", null);
+        for (const row of rows ?? []) if (row.batch?.name) batches[row.set_id] ??= row.batch.name;
+      }
       if (!alive) return;
       setError(null);
-      setSets((data ?? []).map((set) => ({ ...set, iconCount: iconCount(set), sample: samples[set.id] ?? null })));
+      setSets((data ?? []).map((set) => ({ ...set, iconCount: iconCount(set), sample: samples[set.id] ?? null, batchName: batches[set.id] ?? null })));
       setTotal(count ?? 0);
       setExpanded(null);
       setMembers({});
@@ -496,6 +506,7 @@ function ManageIconSets({ refreshKey }) {
             <div className="ad-fields">
               <strong>{set.name}</strong>
               <span className="ad-file">
+                {set.batchName && <b className="ad-ref">{set.batchName}</b>}
                 {set.code} · {set.iconCount} {set.iconCount === 1 ? "icon" : "icons"} · {capitalize(set.style ?? "outline")} · {capitalize(set.category ?? "other")} · {capitalize(set.license)} · {new Date(set.created_at).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
               </span>
               {set.description && <span className="ad-file">{set.description}</span>}
