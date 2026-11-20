@@ -13,6 +13,7 @@ import {
 import { parseKeywords } from "./vectorUpload";
 import { normalizeVectorCategory, vectorCategoryLabel } from "../../data/vectorCategories";
 import NumberInput from "../../components/NumberInput";
+import KeywordChips from "./KeywordChips";
 
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -88,10 +89,14 @@ function EditAsset({ row, type, onSaved, onCancel }) {
         <textarea rows="2" value={form.description} onChange={set("description")} />
       </label>
 
-      <label className="is-wide">
-        Keywords, separated by commas{type === "element" && ` (max ${MAX_KEYWORDS})`}
-        <textarea rows="2" value={form.keywords} onChange={set("keywords")} />
-      </label>
+      <div className="is-wide">
+        <KeywordChips
+          value={parseKeywords(form.keywords)}
+          onChange={(list) => setForm((f) => ({ ...f, keywords: list.join(", ") }))}
+          max={type === "element" ? MAX_KEYWORDS : 50}
+          min={type === "element" ? 5 : 10}
+        />
+      </div>
 
       {isLogo ? (
         <>
