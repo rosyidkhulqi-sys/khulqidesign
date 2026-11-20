@@ -98,15 +98,33 @@ async function fetchStage() {
     const more = await query(type, field, count, style, null);
     return [...new Set([...matched, ...more])].slice(0, count);
   };
+  // the chosen assets, in their order; one that is hidden or deleted is
+  // skipped, and only then does the automatic pick fill in
+  const pinned = async (codes, fallback) => {
+    const { data } = await supabase.from("assets").select("code, thumb_key").in("code", codes).eq("status", "published");
+    const urls = codes.map((c) => data?.find((row) => row.code === c)).filter(Boolean).map((row) => publicUrl(row.thumb_key));
+    if (urls.length >= codes.length) return urls;
+    return [...new Set([...urls, ...(await fallback())])].slice(0, codes.length);
+  };
   const [vectors, glyphs, outlines, hands, footage] = await Promise.all([
-    pick("vector", "thumb_key", 4, null, "abstract"),
-    pick("icon", "thumb_key", 6, "glyph"),
-    pick("icon", "thumb_key", 6, "outline"),
-    pick("icon", "thumb_key", 6, "hand-drawn"),
-    pick("footage", "thumb_key", 5, null, "abstract"),
+    pinned(STAGE.vectors, () => pick("vector", "thumb_key", 4, null, "abstract")),
+    pinned(STAGE.glyphs, () => pick("icon", "thumb_key", 6, "glyph")),
+    pinned(STAGE.outlines, () => pick("icon", "thumb_key", 6, "outline")),
+    pinned(STAGE.hands, () => pick("icon", "thumb_key", 6, "hand-drawn")),
+    pinned(STAGE.footage, () => pick("footage", "thumb_key", 5, null, "abstract")),
   ]);
   return { vectors, glyphs, outlines, hands, footage };
 }
+
+// What the Download stage shows, chosen by hand so a new upload never
+// changes it. Change a code here to show another asset.
+const STAGE = {
+  vectors: ["KD-VC-8425149", "KD-VC-2229871", "KD-VC-8414086", "KD-VC-5595743"],
+  footage: ["KD-FT-8422335", "KD-FT-3786319", "KD-FT-4346269", "KD-FT-2904492", "KD-FT-6046389"],
+  glyphs: ["KD-IC-1433578", "KD-IC-8993973", "KD-IC-1093670", "KD-IC-8168929", "KD-IC-3710181", "KD-IC-7207070"],
+  outlines: ["KD-IC-1870430", "KD-IC-9369617", "KD-IC-2608837", "KD-IC-6229929", "KD-IC-1608286", "KD-IC-1028112"],
+  hands: ["KD-IC-5920720", "KD-IC-3071369", "KD-IC-8554706", "KD-IC-4308568", "KD-IC-4940032", "KD-IC-3067745"],
+};
 
 // ways: [{ n, title, text, flow, cta: [label, target] }]; covers: Home's
 // store covers; go(target) opens a page; reduced: the visitor asked for less motion
