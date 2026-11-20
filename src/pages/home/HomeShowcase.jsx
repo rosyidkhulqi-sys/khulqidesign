@@ -299,11 +299,11 @@ function HomeShowcase({ ways, covers = {}, go }) {
         </div>
 
         {/* 03 A LOGO: its page recorded on the Logos library, the pointer
-            trying it on dark, a business card and a social profile */}
+            trying a business card and a social profile */}
         <div className={`hs-scene hs-own ${active === 2 ? "is-on" : ""}`} aria-hidden={active !== 2}>
           <div className="hs-shot is-logo">
             <div className="hs-shot-zoom">
-              {[1, 2, 3, 4].map((n) => (
+              {[1, 2, 3].map((n) => (
                 <img key={n} className={`hs-frame hs-l${n}`} src={`/showcase/logo-${n}.webp`} alt="" loading="lazy" />
               ))}
               <svg className="hs-pointer" viewBox="0 0 24 24" aria-hidden="true">
