@@ -629,3 +629,7 @@
 .ad-done div span { color: #aeb0b2; font-size: 13px; }
 .ad-done button { padding: 0 6px; border: 0; background: none; color: #9aa0a8; font-size: 20px; cursor: pointer; }
 .ad-done button:hover { color: var(--white); }
+
+/* the chip box in the set editor keeps its own quiet input */
+.ad-icon-set-edit .kw-box input { flex: 1 0 140px; height: 24px; min-width: 0; padding: 0 6px; border: 0; background: transparent; color: var(--white); font-size: 12px; outline: none; }
+.ad-icon-set-members .ad-icon-grid { margin-top: 4px; }

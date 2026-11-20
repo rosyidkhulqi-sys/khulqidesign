@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { askConfirm } from "../../lib/confirm";
 import { supabase } from "../../lib/supabaseClient";
 import { deleteFromR2, publicUrl } from "../../lib/r2";
-import { ICON_CATEGORIES, ICON_STYLES, splitKeywords } from "./iconPublish";
+import { GENERIC_ICON_WORDS, ICON_CATEGORIES, ICON_STYLES, splitKeywords } from "./iconPublish";
+import KeywordChips from "./KeywordChips";
 import EditAsset from "./EditAsset";
 
 const PAGE_SIZE = 25;
@@ -120,6 +121,8 @@ function ManageIconSets({ refreshKey }) {
   const [editing, setEditing] = useState(null);
   const [editingSet, setEditingSet] = useState(null);
   const [setDraft, setSetDraft] = useState(null);
+  // while a set is edited: each icon's title and own keywords, by icon id
+  const [iconDrafts, setIconDrafts] = useState({});
 
   useEffect(() => {
     let alive = true;
@@ -215,9 +218,30 @@ function ManageIconSets({ refreshKey }) {
     setPage(0);
   };
 
-  const editSet = (set) => {
+  const editSet = async (set) => {
     setEditingSet(set.id);
     setEditing(null);
+    setExpanded(set.id);
+    // the icons, as cards to edit in place (as when they were uploaded); their
+    // own words only, the set's shared words are edited once, above
+    let icons = members[set.id];
+    if (!icons) {
+      setBusy(set.id);
+      try {
+        icons = await loadAllIcons(set.id);
+        setMembers((current) => ({ ...current, [set.id]: icons }));
+      } catch (e) {
+        setError(e.message);
+        icons = [];
+      } finally {
+        setBusy(null);
+      }
+    }
+    const shared = new Set([...(set.keywords ?? []), set.style, "icon"].filter(Boolean));
+    setIconDrafts(Object.fromEntries(icons.map((icon) => [icon.id, {
+      title: icon.title ?? "",
+      keywords: (icon.keywords ?? []).filter((k) => !shared.has(k)).join(", "),
+    }])));
     setSetDraft({
       name: set.name ?? "",
       style: set.style ?? ICON_STYLES[0],
@@ -253,7 +277,7 @@ function ManageIconSets({ refreshKey }) {
     for (let from = 0; ; from += MEMBER_PAGE_SIZE) {
       const { data, error: iconReadError } = await supabase
         .from("assets")
-        .select("id, keywords, style, category, license")
+        .select("id, title, keywords, style, category, license")
         .eq("type", "icon")
         .eq("set_id", set.id)
         .range(from, from + MEMBER_PAGE_SIZE - 1);
@@ -266,14 +290,17 @@ function ManageIconSets({ refreshKey }) {
       if (!data || data.length < MEMBER_PAGE_SIZE) break;
     }
 
+    // the set's words are shared by every icon; "icon" and style words never
+    // go in (the page and the style filter say that)
     const oldSharedTerms = new Set([...(set.keywords ?? []), set.style, "icon"].filter(Boolean));
-    const nextSharedTerms = [...keywords, changes.style, "icon"];
+    const nextSharedTerms = keywords.filter((word) => !GENERIC_ICON_WORDS.has(word));
     const iconChanges = previousIcons.map((icon) => ({
       id: icon.id,
+      title: iconDrafts[icon.id]?.title.trim() || icon.title,
       keywords: [...new Set([
-        ...(icon.keywords ?? []).filter((word) => !oldSharedTerms.has(word)),
+        ...(iconDrafts[icon.id] ? splitKeywords(iconDrafts[icon.id].keywords) : (icon.keywords ?? []).filter((word) => !oldSharedTerms.has(word))),
         ...nextSharedTerms,
-      ])],
+      ])].filter((word) => !GENERIC_ICON_WORDS.has(word)),
       style: changes.style,
       category: changes.category,
       license: changes.license,
@@ -286,8 +313,8 @@ function ManageIconSets({ refreshKey }) {
         const batchResults = await Promise.all(batch.map((row) => {
           const previous = previousIcons.find((icon) => icon.id === row.id);
           const values = rollback && previous
-            ? { keywords: previous.keywords ?? [], style: previous.style, category: previous.category, license: previous.license }
-            : { keywords: row.keywords, style: row.style, category: row.category, license: row.license };
+            ? { title: previous.title, keywords: previous.keywords ?? [], style: previous.style, category: previous.category, license: previous.license }
+            : { title: row.title, keywords: row.keywords, style: row.style, category: row.category, license: row.license };
           return supabase.from("assets").update(values).eq("id", row.id).then(({ error }) => ({ id: row.id, error }));
         }));
         results.push(...batchResults);
@@ -322,6 +349,7 @@ function ManageIconSets({ refreshKey }) {
         style: changes.style,
         category: changes.category,
         license: changes.license,
+        title: iconChanges.find((updated) => updated.id === icon.id)?.title ?? icon.title,
         keywords: iconChanges.find((updated) => updated.id === icon.id)?.keywords ?? icon.keywords,
       })) } : {}),
     }));
@@ -569,16 +597,19 @@ function ManageIconSets({ refreshKey }) {
                   onChange={(event) => setSetDraft((draft) => ({ ...draft, description: event.target.value }))}
                   aria-label="Description"
                 />
-                <input
-                  placeholder="Keywords for every icon in the set, comma separated"
-                  value={setDraft.keywords}
-                  onChange={(event) => setSetDraft((draft) => ({ ...draft, keywords: event.target.value }))}
-                  aria-label="Set keywords"
+                <KeywordChips
+                  compact
+                  label="Keywords for every icon in the set"
+                  value={splitKeywords(setDraft.keywords)}
+                  onChange={(list) => setSetDraft((draft) => ({ ...draft, keywords: list.join(", ") }))}
+                  min={2}
+                  max={15}
+                  banned={GENERIC_ICON_WORDS}
                 />
                 <div className="ad-icon-set-edit-actions">
                   <button onClick={() => { setEditingSet(null); setSetDraft(null); }} disabled={busy === set.id}>Cancel</button>
                   <button className="ad-primary" onClick={() => saveSet(set)} disabled={busy === set.id}>
-                    {busy === set.id ? "Saving…" : "Save set"}
+                    {busy === set.id ? "Saving…" : "Save set and icons"}
                   </button>
                 </div>
               </div>
@@ -590,6 +621,29 @@ function ManageIconSets({ refreshKey }) {
                   <p className="ad-note">Loading icons…</p>
                 ) : members[set.id].length === 0 ? (
                   <p className="ad-note">This set has no icons.</p>
+                ) : editingSet === set.id ? (
+                  <div className="ad-icon-grid">
+                    {members[set.id].map((icon) => {
+                      const draft = iconDrafts[icon.id] ?? { title: icon.title ?? "", keywords: "" };
+                      const change = (patch) => setIconDrafts((all) => ({ ...all, [icon.id]: { ...draft, ...patch } }));
+                      return (
+                        <div className="ad-icon" key={icon.id}>
+                          <div className="ad-icon-preview">{icon.thumb_key && <img src={publicUrl(icon.thumb_key)} alt="" loading="lazy" />}</div>
+                          <input value={draft.title} maxLength={60} spellCheck lang="en" aria-label="Icon name"
+                                 onChange={(e) => change({ title: e.target.value })} />
+                          <KeywordChips
+                            compact
+                            value={splitKeywords(draft.keywords)}
+                            onChange={(list) => change({ keywords: list.join(", ") })}
+                            min={3}
+                            max={30}
+                            banned={GENERIC_ICON_WORDS}
+                          />
+                          <span className="ad-icon-status">{icon.code}{icon.status === "hidden" ? " · Hidden" : ""}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 ) : members[set.id].map((icon) => (
                   <div className={`ad-icon-set-member ${icon.status === "hidden" ? "is-hidden" : ""}`} key={icon.id}>
                     <div className="ad-thumb is-icon">{icon.thumb_key && <img src={publicUrl(icon.thumb_key)} alt="" loading="lazy" />}</div>
