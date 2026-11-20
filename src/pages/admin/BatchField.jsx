@@ -11,7 +11,36 @@ function today(type) {
   return `${PREFIX[type] ?? "AS"} ${d}`;
 }
 
+// the last batch name typed for each type, so a refresh or a second try after
+// a dropped upload goes on in the same batch instead of a new dated one
+const lastKey = (type) => `kd-last-batch-${type}`;
+const readLast = (type) => {
+  try {
+    return localStorage.getItem(lastKey(type)) ?? "";
+  } catch {
+    return "";
+  }
+};
+
 function BatchField({ type, value, onChange, disabled }) {
+  // an empty field takes the last name once, when it first shows
+  const [filled, setFilled] = useState(false);
+  if (!filled) {
+    setFilled(true);
+    const last = !value && readLast(type);
+    if (last) queueMicrotask(() => onChange(last));
+  }
+
+  const change = (name) => {
+    onChange(name);
+    try {
+      if (name.trim()) localStorage.setItem(lastKey(type), name.trim());
+      else localStorage.removeItem(lastKey(type));
+    } catch {
+      /* private window: nothing remembered */
+    }
+  };
+
   // recent batches of this type, to add to one again
   const [recent, setRecent] = useState([]);
   useEffect(() => {
@@ -33,7 +62,7 @@ function BatchField({ type, value, onChange, disabled }) {
       <span>Batch</span>
       <input
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => change(e.target.value)}
         placeholder={`${today(type)} (or a name, such as M 1026)`}
         maxLength={80}
         disabled={disabled}
