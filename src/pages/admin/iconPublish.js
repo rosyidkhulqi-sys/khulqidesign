@@ -8,7 +8,7 @@ import { supabase } from "../../lib/supabaseClient";
 import { uploadToR2 } from "../../lib/r2";
 import { loadIconSvg } from "../../lib/iconEditor";
 
-export const ICON_STYLES = ["outline", "glyph", "flat", "gradient"];
+export const ICON_STYLES = ["outline", "glyph", "flat", "gradient", "hand-drawn"];
 export const ICON_CATEGORIES = ["business", "social", "ui", "holiday", "nature", "food", "education", "medical", "travel", "other"];
 
 // words that say nothing about what an icon shows: the page, the style

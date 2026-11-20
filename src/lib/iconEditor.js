@@ -7,8 +7,8 @@ const CANVAS = 512;
 export const iconSizes = [16, 24, 32, 48, 64, 128, 256, 512];
 export const iconColors = ["#000000", "#6b7280", "#f0202d", "#2563eb", "#16a34a", "#f59e0b"];
 
-// glyph and outline icons are one color, so the color can be changed safely
-export const canRecolor = (style) => style === "glyph" || style === "outline";
+// glyph, outline and hand-drawn icons are one color, so the color can be changed safely
+export const canRecolor = (style) => style === "glyph" || style === "outline" || style === "hand-drawn";
 
 export const fileSlug = (text) => text.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 

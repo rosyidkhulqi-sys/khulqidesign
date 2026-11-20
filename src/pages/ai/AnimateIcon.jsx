@@ -31,7 +31,7 @@ const presets = [
 
 // Draw suits one-color line and solid icons; on flat and gradient icons the
 // traced edges of many colored parts look messy, so it isn't offered there
-const canDraw = (icon) => icon?.style === "outline" || icon?.style === "glyph";
+const canDraw = (icon) => ["outline", "glyph", "hand-drawn"].includes(icon?.style);
 
 const DRAWABLE ="path, circle, rect, ellipse, line, polyline, polygon";
 
@@ -51,8 +51,8 @@ const BACKGROUNDS = [
   ["#0a0b0d", "Dark"],
 ];
 
-const STYLE_ORDER = ["outline", "glyph", "flat", "gradient"];
-const STYLE_LABELS = { outline: "Outline", glyph: "Glyph", flat: "Flat", gradient: "Gradient" };
+const STYLE_ORDER = ["outline", "glyph", "flat", "gradient", "hand-drawn"];
+const STYLE_LABELS = { outline: "Outline", glyph: "Glyph", flat: "Flat", gradient: "Gradient", "hand-drawn": "Hand-drawn" };
 
 // formats only Premium members can export; GIF and MP4 stay free
 const PREMIUM_EXPORTS = ["svg", "json"];

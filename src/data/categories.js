@@ -5,7 +5,7 @@
 export const categories = [
   {
     key: "icons", title: "Icons", image: "/covers/icons.jpg", page: "icons", ready: true, count: "27.000+ assets",
-    desc: "Outline, glyph, flat and gradient icons, single or in sets.",
+    desc: "Outline, glyph, flat, gradient and hand-drawn icons, single or in sets.",
     meta: "SVG · PNG · Recolor & animate",
   },
   {

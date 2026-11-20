@@ -266,6 +266,7 @@ function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
           <option value="glyph">Glyph</option>
           <option value="flat">Flat</option>
           <option value="gradient">Gradient</option>
+          <option value="hand-drawn">Hand-drawn</option>
         </select>
 
         {!showSets && (
