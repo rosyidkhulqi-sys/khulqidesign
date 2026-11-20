@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
     return reply({ error: `sign in first (auth ${userRes.status}: ${detail.slice(0, 120)})` }, 401, origin);
   }
 
-  let body: { action?: string; bucket?: string; key?: unknown; contentType?: unknown; asset?: unknown; format?: unknown };
+  let body: { action?: string; bucket?: string; key?: unknown; contentType?: unknown; asset?: unknown; format?: unknown; uploadId?: unknown; part?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -170,5 +170,58 @@ Deno.serve(async (req) => {
     return reply({ ok: true }, 200, origin);
   }
 
-  return reply({ error: "action must be download, upload or delete" }, 400, origin);
+  // MULTIPART, for big files (footage): the browser sends the file in parts,
+  // and a dropped part is sent again on its own instead of the whole file.
+  //   mp-start    { contentType }        -> { uploadId }
+  //   mp-part     { uploadId, part }     -> { url }   (a signed PUT for that part)
+  //   mp-complete { uploadId }           -> { ok }    (parts read back from R2, so
+  //                                                    the browser needn't see ETags)
+  //   mp-abort    { uploadId }           -> { ok }
+  const uploadId = typeof (body as { uploadId?: unknown }).uploadId === "string" ? (body as { uploadId: string }).uploadId : "";
+  const idQuery = `uploadId=${encodeURIComponent(uploadId)}`;
+
+  if (body.action === "mp-start") {
+    const contentType = typeof body.contentType === "string" && body.contentType.length < 100
+      ? body.contentType
+      : "application/octet-stream";
+    const res = await r2.fetch(`${objectUrl}?uploads`, { method: "POST", headers: { "Content-Type": contentType } });
+    const xml = await res.text();
+    const id = xml.match(/<UploadId>([^<]+)<\/UploadId>/)?.[1];
+    if (!res.ok || !id) return reply({ error: `R2 said ${res.status}` }, 502, origin);
+    return reply({ uploadId: id }, 200, origin);
+  }
+
+  if (!uploadId && body.action?.startsWith("mp-")) return reply({ error: "uploadId is required" }, 400, origin);
+
+  if (body.action === "mp-part") {
+    const part = Number((body as { part?: unknown }).part);
+    if (!Number.isInteger(part) || part < 1 || part > 10000) return reply({ error: "part must be 1 to 10000" }, 400, origin);
+    const signed = await r2.sign(
+      new Request(`${objectUrl}?partNumber=${part}&${idQuery}&X-Amz-Expires=${EXPIRES}`, { method: "PUT" }),
+      { aws: { signQuery: true } },
+    );
+    return reply({ url: signed.url, expiresIn: EXPIRES }, 200, origin);
+  }
+
+  if (body.action === "mp-complete") {
+    const list = await r2.fetch(`${objectUrl}?${idQuery}&max-parts=1000`, { method: "GET" });
+    const xml = await list.text();
+    if (!list.ok) return reply({ error: `R2 said ${list.status}` }, 502, origin);
+    const parts = [...xml.matchAll(/<Part>[\s\S]*?<PartNumber>(\d+)<\/PartNumber>[\s\S]*?<ETag>([^<]+)<\/ETag>[\s\S]*?<\/Part>/g)]
+      .map((m) => ({ n: Number(m[1]), etag: m[2] }))
+      .sort((a, b) => a.n - b.n);
+    if (!parts.length) return reply({ error: "no parts uploaded" }, 400, origin);
+    const done = `<CompleteMultipartUpload>${parts.map((p) => `<Part><PartNumber>${p.n}</PartNumber><ETag>${p.etag}</ETag></Part>`).join("")}</CompleteMultipartUpload>`;
+    const res = await r2.fetch(`${objectUrl}?${idQuery}`, { method: "POST", body: done, headers: { "Content-Type": "application/xml" } });
+    const answer = await res.text();
+    if (!res.ok || answer.includes("<Error>")) return reply({ error: `R2 couldn't join the parts (${res.status})` }, 502, origin);
+    return reply({ ok: true, parts: parts.length }, 200, origin);
+  }
+
+  if (body.action === "mp-abort") {
+    await r2.fetch(`${objectUrl}?${idQuery}`, { method: "DELETE" });
+    return reply({ ok: true }, 200, origin);
+  }
+
+  return reply({ error: "action must be download, upload, delete or mp-start, mp-part, mp-complete, mp-abort" }, 400, origin);
 });
