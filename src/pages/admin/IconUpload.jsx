@@ -177,6 +177,8 @@ function IconUpload({ onPublished }) {
     }
   };
   const [copyNote, setCopyNote] = useState(null);
+  const [copyQuery, setCopyQuery] = useState("");
+  const setLabel = (s) => `${s.name} · ${capitalize(s.style ?? "")} · ${s.code}`;
 
   const publishAll = async () => {
     setError(null);
@@ -268,10 +270,27 @@ function IconUpload({ onPublished }) {
             <div className="ad-set-form">
               {sets.length > 0 && !lockSet && (
                 <div className="ad-copy">
-                  <select value="" disabled={copying} onChange={(e) => copyFrom(e.target.value)} aria-label="Copy details from a set">
-                    <option value="">{copying ? "Copying…" : "Copy details from a set (same icons, other style)…"}</option>
-                    {sets.map((s) => <option key={s.id} value={s.id}>{s.name} · {capitalize(s.style ?? "")}</option>)}
-                  </select>
+                  {/* type part of a published set's name, pick it: its details are copied */}
+                  <input
+                    list="ad-copy-sets"
+                    value={copyQuery}
+                    disabled={copying}
+                    placeholder={copying ? "Copying…" : "Copy details from a published set: type its name or code"}
+                    aria-label="Copy details from a set"
+                    onChange={(e) => {
+                      const text = e.target.value;
+                      const hit = sets.find((s) => setLabel(s) === text);
+                      if (hit) {
+                        setCopyQuery("");
+                        copyFrom(hit.id);
+                      } else {
+                        setCopyQuery(text);
+                      }
+                    }}
+                  />
+                  <datalist id="ad-copy-sets">
+                    {sets.map((s) => <option key={s.id} value={setLabel(s)} />)}
+                  </datalist>
                   {copyNote && <span>{copyNote}</span>}
                 </div>
               )}
