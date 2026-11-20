@@ -1,7 +1,8 @@
 /* AI PAGE — the prompt and the coming tools, in the library pages' calm style */
 
 .ai-prompt {
-  max-width: 880px;
+  /* as wide as the tools grid below it, so it never looks small on a big screen */
+  max-width: none;
   margin-bottom: 28px;
   padding: 14px;
   border: 1px solid #34373a;
@@ -136,7 +137,8 @@
   display: flex;
   gap: 24px;
   align-items: flex-start;
-  max-width: 880px;
+  /* as wide as the tools grid below it, so it never looks small on a big screen */
+  max-width: none;
   margin: -8px 0 32px;
   padding: 18px;
   border: 1px solid rgba(255, 255, 255, 0.1);
