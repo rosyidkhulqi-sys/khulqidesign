@@ -118,5 +118,21 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 }
 .skel-line { height: 12px; margin-top: 12px; border-radius: 6px; }
 @keyframes skel-shine { from { background-position: 100% 0; } to { background-position: 0 0; } }
-@media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
+/* a library card's picture shimmers until it has arrived, on every page of
+   results (main.jsx marks pictures with data-loaded) */
+.vector-thumb:has(> img:not([data-loaded])),
+.logo-thumb:has(> img:not([data-loaded])),
+.footage-thumb:has(> img:not([data-loaded])) {
+  background: linear-gradient(100deg, #17191c 30%, #22252a 50%, #17191c 70%) 0 0 / 300% 100%;
+  animation: skel-shine 1.4s ease-in-out infinite;
+}
+/* icons sit on a light tile: a light shimmer */
+.icon-preview:has(> img:not([data-loaded])) {
+  background: linear-gradient(100deg, #ececea 30%, #f8f8f6 50%, #ececea 70%) 0 0 / 300% 100%;
+  animation: skel-shine 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skel,
+  .vector-thumb, .logo-thumb, .footage-thumb, .icon-preview { animation: none !important; }
+}
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
