@@ -335,7 +335,13 @@ export function ManageAssetRows({ type = "vector", refreshKey, batchId = null, e
             <div className="ad-fields">
               <strong>{row.title}</strong>
               <span className="ad-file">
-                {row.ref_code && <b className="ad-ref">{row.ref_code}</b>}
+                {/* the owner's own file number (such as M 1026 27) leads, as in
+                    the microstock archive; the automatic number stays in the tooltip */}
+                {(row.source_name || row.ref_code) && (
+                  <b className="ad-ref" title={row.ref_code ? `Auto number: ${row.ref_code}` : undefined}>
+                    {row.source_name || row.ref_code}
+                  </b>
+                )}
                 {row.batch?.name && <span className="ad-batch-tag">{row.batch.name}</span>}
                 {row.code} · {capitalize(row.license)} ·{" "}
                 {new Date(row.created_at).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
