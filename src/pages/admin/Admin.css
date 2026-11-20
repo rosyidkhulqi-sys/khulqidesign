@@ -190,6 +190,7 @@
 }
 .ad-icon {
   display: grid;
+  align-content: start;
   gap: 6px;
   padding: 10px;
   border: 1px solid var(--line);
@@ -300,6 +301,9 @@
 .kw.is-compact { gap: 5px; }
 .kw.is-compact .kw-head { font-size: 11.5px; }
 .kw.is-compact .kw-box { min-height: 74px; max-height: 160px; gap: 5px; padding: 7px; border-radius: 9px; }
+/* on an icon card the box keeps one height, so adding a chip never moves the
+   cards around it; a long list scrolls inside */
+.ad-icon .kw.is-compact .kw-box { height: 104px; min-height: 0; max-height: none; overflow-y: auto; }
 .kw.is-compact .kw-chip { height: 24px; padding: 0 3px 0 9px; font-size: 12px; }
 .kw.is-compact .kw-chip button { width: 18px; height: 18px; font-size: 13px; }
 .ad-icon .kw.is-compact .kw-box input { flex-basis: 90px; height: 24px; font-size: 12px; }
@@ -594,3 +598,4 @@
 /* a short note under a choice */
 .ad-hint { margin: 4px 0 0; color: #9aa0a8; font-size: 13px; line-height: 1.5; }
 .ad-hint b { color: #d6d7d8; font-weight: 600; }
+.kw.is-compact .kw-head { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
