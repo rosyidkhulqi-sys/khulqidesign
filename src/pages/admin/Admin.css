@@ -590,3 +590,7 @@
 .ad-copy { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .ad-copy input { flex: 1 1 360px; max-width: 560px; }
 .ad-copy span { color: #8fd19e; font-size: 13px; }
+
+/* a short note under a choice */
+.ad-hint { margin: 4px 0 0; color: #9aa0a8; font-size: 13px; line-height: 1.5; }
+.ad-hint b { color: #d6d7d8; font-weight: 600; }

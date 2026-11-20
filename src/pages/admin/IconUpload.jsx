@@ -342,6 +342,13 @@ function IconUpload({ onPublished }) {
             </div>
           )}
           {chosen?.description && <p className="ad-file">{chosen.description}</p>}
+          {chosen && (
+            <p className="ad-hint">
+              These icons are added to this {capitalize(chosen.style ?? "")} set, with its details. For the same icons in another
+              style, choose <b>+ New set</b> and copy this set&apos;s details. To change this set&apos;s details, use Edit under
+              Uploaded icon sets.
+            </p>
+          )}
         </div>
 
         <BatchField type="icon" value={batch} onChange={setBatch} disabled={publishing} />
