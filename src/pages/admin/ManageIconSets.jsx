@@ -129,13 +129,27 @@ function ManageIconSets({ refreshKey }) {
         .select(SET_FIELDS, { count: "exact" })
         .eq("type", "icon");
 
+      // sets whose icons were uploaded in a batch with this name (such as
+      // "IC 10 Nov 2026" or "M 1026") also match
+      let inBatch = [];
+      const typed = filters.search.trim();
+      if (typed) {
+        const { data: batches } = await supabase.from("upload_batches").select("id").eq("type", "icon").ilike("name", `%${typed}%`);
+        if (batches?.length) {
+          const { data: icons } = await supabase.from("assets").select("set_id").in("batch_id", batches.map((b) => b.id)).not("set_id", "is", null).limit(5000);
+          inBatch = [...new Set((icons ?? []).map((row) => row.set_id))];
+        }
+        if (!alive) return;
+      }
+      const batchMatch = inBatch.length ? `,id.in.(${inBatch.join(",")})` : "";
+
       filters.search
         .split(/\s+/)
         .map((word) => word.replace(/[^\p{L}\p{N}-]/gu, ""))
         .filter(Boolean)
         .forEach((word) => {
           query = query.or(
-            `name.ilike.%${word}%,code.ilike.%${word}%,keywords.cs.{${word.toLowerCase()}}`
+            `name.ilike.%${word}%,code.ilike.%${word}%,keywords.cs.{${word.toLowerCase()}}${batchMatch}`
           );
         });
       if (filters.category) query = query.eq("category", filters.category);
@@ -461,7 +475,7 @@ function ManageIconSets({ refreshKey }) {
         <input
           type="search"
           className="ad-find"
-          placeholder="Search set name, set code, or set keywords"
+          placeholder="Search set name, batch, set code or keywords"
           aria-label="Search icon sets"
           value={filters.search}
           onChange={setFilter("search")}
