@@ -189,72 +189,81 @@ function IconUpload({ onPublished }) {
 
   return (
     <>
-      {/* SET */}
-      <div className="ad-set">
-        <label className="ad-set-pick">
-          <span>Icon set</span>
-          <select value={setId} disabled={lockSet} onChange={(e) => setSetId(e.target.value)}>
-            <option value="">+ New set</option>
-            {sets.map((s) => (
-              <option key={s.id} value={s.id}>{s.name} · {capitalize(s.style ?? "")} · {s.license === "free" ? "Free" : "Premium"}</option>
-            ))}
-          </select>
-        </label>
-
-        {!chosen && (
-          <div className="ad-set-form">
-            <input placeholder="Set name, e.g. Shopping & Promo" value={draft.name} maxLength={60} disabled={lockSet}
-                   onChange={(e) => setDraft({ ...draft, name: e.target.value })} aria-label="Set name" />
-            <div className="ad-row">
-              <select value={draft.style} disabled={lockSet} onChange={(e) => setDraft({ ...draft, style: e.target.value })} aria-label="Style">
-                {ICON_STYLES.map((s) => <option key={s} value={s}>{capitalize(s)}</option>)}
-              </select>
-              <select value={draft.category} disabled={lockSet} onChange={(e) => setDraft({ ...draft, category: e.target.value })} aria-label="Category">
-                {ICON_CATEGORIES.map((c) => <option key={c} value={c}>{capitalize(c)}</option>)}
-              </select>
-              <select value={draft.license} disabled={lockSet}
-                      onChange={(e) => {
-                        setDraft({ ...draft, license: e.target.value });
-                        setItems((list) => list.map((it) => (it.status === "done" ? it : { ...it, license: e.target.value })));
-                      }} aria-label="Default license">
-                <option value="free">Free</option>
-                <option value="premium">Premium</option>
-              </select>
-            </div>
-            <input placeholder="Short description (optional)" value={draft.description} maxLength={140} disabled={lockSet}
-                   onChange={(e) => setDraft({ ...draft, description: e.target.value })} aria-label="Description" />
-            <KeywordChips
-              label="Keywords for every icon in the set"
-              value={splitKeywords(draft.keywords)}
-              onChange={(list) => setDraft({ ...draft, keywords: list.join(", ") })}
-              min={2}
-              max={15}
-              banned={GENERIC_ICON_WORDS}
-              disabled={lockSet}
-            />
-          </div>
-        )}
-        {chosen?.description && <p className="ad-file">{chosen.description}</p>}
-      </div>
-
-      {/* DROP ZONE */}
-      <BatchField type="icon" value={batch} onChange={setBatch} disabled={publishing} />
-      {batchError && <p className="ad-error">{batchError}</p>}
+      {/* 1. the files first, as on The Noun Project; the set's details
+          and the batch follow once there is something to describe */}
       <div
-        className={`ad-drop ${dragging ? "is-over" : ""}`}
+        className={`ad-drop ${dragging ? "is-over" : ""} ${items.length ? "is-small" : ""}`}
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
       >
-        <strong>Drop SVG icons here</strong>
-        <span>
-          One SVG per icon, ideally on a square artboard. Names come from the file names.
-          Every file is cleaned of scripts before it goes online.
-        </span>
-        <button onClick={() => input.current?.click()}>Choose SVG files</button>
+        <strong>{items.length ? "Drop more SVG icons" : "Drop SVG icons here"}</strong>
+        {!items.length && (
+          <span>
+            One SVG per icon, ideally on a square artboard. Names come from the file names.
+            Every file is cleaned of scripts before it goes online.
+          </span>
+        )}
+        <button onClick={() => input.current?.click()}>{items.length ? "Add files" : "Choose SVG files"}</button>
         <input ref={input} type="file" multiple accept=".svg,image/svg+xml" hidden
                onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
       </div>
+
+      {items.length > 0 && (
+        <>
+        {/* SET */}
+        <div className="ad-set">
+          <label className="ad-set-pick">
+            <span>Icon set</span>
+            <select value={setId} disabled={lockSet} onChange={(e) => setSetId(e.target.value)}>
+              <option value="">+ New set</option>
+              {sets.map((s) => (
+                <option key={s.id} value={s.id}>{s.name} · {capitalize(s.style ?? "")} · {s.license === "free" ? "Free" : "Premium"}</option>
+              ))}
+            </select>
+          </label>
+
+          {!chosen && (
+            <div className="ad-set-form">
+              <input placeholder="Set name, e.g. Shopping & Promo" value={draft.name} maxLength={60} disabled={lockSet}
+                     onChange={(e) => setDraft({ ...draft, name: e.target.value })} aria-label="Set name" />
+              <div className="ad-row">
+                <select value={draft.style} disabled={lockSet} onChange={(e) => setDraft({ ...draft, style: e.target.value })} aria-label="Style">
+                  {ICON_STYLES.map((s) => <option key={s} value={s}>{capitalize(s)}</option>)}
+                </select>
+                <select value={draft.category} disabled={lockSet} onChange={(e) => setDraft({ ...draft, category: e.target.value })} aria-label="Category">
+                  {ICON_CATEGORIES.map((c) => <option key={c} value={c}>{capitalize(c)}</option>)}
+                </select>
+                <select value={draft.license} disabled={lockSet}
+                        onChange={(e) => {
+                          setDraft({ ...draft, license: e.target.value });
+                          setItems((list) => list.map((it) => (it.status === "done" ? it : { ...it, license: e.target.value })));
+                        }} aria-label="Default license">
+                  <option value="free">Free</option>
+                  <option value="premium">Premium</option>
+                </select>
+              </div>
+              <input placeholder="Short description (optional)" value={draft.description} maxLength={140} disabled={lockSet}
+                     onChange={(e) => setDraft({ ...draft, description: e.target.value })} aria-label="Description" />
+              <KeywordChips
+                compact
+                label="Keywords for every icon in the set"
+                value={splitKeywords(draft.keywords)}
+                onChange={(list) => setDraft({ ...draft, keywords: list.join(", ") })}
+                min={2}
+                max={15}
+                banned={GENERIC_ICON_WORDS}
+                disabled={lockSet}
+              />
+            </div>
+          )}
+          {chosen?.description && <p className="ad-file">{chosen.description}</p>}
+        </div>
+
+        <BatchField type="icon" value={batch} onChange={setBatch} disabled={publishing} />
+        {batchError && <p className="ad-error">{batchError}</p>}
+        </>
+      )}
 
       {error && <p className="ad-error">{error}</p>}
 

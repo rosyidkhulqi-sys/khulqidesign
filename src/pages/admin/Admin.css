@@ -32,6 +32,9 @@
 }
 .ad-drop.is-over { border-color: rgba(255, 255, 255, 0.28); background: rgba(255, 255, 255, 0.035); }
 .ad-drop strong { font-size: 17px; }
+/* once files are in: one quiet row to add more */
+.ad-drop.is-small { flex-direction: row; justify-content: space-between; gap: 16px; min-height: 0; padding: 14px 20px; }
+.ad-drop.is-small strong { font-size: 14px; font-weight: 600; }
 .ad-drop span { max-width: 560px; color: #8d939b; font-size: 13px; line-height: 1.55; }
 .ad-drop button {
   margin-top: 8px;
