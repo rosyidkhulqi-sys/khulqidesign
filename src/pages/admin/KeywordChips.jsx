@@ -1,11 +1,22 @@
 // Keywords as chips, as stock sites edit them: each keyword its own chip
 // with ×, dragged to reorder (the first ones count most in search), typed or
 // pasted in (commas split a pasted list), with a count and Copy / Clear.
+// The typing box is spell-checked by the browser (English), and chips that
+// look wrong are marked with the reason: digits or symbols, more than three
+// words, or a word that says nothing (`banned`, such as "icon").
+// compact: the small version for an icon card.
 import { useRef, useState } from "react";
 import { parseKeywords } from "./vectorUpload";
 
+function keywordProblem(k, banned) {
+  if (banned?.has(k)) return "Says nothing here; leave it out";
+  if (/[^a-z\s'-]/i.test(k)) return "Digits or symbols; check the spelling";
+  if (k.split(/\s+/).length > 3) return "More than three words; split it";
+  return null;
+}
+
 // value: keywords as an array; onChange(list); max: the cap, if any
-function KeywordChips({ value, onChange, max = 50, min = 10 }) {
+function KeywordChips({ value, onChange, max = 50, min = 10, compact = false, banned = null, disabled = false, label = "Keywords" }) {
   const [draft, setDraft] = useState("");
   const [dragging, setDragging] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -41,46 +52,58 @@ function KeywordChips({ value, onChange, max = 50, min = 10 }) {
   };
 
   const few = value.length < min;
+  const warned = value.filter((k) => keywordProblem(k, banned)).length;
   return (
-    <div className="kw">
+    <div className={`kw ${compact ? "is-compact" : ""}`}>
       <div className="kw-head">
-        <span>Keywords</span>
-        <span className={few ? "is-few" : ""}>{value.length} ({min}–{max})</span>
+        <span>{label}</span>
+        <span className={few || warned ? "is-few" : ""}>
+          {warned ? `${warned} to check · ` : ""}{value.length} ({min}–{max})
+        </span>
       </div>
-      <div className="kw-box" onClick={() => input.current?.focus()}>
-        {value.map((k, i) => (
-          <span
-            key={k}
-            className={`kw-chip ${dragging === i ? "is-dragging" : ""}`}
-            draggable
-            title="Drag to reorder"
-            onDragStart={(e) => { setDragging(i); e.dataTransfer.effectAllowed = "move"; }}
-            onDragOver={(e) => { e.preventDefault(); if (dragging !== null && dragging !== i) { move(dragging, i); setDragging(i); } }}
-            onDragEnd={() => setDragging(null)}
-          >
-            {k}
-            <button type="button" onClick={(e) => { e.stopPropagation(); remove(i); }} aria-label={`Remove ${k}`}>×</button>
-          </span>
-        ))}
-        <input
-          ref={input}
-          value={draft}
-          onChange={(e) => {
-            // a pasted list (with commas) becomes chips at once
-            if (/[,;\n]/.test(e.target.value)) add(e.target.value);
-            else setDraft(e.target.value);
-          }}
-          onKeyDown={onKey}
-          onBlur={() => draft.trim() && add(draft)}
-          placeholder={value.length >= max ? "Limit reached" : "Add keyword, press Enter"}
-          disabled={value.length >= max}
-          aria-label="Add keyword"
-        />
+      <div className="kw-box" onClick={() => !disabled && input.current?.focus()}>
+        {value.map((k, i) => {
+          const problem = keywordProblem(k, banned);
+          return (
+            <span
+              key={k}
+              className={`kw-chip ${dragging === i ? "is-dragging" : ""} ${problem ? "is-warn" : ""}`}
+              draggable={!disabled}
+              title={problem ?? "Drag to reorder"}
+              onDragStart={(e) => { setDragging(i); e.dataTransfer.effectAllowed = "move"; }}
+              onDragOver={(e) => { e.preventDefault(); if (dragging !== null && dragging !== i) { move(dragging, i); setDragging(i); } }}
+              onDragEnd={() => setDragging(null)}
+            >
+              {k}
+              {!disabled && <button type="button" onClick={(e) => { e.stopPropagation(); remove(i); }} aria-label={`Remove ${k}`}>×</button>}
+            </span>
+          );
+        })}
+        {!disabled && (
+          <input
+            ref={input}
+            value={draft}
+            spellCheck
+            lang="en"
+            onChange={(e) => {
+              // a pasted list (with commas) becomes chips at once
+              if (/[,;\n]/.test(e.target.value)) add(e.target.value);
+              else setDraft(e.target.value);
+            }}
+            onKeyDown={onKey}
+            onBlur={() => draft.trim() && add(draft)}
+            placeholder={value.length >= max ? "Limit reached" : compact ? "Add, press Enter" : "Add keyword, press Enter"}
+            disabled={value.length >= max}
+            aria-label="Add keyword"
+          />
+        )}
       </div>
-      <div className="kw-tools">
-        <button type="button" onClick={copy} disabled={!value.length}>{copied ? "Copied" : "Copy"}</button>
-        <button type="button" onClick={() => onChange([])} disabled={!value.length}>Clear</button>
-      </div>
+      {!compact && (
+        <div className="kw-tools">
+          <button type="button" onClick={copy} disabled={!value.length}>{copied ? "Copied" : "Copy"}</button>
+          <button type="button" onClick={() => onChange([])} disabled={!value.length}>Clear</button>
+        </div>
+      )}
     </div>
   );
 }

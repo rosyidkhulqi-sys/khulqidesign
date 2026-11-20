@@ -14,6 +14,7 @@ import { parseKeywords } from "./vectorUpload";
 import { normalizeVectorCategory, vectorCategoryLabel } from "../../data/vectorCategories";
 import NumberInput from "../../components/NumberInput";
 import KeywordChips from "./KeywordChips";
+import { GENERIC_ICON_WORDS } from "./iconPublish";
 
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -99,6 +100,7 @@ function EditAsset({ row, type, onSaved, onCancel }) {
           max={type === "element" ? MAX_KEYWORDS : type === "icon" ? 30 : 50}
           // an icon needs a few exact words, not a stock photo's list
           min={type === "icon" ? 3 : type === "element" ? 5 : 10}
+          banned={type === "icon" ? GENERIC_ICON_WORDS : null}
         />
       </div>
 

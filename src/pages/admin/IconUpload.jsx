@@ -2,7 +2,9 @@
 import { useEffect, useRef, useState } from "react";
 import BatchField from "./BatchField";
 import { openBatch } from "./batches";
+import KeywordChips from "./KeywordChips";
 import {
+  GENERIC_ICON_WORDS,
   ICON_CATEGORIES,
   ICON_STYLES,
   createIconSet,
@@ -169,8 +171,15 @@ function IconUpload({ onPublished }) {
             </div>
             <input placeholder="Short description (optional)" value={draft.description} maxLength={140} disabled={lockSet}
                    onChange={(e) => setDraft({ ...draft, description: e.target.value })} aria-label="Description" />
-            <input placeholder="Keywords for every icon in the set, comma separated" value={draft.keywords} disabled={lockSet}
-                   onChange={(e) => setDraft({ ...draft, keywords: e.target.value })} aria-label="Set keywords" />
+            <KeywordChips
+              label="Keywords for every icon in the set"
+              value={splitKeywords(draft.keywords)}
+              onChange={(list) => setDraft({ ...draft, keywords: list.join(", ") })}
+              min={2}
+              max={15}
+              banned={GENERIC_ICON_WORDS}
+              disabled={lockSet}
+            />
           </div>
         )}
         {chosen?.description && <p className="ad-file">{chosen.description}</p>}
@@ -221,10 +230,17 @@ function IconUpload({ onPublished }) {
               return (
                 <div className={`ad-icon is-${it.status}`} key={it.key}>
                   <div className="ad-icon-preview"><img src={it.preview} alt="" /></div>
-                  <input value={it.name} maxLength={60} disabled={locked} aria-label="Icon name"
+                  <input value={it.name} maxLength={60} disabled={locked} aria-label="Icon name" spellCheck lang="en"
                          onChange={(e) => update(it.key, { name: e.target.value })} />
-                  <input value={it.keywords} placeholder="keywords" disabled={locked} aria-label="Keywords"
-                         onChange={(e) => update(it.key, { keywords: e.target.value })} />
+                  <KeywordChips
+                    compact
+                    value={splitKeywords(it.keywords)}
+                    onChange={(list) => update(it.key, { keywords: list.join(", ") })}
+                    min={3}
+                    max={30}
+                    banned={GENERIC_ICON_WORDS}
+                    disabled={locked}
+                  />
                   <div className="ad-row">
                     <select value={it.license} disabled={locked} aria-label="License"
                             onChange={(e) => update(it.key, { license: e.target.value })}>
