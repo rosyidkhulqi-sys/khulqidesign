@@ -34,11 +34,20 @@ const licenseLabel = { free: "Free", premium: "Premium", exclusive: "Exclusive" 
 
 function Mockup({ logo, view }) {
   if (view === "card") {
+    // a real card: the whole mark on the left, a name and contacts beside
+    // it (placeholder text); the back is plain with the site's address
     return (
       <div className="lm-desk">
-        <div className="lm-card lm-card-back" />
-        <div className="lm-card">
+        <div className="lm-card lm-card-back"><span>yourbrand.com</span></div>
+        <div className="lm-card lm-card-front">
           <img src={logo.image} alt="" />
+          <div className="lm-card-text">
+            <b>Your Name</b>
+            <span>Founder</span>
+            <i />
+            <small>hello@yourbrand.com</small>
+            <small>+1 234 567 890</small>
+          </div>
         </div>
       </div>
     );
