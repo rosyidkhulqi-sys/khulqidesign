@@ -75,24 +75,35 @@ function Typing({ phrases, holds = [], run, onPhrase }) {
 
 // a few real assets for the Download stage: vectors, icons and a clip
 async function fetchStage() {
-  const pick = (type, field, count, style = null) =>
-    supabase
+  const query = (type, field, count, style, word) => {
+    let q = supabase
       .from("assets")
       .select(field)
       .eq("type", type)
       .eq("status", "published")
       .not(field, "is", null)
-      .match(style ? { style } : {})
+      .match(style ? { style } : {});
+    if (word) q = q.contains("keywords", [word]);
+    return q
       .order("downloads", { ascending: false })
       .order("published_at", { ascending: false })
       .limit(count)
       .then(({ data }) => (data ?? []).map((row) => publicUrl(row[field])));
+  };
+  // what the typed search says ("Abstract background"), topped up with the
+  // most downloaded when there are too few
+  const pick = async (type, field, count, style = null, word = null) => {
+    const matched = word ? await query(type, field, count, style, word) : [];
+    if (matched.length >= count) return matched;
+    const more = await query(type, field, count, style, null);
+    return [...new Set([...matched, ...more])].slice(0, count);
+  };
   const [vectors, glyphs, outlines, hands, footage] = await Promise.all([
-    pick("vector", "thumb_key", 4),
+    pick("vector", "thumb_key", 4, null, "abstract"),
     pick("icon", "thumb_key", 6, "glyph"),
     pick("icon", "thumb_key", 6, "outline"),
     pick("icon", "thumb_key", 6, "hand-drawn"),
-    pick("footage", "thumb_key", 4),
+    pick("footage", "thumb_key", 5, null, "abstract"),
   ]);
   return { vectors, glyphs, outlines, hands, footage };
 }
@@ -167,6 +178,8 @@ function HomeShowcase({ ways, covers = {}, go }) {
   const lowMemory = typeof navigator !== "undefined" && navigator.deviceMemory > 0 && navigator.deviceMemory <= 2;
   const clip = lowMemory ? null : covers.reel?.[0];
   const poster = covers.footage?.[0] ?? "/covers/footage.jpg";
+  // the other footage cards never repeat the clip's own picture
+  const fo = f.filter((src) => src !== poster);
   const run = inView && !reduced;
 
   return (
@@ -239,14 +252,14 @@ function HomeShowcase({ ways, covers = {}, go }) {
               </div>
             ))}
 
-          <img className="hs-card hs-a is-footage" style={{ "--i": 0 }} src={f[1] ?? poster} alt="" loading="lazy" />
+          <img className="hs-card hs-a is-footage" style={{ "--i": 0 }} src={fo[0] ?? poster} alt="" loading="lazy" />
           {clip ? (
             <video ref={clipRef} className="hs-card hs-b is-footage" style={{ "--i": 1 }} src={clip} poster={poster} muted loop playsInline preload="metadata" />
           ) : (
             <img className="hs-card hs-b is-footage" style={{ "--i": 1 }} src={poster} alt="" loading="lazy" />
           )}
-          <img className="hs-card hs-c is-footage" style={{ "--i": 2 }} src={f[2] ?? poster} alt="" loading="lazy" />
-          <img className="hs-card hs-d is-footage" style={{ "--i": 3 }} src={f[3] ?? f[0] ?? poster} alt="" loading="lazy" />
+          <img className="hs-card hs-c is-footage" style={{ "--i": 2 }} src={fo[1] ?? poster} alt="" loading="lazy" />
+          <img className="hs-card hs-d is-footage" style={{ "--i": 3 }} src={fo[2] ?? fo[0] ?? poster} alt="" loading="lazy" />
           <Typing phrases={TYPED} holds={HOLDS} run={run && active === 0} onPhrase={setPhrase} />
         </div>
 
