@@ -69,6 +69,8 @@
   column-gap: 16px;
 }
 .vector-grid .no-results { column-span: all; }
+/* pictures only (Vectors): the same gap down as across */
+.vector-grid.is-bare .vector-card { margin-bottom: 16px; }
 
 .vector-card {
   display: inline-block;

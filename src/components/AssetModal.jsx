@@ -9,7 +9,6 @@ const kindLabel = { icon: "Icon", vector: "Vector", footage: "Footage" };
 
 // stock files carry up to 50 keywords for search; only a few are shown,
 // so the view stays clean
-const TAG_LIMIT = 8;
 
 
 // The preview opens full screen on click. There, a click zooms in on the spot
@@ -244,7 +243,7 @@ function AssetModal({
             <div className="asset-keywords">
               <p>Keywords</p>
               <div>
-                {asset.keywords.slice(0, TAG_LIMIT).map((k) => (
+                {asset.keywords.map((k) => (
                   <button key={k} onClick={() => onTag(k)}>
                     {k}
                   </button>

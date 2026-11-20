@@ -230,7 +230,7 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
       {catalogError && <p className="no-results" role="alert">{catalogError}</p>}
 
       {/* GRID */}
-      <div className="vector-grid">
+      <div className="vector-grid is-bare">
         {catalogLoading ? <SkeletonCards count={12} cardClass="vector-card" ratios={["4 / 3", "3 / 4", "16 / 9", "1 / 1"]} /> : items.length > 0 ? (
           items.map((v) => (
             <div
@@ -244,7 +244,7 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
             >
               {/* the real shape of the artwork, so nothing is cropped */}
               <div className="vector-thumb" style={{ aspectRatio: `${v.artboard[0]} / ${v.artboard[1]}` }}>
-                <img src={v.image} alt="" loading="lazy" />
+                <img src={v.image} alt={v.title} loading="lazy" />
                 <span className={`vector-badge ${v.license}`}>
                   {v.license === "free" ? "Free" : "Premium"}
                 </span>
@@ -256,7 +256,8 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
                   </button>
                 </div>
               </div>
-              <p className="vector-name">{v.title}</p>
+              {/* no caption under the picture, as on Adobe Stock and Shutterstock:
+                  the grid is pictures only; the title is the alt text and opens with the card */}
             </div>
           ))
         ) : (
