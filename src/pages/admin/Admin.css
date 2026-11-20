@@ -30,7 +30,7 @@
   text-align: center;
   transition: border-color 0.2s, background 0.2s;
 }
-.ad-drop.is-over { border-color: var(--red); background: rgba(231, 33, 46, 0.06); }
+.ad-drop.is-over { border-color: rgba(255, 255, 255, 0.28); background: rgba(255, 255, 255, 0.035); }
 .ad-drop strong { font-size: 17px; }
 .ad-drop span { max-width: 560px; color: #8d939b; font-size: 13px; line-height: 1.55; }
 .ad-drop button {

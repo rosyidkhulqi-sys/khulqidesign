@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import BatchField from "./BatchField";
 import { openBatch } from "./batches";
 import KeywordChips from "./KeywordChips";
+import { clearDraft, loadDraft, saveDraft } from "../../lib/drafts";
 import {
   GENERIC_ICON_WORDS,
   ICON_CATEGORIES,
@@ -17,6 +18,7 @@ import {
 
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const emptySet = { name: "", style: "outline", category: "business", license: "free", description: "", keywords: "" };
+const DRAFT_KEY = "icon-upload";
 
 // "Add user" -> "add user, user, add"; "Money bag" -> "money bag, bag, money"
 const keywordsFromName = (name) => {
@@ -50,6 +52,48 @@ function IconUpload({ onPublished }) {
   }, []);
 
   useEffect(() => () => urls.current.forEach((u) => URL.revokeObjectURL(u)), []);
+
+  // Icons added but not published yet are kept in this browser with their
+  // names, keywords and license, and come back after a refresh.
+  const [restored, setRestored] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    const patch = (key, change) => setItems((list) => list.map((it) => (it.key === key ? { ...it, ...change } : it)));
+    loadDraft(DRAFT_KEY).then(async (saved) => {
+      if (!alive) return;
+      if (saved?.items?.length) {
+        setSetId(saved.setId ?? "");
+        setDraft(saved.draft ?? emptySet);
+        setBatch(saved.batch ?? "");
+        const back = saved.items.map((it) => {
+          const preview = URL.createObjectURL(it.file);
+          urls.current.push(preview);
+          return { ...it, preview, status: "reading", message: "", progress: 0 };
+        });
+        setItems(back);
+        for (const it of back) {
+          try {
+            const svg = await readSvg(it.file);
+            if (alive) patch(it.key, { svg, status: "ready" });
+          } catch {
+            if (alive) patch(it.key, { status: "error", message: "Not a valid SVG" });
+          }
+        }
+      }
+      if (alive) setRestored(true);
+    });
+    return () => { alive = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!restored) return;
+    const waiting = items.filter((it) => it.status !== "done" && it.file);
+    const timer = setTimeout(() => {
+      if (!waiting.length) clearDraft(DRAFT_KEY);
+      else saveDraft(DRAFT_KEY, { setId, draft, batch, items: waiting.map(({ key, file, name, keywords, license }) => ({ key, file, name, keywords, license })) });
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [restored, items, draft, setId, batch]);
 
   const chosen = sets.find((s) => s.id === setId) ?? null;
   const license = chosen?.license ?? draft.license;
