@@ -136,7 +136,7 @@ function FootageCard({ clip, onOpen }) {
           {formatTime(clip.duration)}
         </span>
       </div>
-      <p className="vector-name">{clip.title}</p>
+      {/* pictures only, as on Vectors and Templates; the title is the alt text */}
     </div>
   );
 }

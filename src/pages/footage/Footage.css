@@ -8,7 +8,8 @@
 .footage-card {
   display: inline-block;
   width: 100%;
-  margin-bottom: 20px;
+  /* no caption under the clip: the same gap down as across */
+  margin-bottom: 16px;
   break-inside: avoid;
   cursor: pointer;
 }
@@ -109,5 +110,5 @@
 
 @media (max-width: 640px) {
   .footage-grid { columns: 2; column-gap: 10px; }
-  .footage-card { margin-bottom: 14px; }
+  .footage-card { margin-bottom: 10px; }
 }
