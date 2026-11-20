@@ -144,7 +144,7 @@ function Templates({ setPage, onCustomize, initialSearch = "" }) {
       </div>
 
       {/* GRID */}
-      <div className="vector-grid">
+      <div className="vector-grid is-bare">
         {catalogLoading ? <SkeletonCards count={12} cardClass="vector-card" ratios={["1 / 1", "4 / 5", "9 / 16", "16 / 9"]} /> : items.length > 0 ? (
           items.map((t) => (
             <div className="vector-card template-card" key={t.dbId ?? t.id} onClick={() => onCustomize(t)}>
@@ -158,7 +158,7 @@ function Templates({ setPage, onCustomize, initialSearch = "" }) {
                     src={t.image}
                     srcSet={t.previewImage ? `${t.image} ${pxWide(t, 600)}w, ${t.previewImage} ${pxWide(t, 1400)}w` : undefined}
                     sizes="(max-width: 700px) 50vw, (max-width: 1100px) 33vw, 25vw"
-                    alt=""
+                    alt={t.title}
                     loading="lazy"
                   />
                 )}
@@ -168,7 +168,7 @@ function Templates({ setPage, onCustomize, initialSearch = "" }) {
                 <span className="vector-format">{t.w}×{t.h}</span>
                 <button className="template-edit">Customize in Create</button>
               </div>
-              <p className="vector-name">{t.title}</p>
+              {/* pictures only, as on Vectors; the title is the alt text */}
             </div>
           ))
         ) : (
