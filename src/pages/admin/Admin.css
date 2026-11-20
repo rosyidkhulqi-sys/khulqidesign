@@ -585,3 +585,8 @@
 }
 
 .ad-bulk .ad-delete { border-color: rgba(255, 139, 146, 0.45); color: #ff8b92; }
+
+/* copy a set's details to the same icons in another style */
+.ad-copy { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.ad-copy select { max-width: 420px; }
+.ad-copy span { color: #8fd19e; font-size: 13px; }

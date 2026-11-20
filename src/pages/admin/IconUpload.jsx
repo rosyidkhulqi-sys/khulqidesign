@@ -12,6 +12,7 @@ import {
   listIconSets,
   nameFromFile,
   publishIcon,
+  iconsOfSet,
   readSvg,
   splitKeywords,
 } from "./iconPublish";
@@ -137,6 +138,46 @@ function IconUpload({ onPublished }) {
     }
   };
 
+  // The same set in another style (Glyph after Outline): copy the set's
+  // details, with the style word swapped in its name and description, and
+  // each icon's name and keywords from the icon with the same file name.
+  const [copying, setCopying] = useState(false);
+  const copyFrom = async (sourceId) => {
+    const source = sets.find((s) => s.id === sourceId);
+    if (!source) return;
+    setCopying(true);
+    try {
+      const icons = await iconsOfSet(source.id);
+      const style = capitalize(draft.style);
+      const swap = (text) => (text ?? "").replace(/\b(outline|glyph|flat|gradient|hand-drawn|hand drawn)\b/gi, style);
+      setDraft((d) => ({
+        ...d,
+        name: swap(source.name),
+        description: swap(source.description),
+        category: source.category ?? d.category,
+        license: source.license ?? d.license,
+        keywords: (source.keywords ?? []).join(", "),
+      }));
+      const byFile = new Map(icons.map((i) => [(i.source_name ?? "").toLowerCase(), i]));
+      const byTitle = new Map(icons.map((i) => [(i.title ?? "").toLowerCase(), i]));
+      const twinOf = (it) => byFile.get(it.key.replace(/\.svg$/i, "").toLowerCase()) ?? byTitle.get(it.name.toLowerCase());
+      const matched = items.filter((it) => it.status !== "done" && twinOf(it)).length;
+      setItems((list) => list.map((it) => {
+        if (it.status === "done") return it;
+        const twin = twinOf(it);
+        if (!twin) return { ...it, license: source.license ?? it.license };
+        return { ...it, name: twin.title, keywords: (twin.keywords ?? []).join(", "), license: source.license ?? it.license };
+      }));
+      setError(null);
+      setCopyNote(`Copied from ${source.name}: ${matched} of ${items.length} icons matched by file name.`);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setCopying(false);
+    }
+  };
+  const [copyNote, setCopyNote] = useState(null);
+
   const publishAll = async () => {
     setError(null);
     let set = chosen;
@@ -225,6 +266,15 @@ function IconUpload({ onPublished }) {
 
           {!chosen && (
             <div className="ad-set-form">
+              {sets.length > 0 && !lockSet && (
+                <div className="ad-copy">
+                  <select value="" disabled={copying} onChange={(e) => copyFrom(e.target.value)} aria-label="Copy details from a set">
+                    <option value="">{copying ? "Copying…" : "Copy details from a set (same icons, other style)…"}</option>
+                    {sets.map((s) => <option key={s.id} value={s.id}>{s.name} · {capitalize(s.style ?? "")}</option>)}
+                  </select>
+                  {copyNote && <span>{copyNote}</span>}
+                </div>
+              )}
               <input placeholder="Set name, e.g. Shopping & Promo" value={draft.name} maxLength={60} disabled={lockSet}
                      onChange={(e) => setDraft({ ...draft, name: e.target.value })} aria-label="Set name" />
               <div className="ad-row">

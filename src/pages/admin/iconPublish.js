@@ -51,6 +51,17 @@ export async function readSvg(file) {
   }
 }
 
+// the icons of a set, to copy their names and keywords to the same icons in
+// another style; matched by file name
+export async function iconsOfSet(setId) {
+  const { data, error } = await supabase
+    .from("assets")
+    .select("title, keywords, source_name")
+    .eq("set_id", setId);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
 export async function listIconSets() {
   const { data, error } = await supabase
     .from("asset_sets")
