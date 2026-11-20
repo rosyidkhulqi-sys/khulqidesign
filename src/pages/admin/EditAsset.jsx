@@ -84,17 +84,21 @@ function EditAsset({ row, type, onSaved, onCancel }) {
         <input value={form.title} onChange={set("title")} required />
       </label>
 
-      <label className="is-wide">
-        Description
-        <textarea rows="2" value={form.description} onChange={set("description")} />
-      </label>
+      {/* an icon is described by its set */}
+      {type !== "icon" && (
+        <label className="is-wide">
+          Description
+          <textarea rows="2" value={form.description} onChange={set("description")} />
+        </label>
+      )}
 
       <div className="is-wide">
         <KeywordChips
           value={parseKeywords(form.keywords)}
           onChange={(list) => setForm((f) => ({ ...f, keywords: list.join(", ") }))}
-          max={type === "element" ? MAX_KEYWORDS : 50}
-          min={type === "element" ? 5 : 10}
+          max={type === "element" ? MAX_KEYWORDS : type === "icon" ? 30 : 50}
+          // an icon needs a few exact words, not a stock photo's list
+          min={type === "icon" ? 3 : type === "element" ? 5 : 10}
         />
       </div>
 
