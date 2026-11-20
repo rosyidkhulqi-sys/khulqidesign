@@ -3,6 +3,7 @@
 // owner writes for Adobe Stock and Shutterstock), read the EPS artboard, make
 // a 1600 px thumbnail and a 3000 px watermarked preview in the browser, upload 
 // all four files to R2 and write the catalogue row.
+import { decodeImage } from "../../lib/decodeImage";
 import exifr from "exifr";
 import { supabase } from "../../lib/supabaseClient";
 import { uploadToR2 } from "../../lib/r2";
@@ -132,7 +133,7 @@ async function renderImage(bitmap, max, watermark, quality = 0.9, type = "image/
 
 // Premium previews carry the watermark in their pixels; free ones don't
 export async function makeImages(jpg, watermark) {
-  const bitmap = await createImageBitmap(jpg);
+  const bitmap = await decodeImage(jpg);
   try {
     return {
       width: bitmap.width,

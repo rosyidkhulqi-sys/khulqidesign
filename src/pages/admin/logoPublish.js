@@ -4,6 +4,7 @@
 // A logo at 600 px is already usable, so Premium and Exclusive logos get
 // the watermark in the pixels of both the thumbnail and the preview.
 // Exclusive logos carry a USD price and are sold once.
+import { decodeImage } from "../../lib/decodeImage";
 import { supabase } from "../../lib/supabaseClient";
 import { uploadToR2 } from "../../lib/r2";
 import { drawWatermark, readMetadata, shortTitle } from "./vectorUpload";
@@ -64,7 +65,7 @@ const newCode = () => `KD-LG-${String(Math.floor(1_000_000 + Math.random() * 9_0
 
 export async function publishLogo(item, onStep) {
   if (item.license === "exclusive" && !(item.price > 0)) throw new Error("Exclusive logos need a price");
-  const bitmap = await createImageBitmap(item.jpg);
+  const bitmap = await decodeImage(item.jpg);
   const watermark = item.license !== "free";
   let images;
   try {

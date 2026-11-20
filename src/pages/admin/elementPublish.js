@@ -2,6 +2,7 @@
 // sort them: elements (SVG stays recolorable, PNG keeps its transparency) and
 // backgrounds (usually JPG). The editor needs the file itself, so it lives in
 // the public bucket, at most 3000 px on its long side.
+import { decodeImage } from "../../lib/decodeImage";
 import { supabase } from "../../lib/supabaseClient";
 import { uploadToR2 } from "../../lib/r2";
 import { parseKeywords, readMetadata, shortTitle } from "./vectorUpload";
@@ -80,7 +81,7 @@ export async function readElement(file) {
   if (format === "SVG") {
     ({ meta, ...size } = await readSvg(file));
   } else {
-    const bitmap = await createImageBitmap(file);
+    const bitmap = await decodeImage(file);
     size = { width: bitmap.width, height: bitmap.height };
     bitmap.close();
     meta = await readMetadata(file).catch(() => blank);
@@ -97,7 +98,7 @@ export async function readElement(file) {
 }
 
 async function shrunk(file, max, type, quality) {
-  const bitmap = await createImageBitmap(file);
+  const bitmap = await decodeImage(file);
   try {
     const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
     const canvas = document.createElement("canvas");
