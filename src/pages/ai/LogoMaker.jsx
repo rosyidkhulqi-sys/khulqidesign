@@ -61,30 +61,37 @@ function tint(svg, color) {
 }
 
 // a name's size, so long names still fit their line
-const fit = (name, widthPx, max) => Math.round(Math.max(44, Math.min(max, (widthPx / Math.max(4, name.length)) * 1.75)));
+// (wide fonts need room: `per` is how many letter widths fit the size)
+const fit = (name, widthPx, max, per = 1.75) => Math.round(Math.max(44, Math.min(max, (widthPx / Math.max(4, name.length)) * per)));
 
-function scene(layout, { name, tagline, svg, palette: p, fonts: [nameFont, weight, tagFont] }) {
+function scene(layout, { name, tagline, svg, multi, palette: p, fonts: [nameFont, weight, tagFont] }) {
   const el = [];
+  const paint = (color) => (multi ? svg : tint(svg, color));
   const tag = tagline ? tagline.toUpperCase() : "";
   if (layout === "stacked") {
-    el.push({ type: "svg", svg: tint(svg, p.main), x: 390, y: 210, w: 300, h: 300 });
+    el.push({ type: "svg", svg: paint(p.main), x: 390, y: 210, w: 300, h: 300 });
     el.push({ type: "text", text: name, x: 40, y: 560, w: 1000, size: fit(name, 1000, 120), font: nameFont, weight, fill: p.text, align: "center", lineHeight: 1 });
     if (tag) el.push({ type: "text", text: tag, x: 90, y: 720, w: 900, size: 30, font: tagFont, weight: 500, fill: p.muted, align: "center", letterSpacing: 6 });
   }
   if (layout === "inline") {
-    el.push({ type: "svg", svg: tint(svg, p.main), x: 120, y: 410, w: 240, h: 240 });
+    el.push({ type: "svg", svg: paint(p.main), x: 120, y: 410, w: 240, h: 240 });
     el.push({ type: "text", text: name, x: 400, y: 430, w: 620, size: fit(name, 620, 104), font: nameFont, weight, fill: p.text, align: "left", lineHeight: 1 });
     if (tag) el.push({ type: "text", text: tag, x: 404, y: 570, w: 600, size: 26, font: tagFont, weight: 500, fill: p.muted, align: "left", letterSpacing: 5 });
   }
   if (layout === "badge") {
-    el.push({ type: "circle", x: 330, y: 170, r: 210, fill: p.main });
-    el.push({ type: "circle", x: 346, y: 186, r: 194, fill: "transparent", stroke: p.bg, strokeWidth: 6 });
-    el.push({ type: "svg", svg: tint(svg, p.bg), x: 410, y: 250, w: 260, h: 260 });
+    if (multi) {
+      // a colored element sits inside a ring, on the ground, in its own colors
+      el.push({ type: "circle", x: 330, y: 170, r: 210, fill: "transparent", stroke: p.main, strokeWidth: 12 });
+    } else {
+      el.push({ type: "circle", x: 330, y: 170, r: 210, fill: p.main });
+      el.push({ type: "circle", x: 346, y: 186, r: 194, fill: "transparent", stroke: p.bg, strokeWidth: 6 });
+    }
+    el.push({ type: "svg", svg: paint(p.bg), x: 410, y: 250, w: 260, h: 260 });
     el.push({ type: "text", text: name, x: 40, y: 640, w: 1000, size: fit(name, 1000, 96), font: nameFont, weight, fill: p.main, align: "center", lineHeight: 1 });
     if (tag) el.push({ type: "text", text: tag, x: 90, y: 780, w: 900, size: 28, font: tagFont, weight: 500, fill: p.muted, align: "center", letterSpacing: 6 });
   }
   if (layout === "wordmark") {
-    el.push({ type: "text", text: name, x: 40, y: 400, w: 1000, size: fit(name, 1000, 150), font: nameFont, weight, fill: p.text, align: "center", lineHeight: 1 });
+    el.push({ type: "text", text: name, x: 40, y: 430, w: 1000, size: fit(name, 1000, 130, 1.3), font: nameFont, weight, fill: p.text, align: "center", lineHeight: 1 });
     el.push({ type: "rect", x: 470, y: 600, w: 140, h: 10, r: 5, fill: p.accent });
     if (tag) el.push({ type: "text", text: tag, x: 90, y: 650, w: 900, size: 30, font: tagFont, weight: 500, fill: p.muted, align: "center", letterSpacing: 8 });
   }
@@ -93,20 +100,29 @@ function scene(layout, { name, tagline, svg, palette: p, fonts: [nameFont, weigh
 
 // symbols for what the brand does: icons whose title or keywords match,
 // topped up with the most used ones
+// Symbols come from icons and Create elements (SVG ones): the words of
+// "what it does" are matched against their titles and keywords.
 async function findSymbols(about) {
-  const word = about.trim().toLowerCase().split(/\s+/)[0] ?? "";
-  const base = () => supabase.from("assets").select("code, title, thumb_key").eq("type", "icon").eq("status", "published").not("thumb_key", "is", null);
+  const words = about.trim().toLowerCase().split(/[\s,]+/).map((w) => w.replace(/[^a-z0-9-]/g, "")).filter((w) => w.length > 1).slice(0, 3);
+  const base = () => supabase
+    .from("assets")
+    .select("code, title, thumb_key, type")
+    .in("type", ["icon", "element"])
+    .eq("status", "published")
+    .ilike("thumb_key", "%.svg");
   let rows = [];
-  if (word) {
-    const { data } = await base().or(`title.ilike.%${word}%,keywords.cs.{${word}}`).limit(8);
+  if (words.length) {
+    const any = words.flatMap((w) => [`title.ilike.%${w}%`, `keywords.cs.{${w}}`]).join(",");
+    const { data } = await base().or(any).limit(10);
     rows = data ?? [];
   }
   if (rows.length < 4) {
-    const { data } = await base().order("downloads", { ascending: false }).limit(8);
-    rows = [...rows, ...(data ?? []).filter((r) => !rows.some((x) => x.code === r.code))].slice(0, 8);
+    const { data } = await base().eq("type", "icon").order("downloads", { ascending: false }).limit(8);
+    rows = [...rows, ...(data ?? []).filter((r) => !rows.some((x) => x.code === r.code))].slice(0, 10);
   }
   const svgs = await Promise.all(rows.map((r) => fetch(publicUrl(r.thumb_key)).then((res) => res.text()).catch(() => null)));
-  return rows.map((r, i) => ({ code: r.code, title: r.title, svg: svgs[i] })).filter((s) => s.svg && /<svg/i.test(s.svg));
+  // an element keeps its own colors (one color would lose its detail)
+  return rows.map((r, i) => ({ code: r.code, title: r.title, svg: svgs[i], multi: r.type === "element" })).filter((s) => s.svg && /<svg/i.test(s.svg));
 }
 
 function LogoMaker({ onOpen }) {
@@ -152,7 +168,7 @@ function LogoMaker({ onOpen }) {
       const symbol = symbols[(i + seed) % symbols.length];
       const p = PALETTES[palette >= 0 ? palette : (i + seed * 2) % PALETTES.length];
       const fonts = FONTS[(i * 3 + seed) % FONTS.length];
-      return { id: `${seed}-${i}`, layout, symbol, scene: scene(layout, { name: name.trim(), tagline: tagline.trim(), svg: symbol.svg, palette: p, fonts }) };
+      return { id: `${seed}-${i}`, layout, symbol, scene: scene(layout, { name: name.trim(), tagline: tagline.trim(), svg: symbol.svg, multi: symbol.multi, palette: p, fonts }) };
     });
   }, [symbols, seed, style, palette, name, tagline]);
 
