@@ -11,6 +11,13 @@ import { loadIconSvg } from "../../lib/iconEditor";
 export const ICON_STYLES = ["outline", "glyph", "flat", "gradient"];
 export const ICON_CATEGORIES = ["business", "social", "ui", "holiday", "nature", "food", "education", "medical", "travel", "other"];
 
+// words that say nothing about what an icon shows: the page, the style
+// filter and the file type already do
+export const GENERIC_ICON_WORDS = new Set([
+  "icon", "icons", "outline", "outlined", "glyph", "solid", "filled", "line icon",
+  "vector", "vectors", "svg", "symbol", "pictogram", "illustration", "doodle icon",
+]);
+
 const slug = (s) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "icon";
 
@@ -83,7 +90,9 @@ export async function createIconSet(set) {
 export async function publishIcon(item, set, onStep) {
   const svg = item.svg ?? (await readSvg(item.file));
   const cleanBlob = new Blob([svg.clean], { type: "image/svg+xml" });
-  const keywords = [...new Set([...item.keywords, ...(set.keywords ?? []), set.style, "icon"])];
+  // what the icon shows, as on The Noun Project: no "icon", "outline" or
+  // "vector" (the Icons page and its style filter already say that)
+  const keywords = [...new Set([...item.keywords, ...(set.keywords ?? [])])].filter((k) => !GENERIC_ICON_WORDS.has(k.toLowerCase()));
 
   for (let attempt = 0; attempt < 3; attempt++) {
     const code = newCode("KD-IC");

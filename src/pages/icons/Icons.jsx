@@ -80,7 +80,9 @@ function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
     const matchSearch = matchesSearch(q, (term) =>
       icon.name.toLowerCase().includes(term) ||
       // match from the start of a word, so "pin" doesn't find "shopping"
-      wordStarts(icon.keywords, term)
+      wordStarts(icon.keywords, term) ||
+      // "outline bat": the style is a filter, not a keyword
+      (icon.style ?? "").startsWith(term)
     , ["icon", "icons"]);
 
     const matchCategory =
@@ -102,6 +104,7 @@ function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
     (set) =>
       matchesSearch(q, (term) =>
         set.name.toLowerCase().includes(term) ||
+        (set.style ?? "").startsWith(term) ||
         membersOf(set).some((icon) => wordStarts(icon.keywords, term))
       , ["icon", "icons", "set", "sets"]) &&
       (style === "all" || set.style === style) &&
