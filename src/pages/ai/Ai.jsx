@@ -19,6 +19,7 @@ import RecolorTool from "./RecolorTool";
 import SvgAiEdit from "./SvgAiEdit";
 import { keptAnimate, keptTool } from "../../lib/aiKeep";
 import { MODELS, UPSCALE_MAX_SIDE, removeBackground, upscale } from "../../lib/aiLocal";
+import LogoMaker from "./LogoMaker";
 
 // tools that already work in the browser, without the AI backend
 const ready = new Set(["animate", "cutout", "upscale", "edit"]);
@@ -55,6 +56,7 @@ const kinds = [
 const glyphs = {
   animate: <><path d="M5 19c3-1 4-4 4-7s1-6 4-7" /><circle cx="17" cy="7" r="3" /><path d="M14 17h6M17 14v6" /></>,
   template: <><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 8h8M8 12h5M8 16h3" /></>,
+  logo: <><circle cx="12" cy="9" r="5" /><path d="M5 20h14M8 16.5h8" /></>,
   video: <><rect x="3" y="6" width="13" height="12" rx="2" /><path d="M16 10l5-3v10l-5-3z" /></>,
   image: <><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="10" r="2" /><path d="M21 16l-5-5-9 9" /></>,
   edit: <><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="M13.5 6.5l4 4" /></>,
@@ -63,6 +65,7 @@ const glyphs = {
 };
 
 const tools = [
+  ["logo", "Make a logo", "A name, what the brand does and a style: logos from our own symbols and fonts, ready to edit in Create.", ["Icons", "Logos"]],
   ["animate", "Animate an icon", "Turn an icon into a Lottie, GIF, MP4 or animated SVG, right in your browser.", ["Icons"]],
   ["template", "Template from text", "Describe a post or poster; AI fills one of our templates with your words and colors.", ["Templates"]],
   ["video", "Image to video", "Bring a vector or still frame to life as a short clip.", ["Vectors", "Footage"]],
@@ -85,7 +88,16 @@ function Glyph({ name }) {
 // studio then opens straight away with that icon
 // openInCreate(template): opens a design in Create as a new project
 function Ai({ setPage, user = null, animateIcon = null, openInCreate }) {
-  const [kind, setKind] = useState("image");
+  // the Logos page can open the logo maker straight away
+  const [kind, setKind] = useState(() => {
+    try {
+      const asked = sessionStorage.getItem("kd-ai-kind");
+      sessionStorage.removeItem("kd-ai-kind");
+      return asked || "image";
+    } catch {
+      return "image";
+    }
+  });
   const [prompt, setPrompt] = useState("");
   // Template from text is on for admins while it's being tried out
   const [isAdmin, setIsAdmin] = useState(false);
@@ -105,6 +117,8 @@ function Ai({ setPage, user = null, animateIcon = null, openInCreate }) {
   }, [user]);
 
   const templateOpen = isAdmin && kind === "template";
+  // the logo maker: an admin prototype for now
+  const logoOpen = isAdmin && kind === "logo";
   const canGenerate = (aiReady || templateOpen) && prompt.trim() && !made?.busy;
 
   const generate = async (e) => {
@@ -189,7 +203,7 @@ function Ai({ setPage, user = null, animateIcon = null, openInCreate }) {
       {/* one prompt for every tool, as on Magnific */}
       <form className="ai-prompt" onSubmit={generate}>
         <div className="ai-kinds" role="radiogroup" aria-label="What to create">
-          {kinds.map(([id, label]) => (
+          {(isAdmin ? [["logo", "Logo"], ...kinds] : kinds).map(([id, label]) => (
             <button
               key={id}
               type="button"
@@ -202,7 +216,8 @@ function Ai({ setPage, user = null, animateIcon = null, openInCreate }) {
             </button>
           ))}
         </div>
-        <div className="ai-prompt-row">
+        {logoOpen && <LogoMaker onOpen={openInCreate} />}
+        {!logoOpen && <div className="ai-prompt-row">
           <Sparkle size={20} />
           <input
             value={prompt}
@@ -213,7 +228,7 @@ function Ai({ setPage, user = null, animateIcon = null, openInCreate }) {
           <button type="submit" className="ai-generate" disabled={!canGenerate}>
             {made?.busy ? "Designing…" : "Generate"}
           </button>
-        </div>
+        </div>}
         {templateOpen && <TemplateBrief brief={brief} onChange={setBrief} />}
         {templateOpen && !made && (
           <p className="ai-note">
@@ -221,7 +236,7 @@ function Ai({ setPage, user = null, animateIcon = null, openInCreate }) {
             Claude designs an editable template from your words. It takes about half a minute.
           </p>
         )}
-        {!aiReady && !templateOpen && (
+        {!aiReady && !templateOpen && !logoOpen && (
           <p className="ai-note">
             <span className="ai-soon">Coming soon</span>
             AI tools open once your account and credits are live.
@@ -289,7 +304,7 @@ function Ai({ setPage, user = null, animateIcon = null, openInCreate }) {
         {tools.map(([id, name, text, from]) => {
           // Template from text is an admin trial: for admins the card opens it
           // in the prompt box above; everyone else still sees Coming soon
-          const trial = id === "template" && isAdmin;
+          const trial = (id === "template" || id === "logo") && isAdmin;
           const open = ready.has(id) || trial;
           const body = (
             <>
@@ -308,7 +323,7 @@ function Ai({ setPage, user = null, animateIcon = null, openInCreate }) {
           );
           // tools that work now open; the rest are a description for now
           const go = trial
-            ? () => { setKind("template"); document.querySelector(".ai-prompt")?.scrollIntoView({ behavior: "smooth", block: "center" }); }
+            ? () => { setKind(id); document.querySelector(".ai-prompt")?.scrollIntoView({ behavior: "smooth", block: "center" }); }
             : () => { setTool(id); window.scrollTo(0, 0); };
           return open ? (
             <button key={id} className="ai-tool is-open" onClick={go}>

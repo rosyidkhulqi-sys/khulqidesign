@@ -29,6 +29,14 @@ function TemplateThumb({ scene }) {
                    preserveAspectRatio="xMidYMid slice" />
           );
         }
+        // a vector from the library (a logo's symbol), fitted whole in its box
+        if (el.type === "svg") {
+          return (
+            <image key={i} href={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(el.svg)}`}
+                   x={el.x} y={el.y} width={el.w} height={el.h} opacity={opacity}
+                   preserveAspectRatio="xMidYMid meet" />
+          );
+        }
         return (
           <foreignObject key={i} x={el.x} y={el.y} width={el.w} height={scene.h} opacity={opacity} transform={turn}>
             <div

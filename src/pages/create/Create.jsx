@@ -169,6 +169,20 @@ function sceneObjects(scene) {
         img.set({ left: el.x, top: el.y });
         return img;
       }
+      // a vector from our library (a logo's symbol): editable shapes, so its
+      // colors can change in Create
+      if (el.type === "svg") {
+        const { objects, options } = await loadSVGFromString(el.svg);
+        const group = util.groupSVGElements(objects.filter(Boolean), options);
+        group.scaleToWidth(el.w);
+        if (group.getScaledHeight() > el.h) group.scaleToHeight(el.h);
+        group.set({
+          left: el.x + (el.w - group.getScaledWidth()) / 2,
+          top: el.y + (el.h - group.getScaledHeight()) / 2,
+          ...look,
+        });
+        return group;
+      }
       return new Textbox(el.text, {
         left: el.x,
         top: el.y,

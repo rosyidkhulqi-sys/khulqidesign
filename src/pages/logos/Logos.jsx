@@ -11,6 +11,7 @@ import { industries, industryName, logoStyles } from "../../data/logosData";
 import { fetchAssetByCode, searchCatalog, toLogo } from "../../lib/catalog";
 import { useAssetUrl } from "../../lib/useAssetUrl";
 import SkeletonCards from "../../components/SkeletonCards";
+import { supabase } from "../../lib/supabaseClient";
 
 const licenseLabel = { free: "Free", premium: "Premium", exclusive: "Exclusive" };
 
@@ -44,6 +45,13 @@ function LogoCard({ logo, onOpen }) {
 }
 
 function Logos({ setPage, initialSearch = "", user = null }) {
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    supabase.rpc("is_admin").then(({ data }) => alive && setIsAdmin(data === true));
+    return () => { alive = false; };
+  }, [user]);
   const [search, setSearch] = useState(initialSearch);
   const [license, setLicense] = useState("all");
   const [industry, setIndustry] = useState("all");
@@ -154,6 +162,22 @@ function Logos({ setPage, initialSearch = "", user = null }) {
           Logos {!catalogLoading && <span className="library-count">{total} {total === 1 ? "logo" : "logos"}</span>}
         </h1>
       </div>
+
+      {/* make your own, at the top of the library (admin prototype for now) */}
+      {isAdmin && (
+        <button
+          className="logo-maker-cta"
+          onClick={() => {
+            try { sessionStorage.setItem("kd-ai-kind", "logo"); } catch { /* opens on Image */ }
+            setPage("ai");
+            window.scrollTo(0, 0);
+          }}
+        >
+          <strong>Make a logo with AI</strong>
+          <span>Your name and what you do: logos from our own symbols and fonts, ready to edit in Create.</span>
+          <em>Admin prototype →</em>
+        </button>
+      )}
 
       {/* SEARCH */}
       <div className="icon-search">

@@ -115,3 +115,26 @@
   .logo-grid { grid-template-columns: repeat(2, 1fr); gap: 16px 10px; }
   .logo-licenses { font-size: 12px; }
 }
+
+/* make your own logo: one quiet row at the top of the library */
+.logo-maker-cta {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  margin: 0 0 18px;
+  padding: 16px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+  color: #d6d9de;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.logo-maker-cta:hover { border-color: rgba(255, 255, 255, 0.25); }
+.logo-maker-cta strong { color: var(--white); font-size: 15px; }
+.logo-maker-cta span { color: #9aa0a8; font-size: 13.5px; }
+.logo-maker-cta em { color: #c9ced6; font-size: 13px; font-style: normal; }
+@media (max-width: 700px) { .logo-maker-cta { grid-template-columns: 1fr; gap: 4px; } }
