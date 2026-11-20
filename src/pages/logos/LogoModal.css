@@ -6,9 +6,6 @@
 }
 .lm-stage > img { object-fit: contain; }
 
-/* inverted preview: dark ground, hues kept roughly as they are */
-.lm-stage.is-dark { background: #0d0d0d; }
-.lm-dark { filter: invert(1) hue-rotate(180deg); }
 
 /* business card on a desk */
 .lm-stage.is-card { background: linear-gradient(135deg, #c9c4bb, #a7a196); }

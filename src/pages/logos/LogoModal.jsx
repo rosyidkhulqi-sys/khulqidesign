@@ -17,7 +17,6 @@ const TAG_LIMIT = 8;
 
 const mockups = [
   ["logo", "Logo"],
-  ["dark", "On dark"],
   ["card", "Business card"],
   ["social", "Social"],
 ];
@@ -53,8 +52,9 @@ function Mockup({ logo, view }) {
       </div>
     );
   }
-  // "dark": an inverted preview until each pack ships its own dark version
-  return <img className={view === "dark" ? "lm-dark" : ""} src={logo.previewImage || logo.image} alt={logo.title} />;
+  // the logo as it is. (An "On dark" view comes back once each pack ships
+  // its own dark version: an inverted picture showed the wrong colors.)
+  return <img src={logo.previewImage || logo.image} alt={logo.title} />;
 }
 
 function LogoModal({ logo, related = [], user = null, onAuth, onSelect, onTag, onClose }) {
