@@ -57,6 +57,13 @@ function Mockup({ logo, view }) {
       <div className="lm-social">
         <div className="lm-cover" />
         <div className="lm-avatar"><img src={logo.image} alt="" /></div>
+        <div className="lm-profile">
+          <div>
+            <b>Your Brand</b>
+            <span>@yourbrand</span>
+          </div>
+          <em>Follow</em>
+        </div>
         <div className="lm-lines"><span /><span /></div>
       </div>
     );
