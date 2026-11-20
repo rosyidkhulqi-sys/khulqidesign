@@ -20,6 +20,8 @@ import {
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const emptySet = { name: "", style: "outline", category: "business", license: "free", description: "", keywords: "" };
 const DRAFT_KEY = "icon-upload";
+// icons published at the same time
+const ICONS_AT_ONCE = 6;
 
 // "Add user" -> "add user, user, add"; "Money bag" -> "money bag, bag, money"
 const keywordsFromName = (name) => {
@@ -209,19 +211,28 @@ function IconUpload({ onPublished }) {
       return;
     }
     setBatchError(null);
-    for (const item of items.filter((it) => it.status === "ready" || it.status === "failed")) {
-      update(item.key, { status: "uploading", progress: 0, message: "Preparing" });
-      try {
-        const code = await publishIcon(
-          { ...item, batchId, keywords: splitKeywords(item.keywords), name: item.name.trim() || "Icon" },
-          set,
-          (message, progress) => update(item.key, { message, progress })
-        );
-        update(item.key, { status: "done", progress: 1, message: `Published as ${code}` });
-      } catch (e) {
-        update(item.key, { status: "failed", message: e.message });
+    // several icons at once, as The Noun Project does; each still reports
+    // its own progress and failure
+    const queue = items.filter((it) => it.status === "ready" || it.status === "failed");
+    queue.forEach((it) => update(it.key, { status: "uploading", progress: 0, message: "Waiting" }));
+    let next = 0;
+    const worker = async () => {
+      while (next < queue.length) {
+        const item = queue[next++];
+        update(item.key, { message: "Preparing" });
+        try {
+          const code = await publishIcon(
+            { ...item, batchId, keywords: splitKeywords(item.keywords), name: item.name.trim() || "Icon" },
+            set,
+            (message, progress) => update(item.key, { message, progress })
+          );
+          update(item.key, { status: "done", progress: 1, message: `Published as ${code}` });
+        } catch (e) {
+          update(item.key, { status: "failed", message: e.message });
+        }
       }
-    }
+    };
+    await Promise.all(Array.from({ length: Math.min(ICONS_AT_ONCE, queue.length) }, worker));
     setPublishing(false);
     onPublished?.();
   };

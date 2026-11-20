@@ -112,9 +112,14 @@ export async function publishIcon(item, set, onStep) {
     const original = { bucket: "private", key: `${folder}/${name}.svg`, file: item.file, contentType: "image/svg+xml" };
     const shown = { bucket: "public", key: `${folder}/icon.svg`, file: cleanBlob, contentType: "image/svg+xml" };
 
-    onStep("Uploading SVG", 0);
-    await uploadToR2({ ...original, onProgress: (p) => onStep("Uploading SVG", p * 0.5) });
-    await uploadToR2({ ...shown, onProgress: (p) => onStep("Uploading preview", 0.5 + p * 0.5) });
+    // both files at once
+    onStep("Uploading", 0);
+    const sent = [0, 0];
+    const progress = (i) => (p) => { sent[i] = p; onStep("Uploading", (sent[0] + sent[1]) / 2); };
+    await Promise.all([
+      uploadToR2({ ...original, onProgress: progress(0) }),
+      uploadToR2({ ...shown, onProgress: progress(1) }),
+    ]);
 
     onStep("Saving", 1);
     const { error } = await supabase.from("assets").insert({
