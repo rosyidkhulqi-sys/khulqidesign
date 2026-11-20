@@ -599,3 +599,33 @@
 .ad-hint { margin: 4px 0 0; color: #9aa0a8; font-size: 13px; line-height: 1.5; }
 .ad-hint b { color: #d6d7d8; font-weight: 600; }
 .kw.is-compact .kw-head { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* after publishing: one Done note, as on The Noun Project */
+.ad-done {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(143, 209, 158, 0.35);
+  border-radius: 14px;
+  background: rgba(143, 209, 158, 0.07);
+}
+.ad-done.has-failed { border-color: rgba(255, 179, 107, 0.4); background: rgba(255, 179, 107, 0.06); }
+.ad-done-check {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #8fd19e;
+  color: #0b0b0c;
+  font-size: 17px;
+  font-weight: 700;
+}
+.ad-done div { display: grid; gap: 2px; flex: 1; }
+.ad-done strong { font-size: 15px; }
+.ad-done div span { color: #aeb0b2; font-size: 13px; }
+.ad-done button { padding: 0 6px; border: 0; background: none; color: #9aa0a8; font-size: 20px; cursor: pointer; }
+.ad-done button:hover { color: var(--white); }

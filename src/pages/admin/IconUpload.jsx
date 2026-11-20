@@ -106,6 +106,7 @@ function IconUpload({ onPublished }) {
   const update = (key, patch) => setItems((list) => list.map((it) => (it.key === key ? { ...it, ...patch } : it)));
 
   const addFiles = async (fileList) => {
+    setFinished(null);
     const svgs = [...fileList].filter((f) => /\.svg$/i.test(f.name) && !items.some((it) => it.key === f.name));
     const fresh = svgs.map((file) => {
       const preview = URL.createObjectURL(file);
@@ -232,15 +233,24 @@ function IconUpload({ onPublished }) {
             (message, progress) => update(item.key, { message, progress })
           );
           update(item.key, { status: "done", progress: 1, message: `Published as ${code}` });
+          published += 1;
         } catch (e) {
           update(item.key, { status: "failed", message: e.message });
+          failed += 1;
         }
       }
     };
+    let published = 0;
+    let failed = 0;
     await Promise.all(Array.from({ length: Math.min(ICONS_AT_ONCE, queue.length) }, worker));
+    // as on The Noun Project: the published cards go, a Done note stays, and
+    // only icons that failed are left to try again
+    setItems((list) => list.filter((it) => it.status !== "done"));
+    setFinished({ published, failed, setName: set.name });
     setPublishing(false);
     onPublished?.();
   };
+  const [finished, setFinished] = useState(null);
 
   const ready = items.filter((it) => it.status === "ready" || it.status === "failed").length;
   const done = items.filter((it) => it.status === "done").length;
@@ -250,6 +260,19 @@ function IconUpload({ onPublished }) {
     <>
       {/* 1. the files first, as on The Noun Project; the set's details
           and the batch follow once there is something to describe */}
+      {finished && finished.published > 0 && (
+        <div className={`ad-done ${finished.failed ? "has-failed" : ""}`} role="status">
+          <span className="ad-done-check" aria-hidden="true">✓</span>
+          <div>
+            <strong>Done · {finished.published} {finished.published === 1 ? "icon" : "icons"} published</strong>
+            <span>
+              In {finished.setName}.{" "}
+              {finished.failed ? `${finished.failed} failed: they stay below, press Publish to try them again.` : "They're on the site now."}
+            </span>
+          </div>
+          <button onClick={() => setFinished(null)} aria-label="Close">×</button>
+        </div>
+      )}
       <div
         className={`ad-drop ${dragging ? "is-over" : ""} ${items.length ? "is-small" : ""}`}
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
@@ -368,11 +391,6 @@ function IconUpload({ onPublished }) {
               {items.length} {items.length === 1 ? "icon" : "icons"}{done > 0 && ` · ${done} published`}
               {styleOfSet && ` · set style ${styleOfSet}`}
             </span>
-            {done > 0 && (
-              <button onClick={() => setItems((l) => l.filter((it) => it.status !== "done"))} disabled={publishing}>
-                Clear published
-              </button>
-            )}
             <button className="ad-primary" onClick={publishAll} disabled={publishing || ready === 0}>
               {publishing ? "Publishing…" : `Publish ${ready}`}
             </button>
