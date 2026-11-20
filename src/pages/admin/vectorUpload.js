@@ -122,7 +122,24 @@ async function renderImage(bitmap, max, watermark, quality = 0.9, type = "image/
   const ctx = canvas.getContext("2d");
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, w, h);
-  ctx.drawImage(bitmap, 0, 0, w, h);
+  // one big jump down leaves jagged edges: halve in steps first, each with
+  // the browser's best smoothing, then draw the last step
+  let source = bitmap;
+  let sw = bitmap.width;
+  let sh = bitmap.height;
+  while (sw / 2 >= w * 1.5) {
+    const half = document.createElement("canvas");
+    half.width = Math.round(sw / 2);
+    half.height = Math.round(sh / 2);
+    const hctx = half.getContext("2d");
+    hctx.imageSmoothingQuality = "high";
+    hctx.drawImage(source, 0, 0, half.width, half.height);
+    source = half;
+    sw = half.width;
+    sh = half.height;
+  }
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(source, 0, 0, w, h);
   if (watermark) drawWatermark(ctx, w, h);
   let blob = await new Promise((resolve) => canvas.toBlob(resolve, type, quality));
   // a browser without a WebP encoder hands back a PNG: use JPEG then
@@ -138,8 +155,9 @@ export async function makeImages(jpg, watermark) {
     return {
       width: bitmap.width,
       height: bitmap.height,
-      // the grid shows it about 450 px wide; 900 stays sharp on Retina
-      thumb: await renderImage(bitmap, 900, false, 0.85, "image/webp"),
+      // a wide card on a big Retina screen is about 1000 px across;
+      // 1400 stays sharp there, as the template pictures do
+      thumb: await renderImage(bitmap, 1400, false, 0.85, "image/webp"),
       preview: await renderImage(bitmap, 2800, watermark),
     };
   } finally {
