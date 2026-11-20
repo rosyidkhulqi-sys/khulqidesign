@@ -18,6 +18,13 @@ import {
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const emptySet = { name: "", style: "outline", category: "business", license: "free", description: "", keywords: "" };
 
+// "Add user" -> "add user, user, add"; "Money bag" -> "money bag, bag, money"
+const keywordsFromName = (name) => {
+  const words = name.toLowerCase().split(/\s+/).filter((w) => w.length > 1 && !GENERIC_ICON_WORDS.has(w));
+  const phrase = words.join(" ");
+  return [...new Set([words.length > 1 ? phrase : null, ...words.reverse()].filter(Boolean))].join(", ");
+};
+
 function IconUpload({ onPublished }) {
   const [sets, setSets] = useState([]);
   // "" = new set, otherwise an existing set id
@@ -64,10 +71,11 @@ function IconUpload({ onPublished }) {
         const svg = await readSvg(item.file);
         update(item.key, {
           svg,
-          // the file name's words start the keywords
-          keywords: item.name.toLowerCase().split(" ").filter((w) => w.length > 1).join(", "),
+          // the name starts the keywords: the whole name first ("add user"),
+          // then its words, the last (usually the subject) before the others
+          keywords: keywordsFromName(item.name),
           status: "ready",
-          message: `${svg.colors} ${svg.colors === 1 ? "color" : "colors"} · looks ${svg.style}`,
+          message: "",
         });
       } catch {
         update(item.key, { status: "error", message: "Not a valid SVG" });
@@ -226,7 +234,6 @@ function IconUpload({ onPublished }) {
           <div className="ad-icon-grid">
             {items.map((it) => {
               const locked = publishing || it.status === "done" || it.status === "uploading";
-              const mismatch = it.svg && it.svg.style !== styleOfSet;
               return (
                 <div className={`ad-icon is-${it.status}`} key={it.key}>
                   <div className="ad-icon-preview"><img src={it.preview} alt="" /></div>
@@ -251,9 +258,7 @@ function IconUpload({ onPublished }) {
                       <button className="ad-remove" onClick={() => setItems((l) => l.filter((x) => x.key !== it.key))}>Remove</button>
                     )}
                   </div>
-                  <span className="ad-icon-status">
-                    {mismatch && it.status === "ready" ? `Looks ${it.svg.style}, set is ${styleOfSet}` : it.message}
-                  </span>
+                  {it.message && <span className="ad-icon-status">{it.message}</span>}
                   {it.status === "uploading" && (
                     <div className="ad-progress"><span style={{ width: `${Math.round(it.progress * 100)}%` }} /></div>
                   )}
