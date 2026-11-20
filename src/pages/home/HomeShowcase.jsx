@@ -87,13 +87,14 @@ async function fetchStage() {
       .order("published_at", { ascending: false })
       .limit(count)
       .then(({ data }) => (data ?? []).map((row) => publicUrl(row[field])));
-  const [vectors, glyphs, outlines, footage] = await Promise.all([
-    pick("vector", "thumb_key", 3),
+  const [vectors, glyphs, outlines, hands, footage] = await Promise.all([
+    pick("vector", "thumb_key", 4),
     pick("icon", "thumb_key", 6, "glyph"),
     pick("icon", "thumb_key", 6, "outline"),
-    pick("footage", "thumb_key", 3),
+    pick("icon", "thumb_key", 6, "hand-drawn"),
+    pick("footage", "thumb_key", 4),
   ]);
-  return { vectors, glyphs, outlines, footage };
+  return { vectors, glyphs, outlines, hands, footage };
 }
 
 // ways: [{ n, title, text, flow, cta: [label, target] }]; covers: Home's
@@ -101,7 +102,7 @@ async function fetchStage() {
 function HomeShowcase({ ways, covers = {}, go }) {
   const [active, setActive] = useState(0);
   const [held, setHeld] = useState(false); // clicked: stays on that way
-  const [stage, setStage] = useState({ vectors: [], glyphs: [], outlines: [], footage: [] });
+  const [stage, setStage] = useState({ vectors: [], glyphs: [], outlines: [], hands: [], footage: [] });
   const [inView, setInView] = useState(false);
   // the Download stage's search, as an index into SEARCHES
   const [phrase, setPhrase] = useState(0);
@@ -222,26 +223,30 @@ function HomeShowcase({ ways, covers = {}, go }) {
           aria-hidden={active !== 0}
         >
           {/* each search shows its own results; the others are gone */}
-          <img className="hs-card hs-a is-vector" src={v[0] ?? "/covers/vectors.jpg"} alt="" loading="lazy" />
-          <img className="hs-card hs-b is-vector" src={v[2] ?? v[0] ?? "/covers/vectors.jpg"} alt="" loading="lazy" />
-          <img className="hs-card hs-c is-vector" src={v[1] ?? "/covers/vectors.jpg"} alt="" loading="lazy" />
+          {/* --i: the order the cards pop in when their search comes up */}
+          <img className="hs-card hs-a is-vector" style={{ "--i": 0 }} src={v[0] ?? "/covers/vectors.jpg"} alt="" loading="lazy" />
+          <img className="hs-card hs-b is-vector" style={{ "--i": 1 }} src={v[2] ?? v[0] ?? "/covers/vectors.jpg"} alt="" loading="lazy" />
+          <img className="hs-card hs-c is-vector" style={{ "--i": 2 }} src={v[1] ?? "/covers/vectors.jpg"} alt="" loading="lazy" />
+          <img className="hs-card hs-d is-vector" style={{ "--i": 3 }} src={v[3] ?? v[1] ?? "/covers/vectors.jpg"} alt="" loading="lazy" />
 
-          <div className="hs-card hs-icons is-glyph is-icon">
-            <b>Glyph</b>
-            {stage.glyphs.map((src) => <img key={src} src={src} alt="" loading="lazy" />)}
-          </div>
-          <div className="hs-card hs-icons is-outline is-icon">
-            <b>Outline</b>
-            {stage.outlines.map((src) => <img key={src} src={src} alt="" loading="lazy" />)}
-          </div>
+          {/* one sheet per style, each with its name */}
+          {[["Glyph", "is-glyph", stage.glyphs], ["Outline", "is-outline", stage.outlines], ["Hand-drawn", "is-hand", stage.hands]]
+            .filter(([, , list]) => list.length)
+            .map(([name, cls, list], i) => (
+              <div key={cls} className={`hs-card hs-icons ${cls} is-icon`} style={{ "--i": i }}>
+                <b>{name}</b>
+                {list.map((src) => <img key={src} src={src} alt="" loading="lazy" />)}
+              </div>
+            ))}
 
-          <img className="hs-card hs-a is-footage" src={f[1] ?? poster} alt="" loading="lazy" />
+          <img className="hs-card hs-a is-footage" style={{ "--i": 0 }} src={f[1] ?? poster} alt="" loading="lazy" />
           {clip ? (
-            <video ref={clipRef} className="hs-card hs-b is-footage" src={clip} poster={poster} muted loop playsInline preload="metadata" />
+            <video ref={clipRef} className="hs-card hs-b is-footage" style={{ "--i": 1 }} src={clip} poster={poster} muted loop playsInline preload="metadata" />
           ) : (
-            <img className="hs-card hs-b is-footage" src={poster} alt="" loading="lazy" />
+            <img className="hs-card hs-b is-footage" style={{ "--i": 1 }} src={poster} alt="" loading="lazy" />
           )}
-          <img className="hs-card hs-c is-footage" src={f[2] ?? poster} alt="" loading="lazy" />
+          <img className="hs-card hs-c is-footage" style={{ "--i": 2 }} src={f[2] ?? poster} alt="" loading="lazy" />
+          <img className="hs-card hs-d is-footage" style={{ "--i": 3 }} src={f[3] ?? f[0] ?? poster} alt="" loading="lazy" />
           <Typing phrases={TYPED} holds={HOLDS} run={run && active === 0} onPhrase={setPhrase} />
         </div>
 

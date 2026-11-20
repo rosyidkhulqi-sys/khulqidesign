@@ -15,6 +15,10 @@ import IconUpload from "./IconUpload.jsx";
 import FootageUpload from "./FootageUpload.jsx";
 import LogoUpload from "./LogoUpload.jsx";
 import ElementUpload from "./ElementUpload.jsx";
+import { runPool } from "../../lib/uploadPool";
+
+// vectors published at the same time (EPS files are big)
+const VECTORS_AT_ONCE = 3;
 
 const TABS = [
   ["vector", "Vectors", "EPS + JPG pairs"],
@@ -108,10 +112,13 @@ function Admin({ user, setPage }) {
       return;
     }
     setBatchError(null);
-    for (const item of items.filter((it) => it.status === "ready" || it.status === "error")) {
+    // three vectors at a time (their EPS files are big), and the tab stays
+    // alive in the background while they go up
+    const queue = items.filter((it) => it.status === "ready" || it.status === "error");
+    await runPool(queue, VECTORS_AT_ONCE, async (item) => {
       if (!item.title.trim()) {
         update(item.base, { status: "error", message: "Add a title first" });
-        continue;
+        return;
       }
       update(item.base, { status: "uploading", progress: 0, message: "Preparing" });
       try {
@@ -122,7 +129,7 @@ function Admin({ user, setPage }) {
       } catch (e) {
         update(item.base, { status: "error", message: e.message });
       }
-    }
+    });
     setPublishing(false);
     setPublished((n) => n + 1);
   };

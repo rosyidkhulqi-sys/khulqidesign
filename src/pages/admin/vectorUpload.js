@@ -175,15 +175,16 @@ export async function publishVector(item, onStep) {
       },
       { bucket: "public", key: `${folder}/preview.jpg`, file: images.preview, contentType: "image/jpeg", label: "Preview" },
     ];
+    // all four files at once, one progress bar for them together
     const total = steps.reduce((sum, s) => sum + s.file.size, 0);
-    let done = 0;
-    for (const step of steps) {
-      await uploadToR2({
-        ...step,
-        onProgress: (p) => onStep(`Uploading ${step.label}`, (done + p * step.file.size) / total),
-      });
-      done += step.file.size;
-    }
+    const sent = steps.map(() => 0);
+    await Promise.all(steps.map((step, i) => uploadToR2({
+      ...step,
+      onProgress: (p) => {
+        sent[i] = p * step.file.size;
+        onStep("Uploading", sent.reduce((a, b) => a + b, 0) / total);
+      },
+    })));
 
     onStep("Saving", 1);
     const { error } = await supabase.from("assets").insert({

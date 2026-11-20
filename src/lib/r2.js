@@ -117,9 +117,18 @@ export async function signUploads(files) {
 // for a fresh one (the first may have expired)
 export async function uploadToR2({ bucket, key, file, contentType, onProgress, signedUrl }) {
   const type = contentType || file.type || "application/octet-stream";
-  if (file.size > MULTIPART_FROM) {
-    await uploadInParts({ bucket, key, file, type, onProgress });
-  } else {
+  // big files go up in parts; if joining them fails, the whole file is sent
+  // the ordinary way instead, so the upload still gets through
+  let whole = file.size <= MULTIPART_FROM;
+  if (!whole) {
+    try {
+      await uploadInParts({ bucket, key, file, type, onProgress });
+    } catch {
+      whole = true;
+      onProgress?.(0);
+    }
+  }
+  if (whole) {
     let ready = signedUrl;
     await withRetries(
       async () => {

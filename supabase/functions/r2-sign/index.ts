@@ -229,14 +229,20 @@ Deno.serve(async (req) => {
     const list = await r2.fetch(`${objectUrl}?${idQuery}&max-parts=1000`, { method: "GET" });
     const xml = await list.text();
     if (!list.ok) return reply({ error: `R2 said ${list.status}` }, 502, origin);
-    const parts = [...xml.matchAll(/<Part>[\s\S]*?<PartNumber>(\d+)<\/PartNumber>[\s\S]*?<ETag>([^<]+)<\/ETag>[\s\S]*?<\/Part>/g)]
-      .map((m) => ({ n: Number(m[1]), etag: m[2] }))
+    // each <Part> on its own, whatever order its fields come in
+    const tag = (block: string, name: string) => block.match(new RegExp(`<${name}>([^<]*)</${name}>`))?.[1] ?? "";
+    const parts = [...xml.matchAll(/<Part>([\s\S]*?)<\/Part>/g)]
+      .map((m) => ({ n: Number(tag(m[1], "PartNumber")), etag: tag(m[1], "ETag").replace(/&quot;/g, '"') }))
+      .filter((p) => p.n > 0 && p.etag)
       .sort((a, b) => a.n - b.n);
     if (!parts.length) return reply({ error: "no parts uploaded" }, 400, origin);
-    const done = `<CompleteMultipartUpload>${parts.map((p) => `<Part><PartNumber>${p.n}</PartNumber><ETag>${p.etag}</ETag></Part>`).join("")}</CompleteMultipartUpload>`;
+    const done = `<CompleteMultipartUpload>${parts.map((p) => `<Part><PartNumber>${p.n}</PartNumber><ETag>${p.etag.replace(/"/g, "&quot;")}</ETag></Part>`).join("")}</CompleteMultipartUpload>`;
     const res = await r2.fetch(`${objectUrl}?${idQuery}`, { method: "POST", body: done, headers: { "Content-Type": "application/xml" } });
     const answer = await res.text();
-    if (!res.ok || answer.includes("<Error>")) return reply({ error: `R2 couldn't join the parts (${res.status})` }, 502, origin);
+    if (!res.ok || answer.includes("<Error>")) {
+      const why = [tag(answer, "Code"), tag(answer, "Message")].filter(Boolean).join(": ");
+      return reply({ error: `R2 couldn't join the parts (${res.status}${why ? `, ${why}` : ""})` }, 502, origin);
+    }
     return reply({ ok: true, parts: parts.length }, 200, origin);
   }
 

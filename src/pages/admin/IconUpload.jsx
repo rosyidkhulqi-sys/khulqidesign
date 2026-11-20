@@ -4,6 +4,7 @@ import BatchField from "./BatchField";
 import { openBatch } from "./batches";
 import KeywordChips from "./KeywordChips";
 import { clearDraft, loadDraft, saveDraft } from "../../lib/drafts";
+import { runPool } from "../../lib/uploadPool";
 import {
   GENERIC_ICON_WORDS,
   ICON_CATEGORIES,
@@ -221,10 +222,8 @@ function IconUpload({ onPublished }) {
     // every upload link of the batch in one call; if that fails, each icon
     // simply signs its own links as before
     const plans = await planIcons(queue).catch(() => ({}));
-    let next = 0;
-    const worker = async () => {
-      while (next < queue.length) {
-        const item = queue[next++];
+    const worker = async (item) => {
+      {
         update(item.key, { message: "Preparing" });
         try {
           const code = await publishIcon(
@@ -242,7 +241,7 @@ function IconUpload({ onPublished }) {
     };
     let published = 0;
     let failed = 0;
-    await Promise.all(Array.from({ length: Math.min(ICONS_AT_ONCE, queue.length) }, worker));
+    await runPool(queue, ICONS_AT_ONCE, worker);
     // as on The Noun Project: the published cards go, a Done note stays, and
     // only icons that failed are left to try again
     setItems((list) => list.filter((it) => it.status !== "done"));
