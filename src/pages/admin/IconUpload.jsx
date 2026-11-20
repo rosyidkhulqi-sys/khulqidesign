@@ -153,7 +153,7 @@ function IconUpload({ onPublished }) {
       const icons = await iconsOfSet(source.id);
       const style = capitalize(draft.style);
       const swap = (text) => (text ?? "").replace(/\b(outline|glyph|flat|gradient|hand-drawn|hand drawn)\b/gi, style);
-      setDraft((d) => ({
+      if (!chosen) setDraft((d) => ({
         ...d,
         name: swap(source.name),
         description: swap(source.description),
@@ -168,8 +168,9 @@ function IconUpload({ onPublished }) {
       setItems((list) => list.map((it) => {
         if (it.status === "done") return it;
         const twin = twinOf(it);
-        if (!twin) return { ...it, license: source.license ?? it.license };
-        return { ...it, name: twin.title, keywords: (twin.keywords ?? []).join(", "), license: source.license ?? it.license };
+        const license = chosen ? it.license : source.license ?? it.license;
+        if (!twin) return { ...it, license };
+        return { ...it, name: twin.title, keywords: (twin.keywords ?? []).join(", "), license };
       }));
       setError(null);
       setCopyNote(`Copied from ${source.name}: ${matched} of ${items.length} icons matched by file name.`);
@@ -281,34 +282,36 @@ function IconUpload({ onPublished }) {
             </select>
           </label>
 
+          {sets.length > 0 && !publishing && (
+            <div className="ad-copy">
+              {/* type part of a published set's name, pick it: its details are copied
+                (into an existing set: only the icons' names and keywords) */}
+              <input
+                list="ad-copy-sets"
+                value={copyQuery}
+                disabled={copying}
+                placeholder={copying ? "Copying…" : chosen ? "Copy icon names and keywords from another set: type its name or code" : "Copy details from a published set: type its name or code"}
+                aria-label="Copy details from a set"
+                onChange={(e) => {
+                  const text = e.target.value;
+                  const hit = sets.find((s) => setLabel(s) === text);
+                  if (hit) {
+                    setCopyQuery("");
+                    copyFrom(hit.id);
+                  } else {
+                    setCopyQuery(text);
+                  }
+                }}
+              />
+              <datalist id="ad-copy-sets">
+                {sets.filter((s) => s.id !== chosen?.id).map((s) => <option key={s.id} value={setLabel(s)} />)}
+              </datalist>
+              {copyNote && <span>{copyNote}</span>}
+            </div>
+          )}
+
           {!chosen && (
             <div className="ad-set-form">
-              {sets.length > 0 && !lockSet && (
-                <div className="ad-copy">
-                  {/* type part of a published set's name, pick it: its details are copied */}
-                  <input
-                    list="ad-copy-sets"
-                    value={copyQuery}
-                    disabled={copying}
-                    placeholder={copying ? "Copying…" : "Copy details from a published set: type its name or code"}
-                    aria-label="Copy details from a set"
-                    onChange={(e) => {
-                      const text = e.target.value;
-                      const hit = sets.find((s) => setLabel(s) === text);
-                      if (hit) {
-                        setCopyQuery("");
-                        copyFrom(hit.id);
-                      } else {
-                        setCopyQuery(text);
-                      }
-                    }}
-                  />
-                  <datalist id="ad-copy-sets">
-                    {sets.map((s) => <option key={s.id} value={setLabel(s)} />)}
-                  </datalist>
-                  {copyNote && <span>{copyNote}</span>}
-                </div>
-              )}
               <input placeholder="Set name, e.g. Shopping & Promo" value={draft.name} maxLength={60} disabled={lockSet}
                      onChange={(e) => setDraft({ ...draft, name: e.target.value })} aria-label="Set name" />
               <div className="ad-row">
