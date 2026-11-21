@@ -4,13 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import "../vectors/Vectors.css";
 import "./About.css";
 import Breadcrumb from "../../components/Breadcrumb";
+import { fetchAssetCounts } from "../../lib/assetCounts";
 
-// [final value, what it counts up from, what follows the number, label]
-const facts = [
+// [final value, what it counts up from, what follows the number, label];
+// "live" is every published asset, counted by the database (null until it
+// arrives), written as Home writes it: 582, 1.2K+, 27K+
+const facts = (live) => [
   // a year stays still: starting from itself, it has nothing to count
   [2018, 2018, "", "Creating digital assets since"],
-  // placeholder until the real count comes from the database
-  [34, 0, "K+", "Design assets"],
+  live == null ? [null, 0, "", "Design assets"]
+    : live < 1000 ? [live, 0, "", "Design assets"]
+    : live < 10000 ? [Math.floor(live / 100) / 10, 0, "K+", "Design assets"]
+    : [Math.floor(live / 1000), 0, "K+", "Design assets"],
   [5, 0, "", "Asset types in one library"],
   [100, 0, "%", "Of our assets made in-house"],
 ];
@@ -35,7 +40,9 @@ function CountUp({ to, from, suffix }) {
         const t = Math.min(1, (now - start) / COUNT_MS);
         // fast at first, settling onto the final number
         const eased = 1 - (1 - t) ** 3;
-        setValue(Math.round(from + (to - from) * eased));
+        // whole numbers count in whole steps; 1.2 counts in tenths
+        const step = Number.isInteger(to) ? 1 : 10;
+        setValue(Math.round((from + (to - from) * eased) * step) / step);
         if (t < 1) frame = requestAnimationFrame(tick);
       };
       frame = requestAnimationFrame(tick);
@@ -51,7 +58,7 @@ function CountUp({ to, from, suffix }) {
     <>
       {/* screen readers get the final number, not every step */}
       <span className="home-sr-only">{to}{suffix}</span>
-      <span ref={box} aria-hidden="true">{value}{suffix}</span>
+      <span ref={box} aria-hidden="true">{Number.isInteger(to) ? value : value.toFixed(1)}{suffix}</span>
     </>
   );
 }
@@ -108,6 +115,18 @@ function Glyph({ name }) {
 }
 
 function About({ setPage }) {
+  // every published asset, live from the database
+  const [live, setLive] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    fetchAssetCounts()
+      .then((c) => alive && setLive(Object.values(c).reduce((a, b) => a + b, 0)))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   const go = (page) => () => {
     setPage(page);
     window.scrollTo(0, 0);
@@ -137,9 +156,9 @@ function About({ setPage }) {
 
       <div className="ab-facts">
         <dl>
-          {facts.map(([to, from, suffix, label]) => (
+          {facts(live).map(([to, from, suffix, label]) => (
             <div key={label}>
-              <dd><CountUp to={to} from={from} suffix={suffix} /></dd>
+              <dd>{to == null ? " " : <CountUp to={to} from={from} suffix={suffix} />}</dd>
               <dt>{label}</dt>
             </div>
           ))}
