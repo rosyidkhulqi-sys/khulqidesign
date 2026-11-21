@@ -78,6 +78,29 @@
   transition: border-color 0.15s, color 0.15s;
 }
 .lc-credits dd a:hover { border-color: rgba(255, 255, 255, 0.35); color: var(--white); }
+
+/* the open source list, folded until opened */
+.lc-oss { margin-top: 20px; }
+.lc-oss summary { width: fit-content; color: #d6d7d8; font-size: 14px; font-weight: 600; cursor: pointer; }
+.lc-oss summary:hover { color: var(--white); }
+.lc-oss .lc-credits-intro { margin-top: 10px; }
+.lc-oss ul { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.lc-oss li {
+  display: grid;
+  grid-template-columns: 220px 1fr auto;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  color: #aeb0b2;
+  font-size: 13.5px;
+}
+.lc-oss li a, .lc-oss-name { color: #e6e7e8; font-weight: 600; text-decoration: none; }
+.lc-oss li a:hover { color: var(--white); text-decoration: underline; }
+.lc-oss li em { color: #d6d7d8; font-style: normal; font-size: 12.5px; }
+@media (max-width: 640px) {
+  .lc-oss li { grid-template-columns: 1fr auto; }
+  .lc-oss li > span:not(.lc-oss-name) { grid-column: 1 / -1; grid-row: 2; }
+}
 @media (max-width: 640px) {
   .lc-credits dl > div { grid-template-columns: 1fr; gap: 4px; }
 }

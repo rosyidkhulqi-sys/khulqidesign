@@ -7,6 +7,7 @@
 import "../vectors/Vectors.css";
 import "./License.css";
 import Breadcrumb from "../../components/Breadcrumb";
+import openSource from "../../data/openSource.json";
 
 const UPDATED = "November 2026";
 
@@ -153,6 +154,26 @@ function License({ setPage }) {
             </div>
           ))}
         </dl>
+
+        {/* every library the site ships, listed automatically at each build */}
+        <details className="lc-oss">
+          <summary>Open source libraries ({openSource.length + 1})</summary>
+          <p className="lc-credits-intro">The website and Create are built with these. Each keeps its own license.</p>
+          <ul>
+            {openSource.map((lib) => (
+              <li key={lib.name}>
+                <a href={lib.url} target="_blank" rel="noopener noreferrer">{lib.name}</a>
+                <span>{lib.version}{lib.author ? ` · ${lib.author}` : ""}</span>
+                <em>{lib.license}</em>
+              </li>
+            ))}
+            <li>
+              <span className="lc-oss-name">Fonts in Create</span>
+              <span>58 families from Google Fonts, served by us</span>
+              <em>OFL-1.1</em>
+            </li>
+          </ul>
+        </details>
       </div>
 
       <div className="lc-foot">
