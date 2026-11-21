@@ -40,3 +40,6 @@ public/trial-logos/*
 
 # originals for the Home showcase stay local; only the small WebP versions ship
 public/showcase/M *
+
+# tutorial recorder output, if ever written inside the repo
+scripts/tutorials/out/
