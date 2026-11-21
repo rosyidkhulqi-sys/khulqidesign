@@ -28,6 +28,7 @@ const contact = [
   ["mailto:khulqidesign@mail.com", "Email"],
   ["https://wa.me/6285236752860", "WhatsApp"],
   ["https://www.instagram.com/khulqidesign/", "Instagram"],
+  ["https://www.youtube.com/@khulqidesign", "YouTube"],
   ["https://www.pinterest.com/khulqidesign/", "Pinterest"],
 ];
 
