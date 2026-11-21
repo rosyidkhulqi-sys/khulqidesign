@@ -22,8 +22,11 @@ function KeywordChips({ value, onChange, max = 50, min = 10, compact = false, ba
   const [copied, setCopied] = useState(false);
   const input = useRef(null);
 
+  // a keyword is at most three words; anything longer is a list copied from
+  // another site with only spaces between, so each word becomes a chip
   const add = (text) => {
-    const next = [...new Set([...value, ...parseKeywords(text)])].slice(0, max);
+    const words = parseKeywords(text.replace(/\t/g, ",")).flatMap((k) => (k.split(/\s+/).length > 3 ? k.split(/\s+/) : [k]));
+    const next = [...new Set([...value, ...words])].slice(0, max);
     onChange(next);
     setDraft("");
   };
@@ -95,6 +98,14 @@ function KeywordChips({ value, onChange, max = 50, min = 10, compact = false, ba
               else setDraft(e.target.value);
             }}
             onKeyDown={onKey}
+            onPaste={(e) => {
+              // a pasted list becomes chips at once, no Enter needed
+              const text = e.clipboardData.getData("text");
+              if (/[,;\n\t]/.test(text) || text.trim().split(/\s+/).length > 3) {
+                e.preventDefault();
+                add(draft + " " + text);
+              }
+            }}
             onBlur={() => draft.trim() && add(draft)}
             placeholder={value.length >= max ? "Limit reached" : compact ? "Add, press Enter" : "Add keyword, press Enter"}
             disabled={value.length >= max}

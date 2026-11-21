@@ -600,7 +600,11 @@
 /* a short note under a choice */
 .ad-hint { margin: 4px 0 0; color: #9aa0a8; font-size: 13px; line-height: 1.5; }
 .ad-hint b { color: #d6d7d8; font-weight: 600; }
-.kw.is-compact .kw-head { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* on a narrow card the label gives way first; the count and Copy stay whole */
+.kw.is-compact .kw-head { gap: 8px; white-space: nowrap; }
+.kw.is-compact .kw-head > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.kw.is-compact .kw-head > span:last-child { flex: none; }
+.kw.is-compact .kw-copy { margin-left: 8px; }
 
 /* after publishing: one Done note, as on The Noun Project */
 .ad-done {
