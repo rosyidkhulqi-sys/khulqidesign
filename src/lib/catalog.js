@@ -121,16 +121,30 @@ export function toIcon(row) {
   };
 }
 
-// Published icons and the sets they belong to, ready for the library pages.
-export async function fetchIconCatalog() {
-  const [iconRes, setRes] = await Promise.all([
-    supabase
+// every published icon: the database hands out at most 1000 rows at a time,
+// so it is asked page after page until a page comes back short
+const ICON_PAGE = 1000;
+async function fetchAllIcons() {
+  const all = [];
+  for (let from = 0; ; from += ICON_PAGE) {
+    const { data, error } = await supabase
       .from("assets")
       .select("id, code, title, keywords, category, style, set_id, license, thumb_key, downloads, published_at, created_at")
       .eq("type", "icon")
       .eq("status", "published")
       .order("published_at", { ascending: false })
-      .limit(1000),
+      .order("id")
+      .range(from, from + ICON_PAGE - 1);
+    if (error) return { data: null, error };
+    all.push(...(data ?? []));
+    if (!data || data.length < ICON_PAGE) return { data: all, error: null };
+  }
+}
+
+// Published icons and the sets they belong to, ready for the library pages.
+export async function fetchIconCatalog() {
+  const [iconRes, setRes] = await Promise.all([
+    fetchAllIcons(),
     supabase
       .from("asset_sets")
       .select("id, name, style, license, description, created_at")
