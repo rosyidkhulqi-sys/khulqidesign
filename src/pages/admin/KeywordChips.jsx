@@ -59,6 +59,10 @@ function KeywordChips({ value, onChange, max = 50, min = 10, compact = false, ba
         <span>{label}</span>
         <span className={few || warned ? "is-few" : ""}>
           {warned ? `${warned} to check · ` : ""}{value.length} ({min}–{max})
+          {/* the small boxes copy too: keywords pasted on another site */}
+          {compact && value.length > 0 && (
+            <button type="button" className="kw-copy" onClick={copy}>{copied ? "Copied" : "Copy"}</button>
+          )}
         </span>
       </div>
       <div className="kw-box" onClick={() => !disabled && input.current?.focus()}>

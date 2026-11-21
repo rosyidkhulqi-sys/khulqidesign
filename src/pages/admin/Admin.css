@@ -312,6 +312,8 @@
 .kw-tools button { padding: 0; border: 0; background: none; color: #9aa0a8; font: inherit; font-size: 13px; cursor: pointer; }
 .kw-tools button:hover:not(:disabled) { color: var(--white); }
 .kw-tools button:disabled { opacity: 0.4; cursor: default; }
+.kw-copy { margin-left: 10px; padding: 0; border: 0; background: none; color: #9aa0a8; font: inherit; font-weight: 600; cursor: pointer; }
+.kw-copy:hover { color: var(--white); }
 .ad-edit input,
 .ad-edit select,
 .ad-edit textarea {
