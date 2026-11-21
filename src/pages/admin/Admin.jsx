@@ -30,6 +30,7 @@ const TABS = [
 ];
 import {
   pairFiles,
+  unzipFiles,
   publishVector,
   readMetadata,
   shortTitle,
@@ -65,7 +66,14 @@ function Admin({ user, setPage }) {
   const update = (base, patch) =>
     setItems((list) => list.map((it) => (it.base === base ? { ...it, ...patch } : it)));
 
-  const addFiles = async (fileList) => {
+  const addFiles = async (dropped) => {
+    let fileList;
+    try {
+      fileList = await unzipFiles(dropped);
+    } catch {
+      setBatchError("A ZIP file couldn't be opened; drop its EPS and JPG files instead");
+      fileList = dropped.filter((f) => !/\.zip$/i.test(f.name));
+    }
     const pairs = pairFiles(fileList).filter((p) => !items.some((it) => it.base === p.base));
     const fresh = pairs.map((p) => {
       const thumb = p.jpg ? URL.createObjectURL(p.jpg) : null;
@@ -214,17 +222,17 @@ function Admin({ user, setPage }) {
           addFiles([...e.dataTransfer.files]);
         }}
       >
-        <strong>Drop EPS and JPG files here</strong>
+        <strong>Drop EPS and JPG files, or ZIPs of them, here</strong>
         <span>
-          Files with the same name become one vector. Title, description and keywords come from
-          the JPG's metadata, as on Adobe Stock and Shutterstock.
+          Files with the same name become one vector, loose or inside a ZIP. Title, description
+          and keywords come from the JPG's metadata, as on Adobe Stock and Shutterstock.
         </span>
         <button onClick={() => input.current?.click()}>Choose files</button>
         <input
           ref={input}
           type="file"
           multiple
-          accept=".eps,.jpg,.jpeg"
+          accept=".eps,.jpg,.jpeg,.zip"
           hidden
           onChange={(e) => {
             addFiles([...e.target.files]);

@@ -11,6 +11,29 @@ import { uploadToR2 } from "../../lib/r2";
 const baseName = (name) => name.replace(/\.[^.]+$/, "");
 const extOf = (name) => name.split(".").pop().toLowerCase();
 
+// ZIP files (as VectorStock and the other stock sites take them) are opened
+// in the browser: the EPS and JPG files inside join the loose ones, by their
+// own names. Mac's __MACOSX copies and folders are skipped.
+export async function unzipFiles(fileList) {
+  const out = [];
+  for (const file of fileList) {
+    if (extOf(file.name) !== "zip") {
+      out.push(file);
+      continue;
+    }
+    const { default: JSZip } = await import("jszip");
+    const zip = await JSZip.loadAsync(file);
+    for (const entry of Object.values(zip.files)) {
+      const name = entry.name.split("/").pop();
+      if (entry.dir || entry.name.startsWith("__MACOSX/") || name.startsWith("._")) continue;
+      if (!["eps", "jpg", "jpeg"].includes(extOf(name))) continue;
+      const type = extOf(name) === "eps" ? "application/postscript" : "image/jpeg";
+      out.push(new File([await entry.async("blob")], name, { type, lastModified: entry.date?.getTime() }));
+    }
+  }
+  return out;
+}
+
 // EPS + JPG with the same name make one vector; anything else is reported
 export function pairFiles(fileList) {
   const groups = new Map();
