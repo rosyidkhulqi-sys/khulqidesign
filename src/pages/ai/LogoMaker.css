@@ -79,6 +79,17 @@
 .lg-error { margin: 0; color: #ff8b92; font-size: 13.5px; }
 .lg-note { margin: 0; color: #7d828a; font-size: 12.5px; line-height: 1.5; }
 
+/* big screens: larger, like the rest of the AI page */
+@media (min-width: 1600px) {
+  .lg { gap: 22px; }
+  .lg-form label span { font-size: 14px; }
+  .lg-form input, .lg-go { height: 54px; font-size: 17px; }
+  .lg-row > span { width: 68px; font-size: 15px; }
+  .lg-row button { height: 40px; padding: 0 18px; font-size: 15px; }
+  .lg-grid { gap: 16px; }
+  .lg-bar > span, .lg-note { font-size: 14px; }
+}
+
 @media (max-width: 900px) {
   .lg-form { grid-template-columns: 1fr 1fr; }
   .lg-grid { grid-template-columns: repeat(2, 1fr); }
