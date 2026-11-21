@@ -128,26 +128,24 @@
   .ai-generate { width: 100%; }
 }
 
-/* big screens (a 4K monitor, a wide desktop): the same layout, larger, as
-   the big AI sites do, so the prompt and the cards don't look tiny */
-@media (min-width: 1600px) {
-  .ai-prompt { margin-bottom: 40px; padding: 22px 24px; border-radius: 18px; }
-  .ai-kinds { gap: 8px; margin-bottom: 18px; }
-  .ai-kinds button { height: 40px; padding: 0 18px; font-size: 15px; }
-  .ai-prompt-row { gap: 14px; }
-  .ai-prompt-row input { height: 64px; font-size: 19px; }
-  .ai-generate { height: 52px; padding: 0 26px; border-radius: 12px; font-size: 16px; }
-  .ai-note { margin-top: 14px; font-size: 13.5px; }
-  .ai-section { margin-bottom: 16px; font-size: 13px; }
-  .ai-tools { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
-  .ai-tool { gap: 10px; padding: 26px; border-radius: 16px; }
-  .ai-tool-icon { width: 48px; height: 48px; border-radius: 12px; }
-  .ai-tool strong { font-size: 18px; }
-  .ai-tool .ai-soon { top: 24px; right: 24px; }
-  .ai-tool p { font-size: 15px; }
-  .ai-from { font-size: 13.5px; }
-  .ai-foot { margin-top: 30px; font-size: 14.5px; }
-}
+/* fluid sizes: the laptop size up to a 1280 px wide window, then growing
+   smoothly with the screen up to 2200 px (a 4K or 5K monitor), where they
+   stop. clamp(laptop size, growth, biggest size); phones keep the laptop size */
+.ai-prompt { margin-bottom: clamp(28px, 11.3px + 1.3vw, 40px); padding: clamp(14px, -2.7px + 1.3vw, 26px); border-radius: clamp(14px, 8.43px + 0.43vw, 18px); }
+.ai-kinds { margin-bottom: clamp(12px, 3.65px + 0.65vw, 18px); }
+.ai-kinds button { height: clamp(32px, 18.09px + 1.09vw, 42px); padding: 0 clamp(14px, 8.43px + 0.43vw, 18px); font-size: clamp(13px, 8.83px + 0.33vw, 16px); }
+.ai-prompt-row input { height: clamp(44px, 10.61px + 2.61vw, 68px); font-size: clamp(15px, 6.65px + 0.65vw, 21px); }
+.ai-generate { height: clamp(40px, 17.74px + 1.74vw, 56px); padding: 0 clamp(18px, 4.09px + 1.09vw, 28px); font-size: clamp(14px, 9.83px + 0.33vw, 17px); }
+.ai-note { margin-top: clamp(10px, 4.43px + 0.43vw, 14px); font-size: clamp(12px, 8.52px + 0.27vw, 14.5px); }
+.ai-section { margin-bottom: clamp(12px, 6.43px + 0.43vw, 16px); font-size: clamp(12px, 9.91px + 0.16vw, 13.5px); }
+.ai-tools { grid-template-columns: repeat(auto-fill, minmax(clamp(250px, 124.78px + 9.78vw, 340px), 1fr)); gap: clamp(12px, 6.43px + 0.43vw, 16px); }
+.ai-tool { padding: clamp(18px, 4.09px + 1.09vw, 28px); border-radius: clamp(12px, 6.43px + 0.43vw, 16px); }
+.ai-tool-icon { width: clamp(40px, 23.3px + 1.3vw, 52px); height: clamp(40px, 23.3px + 1.3vw, 52px); }
+.ai-tool strong { font-size: clamp(15px, 8.04px + 0.54vw, 20px); }
+.ai-tool .ai-soon { top: clamp(18px, 9.65px + 0.65vw, 24px); right: clamp(18px, 9.65px + 0.65vw, 24px); }
+.ai-tool p { font-size: clamp(13px, 8.83px + 0.33vw, 16px); }
+.ai-from { font-size: clamp(12px, 8.52px + 0.27vw, 14.5px); }
+.ai-foot { margin-top: clamp(22px, 10.87px + 0.87vw, 30px); font-size: clamp(13px, 10.22px + 0.22vw, 15px); }
 
 /* model credits */
 .ai-credits { margin-top: 6px; font-size: 12px; opacity: 0.75; }
