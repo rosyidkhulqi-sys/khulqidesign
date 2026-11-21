@@ -1,9 +1,13 @@
-// The fonts in Create. Every web font here is from Google Fonts and was checked
-// to carry the SIL Open Font License, which allows commercial use, also inside
-// a paid product. Add only OFL fonts (github.com/google/fonts, folder ofl/).
-// Google serves the files, so we don't redistribute them, and a font file must
-// never be sold or offered for download on its own.
+// The fonts in Create. Every web font here comes from Google Fonts and was
+// checked to carry the SIL Open Font License, which allows commercial use and
+// serving the files ourselves, also inside a paid product. Add only OFL fonts
+// (github.com/google/fonts, folder ofl/). A font file must never be sold or
+// offered for download on its own.
+// We serve them from our CDN (fonts/create.css and fonts/create/*.woff2 on R2,
+// latin and latin-ext, 400 and 700), so visitors' addresses aren't sent to
+// Google. A new font here needs its files and CSS uploaded there too.
 // A font's files only download once a design or the font list shows it.
+import { PUBLIC_URL } from "../../lib/r2";
 
 const GOOGLE = [
   { name: "Sans", fonts: [
@@ -35,17 +39,12 @@ const SYSTEM = ["Arial", "Helvetica", "Georgia", "Times New Roman", "Courier New
 
 export const fontGroups = [...GOOGLE, { name: "On your device", fonts: SYSTEM }];
 
-// already linked for the whole site in index.html
+// already loaded for the whole site (src/styles/fonts.js)
 const SITE_FONTS = ["Space Grotesk", "DM Sans", "Instrument Serif"];
 
 const webFonts = new Set(GOOGLE.flatMap((g) => g.fonts));
 
-const sheetUrl = () => {
-  const families = [...webFonts]
-    .filter((f) => !SITE_FONTS.includes(f))
-    .map((f) => `family=${f.replace(/ /g, "+")}:wght@400;700`);
-  return `https://fonts.googleapis.com/css2?${families.join("&")}&display=swap`;
-};
+const sheetUrl = () => `${PUBLIC_URL}/fonts/create.css`;
 
 let sheet;
 
