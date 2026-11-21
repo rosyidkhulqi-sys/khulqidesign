@@ -55,7 +55,7 @@ const notes = [
   ],
   [
     "Exclusive logos",
-    "Bought once by one buyer. The logo is taken off sale, the full files and rights pass to you, and you may register it as a trademark. We may still show it in our portfolio, marked Sold.",
+    "Bought once by one buyer. The logo is taken off sale, the full files and rights pass to you, and you may register it as a trademark (whether an office accepts it isn't something we can promise, so search the register first). We may still show it in our portfolio, marked Sold.",
   ],
   [
     "Footage",
