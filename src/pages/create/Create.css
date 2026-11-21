@@ -88,6 +88,9 @@
 }
 
 .ct-export { margin-left: auto; }
+/* Tutorial sits just left of Download */
+.ct-tutorial { margin-left: auto; }
+.ct-tutorial + .ct-export { margin-left: 0; }
 
 .ct-name {
   width: 220px;

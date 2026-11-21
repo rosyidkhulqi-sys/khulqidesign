@@ -21,6 +21,8 @@ import {
   util,
 } from "fabric";
 import Icon from "./CreateIcons";
+import TutorialModal from "../../components/TutorialModal";
+import { tutorials } from "../../data/tutorials";
 import ElementsPanel, { PremiumMark } from "./CreateElements";
 import { qrSvg, qrText } from "./qrCode";
 import { QrEdit } from "./CreateQr";
@@ -217,6 +219,8 @@ function Create({ draft, clearDraft, user = null }) {
   // the crop in progress: { apply(), cancel() }, or null
   const cropRef = useRef(null);
   const [cropping, setCropping] = useState(false);
+  // the "Getting started" video, in a window over the editor
+  const [showTutorial, setShowTutorial] = useState(false);
   const fileInput = useRef(null);
   // the file picker behind a photo frame's Add photo / Replace photo
   const frameInput = useRef(null);
@@ -2609,6 +2613,11 @@ function Create({ draft, clearDraft, user = null }) {
 
           <span className="ct-size">{board.w} × {board.h} px</span>
 
+          <button className="ct-btn ct-tutorial" onClick={() => setShowTutorial(true)} title={`${tutorials.create.title} (${tutorials.create.duration})`}>
+            <Icon name="play" size={14} />
+            Tutorial
+          </button>
+
           <div className="ct-menu ct-export">
             <button
               className="ct-btn primary"
@@ -3597,6 +3606,8 @@ function Create({ draft, clearDraft, user = null }) {
       )}
 
       {/* NEW DESIGN */}
+      {showTutorial && <TutorialModal tutorial={tutorials.create} onClose={() => setShowTutorial(false)} />}
+
       {showNew && (
         <div className="create-modal-overlay">
           <div className="create-modal">

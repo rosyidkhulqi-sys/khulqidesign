@@ -1,0 +1,84 @@
+.tm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(4px);
+}
+
+.tm {
+  position: relative;
+  width: min(1100px, 100%);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.tm-player {
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+.tm-player iframe { display: block; width: 100%; height: 100%; border: 0; }
+
+.tm-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 26px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.tm-foot strong { display: block; font-size: 17px; font-weight: 600; }
+.tm-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.tm-more {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.tm-more:hover { background: rgba(255, 255, 255, 0.12); }
+
+/* outside the window, as Magnific has it, clear of the player's own icons */
+.tm-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 2;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+.tm-close:hover { background: rgba(255, 255, 255, 0.18); }
+
+@media (max-width: 600px) {
+  .tm-overlay { padding: 64px 12px 12px; }
+  .tm-close { top: 12px; right: 12px; }
+  .tm-foot { flex-direction: column; align-items: flex-start; padding: 16px; }
+}
