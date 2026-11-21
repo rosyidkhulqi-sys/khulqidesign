@@ -1141,6 +1141,74 @@ function Create({ draft, clearDraft, user = null }) {
     render();
   };
 
+  /* ---------- words inside a grouped element (infographics) ---------- */
+
+  // the text inside a group (at any depth) under a point on the canvas. The
+  // point is taken into the text's own space (its stored corners go stale
+  // when the group moves), with a little slack around short labels
+  const textAt = (group, point) => {
+    for (const o of [...group.getObjects()].reverse()) {
+      if (o instanceof Group) {
+        const hit = textAt(o, point);
+        if (hit) return hit;
+      } else if (typeof o.text === "string") {
+        const p = point.transform(util.invertTransform(o.calcTransformMatrix()));
+        const slack = o.fontSize * 0.25;
+        if (Math.abs(p.x) <= o.width / 2 + slack && Math.abs(p.y) <= o.height / 2 + slack) return o;
+      }
+    }
+    return null;
+  };
+
+  // double-click a label in an infographic: it is typed over in place, the
+  // element stays one group (no Ungroup needed)
+  const editGroupText = (group, text) => {
+    const canvas = fc.current;
+    const d = util.qrDecompose(text.calcTransformMatrix());
+    const box = new Textbox(text.text, {
+      width: Math.max(text.width, text.fontSize * 2),
+      fontFamily: text.fontFamily,
+      fontSize: text.fontSize,
+      fontWeight: text.fontWeight,
+      fontStyle: text.fontStyle,
+      fill: text.fill,
+      textAlign: "center",
+      scaleX: d.scaleX,
+      scaleY: d.scaleY,
+      angle: d.angle,
+      excludeFromExport: true,
+      kdCellEditor: true,
+      hasControls: false,
+      lockMovementX: true,
+      lockMovementY: true,
+    });
+    box.setPositionByOrigin(text.getCenterPoint(), "center", "center");
+    text.set({ opacity: 0 });
+    group.set({ dirty: true });
+    canvas.add(box);
+    canvas.setActiveObject(box);
+    box.enterEditing();
+    box.selectAll();
+    box.on("editing:exited", () => {
+      // the label keeps its center, as the element drew it (centered text)
+      const center = text.getRelativeCenterPoint();
+      text.set({ text: box.text, opacity: 1 });
+      text.initDimensions?.();
+      text.setPositionByOrigin(center, "center", "center");
+      text.setCoords();
+      group.set({ dirty: true });
+      canvas.remove(box);
+      setTimeout(() => {
+        if (canvas.getActiveObject()) return;
+        canvas.setActiveObject(group);
+        setActive(group);
+        canvas.requestRenderAll();
+      });
+      render();
+    });
+    canvas.requestRenderAll();
+  };
+
   // premium: a Premium library item, free to try and Premium to download
   const addImage = async (src, point, premium = false) => {
     const img = await FabricImage.fromURL(src, { crossOrigin: "anonymous" });
@@ -2232,6 +2300,11 @@ function Create({ draft, clearDraft, user = null }) {
       const cell = cellAt(target.kdTable, target.kdTable.tops, target, local);
       if (cell) editCell(target, cell[0], cell[1]);
       return;
+    }
+    // a word inside an element (an infographic's labels): type over it
+    if (target instanceof Group && !target.kdQr && scenePoint) {
+      const text = textAt(target, scenePoint);
+      if (text) return editGroupText(target, text);
     }
     if (framePhoto(target)) startFrameAdjust(target);
     else if (target instanceof FabricImage && !target.kdGhost) startCrop();
