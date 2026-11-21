@@ -118,17 +118,21 @@ Deno.serve(async (req) => {
       return reply({ error: result?.message ?? `download refused (${gate.status})` }, 403, origin);
     }
     if (!validKey(result?.key)) return reply({ error: "file missing" }, 500, origin);
-    const ext = result.key.split(".").pop();
+    // vector originals may be stored gzip-compressed ("….eps.gz"): the
+    // browser fetches and unpacks them, and saves the file under its real name
+    const gzip = result.key.endsWith(".gz");
+    const ext = result.key.replace(/\.gz$/, "").split(".").pop();
     const name = `${result.code}-${String(result.title).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50)}.${ext}`;
+    const type = { eps: "application/postscript", jpg: "image/jpeg", jpeg: "image/jpeg", ai: "application/postscript" }[ext.toLowerCase()];
     const signed = await r2.sign(
       new Request(
         `${objectUrlFor(env("R2_PRIVATE_BUCKET"), result.key)}?X-Amz-Expires=${DOWNLOAD_EXPIRES}` +
-          `&response-content-disposition=${encodeURIComponent(`attachment; filename="${name}"`)}`,
+          (gzip ? "" : `&response-content-disposition=${encodeURIComponent(`attachment; filename="${name}"`)}`),
         { method: "GET" },
       ),
       { aws: { signQuery: true } },
     );
-    return reply({ url: signed.url, filename: name, license: result.license, expiresIn: DOWNLOAD_EXPIRES }, 200, origin);
+    return reply({ url: signed.url, filename: name, gzip, type, license: result.license, expiresIn: DOWNLOAD_EXPIRES }, 200, origin);
   }
 
   // everything else is for admins

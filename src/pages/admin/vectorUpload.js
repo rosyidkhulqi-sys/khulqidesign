@@ -193,11 +193,22 @@ const slug = (s) =>
 
 const newCode = () => `KD-VC-${String(Math.floor(1_000_000 + Math.random() * 9_000_000))}`;
 
+// a file gzip-compressed in the browser: lossless, the buyer's download
+// unpacks it back to the identical file (lib/downloads.js); EPS and the
+// stock JPGs (heavy with metadata) shrink by about half
+async function gzipped(file) {
+  if (typeof CompressionStream !== "function") return null;
+  return new Response(file.stream().pipeThrough(new CompressionStream("gzip"))).blob();
+}
+
 // Upload one pair and publish it. onStep(label, progress 0..1) drives the UI.
 export async function publishVector(item, onStep) {
   const images = await makeImages(item.jpg, item.license === "premium");
   const artboard = (await readArtboard(item.eps)) ?? [images.width, images.height];
   const [w, h] = artboard;
+  // the originals are stored compressed ("….eps.gz"); a browser without
+  // CompressionStream stores them as they are, which downloads handle too
+  const [epsGz, jpgGz] = await Promise.all([gzipped(item.eps), gzipped(item.jpg)]);
 
   // a fresh public code; the unique index catches the rare clash
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -205,8 +216,12 @@ export async function publishVector(item, onStep) {
     const name = slug(item.title);
     const folder = `vectors/${code}`;
     const steps = [
-      { bucket: "private", key: `${folder}/${name}.eps`, file: item.eps, contentType: "application/postscript", label: "EPS" },
-      { bucket: "private", key: `${folder}/${name}.jpg`, file: item.jpg, contentType: "image/jpeg", label: "JPG" },
+      epsGz
+        ? { bucket: "private", key: `${folder}/${name}.eps.gz`, file: epsGz, contentType: "application/gzip", label: "EPS" }
+        : { bucket: "private", key: `${folder}/${name}.eps`, file: item.eps, contentType: "application/postscript", label: "EPS" },
+      jpgGz
+        ? { bucket: "private", key: `${folder}/${name}.jpg.gz`, file: jpgGz, contentType: "application/gzip", label: "JPG" }
+        : { bucket: "private", key: `${folder}/${name}.jpg`, file: item.jpg, contentType: "image/jpeg", label: "JPG" },
       {
         bucket: "public",
         key: `${folder}/thumb.${images.thumb.type === "image/webp" ? "webp" : "jpg"}`,

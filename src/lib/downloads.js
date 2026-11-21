@@ -65,6 +65,15 @@ export async function requestDownload(assetId, format) {
     e.code = code;
     throw e;
   }
+  // vector originals are stored gzip-compressed (lossless, about half the
+  // space): fetched, unpacked in the browser and saved as the original file
+  if (data.gzip) {
+    const res = await fetch(data.url);
+    if (!res.ok || !res.body) throw new Error(`The file couldn't be fetched (${res.status})`);
+    const blob = await new Response(res.body.pipeThrough(new DecompressionStream("gzip"))).blob();
+    saveBlob(new Blob([blob], { type: data.type || "application/octet-stream" }), data.filename);
+    return data;
+  }
   const a = document.createElement("a");
   a.href = data.url;
   a.download = data.filename;
