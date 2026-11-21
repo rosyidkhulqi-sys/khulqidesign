@@ -1,30 +1,31 @@
 // The library cards on Home. desc says what's inside; meta says the formats
 // and what you can do with it here, since editing in the browser is what
 // sets the site apart. Covers come from each library's own files (resized
-// into public/covers/), so a card looks like what it opens.
+// into public/covers/), so a card looks like what it opens. type is the
+// assets.type its count comes from (lib/assetCounts.js); unit names it.
 export const categories = [
   {
-    key: "icons", title: "Icons", image: "/covers/icons.jpg", page: "icons", ready: true, count: "27.000+ assets",
+    key: "icons", title: "Icons", image: "/covers/icons.jpg", page: "icons", ready: true, type: "icon", unit: ["icon", "icons"],
     desc: "Outline, glyph, flat, gradient and hand-drawn icons, single or in sets.",
     meta: "SVG · PNG · Recolor & animate",
   },
   {
-    key: "vectors", title: "Vectors", image: "/covers/vectors.jpg", page: "vectors", ready: true, count: "7.000+ assets",
+    key: "vectors", title: "Vectors", image: "/covers/vectors.jpg", page: "vectors", ready: true, type: "vector", unit: ["vector", "vectors"],
     desc: "Illustrations, backgrounds and seasonal artwork.",
     meta: "EPS · JPG · Free & Premium",
   },
   {
-    key: "logos", title: "Logos", image: "/covers/logos.jpg", page: "logos", ready: true, count: "New",
+    key: "logos", title: "Logos", image: "/covers/logos.jpg", page: "logos", ready: true, type: "logo", unit: ["logo", "logos"],
     desc: "Ready-made logos for brands, from free to exclusive.",
     meta: "Free · Premium · Exclusive",
   },
   {
-    key: "footage", title: "Footage", image: "/covers/footage.jpg", page: "footage", ready: true, count: "96+ clips",
+    key: "footage", title: "Footage", image: "/covers/footage.jpg", page: "footage", ready: true, type: "footage", unit: ["clip", "clips"],
     desc: "Motion backgrounds and loops for video and social.",
     meta: "4K · Full HD · MP4",
   },
   {
-    key: "templates", title: "Templates", image: "/preview3.jpg", page: "templates", ready: true, count: "20+ templates",
+    key: "templates", title: "Templates", image: "/preview3.jpg", page: "templates", ready: true, type: "template", unit: ["template", "templates"],
     desc: "Posters, flyers, stories, thumbnails and slides.",
     meta: "Edit text & colors in Create",
   },

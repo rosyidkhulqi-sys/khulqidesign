@@ -6,6 +6,7 @@ import { SERVICES_OPEN } from "../../data/services";
 import HomeServices from "./HomeServices";
 import "./Home.css";
 import { fetchCovers } from "../../lib/covers";
+import { fetchAssetCounts, formatCount } from "../../lib/assetCounts";
 import HomeShowcase from "./HomeShowcase";
 import HomeAiDemo from "./HomeAiDemo";
 import HomeReel from "./HomeReel";
@@ -183,6 +184,21 @@ function Home({ setPage, user = null }) {
     };
   }, []);
 
+  // how many assets each library really has; nothing shows until they arrive
+  const [counts, setCounts] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    fetchAssetCounts().then((c) => alive && setCounts(c)).catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const total = counts ? Object.values(counts).reduce((a, b) => a + b, 0) : 0;
+  const countLabel = (cat) => {
+    const n = counts?.[cat.type] ?? 0;
+    return n ? `${formatCount(n)} ${cat.unit[n === 1 ? 0 : 1]}` : null;
+  };
+
   useEffect(() => {
     if (!user) return;
     supabase.from("profiles").select("plan").eq("id", user.id).maybeSingle()
@@ -261,7 +277,10 @@ function Home({ setPage, user = null }) {
         </div>
 
         <div className="home-hero-bottom">
-          <div className="home-counter"><strong>34K+</strong><span>Original assets</span></div>
+          {/* every published asset, counted live (fades in when it arrives) */}
+          <div className={`home-counter ${total ? "" : "is-waiting"}`}>
+            <strong>{total ? formatCount(total) : " "}</strong><span>Original assets</span>
+          </div>
           <a className="home-scroll-cue" href="#assets"><span>Explore assets</span><Arrow /></a>
         </div>
       </section>
@@ -300,7 +319,7 @@ function Home({ setPage, user = null }) {
                 ) : (
                   <img src={covers[cat.key]?.[0] ?? cat.image} alt="" loading="lazy" />
                 )}
-                <span className="home-asset-count">{cat.count}</span>
+                {countLabel(cat) && <span className="home-asset-count">{countLabel(cat)}</span>}
                 {cat.key === "templates" && <span className="home-edit-hint">Edit in Create →</span>}
               </button>
               <div className="home-asset-details">

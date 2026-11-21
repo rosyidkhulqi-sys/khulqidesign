@@ -223,7 +223,9 @@
   padding: 0 var(--page-x) 3vw;
 }
 
-.home-counter { display: flex; flex-direction: column; }
+.home-counter { display: flex; flex-direction: column; transition: opacity 0.4s; }
+/* the live count hasn't arrived yet: hidden, keeping its place */
+.home-counter.is-waiting { opacity: 0; }
 .home-counter strong { font-size: 26px; }
 .home-counter span { color: var(--muted); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
 
