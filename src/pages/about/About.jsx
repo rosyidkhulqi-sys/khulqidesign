@@ -16,7 +16,8 @@ const facts = (live) => [
     : live < 1000 ? [live, 0, "", "Design assets"]
     : live < 10000 ? [Math.floor(live / 100) / 10, 0, "K+", "Design assets"]
     : [Math.floor(live / 1000), 0, "K+", "Design assets"],
-  [5, 0, "", "Asset types in one library"],
+  // icons, vectors, logos, footage, templates and Create's elements
+  [6, 0, "", "Asset types in one library"],
   [100, 0, "%", "Of our assets made in-house"],
 ];
 
