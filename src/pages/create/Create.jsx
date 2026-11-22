@@ -222,8 +222,30 @@ function Create({ draft, clearDraft, user = null }) {
   // the "Getting started" video, in a window over the editor
   const [showTutorial, setShowTutorial] = useState(false);
   const fileInput = useRef(null);
-  // files dragged over the Uploads panel (they're added there, not placed)
+  // files dragged over the Uploads panel or its tab (they're added there, not placed)
   const [uploadDrop, setUploadDrop] = useState(false);
+  const hasFiles = (e) => [...e.dataTransfer.types].includes("Files");
+  // as on Canva: files dropped on Uploads wait there, to be dragged onto the
+  // page or into a photo frame
+  const uploadDropProps = {
+    onDragOver: (e) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      setUploadDrop(true);
+    },
+    onDragLeave: (e) => !e.currentTarget.contains(e.relatedTarget) && setUploadDrop(false),
+    onDrop: async (e) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setUploadDrop(false);
+      openTab("uploads");
+      const list = await Promise.all(
+        [...e.dataTransfer.files].filter((f) => /svg|png|jpe?g|webp/i.test(f.type || f.name)).map(readFile)
+      );
+      setUploads((u) => [...list, ...u]);
+    },
+  };
   // the file picker behind a photo frame's Add photo / Replace photo
   const frameInput = useRef(null);
 
@@ -2751,8 +2773,9 @@ function Create({ draft, clearDraft, user = null }) {
             {tabs.map((t) => (
               <button
                 key={t}
-                className={tab === t && panelOpen ? "active" : ""}
+                className={`${tab === t && panelOpen ? "active" : ""} ${t === "uploads" && uploadDrop ? "is-over" : ""}`}
                 onClick={() => (t === tab && panelOpen ? showPanel(false) : openTab(t))}
+                {...(t === "uploads" ? uploadDropProps : {})}
               >
                 <Icon name={t} size={22} />
                 {tabLabel(t)}
@@ -2762,7 +2785,8 @@ function Create({ draft, clearDraft, user = null }) {
 
           {/* LIBRARY PANEL */}
           {/* stays in its grid column when hidden (width 0), so the canvas keeps its place */}
-          <div className="create-panel" inert={!panelOpen || cropping} aria-hidden={!panelOpen}>
+          <div className={`create-panel ${tab === "uploads" && uploadDrop ? "is-over" : ""}`} inert={!panelOpen || cropping} aria-hidden={!panelOpen}
+               {...(tab === "uploads" ? uploadDropProps : {})}>
             {SEARCH_TABS.includes(tab) && <SearchBox value={query} onChange={search} placeholder="Search everything" />}
 
             {searching && (
@@ -2860,25 +2884,7 @@ function Create({ draft, clearDraft, user = null }) {
             )}
 
             {tab === "uploads" && (
-              <div
-                className={`cp-uploads ${uploadDrop ? "is-over" : ""}`}
-                onDragOver={(e) => {
-                  if (![...e.dataTransfer.types].includes("Files")) return;
-                  e.preventDefault();
-                  setUploadDrop(true);
-                }}
-                onDragLeave={(e) => !e.currentTarget.contains(e.relatedTarget) && setUploadDrop(false)}
-                onDrop={async (e) => {
-                  e.preventDefault();
-                  setUploadDrop(false);
-                  // as on Canva: dropped here, files wait in Uploads to be
-                  // dragged onto the page or into a photo frame
-                  const list = await Promise.all(
-                    [...e.dataTransfer.files].filter((f) => /svg|png|jpe?g|webp/i.test(f.type || f.name)).map(readFile)
-                  );
-                  setUploads((u) => [...list, ...u]);
-                }}
-              >
+              <div className="cp-uploads">
                 <button className="cp-upload" onClick={() => fileInput.current.click()}>
                   ⇪ Upload SVG / PNG / JPG
                 </button>
@@ -2895,9 +2901,15 @@ function Create({ draft, clearDraft, user = null }) {
                 />
                 <div className="cp-grid three">
                   {uploads.map((u) => (
-                    <button key={u.id} className="cp-tile" {...dragItem("upload", u.id)} title={u.name}>
-                      <img src={u.type === "svg" ? svgDataUrl(u.data) : u.data} alt={u.name} />
-                    </button>
+                    <div key={u.id} className="cp-up">
+                      <button className="cp-tile" {...dragItem("upload", u.id)} title={u.name}>
+                        <img src={u.type === "svg" ? svgDataUrl(u.data) : u.data} alt={u.name} />
+                      </button>
+                      <button className="cp-up-remove" aria-label={`Remove ${u.name}`} title="Remove from uploads"
+                              onClick={() => setUploads((list) => list.filter((x) => x.id !== u.id))}>
+                        <Icon name="trash" size={13} />
+                      </button>
+                    </div>
                   ))}
                 </div>
                 <p className="cp-hint">Drop files here, or straight onto the page or a photo frame.</p>

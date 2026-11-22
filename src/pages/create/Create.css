@@ -2319,5 +2319,28 @@
 .pp-table-style button { flex: 1; }
 
 /* the Uploads panel takes dropped files; it shows where they'll land */
-.cp-uploads { min-height: 100%; border-radius: 12px; }
-.cp-uploads.is-over { outline: 2px dashed var(--red); outline-offset: -4px; background: rgba(240, 32, 45, 0.06); }
+.create-panel.is-over { outline: 2px dashed var(--red); outline-offset: -6px; background: rgba(240, 32, 45, 0.06); }
+.create-rail button.is-over { color: var(--white); background: rgba(240, 32, 45, 0.18); }
+/* an uploaded file and its remove button (shown on hover) */
+.cp-up { position: relative; }
+.cp-up .cp-tile { width: 100%; }
+.cp-up-remove {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 7px;
+  background: rgba(20, 20, 20, 0.78);
+  color: #fff;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.cp-up:hover .cp-up-remove,
+.cp-up-remove:focus-visible { opacity: 1; }
+.cp-up-remove:hover { background: var(--red); }
+@media (hover: none) { .cp-up-remove { opacity: 1; } }
