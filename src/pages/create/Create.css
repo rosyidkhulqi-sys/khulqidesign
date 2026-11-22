@@ -2344,3 +2344,27 @@
 .cp-up-remove:focus-visible { opacity: 1; }
 .cp-up-remove:hover { background: var(--red); }
 @media (hover: none) { .cp-up-remove { opacity: 1; } }
+
+/* over a photo frame: a short label for an empty one, a red outline while a
+   photo is dragged over any frame */
+.ct-frame-hint {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  border-radius: 4px;
+}
+.ct-frame-hint span {
+  margin-top: 26%;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(20, 20, 20, 0.82);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ct-frame-hint.is-dropping { outline: 3px solid var(--red); outline-offset: -3px; background: rgba(240, 32, 45, 0.12); }
+.ct-frame-hint.is-dropping span { margin-top: 0; background: var(--red); }

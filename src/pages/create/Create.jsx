@@ -224,6 +224,16 @@ function Create({ draft, clearDraft, user = null }) {
   const fileInput = useRef(null);
   // files dragged over the Uploads panel or its tab (they're added there, not placed)
   const [uploadDrop, setUploadDrop] = useState(false);
+  // the photo frame under the pointer: an empty one shows "Drop a photo here",
+  // and any frame lights up while a photo is dragged over it
+  const [frameHint, setFrameHint] = useState(null);
+  // the hint's box on the artboard (page units, scaled by the zoom when drawn)
+  const hintFor = (frame, dropping) => {
+    const pts = frame.getCoords();
+    const xs = pts.map((p) => p.x);
+    const ys = pts.map((p) => p.y);
+    return { frame, dropping, x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) };
+  };
   const hasFiles = (e) => [...e.dataTransfer.types].includes("Files");
   // as on Canva: files dropped on Uploads wait there, to be dragged onto the
   // page or into a photo frame
@@ -2532,6 +2542,12 @@ function Create({ draft, clearDraft, user = null }) {
     c.on("object:rotating", onRotating);
     c.on("mouse:up", onMouseUp);
     c.on("mouse:dblclick", onDoubleClick);
+    c.on("mouse:over", ({ target }) => {
+      if (target?.kdFrame && !(target.getObjects?.()[0] instanceof FabricImage)) setFrameHint(hintFor(target, false));
+    });
+    c.on("mouse:out", ({ target }) => target?.kdFrame && setFrameHint((h) => (h && !h.dropping ? null : h)));
+    // moving, resizing or clicking a frame hides its hint
+    c.on("mouse:down", () => setFrameHint(null));
     c.on("text:editing:entered", syncSelection);
     c.on("text:editing:exited", syncSelection);
     c.on("text:changed", syncSelection);
@@ -2963,8 +2979,17 @@ function Create({ draft, clearDraft, user = null }) {
           <div
             className="create-stage"
             ref={stageRef}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={onDrop}
+            onDragOver={(e) => {
+              e.preventDefault();
+              const c = fc.current;
+              const frame = c && frameAt(c.getScenePoint(e.nativeEvent));
+              setFrameHint((h) => (frame ? (h?.frame === frame && h.dropping ? h : hintFor(frame, true)) : h?.dropping ? null : h));
+            }}
+            onDragLeave={(e) => !e.currentTarget.contains(e.relatedTarget) && setFrameHint(null)}
+            onDrop={(e) => {
+              setFrameHint(null);
+              onDrop(e);
+            }}
             onPointerDown={startMarquee}
           >
             {marquee && (
@@ -3002,6 +3027,16 @@ function Create({ draft, clearDraft, user = null }) {
 
             <div className="create-artboard">
               <canvas ref={canvasEl} />
+
+              {frameHint && frameHint.frame.canvas && !cropping && !adjusting && (
+                <div
+                  className={`ct-frame-hint ${frameHint.dropping ? "is-dropping" : ""}`}
+                  style={{ left: frameHint.x * zoom, top: frameHint.y * zoom, width: frameHint.w * zoom, height: frameHint.h * zoom }}
+                  aria-hidden="true"
+                >
+                  <span>{frameHint.dropping ? "Drop to place" : "Drop a photo here"}</span>
+                </div>
+              )}
 
               {rotation && (
                 <span className="ct-angle" style={{ left: rotation.x, top: rotation.y }}>{rotation.angle}°</span>
