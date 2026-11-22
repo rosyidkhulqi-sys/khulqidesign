@@ -222,6 +222,8 @@ function Create({ draft, clearDraft, user = null }) {
   // the "Getting started" video, in a window over the editor
   const [showTutorial, setShowTutorial] = useState(false);
   const fileInput = useRef(null);
+  // files dragged over the Uploads panel (they're added there, not placed)
+  const [uploadDrop, setUploadDrop] = useState(false);
   // the file picker behind a photo frame's Add photo / Replace photo
   const frameInput = useRef(null);
 
@@ -1422,10 +1424,19 @@ function Create({ draft, clearDraft, user = null }) {
     if (!f) return;
     const w = frame.width;
     const h = frame.height;
-    const img = await imageCover(src, w, h);
-    img.set({ left: 0, top: 0 });
-    // a fixed layout: zooming or moving the photo inside never resizes the frame
-    const filled = new Group([img], { kdFrame: frame.kdFrame, layoutManager: new LayoutManager(new FixedLayout()) });
+    // the whole photo, scaled to cover the box and centered on it, as on
+    // Canva: the frame is a window, so Adjust photo can move it to any part
+    const img = await FabricImage.fromURL(src, { crossOrigin: "anonymous" });
+    const k = Math.max(w / img.width, h / img.height);
+    img.set({ scaleX: k, scaleY: k, left: (w - img.width * k) / 2, top: (h - img.height * k) / 2 });
+    // a fixed layout the size of the box: moving or zooming the photo inside
+    // never resizes the frame
+    const filled = new Group([img], {
+      kdFrame: frame.kdFrame,
+      layoutManager: new LayoutManager(new FixedLayout()),
+      width: w,
+      height: h,
+    });
     // the shape stretched to the frame's box, so a template's wide or tall
     // photo box keeps its proportions (frames added here are square anyway)
     filled.clipPath = new Path(f.path, { scaleX: w / f.w, scaleY: h / f.h, left: -w / 2, top: -h / 2 });
@@ -2818,7 +2829,25 @@ function Create({ draft, clearDraft, user = null }) {
             )}
 
             {tab === "uploads" && (
-              <>
+              <div
+                className={`cp-uploads ${uploadDrop ? "is-over" : ""}`}
+                onDragOver={(e) => {
+                  if (![...e.dataTransfer.types].includes("Files")) return;
+                  e.preventDefault();
+                  setUploadDrop(true);
+                }}
+                onDragLeave={(e) => !e.currentTarget.contains(e.relatedTarget) && setUploadDrop(false)}
+                onDrop={async (e) => {
+                  e.preventDefault();
+                  setUploadDrop(false);
+                  // as on Canva: dropped here, files wait in Uploads to be
+                  // dragged onto the page or into a photo frame
+                  const list = await Promise.all(
+                    [...e.dataTransfer.files].filter((f) => /svg|png|jpe?g|webp/i.test(f.type || f.name)).map(readFile)
+                  );
+                  setUploads((u) => [...list, ...u]);
+                }}
+              >
                 <button className="cp-upload" onClick={() => fileInput.current.click()}>
                   ⇪ Upload SVG / PNG / JPG
                 </button>
@@ -2840,8 +2869,8 @@ function Create({ draft, clearDraft, user = null }) {
                     </button>
                   ))}
                 </div>
-                <p className="cp-hint">You can also drop files straight onto the canvas.</p>
-              </>
+                <p className="cp-hint">Drop files here, or straight onto the page or a photo frame.</p>
+              </div>
             )}
           </div>
 

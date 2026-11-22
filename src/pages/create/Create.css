@@ -2317,3 +2317,7 @@
 .pp-type.is-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .pp-table-style { display: flex; width: 100%; margin-bottom: 10px; }
 .pp-table-style button { flex: 1; }
+
+/* the Uploads panel takes dropped files; it shows where they'll land */
+.cp-uploads { min-height: 100%; border-radius: 12px; }
+.cp-uploads.is-over { outline: 2px dashed var(--red); outline-offset: -4px; background: rgba(240, 32, 45, 0.06); }
