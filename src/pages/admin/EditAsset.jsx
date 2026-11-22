@@ -12,6 +12,7 @@ import {
 } from "./elementPublish";
 import { parseKeywords } from "./vectorUpload";
 import { normalizeVectorCategory, vectorCategoryLabel } from "../../data/vectorCategories";
+import { stockCategoryLabel } from "../../data/stockCategories";
 import NumberInput from "../../components/NumberInput";
 import KeywordChips from "./KeywordChips";
 import { GENERIC_ICON_WORDS } from "./iconPublish";
@@ -19,7 +20,7 @@ import { GENERIC_ICON_WORDS } from "./iconPublish";
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 // these types get a watermark baked into their preview when they aren't free
-const hasWatermark = (type, license) => ["vector", "logo", "footage"].includes(type) && license !== "free";
+const hasWatermark = (type, license) => ["vector", "logo", "footage", "photo", "mockup"].includes(type) && license !== "free";
 
 // row: the asset. onSaved(changes) after saving, onCancel() to close.
 function EditAsset({ row, type, onSaved, onCancel }) {
@@ -127,6 +128,8 @@ function EditAsset({ row, type, onSaved, onCancel }) {
               <option key={c} value={c}>
                 {type === "vector"
                   ? vectorCategoryLabel(c)
+                  : type === "photo" || type === "mockup"
+                    ? stockCategoryLabel(c)
                   : type === "element"
                     ? row.style === "background" ? backgroundCategoryLabel(c) : elementCategoryLabel(c)
                     : capitalize(c)}

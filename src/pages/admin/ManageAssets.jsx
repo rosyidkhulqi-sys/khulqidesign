@@ -9,6 +9,7 @@ import { supabase } from "../../lib/supabaseClient";
 import { publicUrl } from "../../lib/r2";
 import { industries } from "../../data/logosData";
 import { VECTOR_CATEGORY_OPTIONS, vectorCategoryStorageValues } from "../../data/vectorCategories";
+import { MOCKUP_CATEGORY_OPTIONS, PHOTO_CATEGORY_OPTIONS } from "../../data/stockCategories";
 import {
   backgroundCategoryLabel,
   elementCategoryLabel,
@@ -21,7 +22,7 @@ import ManageIconSets from "./ManageIconSets";
 import ManageBatches from "./ManageBatches";
 import { deleteAsset } from "./batches";
 
-const LABEL = { vector: "vectors", icon: "icons", logo: "logos", footage: "clips", template: "templates", element: "elements" };
+const LABEL = { vector: "vectors", icon: "icons", logo: "logos", footage: "clips", template: "templates", element: "elements", photo: "photos", mockup: "mockups" };
 const FIELDS = "id, code, ref_code, source_name, title, description, keywords, category, industry, style, license, price_cents, sold_at, status, thumb_key, preview_key, preview_video_key, files, created_at, batch_id, batch:upload_batches(name)";
 const PAGE_SIZE = 50;
 const NO_FILTERS = { search: "", batch: "", category: "", kind: "", month: "", license: "", status: "", sort: "newest" };
@@ -32,6 +33,8 @@ const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 function categoryOptions(type, kind = "") {
   if (type === "logo") return industries;
   if (type === "vector") return VECTOR_CATEGORY_OPTIONS;
+  if (type === "photo") return PHOTO_CATEGORY_OPTIONS;
+  if (type === "mockup") return MOCKUP_CATEGORY_OPTIONS;
   const list = type === "element"
     ? kind === "background"
       ? BACKGROUND_CATEGORIES

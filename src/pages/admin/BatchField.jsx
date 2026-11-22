@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 
-const PREFIX = { vector: "VC", icon: "IC", logo: "LG", footage: "FT", element: "EL", template: "TP" };
+const PREFIX = { vector: "VC", icon: "IC", logo: "LG", footage: "FT", element: "EL", template: "TP", photo: "PH", mockup: "MK" };
 
 function today(type) {
   const d = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Jakarta" });

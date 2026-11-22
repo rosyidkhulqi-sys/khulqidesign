@@ -16,6 +16,7 @@ import IconUpload from "./IconUpload.jsx";
 import FootageUpload from "./FootageUpload.jsx";
 import LogoUpload from "./LogoUpload.jsx";
 import ElementUpload from "./ElementUpload.jsx";
+import StockUpload from "./StockUpload.jsx";
 import { runPool } from "../../lib/uploadPool";
 
 // vectors published at the same time (EPS files are big)
@@ -24,9 +25,11 @@ const VECTORS_AT_ONCE = 3;
 const TABS = [
   ["vector", "Vectors", "EPS + JPG pairs"],
   ["icon", "Icons", "SVG icons in sets"],
+  ["photo", "Photos", "JPG originals"],
   ["logo", "Logos", "JPG preview + AI, EPS, SVG"],
   ["footage", "Footage", "MP4 and MOV clips"],
   ["template", "Templates", "made in Create"],
+  ["mockup", "Mockups", "PSD + JPG preview"],
   ["element", "Elements", "SVG, PNG and JPG for Create"],
 ];
 import {
@@ -198,6 +201,8 @@ function Admin({ user, setPage }) {
         <LogoUpload onPublished={() => setPublished((n) => n + 1)} />
       ) : tab === "footage" ? (
         <FootageUpload onPublished={() => setPublished((n) => n + 1)} />
+      ) : tab === "photo" || tab === "mockup" ? (
+        <StockUpload key={tab} kind={tab} onPublished={() => setPublished((n) => n + 1)} />
       ) : tab === "element" ? (
         <ElementUpload onPublished={() => setPublished((n) => n + 1)} />
       ) : tab === "template" ? (
