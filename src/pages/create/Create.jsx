@@ -2676,17 +2676,6 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                 {[["home", "Home"], ["ai", "AI tools"], ["assets", "All assets"], ["pricing", "Pricing"]].map(([p, label]) => (
                   <a key={p} href={pathFor(p)} onClick={siteLink(p)}>{label}</a>
                 ))}
-                <hr />
-                <button onClick={() => { setMenu(null); openTab("projects"); }}>Your designs</button>
-                {user ? (
-                  <>
-                    <a href={pathFor("account")} onClick={siteLink("account")}>Account</a>
-                    <a href={pathFor("downloads")} onClick={siteLink("downloads")}>Your downloads</a>
-                    <button className="danger" onClick={() => { setMenu(null); onLogout(); }}>Log out</button>
-                  </>
-                ) : (
-                  <a href={pathFor("login")} onClick={siteLink("login")}>Log in</a>
-                )}
               </div>
             )}
           </div>
@@ -2837,11 +2826,27 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
 
           {/* the account, as the site header shows it */}
           {user ? (
-            <button className="ct-avatar" onClick={() => setMenu(menu === "home" ? null : "home")} title={accountInfo(user).name} aria-label="Account menu">
-              {accountInfo(user).avatar
-                ? <img src={accountInfo(user).avatar} alt="" referrerPolicy="no-referrer" />
-                : <span>{accountInfo(user).initial}</span>}
-            </button>
+            <div className="ct-menu">
+              <button className="ct-avatar" onClick={() => setMenu(menu === "account" ? null : "account")} title={accountInfo(user).name}
+                      aria-label="Account menu" aria-expanded={menu === "account"}>
+                {accountInfo(user).avatar
+                  ? <img src={accountInfo(user).avatar} alt="" referrerPolicy="no-referrer" />
+                  : <span>{accountInfo(user).initial}</span>}
+              </button>
+              {menu === "account" && (
+                <div className="ct-dropdown is-right">
+                  <div className="ct-account-head">
+                    <strong>{accountInfo(user).name}</strong>
+                    <small>{accountInfo(user).email}</small>
+                  </div>
+                  <a href={pathFor("account")} onClick={siteLink("account")}>Account</a>
+                  <a href={pathFor("downloads")} onClick={siteLink("downloads")}>Your downloads</a>
+                  <button onClick={() => { setMenu(null); openTab("projects"); }}>Your designs</button>
+                  <hr />
+                  <button className="danger" onClick={() => { setMenu(null); onLogout(); }}>Log out</button>
+                </div>
+              )}
+            </div>
           ) : (
             <a className="ct-btn ct-login" href={pathFor("login")} onClick={siteLink("login")}>Log in</a>
           )}

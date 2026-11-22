@@ -2407,7 +2407,11 @@
 .create-topbar .site-assets-item:hover { background: var(--surface-2); }
 .create-topbar .site-assets-all { display: flex; justify-content: space-between; margin-top: 8px; padding: 14px 12px 6px; border-top: 1px solid var(--line); color: var(--white); font-size: 14px; font-weight: 600; text-decoration: none; }
 .ct-tutorial { margin-left: 0; }
-.ct-assets { margin-left: auto; }
+/* Assets, Tutorial, Download and the account sit together on the right */
+.create-topbar > .site-assets { margin-left: auto; }
+.ct-account-head { display: grid; gap: 2px; padding: 8px 12px 10px; border-bottom: 1px solid var(--line); margin-bottom: 6px; }
+.ct-account-head strong { font-size: 14px; }
+.ct-account-head small { color: var(--muted); font-size: 12px; }
 
 .ct-avatar {
   display: grid;
