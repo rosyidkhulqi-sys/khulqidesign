@@ -5,6 +5,10 @@ import { useEffect, useRef, useState } from "react";
 import DoneNote from "./DoneNote";
 import BatchField from "./BatchField";
 import { openBatch } from "./batches";
+import { runPool } from "../../lib/uploadPool";
+
+// clips published at the same time (video files are big)
+const CLIPS_AT_ONCE = 2;
 import {
   FOOTAGE_CATEGORIES,
   findPlayable,
@@ -90,10 +94,11 @@ function FootageUpload({ onPublished }) {
       return;
     }
     setBatchError(null);
-    for (const item of items.filter((it) => it.status === "ready" || it.status === "failed")) {
+    const queue = items.filter((it) => it.status === "ready" || it.status === "failed");
+    await runPool(queue, CLIPS_AT_ONCE, async (item) => {
       if (!item.title.trim()) {
         update(item.base, { status: "failed", message: "Add a title first" });
-        continue;
+        return;
       }
       update(item.base, { status: "uploading", progress: 0, message: "Preparing" });
       try {
@@ -105,7 +110,7 @@ function FootageUpload({ onPublished }) {
       } catch (e) {
         update(item.base, { status: "failed", message: e.message });
       }
-    }
+    });
     // the published cards go, a Done note stays (as on The Noun Project)
     setItems((list) => list.filter((it) => it.status !== "done"));
     if (published) setFinished({ published, failed: ready - published, where: batch.trim() || null });
