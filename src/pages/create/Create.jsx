@@ -22,6 +22,9 @@ import {
 } from "fabric";
 import Icon from "./CreateIcons";
 import TutorialModal from "../../components/TutorialModal";
+import AssetsMenu from "../../components/AssetsMenu";
+import { pathFor } from "../../lib/router";
+import { accountInfo } from "../../lib/account";
 import { tutorials } from "../../data/tutorials";
 import ElementsPanel, { PremiumMark } from "./CreateElements";
 import { qrSvg, qrText } from "./qrCode";
@@ -206,7 +209,7 @@ function sceneObjects(scene) {
 }
 
 // user: the signed-in account; anyone can design, downloading needs one
-function Create({ draft, clearDraft, user = null }) {
+function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout = () => {} }) {
   const canvasEl = useRef(null);
   const stageRef = useRef(null);
   const fc = useRef(null);
@@ -781,6 +784,16 @@ function Create({ draft, clearDraft, user = null }) {
   };
 
   // switching tabs from anywhere also brings a hidden panel back
+  // a link to a site page from Create's bar: the design autosaves, so it
+  // opens in place (Cmd/Ctrl-click still opens a new tab)
+  const siteLink = (target) => (e) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+    e.preventDefault();
+    setMenu(null);
+    setPage(target);
+    window.scrollTo(0, 0);
+  };
+
   const openTab = (name) => {
     setTab(name);
     setQuery("");
@@ -2652,6 +2665,31 @@ function Create({ draft, clearDraft, user = null }) {
       <div className="create-editor" ref={editorRef}>
         {/* TOP BAR */}
         <div className="create-topbar" inert={cropping || aiBusy}>
+          {/* the way back to the site: Create is an app, its bar is the only header */}
+          <div className="ct-menu">
+            <button className="ct-home" onClick={() => setMenu(menu === "home" ? null : "home")} aria-label="Khulqidesign menu" aria-expanded={menu === "home"}>
+              <img src="/logo.png" alt="" />
+              <Icon name="chevron" size={12} />
+            </button>
+            {menu === "home" && (
+              <div className="ct-dropdown">
+                {[["home", "Home"], ["ai", "AI tools"], ["assets", "All assets"], ["pricing", "Pricing"]].map(([p, label]) => (
+                  <a key={p} href={pathFor(p)} onClick={siteLink(p)}>{label}</a>
+                ))}
+                <hr />
+                <button onClick={() => { setMenu(null); openTab("projects"); }}>Your designs</button>
+                {user ? (
+                  <>
+                    <a href={pathFor("account")} onClick={siteLink("account")}>Account</a>
+                    <a href={pathFor("downloads")} onClick={siteLink("downloads")}>Your downloads</a>
+                    <button className="danger" onClick={() => { setMenu(null); onLogout(); }}>Log out</button>
+                  </>
+                ) : (
+                  <a href={pathFor("login")} onClick={siteLink("login")}>Log in</a>
+                )}
+              </div>
+            )}
+          </div>
           <div className="ct-menu">
             <button className="ct-btn" onClick={() => setMenu(menu === "file" ? null : "file")}>
               <Icon name="menu" /> File
@@ -2707,6 +2745,22 @@ function Create({ draft, clearDraft, user = null }) {
           </span>
 
           <span className="ct-size">{board.w} × {board.h} px</span>
+
+          {/* the whole library, one click away: Templates and Icons open here in
+              the panel, the other libraries in a new tab so the design stays open */}
+          <AssetsMenu
+            page="create"
+            go={siteLink}
+            buttonClass="ct-btn ct-assets"
+            align="right"
+            onPick={(lib, e) => {
+              if (lib.page === "templates") { openTab("templates"); return true; }
+              if (lib.page === "icons") { openTab("elements"); return true; }
+              if (e.metaKey || e.ctrlKey || e.shiftKey) return false;
+              window.open(pathFor(lib.page), "_blank", "noopener");
+              return true;
+            }}
+          />
 
           <button className="ct-btn ct-tutorial" onClick={() => setShowTutorial(true)} title={`${tutorials.create.title} (${tutorials.create.duration})`}>
             <Icon name="play" size={14} />
@@ -2780,6 +2834,17 @@ function Create({ draft, clearDraft, user = null }) {
               </div>
             )}
           </div>
+
+          {/* the account, as the site header shows it */}
+          {user ? (
+            <button className="ct-avatar" onClick={() => setMenu(menu === "home" ? null : "home")} title={accountInfo(user).name} aria-label="Account menu">
+              {accountInfo(user).avatar
+                ? <img src={accountInfo(user).avatar} alt="" referrerPolicy="no-referrer" />
+                : <span>{accountInfo(user).initial}</span>}
+            </button>
+          ) : (
+            <a className="ct-btn ct-login" href={pathFor("login")} onClick={siteLink("login")}>Log in</a>
+          )}
         </div>
         {menu && <div className="ct-backdrop" onClick={() => setMenu(null)} />}
 

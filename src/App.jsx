@@ -229,7 +229,7 @@ function App() {
     create: (
       <Suspense fallback={null}>
         {/* anyone can design; downloading the design asks for an account */}
-        <Create draft={createDraft} clearDraft={() => setCreateDraft(null)} user={user} />
+        <Create draft={createDraft} clearDraft={() => setCreateDraft(null)} user={user} setPage={go} onLogout={logout} />
       </Suspense>
     ),
     admin: (
@@ -247,7 +247,8 @@ function App() {
   // every page shares the header; the editor fills the screen, so it has no footer
   return (
     <>
-      <PageHeader page={page} setPage={go} user={user} onLogout={logout} />
+      {/* Create is an app: full screen, its own bar carries the navigation */}
+      {page !== "create" && <PageHeader page={page} setPage={go} user={user} onLogout={logout} />}
       {pages[page] ?? pages.notfound}
       {loginReason && !user && (
         <LoginDialog reason={loginReason} onAuth={authFromDialog} onClose={() => setLoginReason(null)} />

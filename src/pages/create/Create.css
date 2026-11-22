@@ -2,11 +2,14 @@
    KHULQI DESIGN — CREATE EDITOR
    ========================================================= */
 
+/* Create is an app: the whole window, no site header (its bar carries the
+   navigation) */
 .create-page {
-  height: calc(100vh - var(--header-h));
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding: 20px 24px;
+  padding: 10px 12px;
   box-sizing: border-box;
   color: var(--white);
   font-family: var(--font-sans);
@@ -89,7 +92,6 @@
 
 .ct-export { margin-left: auto; }
 /* Tutorial sits just left of Download */
-.ct-tutorial { margin-left: auto; }
 .ct-tutorial + .ct-export { margin-left: 0; }
 
 .ct-name {
@@ -2368,3 +2370,57 @@
 }
 .ct-frame-hint.is-dropping { outline: 3px solid var(--red); outline-offset: -3px; background: rgba(240, 32, 45, 0.12); }
 .ct-frame-hint.is-dropping span { margin-top: 0; background: var(--red); }
+
+/* the KD mark: the way back to the site */
+.ct-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 36px;
+  padding: 0 8px 0 4px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: #9a9ea5;
+  cursor: pointer;
+}
+.ct-home:hover { background: rgba(255, 255, 255, 0.07); color: var(--white); }
+.ct-home img { width: 30px; height: 30px; object-fit: contain; }
+.ct-dropdown a {
+  display: block;
+  padding: 9px 12px;
+  border-radius: 6px;
+  color: var(--white);
+  font-size: 14px;
+  text-decoration: none;
+}
+.ct-dropdown a:hover { background: rgba(255, 255, 255, 0.07); }
+.ct-dropdown hr { margin: 6px 4px; border: 0; border-top: 1px solid var(--line); }
+
+/* the Assets menu in Create's bar, opening to the left of the button */
+.ct-assets.ct-btn { font-family: inherit; }
+.ct-assets .site-chevron { width: 14px; height: 14px; stroke: currentColor; stroke-width: 2; }
+.create-topbar .site-assets.is-right .site-assets-panel { left: auto; right: 0; transform: none; animation: ct-assets-in 0.16s ease-out; }
+@keyframes ct-assets-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.create-topbar .site-assets-panel { top: calc(100% + 8px); }
+.create-topbar .site-assets-item { display: flex; align-items: center; gap: 14px; padding: 10px; border-radius: 12px; color: var(--white); text-decoration: none; }
+.create-topbar .site-assets-item:hover { background: var(--surface-2); }
+.create-topbar .site-assets-all { display: flex; justify-content: space-between; margin-top: 8px; padding: 14px 12px 6px; border-top: 1px solid var(--line); color: var(--white); font-size: 14px; font-weight: 600; text-decoration: none; }
+.ct-tutorial { margin-left: 0; }
+.ct-assets { margin-left: auto; }
+
+.ct-avatar {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--white);
+  font-weight: 700;
+  cursor: pointer;
+}
+.ct-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.ct-login { text-decoration: none; }
