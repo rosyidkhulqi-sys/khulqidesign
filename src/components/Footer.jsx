@@ -9,8 +9,10 @@ const products = [
   ["ai", "AI tools"],
   ["icons", "Icons"],
   ["vectors", "Vectors"],
+  ["photos", "Photos"],
   ["logos", "Logos"],
   ["templates", "Templates"],
+  ["mockups", "Mockups"],
   ["footage", "Footage"],
   ["create", "Create"],
 ];

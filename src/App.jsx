@@ -16,6 +16,9 @@ const Create = lazy(() => import("./pages/create/Create"));
 const Ai = lazy(() => import("./pages/ai/Ai"));
 // Logos carries its own search keywords, so it loads when opened as well
 const Logos = lazy(() => import("./pages/logos/Logos"));
+const Photos = lazy(() => import("./pages/photos/Photos"));
+const Mockups = lazy(() => import("./pages/mockups/Mockups"));
+const Assets = lazy(() => import("./pages/assets/Assets"));
 const Pricing = lazy(() => import("./pages/pricing/Pricing"));
 const License = lazy(() => import("./pages/license/License"));
 const About = lazy(() => import("./pages/about/About"));
@@ -166,6 +169,21 @@ function App() {
     footage: (
       <Suspense fallback={null}>
         <Footage key={searchQuery} setPage={go} initialSearch={searchQuery} user={user} />
+      </Suspense>
+    ),
+    photos: (
+      <Suspense fallback={null}>
+        <Photos key={searchQuery} setPage={go} initialSearch={searchQuery} user={user} />
+      </Suspense>
+    ),
+    mockups: (
+      <Suspense fallback={null}>
+        <Mockups key={searchQuery} setPage={go} initialSearch={searchQuery} user={user} />
+      </Suspense>
+    ),
+    assets: (
+      <Suspense fallback={null}>
+        <Assets setPage={go} />
       </Suspense>
     ),
     downloads: (

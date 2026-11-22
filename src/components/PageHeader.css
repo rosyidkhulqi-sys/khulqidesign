@@ -43,6 +43,93 @@
 .site-header .site-nav a:hover { color: var(--white); }
 .site-header .site-nav a.active { color: var(--white); }
 
+/* ASSETS MEGA MENU — every library in one panel, as Magnific's Stock */
+.site-assets { position: relative; }
+.site-assets-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #9a9ea5;
+  font: inherit;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.site-assets-button:hover,
+.site-assets-button.open,
+.site-assets-button.active { color: var(--white); }
+.site-assets-button .site-chevron { width: 14px; height: 14px; transition: transform 0.2s; }
+.site-assets-button.open .site-chevron { transform: rotate(180deg); }
+
+.site-assets-panel {
+  position: absolute;
+  top: calc(100% + 18px);
+  left: 50%;
+  z-index: 50;
+  width: min(720px, 92vw);
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  transform: translateX(-50%);
+  animation: site-assets-in 0.16s ease-out;
+}
+/* the gap above the panel still counts as "inside", so hover holds */
+.site-assets-panel::before { content: ""; position: absolute; inset: -20px 0 auto; height: 20px; }
+@keyframes site-assets-in { from { opacity: 0; transform: translate(-50%, -6px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+.site-assets-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.site-header .site-assets-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px;
+  border-radius: 12px;
+  color: var(--white);
+  transition: background 0.15s;
+}
+.site-header .site-assets-item:hover,
+.site-header .site-assets-item.active { background: var(--surface-2); }
+.site-assets-cover {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+.library-glyph { display: grid; place-items: center; color: #fff; }
+.library-glyph svg { width: 46%; height: 46%; }
+.site-assets-text { display: grid; gap: 3px; min-width: 0; flex: 1; }
+.site-assets-text strong { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; }
+.site-assets-text em {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(240, 32, 45, 0.16);
+  color: #ff7a82;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.site-assets-text small { overflow: hidden; color: var(--muted); font-size: 12.5px; white-space: nowrap; text-overflow: ellipsis; }
+.site-assets-count { flex: none; color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.site-header .site-assets-all {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding: 14px 12px 6px;
+  border-top: 1px solid var(--line);
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 600;
+}
+.site-header .site-assets-all:hover span { transform: translateX(3px); }
+.site-assets-all span { transition: transform 0.15s; }
+
 .site-account { display: flex; align-items: center; gap: 8px; justify-self: end; }
 
 .site-downloads {

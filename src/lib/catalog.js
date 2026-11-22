@@ -143,6 +143,31 @@ export function toVector(row) {
   };
 }
 
+// a photo or mockup row as a library item: the first file is the one sold
+// (a full-size JPG, a layered PSD); the picture is its own shape
+export function toStock(row) {
+  const main = row.files[0] ?? {};
+  const size = [row.width || main.width || 1, row.height || main.height || 1];
+  return {
+    id: Date.parse(row.published_at || row.created_at),
+    dbId: row.id,
+    code: row.code,
+    title: row.title,
+    searchText: `${row.long_title ?? ""} ${row.description ?? ""}`.toLowerCase(),
+    category: row.category || "other",
+    license: row.license,
+    image: publicUrl(row.thumb_key),
+    previewImage: publicUrl(row.preview_key),
+    files: row.files,
+    format: main.format ?? "JPG",
+    artboard: size,
+    orientation: row.orientation || orientationOf(size[0], size[1]),
+    downloads: row.downloads,
+    keywords: row.keywords ?? [],
+    bytes: mb(main.bytes),
+  };
+}
+
 // One published asset by its code, for an asset's own address; null when
 // there's none (or it's hidden)
 export async function fetchAssetByCode(type, code) {

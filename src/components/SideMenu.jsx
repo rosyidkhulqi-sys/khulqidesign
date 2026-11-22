@@ -1,14 +1,11 @@
 import "./SideMenu.css";
 import { pathFor } from "../lib/router";
 import { accountInfo } from "../lib/account";
+import { libraries } from "../data/libraries";
 
+// on phones the libraries list in full under Assets, as the header's menu has them
 const menuItems = [
   { key: "ai", label: "AI" },
-  { key: "icons", label: "Icons" },
-  { key: "vectors", label: "Vectors" },
-  { key: "logos", label: "Logos" },
-  { key: "templates", label: "Templates" },
-  { key: "footage", label: "Footage" },
   { key: "create", label: "Create" },
 ];
 
@@ -66,6 +63,22 @@ function SideMenu({ open, onClose, page, setPage, user, isAdmin = false, onLogou
             {item.label}
           </a>
         ))}
+
+        <p className="sidemenu-label" style={{ marginTop: 24 }}>ASSETS</p>
+        {libraries.map((lib) => (
+          <a
+            key={lib.page}
+            href={pathFor(lib.page)}
+            className={`sidemenu-link ${page === lib.page ? "active" : ""}`}
+            onClick={go(lib.page)}
+          >
+            {lib.title}
+            {lib.badge && <span className="sidemenu-badge">{lib.badge}</span>}
+          </a>
+        ))}
+        <a href={pathFor("assets")} className={`sidemenu-link ${page === "assets" ? "active" : ""}`} onClick={go("assets")}>
+          All assets →
+        </a>
 
         <p className="sidemenu-label" style={{ marginTop: 24 }}>ACCOUNT</p>
         {user && (

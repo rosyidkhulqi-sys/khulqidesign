@@ -5,7 +5,7 @@
 // JavaScript. The app then starts as usual and opens the asset.
 import { PAGE_TYPES, SITE, assetUrl, cdn, escapeHtml, jsonLd, rest } from "./_seo.js";
 
-const KINDS = { icon: "Icon", vector: "Vector", logo: "Logo", footage: "Stock footage" };
+const KINDS = { icon: "Icon", vector: "Vector", logo: "Logo", footage: "Stock footage", photo: "Photo", mockup: "Mockup" };
 const CODE_AT_END = /(?:^|-)(kd-[a-z]{2}-\d{5,9})$/;
 
 // the words a search result shows under the title

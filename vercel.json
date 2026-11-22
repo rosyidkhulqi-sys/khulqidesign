@@ -1,7 +1,7 @@
 {
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
-    { "source": "/:page(icons|vectors|logos|footage)/:slug", "destination": "/api/asset?page=:page&slug=:slug" },
+    { "source": "/:page(icons|vectors|logos|footage|photos|mockups)/:slug", "destination": "/api/asset?page=:page&slug=:slug" },
     { "source": "/((?!.*\\.).*)", "destination": "/index.html" }
   ]
 }

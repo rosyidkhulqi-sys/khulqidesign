@@ -4,6 +4,9 @@ import { Sparkle } from "./AiSearchButton";
 import SideMenu from "./SideMenu";
 import { accountInfo } from "../lib/account";
 import { supabase } from "../lib/supabaseClient";
+import { libraries, libraryPages } from "../data/libraries";
+import { fetchAssetCounts, formatCount } from "../lib/assetCounts";
+import LibraryCover from "./LibraryCover";
 import "./PageHeader.css";
 
 function Avatar({ info }) {
@@ -14,14 +17,11 @@ function Avatar({ info }) {
   );
 }
 
-// AI comes first, as on Magnific and Envato: the stock library plus AI tools
+// AI comes first, as on Magnific and Envato; every asset library sits under
+// one Assets menu (as Magnific's Stock), so a new library never crowds the bar
 const navItems = [
   { page: "ai", label: "AI", sparkle: true },
-  { page: "icons", label: "Icons" },
-  { page: "vectors", label: "Vectors" },
-  { page: "logos", label: "Logos" },
-  { page: "templates", label: "Templates" },
-  { page: "footage", label: "Footage" },
+  { page: "assets", label: "Assets", menu: true },
   { page: "create", label: "Create" },
 ];
 
@@ -29,6 +29,11 @@ const navItems = [
 function PageHeader({ page, setPage, user, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  // the Assets mega menu, and each library's live count in it
+  const [assetsOpen, setAssetsOpen] = useState(false);
+  const [counts, setCounts] = useState(null);
+  const assetsRef = useRef(null);
+  const closeTimer = useRef(null);
   // the owner's accounts get an Admin link in the menus
   const [isAdmin, setIsAdmin] = useState(false);
   const accountRef = useRef(null);
@@ -48,6 +53,7 @@ function PageHeader({ page, setPage, user, onLogout }) {
     if (e.metaKey || e.ctrlKey || e.shiftKey) return;
     e.preventDefault();
     setAccountOpen(false);
+    setAssetsOpen(false);
     setPage(target);
     window.scrollTo(0, 0);
   };
@@ -65,6 +71,33 @@ function PageHeader({ page, setPage, user, onLogout }) {
     };
   }, [accountOpen]);
 
+  // the counts load the first time the menu opens
+  useEffect(() => {
+    if (!assetsOpen || counts) return;
+    fetchAssetCounts().then(setCounts).catch(() => {});
+  }, [assetsOpen, counts]);
+
+  // close the Assets menu on a click outside or on Escape
+  useEffect(() => {
+    if (!assetsOpen) return;
+    const onClick = (e) => !assetsRef.current?.contains(e.target) && setAssetsOpen(false);
+    const onKey = (e) => e.key === "Escape" && setAssetsOpen(false);
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [assetsOpen]);
+
+  // opens on hover (a short delay before closing, so the pointer can travel
+  // down into the panel) and on click or keyboard
+  const hoverAssets = (open) => {
+    clearTimeout(closeTimer.current);
+    if (open) setAssetsOpen(true);
+    else closeTimer.current = setTimeout(() => setAssetsOpen(false), 160);
+  };
+
   const info = accountInfo(user);
 
   return (
@@ -76,7 +109,50 @@ function PageHeader({ page, setPage, user, onLogout }) {
         </a>
 
         <nav className="site-nav" aria-label="Primary navigation">
-          {navItems.map((item) => (
+          {navItems.map((item) => item.menu ? (
+            <div
+              key={item.page}
+              className="site-assets"
+              ref={assetsRef}
+              onMouseEnter={() => hoverAssets(true)}
+              onMouseLeave={() => hoverAssets(false)}
+            >
+              <button
+                className={`site-assets-button ${libraryPages.has(page) ? "active" : ""} ${assetsOpen ? "open" : ""}`}
+                onClick={() => setAssetsOpen(!assetsOpen)}
+                aria-expanded={assetsOpen}
+                aria-haspopup="true"
+              >
+                {item.label}
+                <svg className="site-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+              {assetsOpen && (
+                <div className="site-assets-panel">
+                  <div className="site-assets-grid">
+                    {libraries.map((lib) => (
+                      <a key={lib.page} href={pathFor(lib.page)} onClick={go(lib.page)}
+                         className={`site-assets-item ${page === lib.page ? "active" : ""}`}>
+                        <LibraryCover library={lib} className="site-assets-cover" />
+                        <span className="site-assets-text">
+                          <strong>
+                            {lib.title}
+                            {lib.badge && <em>{lib.badge}</em>}
+                          </strong>
+                          <small>{lib.blurb}</small>
+                        </span>
+                        {counts?.[lib.type] > 0 && <span className="site-assets-count">{formatCount(counts[lib.type])}</span>}
+                      </a>
+                    ))}
+                  </div>
+                  <a className="site-assets-all" href={pathFor("assets")} onClick={go("assets")}>
+                    Browse all assets <span aria-hidden="true">→</span>
+                  </a>
+                </div>
+              )}
+            </div>
+          ) : (
             <a
               key={item.page}
               href={pathFor(item.page)}

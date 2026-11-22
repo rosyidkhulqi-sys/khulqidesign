@@ -81,3 +81,16 @@
 }
 .sidemenu-link:hover { color: white; }
 .sidemenu-link.active { color: #e7212e; }
+
+.sidemenu-badge {
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(240, 32, 45, 0.16);
+  color: #ff7a82;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}

@@ -15,6 +15,9 @@ export const pageTitles = {
   logos: "Logos",
   templates: "Templates",
   footage: "Footage",
+  photos: "Photos",
+  mockups: "Mockups",
+  assets: "All assets",
   create: "Create",
   downloads: "Your downloads",
   account: "Account",
@@ -40,7 +43,7 @@ export function pathFor(page, query = "") {
 // Every asset has its own address: /vectors/<title-words>-<code>, e.g.
 // /vectors/blue-abstract-circle-pattern-kd-vc-1329331. The words are for
 // people and search engines; the code at the end is what's looked up.
-export const ASSET_PAGES = { icons: "icon", vectors: "vector", logos: "logo", footage: "footage" };
+export const ASSET_PAGES = { icons: "icon", vectors: "vector", logos: "logo", footage: "footage", photos: "photo", mockups: "mockup" };
 const CODE_AT_END = /(?:^|-)(kd-[a-z]{2}-\d{5,9})$/;
 
 export const slugify = (text = "") =>

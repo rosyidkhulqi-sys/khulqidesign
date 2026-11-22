@@ -5,7 +5,7 @@ import { PremiumPrompt, ToolGlyph } from "./IconControls";
 import { Sparkle } from "./AiSearchButton";
 import "./AssetModal.css";
 
-const kindLabel = { icon: "Icon", vector: "Vector", footage: "Footage" };
+const kindLabel = { icon: "Icon", vector: "Vector", footage: "Footage", photo: "Photo", mockup: "Mockup" };
 
 // stock files carry up to 50 keywords for search; only a few are shown,
 // so the view stays clean
