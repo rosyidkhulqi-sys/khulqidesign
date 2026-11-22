@@ -2,11 +2,19 @@
 // videos: the player, then the title, length and a link to the channel.
 // youtube-nocookie.com sets no tracking cookies until the viewer presses
 // play, and the player only loads once the window is open.
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { YOUTUBE_CHANNEL } from "../data/tutorials";
 import "./TutorialModal.css";
 
 function TutorialModal({ tutorial, onClose }) {
+  const close = useRef(null);
+  // keyboard focus moves into the window, and back where it was on close
+  useEffect(() => {
+    const before = document.activeElement;
+    close.current?.focus();
+    return () => before?.focus?.();
+  }, []);
+
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -15,7 +23,7 @@ function TutorialModal({ tutorial, onClose }) {
 
   return (
     <div className="tm-overlay" onClick={onClose}>
-      <button className="tm-close" onClick={onClose} aria-label="Close tutorial">×</button>
+      <button ref={close} className="tm-close" onClick={onClose} aria-label="Close tutorial">×</button>
       <div className="tm" role="dialog" aria-modal="true" aria-label={tutorial.title} onClick={(e) => e.stopPropagation()}>
         <div className="tm-player">
           <iframe
