@@ -34,11 +34,11 @@ function SideMenu({ open, onClose, page, setPage, user, isAdmin = false, onLogou
         <div className="sidemenu-top">
           <img
             src="/KD Logogram.png"
-            alt="Khulqi Design"
+            alt="Khulqidesign"
             className="sidemenu-logo"
             onClick={go("home")}
           />
-          <button className="sidemenu-close" onClick={onClose}>✕</button>
+          <button className="sidemenu-close" onClick={onClose} aria-label="Close menu">✕</button>
         </div>
 
         {user ? (
