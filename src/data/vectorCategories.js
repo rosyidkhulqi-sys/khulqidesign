@@ -13,6 +13,8 @@ export const VECTOR_CATEGORY_OPTIONS = [
   ["healthcare-medical", "Healthcare & Medical"],
   ["hobbies-leisure", "Hobbies & Leisure"],
   ["holiday", "Holidays"],
+  // sheets of many icons in one vector file (single icons live in the Icons library)
+  ["icon-sets", "Icon Sets"],
   ["industry", "Industry"],
   ["landscape", "Landscape"],
   ["lifestyle", "Lifestyle"],
