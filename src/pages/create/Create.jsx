@@ -1422,12 +1422,13 @@ function Create({ draft, clearDraft, user = null }) {
     if (!f) return;
     const w = frame.width;
     const h = frame.height;
-    const k = Math.min(w / f.w, h / f.h);
     const img = await imageCover(src, w, h);
     img.set({ left: 0, top: 0 });
     // a fixed layout: zooming or moving the photo inside never resizes the frame
     const filled = new Group([img], { kdFrame: frame.kdFrame, layoutManager: new LayoutManager(new FixedLayout()) });
-    filled.clipPath = new Path(f.path, { scaleX: k, scaleY: k, left: -w / 2, top: -h / 2 });
+    // the shape stretched to the frame's box, so a template's wide or tall
+    // photo box keeps its proportions (frames added here are square anyway)
+    filled.clipPath = new Path(f.path, { scaleX: w / f.w, scaleY: h / f.h, left: -w / 2, top: -h / 2 });
     filled.set({
       left: frame.left, top: frame.top, scaleX: frame.scaleX, scaleY: frame.scaleY,
       angle: frame.angle, flipX: frame.flipX, flipY: frame.flipY, opacity: frame.opacity, shadow: frame.shadow,
