@@ -5,14 +5,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  /* room above the window for the close button, at any width */
+  padding: 76px 24px 24px;
   background: rgba(0, 0, 0, 0.78);
   backdrop-filter: blur(4px);
 }
 
 .tm {
   position: relative;
-  width: min(1100px, 100%);
+  /* the whole window (video + title row) fits the screen height too */
+  width: min(1100px, 100%, (100vh - 220px) * 16 / 9);
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 18px;
@@ -79,6 +81,7 @@
 
 @media (max-width: 600px) {
   .tm-overlay { padding: 64px 12px 12px; }
+  .tm { width: 100%; }
   .tm-close { top: 12px; right: 12px; }
   .tm-foot { flex-direction: column; align-items: flex-start; padding: 16px; }
 }
