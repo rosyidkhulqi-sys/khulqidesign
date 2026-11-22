@@ -179,7 +179,7 @@ function ElementUpload({ onPublished }) {
                            onChange={(e) => update(it.base, { title: e.target.value })} />
                     <div className="ad-row">
                       <select value={it.kind} disabled={locked} aria-label="Type"
-                              onChange={(e) => update(it.base, { kind: e.target.value, category: "" })}>
+                              onChange={(e) => update(it.base, { kind: e.target.value, category: e.target.value === "element" ? "graphics" : "" })}>
                         <option value="element">Element</option>
                         <option value="background">Background</option>
                       </select>

@@ -93,6 +93,9 @@ export async function readElement(file) {
     keywords: parseKeywords(meta.keywords.join(",")).slice(0, MAX_KEYWORDS),
     format,
     kind,
+    // nearly every element is a graphic, so it starts as one (as on Canva and
+    // MiriCanvas, the topic comes from the keywords); backgrounds still pick one
+    category: kind === "element" ? "graphics" : "",
     title: shortTitle(meta.longTitle) || shortTitle(fromName) || fromName,
   };
 }
