@@ -3,6 +3,7 @@
 // footage follow the same pattern next. Only admins get past the guard; the
 // database and the r2-sign function check the role again on every write.
 import { useEffect, useRef, useState } from "react";
+import DoneNote from "./DoneNote";
 import BatchField from "./BatchField";
 import { openBatch } from "./batches";
 import "../vectors/Vectors.css";
@@ -41,6 +42,8 @@ function Admin({ user, setPage }) {
   const [access, setAccess] = useState("checking");
   const [items, setItems] = useState([]);
   const [publishing, setPublishing] = useState(false);
+  // the last publish: how many went up, how many failed
+  const [finished, setFinished] = useState(null);
   const [batch, setBatch] = useState("");
   const [batchError, setBatchError] = useState(null);
   const [dragging, setDragging] = useState(false);
@@ -111,6 +114,8 @@ function Admin({ user, setPage }) {
 
   const publishAll = async () => {
     setPublishing(true);
+    setFinished(null);
+    let published = 0;
     let batchId;
     try {
       batchId = await openBatch("vector", batch);
@@ -134,15 +139,17 @@ function Admin({ user, setPage }) {
           update(item.base, { message, progress })
         );
         update(item.base, { status: "done", progress: 1, message: `Published as ${code}` });
+        published += 1;
       } catch (e) {
         update(item.base, { status: "error", message: e.message });
       }
     });
+    // the published cards go, a Done note stays (as on The Noun Project)
+    setItems((list) => list.filter((it) => it.status !== "done"));
+    if (published) setFinished({ published, failed: queue.length - published, where: batch.trim() || null });
     setPublishing(false);
     setPublished((n) => n + 1);
   };
-
-  const clearDone = () => setItems((list) => list.filter((it) => it.status !== "done"));
 
   if (!user || access !== "admin") {
     return (
@@ -166,7 +173,6 @@ function Admin({ user, setPage }) {
   }
 
   const ready = items.filter((it) => it.status === "ready" || it.status === "error").length;
-  const done = items.filter((it) => it.status === "done").length;
 
   return (
     <section className="vectors-page admin-page">
@@ -206,6 +212,7 @@ function Admin({ user, setPage }) {
         </div>
       ) : (
       <>
+      <DoneNote finished={finished} noun={["vector", "vectors"]} onClose={() => setFinished(null)} />
       {/* DROP ZONE */}
       <BatchField type="vector" value={batch} onChange={setBatch} disabled={publishing} />
       {batchError && <p className="ad-error">{batchError}</p>}
@@ -246,9 +253,7 @@ function Admin({ user, setPage }) {
           <div className="ad-bar">
             <span>
               {items.length} {items.length === 1 ? "vector" : "vectors"}
-              {done > 0 && ` · ${done} published`}
             </span>
-            {done > 0 && <button onClick={clearDone} disabled={publishing}>Clear published</button>}
             <button className="ad-primary" onClick={publishAll} disabled={publishing || ready === 0}>
               {publishing ? "Publishing…" : `Publish ${ready}`}
             </button>

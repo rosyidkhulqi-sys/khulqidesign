@@ -2,6 +2,7 @@
 // EPS, SVG, PDF, PNG; same file name), set industry, style and license,
 // and a USD price for Exclusive logos.
 import { useEffect, useRef, useState } from "react";
+import DoneNote from "./DoneNote";
 import BatchField from "./BatchField";
 import { openBatch } from "./batches";
 import { industries, logoStyles } from "../../data/logosData";
@@ -13,6 +14,8 @@ const mb = (bytes) => `${(bytes / 1_000_000).toFixed(1)} MB`;
 function LogoUpload({ onPublished }) {
   const [items, setItems] = useState([]);
   const [publishing, setPublishing] = useState(false);
+  // the last publish: how many went up, how many failed
+  const [finished, setFinished] = useState(null);
   const [batch, setBatch] = useState("");
   const [batchError, setBatchError] = useState(null);
   const [dragging, setDragging] = useState(false);
@@ -60,6 +63,8 @@ function LogoUpload({ onPublished }) {
 
   const publishAll = async () => {
     setPublishing(true);
+    setFinished(null);
+    let published = 0;
     let batchId;
     try {
       batchId = await openBatch("logo", batch);
@@ -78,19 +83,23 @@ function LogoUpload({ onPublished }) {
       try {
         const code = await publishLogo({ ...item, batchId }, (message, progress) => update(item.base, { message, progress }));
         update(item.base, { status: "done", progress: 1, message: `Published as ${code}` });
+        published += 1;
       } catch (e) {
         update(item.base, { status: "failed", message: e.message });
       }
     }
+    // the published cards go, a Done note stays (as on The Noun Project)
+    setItems((list) => list.filter((it) => it.status !== "done"));
+    if (published) setFinished({ published, failed: ready - published, where: batch.trim() || null });
     setPublishing(false);
     onPublished?.();
   };
 
   const ready = items.filter((it) => it.status === "ready" || it.status === "failed").length;
-  const done = items.filter((it) => it.status === "done").length;
 
   return (
     <>
+      <DoneNote finished={finished} noun={["logo", "logos"]} onClose={() => setFinished(null)} />
       <BatchField type="logo" value={batch} onChange={setBatch} disabled={publishing} />
       {batchError && <p className="ad-error">{batchError}</p>}
       <div
@@ -113,12 +122,7 @@ function LogoUpload({ onPublished }) {
       {items.length > 0 && (
         <>
           <div className="ad-bar">
-            <span>{items.length} {items.length === 1 ? "logo" : "logos"}{done > 0 && ` · ${done} published`}</span>
-            {done > 0 && (
-              <button onClick={() => setItems((l) => l.filter((it) => it.status !== "done"))} disabled={publishing}>
-                Clear published
-              </button>
-            )}
+            <span>{items.length} {items.length === 1 ? "logo" : "logos"}</span>
             <button className="ad-primary" onClick={publishAll} disabled={publishing || ready === 0}>
               {publishing ? "Publishing…" : `Publish ${ready}`}
             </button>

@@ -1,6 +1,7 @@
 // The Elements tab on /admin: parts for the Create editor. Drop SVG, PNG or
 // JPG files; each one is an element or a background (JPGs start as backgrounds).
 import { useRef, useState } from "react";
+import DoneNote from "./DoneNote";
 import BatchField from "./BatchField";
 import { openBatch } from "./batches";
 import { parseKeywords } from "./vectorUpload";
@@ -59,6 +60,8 @@ function KeywordField({ keywords, disabled, onChange }) {
 function ElementUpload({ onPublished }) {
   const [items, setItems] = useState([]);
   const [publishing, setPublishing] = useState(false);
+  // the last publish: how many went up, how many failed
+  const [finished, setFinished] = useState(null);
   const [batch, setBatch] = useState("");
   const [batchError, setBatchError] = useState(null);
   const [dragging, setDragging] = useState(false);
@@ -99,6 +102,8 @@ function ElementUpload({ onPublished }) {
 
   const publishAll = async () => {
     setPublishing(true);
+    setFinished(null);
+    let published = 0;
     let batchId;
     try {
       batchId = await openBatch("element", batch);
@@ -118,19 +123,23 @@ function ElementUpload({ onPublished }) {
       try {
         const code = await publishElement({ ...item, batchId }, (message, progress) => update(item.base, { message, progress }));
         update(item.base, { status: "done", progress: 1, message: `Published as ${code}` });
+        published += 1;
       } catch (e) {
         update(item.base, { status: "failed", message: e.message });
       }
     }
+    // the published cards go, a Done note stays (as on The Noun Project)
+    setItems((list) => list.filter((it) => it.status !== "done"));
+    if (published) setFinished({ published, failed: ready - published, where: batch.trim() || null });
     setPublishing(false);
     onPublished?.();
   };
 
   const ready = items.filter((it) => it.status === "ready" || (it.status === "failed" && it.format)).length;
-  const done = items.filter((it) => it.status === "done").length;
 
   return (
     <>
+      <DoneNote finished={finished} noun={["file", "files"]} onClose={() => setFinished(null)} />
       <BatchField type="element" value={batch} onChange={setBatch} disabled={publishing} />
       {batchError && <p className="ad-error">{batchError}</p>}
       <div
@@ -153,12 +162,7 @@ function ElementUpload({ onPublished }) {
       {items.length > 0 && (
         <>
           <div className="ad-bar">
-            <span>{items.length} {items.length === 1 ? "file" : "files"}{done > 0 && ` · ${done} published`}</span>
-            {done > 0 && (
-              <button onClick={() => setItems((l) => l.filter((it) => it.status !== "done"))} disabled={publishing}>
-                Clear published
-              </button>
-            )}
+            <span>{items.length} {items.length === 1 ? "file" : "files"}</span>
             <button className="ad-primary" onClick={publishAll} disabled={publishing || ready === 0}>
               {publishing ? "Publishing…" : `Publish ${ready}`}
             </button>

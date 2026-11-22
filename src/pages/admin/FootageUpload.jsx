@@ -2,6 +2,7 @@
 // each clip, publish. Previews are recorded in real time, one clip after
 // another, so a 15 s clip takes about 15 s; keep this tab in front.
 import { useEffect, useRef, useState } from "react";
+import DoneNote from "./DoneNote";
 import BatchField from "./BatchField";
 import { openBatch } from "./batches";
 import {
@@ -21,6 +22,8 @@ const clock = (s) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStar
 function FootageUpload({ onPublished }) {
   const [items, setItems] = useState([]);
   const [publishing, setPublishing] = useState(false);
+  // the last publish: how many went up, how many failed
+  const [finished, setFinished] = useState(null);
   const [batch, setBatch] = useState("");
   const [batchError, setBatchError] = useState(null);
   const [dragging, setDragging] = useState(false);
@@ -76,6 +79,8 @@ function FootageUpload({ onPublished }) {
 
   const publishAll = async () => {
     setPublishing(true);
+    setFinished(null);
+    let published = 0;
     let batchId;
     try {
       batchId = await openBatch("footage", batch);
@@ -96,19 +101,23 @@ function FootageUpload({ onPublished }) {
           update(item.base, { message, progress })
         );
         update(item.base, { status: "done", progress: 1, message: `Published as ${code}` });
+        published += 1;
       } catch (e) {
         update(item.base, { status: "failed", message: e.message });
       }
     }
+    // the published cards go, a Done note stays (as on The Noun Project)
+    setItems((list) => list.filter((it) => it.status !== "done"));
+    if (published) setFinished({ published, failed: ready - published, where: batch.trim() || null });
     setPublishing(false);
     onPublished?.();
   };
 
   const ready = items.filter((it) => it.status === "ready" || it.status === "failed").length;
-  const done = items.filter((it) => it.status === "done").length;
 
   return (
     <>
+      <DoneNote finished={finished} noun={["clip", "clips"]} onClose={() => setFinished(null)} />
       <BatchField type="footage" value={batch} onChange={setBatch} disabled={publishing} />
       {batchError && <p className="ad-error">{batchError}</p>}
       <div
@@ -131,12 +140,7 @@ function FootageUpload({ onPublished }) {
       {items.length > 0 && (
         <>
           <div className="ad-bar">
-            <span>{items.length} {items.length === 1 ? "clip" : "clips"}{done > 0 && ` · ${done} published`}</span>
-            {done > 0 && (
-              <button onClick={() => setItems((l) => l.filter((it) => it.status !== "done"))} disabled={publishing}>
-                Clear published
-              </button>
-            )}
+            <span>{items.length} {items.length === 1 ? "clip" : "clips"}</span>
             <button className="ad-primary" onClick={publishAll} disabled={publishing || ready === 0}>
               {publishing ? "Publishing…" : `Publish ${ready}`}
             </button>
