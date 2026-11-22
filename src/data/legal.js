@@ -27,6 +27,7 @@ export const terms = [
     `Questions about these terms: ${CONTACT}.`,
   ]],
   ["accounts", "Your account", [
+    "You must be at least 16 to create an account.",
     "Give accurate details and keep your login to yourself. An account is for one person; sharing it with others isn't allowed.",
     "You're responsible for what happens under your account. Tell us right away if you think someone else has access to it.",
   ]],
@@ -139,7 +140,7 @@ export const privacy = [
     "To improve the site. We don't sell your personal data, and we don't use your designs to train AI.",
   ]],
   ["share", "Who we share it with", [
-    "Only the services that help us run Khulqidesign: sign-in and database (Supabase), hosting (Vercel), file storage and delivery (Cloudflare), sign-in with Google, font delivery (Google Fonts, which sees your IP address when it sends a font), payments (Dodo Payments, which handles your card), AI (Anthropic, see AI tools above), and email delivery. They may only use your data to provide that service.",
+    "Only the services that help us run Khulqidesign: sign-in and database (Supabase), hosting (Vercel), file storage and delivery (Cloudflare), sign-in with Google, tutorial videos (YouTube, through its privacy-enhanced player, which only loads when you open a tutorial and sets cookies once you press play), payments (Dodo Payments, which handles your card), AI (Anthropic, see AI tools above), and email delivery. They may only use your data to provide that service.",
     "Some of these services process data outside the EU and UK, for example in the United States, and we're based in Indonesia. Where that happens, transfers rely on safeguards such as the European Commission's Standard Contractual Clauses.",
     "We also share data when the law requires it.",
   ]],
