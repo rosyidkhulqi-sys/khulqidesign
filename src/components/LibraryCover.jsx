@@ -18,6 +18,15 @@ const glyphs = {
 };
 
 function LibraryCover({ library, className = "" }) {
+  // footage: its picture with a small play sign, so it reads as video
+  if (library.image && library.play) {
+    return (
+      <span className={`library-cover-play ${className}`}>
+        <img src={library.image} alt="" loading="lazy" />
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="rgba(0,0,0,0.55)" /><path d="M10 8l6 4-6 4z" fill="#fff" /></svg>
+      </span>
+    );
+  }
   if (library.image) return <img className={className} src={library.image} alt="" loading="lazy" />;
   return (
     <span className={`library-glyph ${className}`} style={{ background: library.tint }}>
