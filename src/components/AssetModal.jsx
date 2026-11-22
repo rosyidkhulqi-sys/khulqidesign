@@ -223,7 +223,7 @@ function AssetModal({
         <div className="asset-body">
           {/* PREVIEW */}
           <div className="asset-left">
-            <div className={`asset-preview is-${kind}`}>
+            <div className={`asset-preview is-${kind} ${asset.format === "PNG" ? "is-transparent" : ""}`}>
               {kind === "footage" ? (
                 <video src={asset.file} poster={asset.image} autoPlay muted loop playsInline controls />
               ) : (

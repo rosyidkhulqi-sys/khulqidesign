@@ -135,7 +135,7 @@ export function drawWatermark(ctx, w, h) {
 
 // a picture no longer than \`max\` px, optionally watermarked; JPEG, or WebP
 // when asked and the browser can make it (it's about 70% lighter)
-async function renderImage(bitmap, max, watermark, quality = 0.9, type = "image/jpeg") {
+async function renderImage(bitmap, max, watermark, quality = 0.9, type = "image/jpeg", alpha = false) {
   const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
   const w = Math.round(bitmap.width * scale);
   const h = Math.round(bitmap.height * scale);
@@ -143,8 +143,12 @@ async function renderImage(bitmap, max, watermark, quality = 0.9, type = "image/
   canvas.width = w;
   canvas.height = h;
   const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, w, h);
+  // a transparent PNG keeps its transparency (WebP holds it); the rest
+  // sit on white
+  if (!alpha) {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, w, h);
+  }
   // one big jump down leaves jagged edges: halve in steps first, each with
   // the browser's best smoothing, then draw the last step
   let source = bitmap;
@@ -172,7 +176,8 @@ async function renderImage(bitmap, max, watermark, quality = 0.9, type = "image/
 }
 
 // Premium previews carry the watermark in their pixels; free ones don't
-export async function makeImages(jpg, watermark) {
+// alpha: keep transparency (a PNG), in WebP pictures
+export async function makeImages(jpg, watermark, alpha = false) {
   const bitmap = await decodeImage(jpg);
   try {
     return {
@@ -180,8 +185,8 @@ export async function makeImages(jpg, watermark) {
       height: bitmap.height,
       // a wide card on a big Retina screen is about 1000 px across;
       // 1400 stays sharp there, as the template pictures do
-      thumb: await renderImage(bitmap, 1400, false, 0.85, "image/webp"),
-      preview: await renderImage(bitmap, 2800, watermark),
+      thumb: await renderImage(bitmap, 1400, false, 0.85, "image/webp", alpha),
+      preview: await renderImage(bitmap, 2800, watermark, 0.9, alpha ? "image/webp" : "image/jpeg", alpha),
     };
   } finally {
     bitmap.close();

@@ -49,7 +49,7 @@ function StockUpload({ kind, onPublished }) {
           ...meta,
           title: shortTitle(meta.longTitle) || shortTitle(item.base.replace(/[-_]+/g, " ")),
           status: "ready",
-          message: meta.keywords.length ? `${meta.keywords.length} keywords` : "No keywords in this JPG",
+          message: meta.keywords.length ? `${meta.keywords.length} keywords` : "No keywords in this file",
         });
       } catch {
         update(item.base, { title: shortTitle(item.base), status: "ready", message: "Couldn't read metadata" });
@@ -105,10 +105,10 @@ function StockUpload({ kind, onPublished }) {
         onDragLeave={() => setDragging(false)}
         onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles([...e.dataTransfer.files]); }}
       >
-        <strong>{kind === "photo" ? "Drop JPG photos here" : "Drop PSD and JPG files here"}</strong>
+        <strong>{kind === "photo" ? "Drop JPG or PNG photos here" : "Drop PSD and JPG files here"}</strong>
         <span>
           {kind === "photo"
-            ? "Each JPG becomes one photo, sold full size. Title, description and keywords come from the JPG's metadata, as on Adobe Stock."
+            ? "Each JPG or PNG becomes one photo, sold full size; a transparent PNG stays transparent. Title, description and keywords come from the file's metadata, as on Adobe Stock."
             : "A PSD and a JPG with the same name become one mockup: the PSD is sold, the JPG shows it. Details come from the JPG's metadata."}
         </span>
         <button onClick={() => input.current?.click()}>Choose files</button>

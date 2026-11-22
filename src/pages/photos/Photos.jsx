@@ -1,4 +1,5 @@
-// Photos: the owner's own photographs, sold full size (the JPG original).
+// Photos: the owner's own photographs, sold full size (the JPG or PNG
+// original; a transparent PNG says so).
 // AI photos join later, labeled as AI.
 import StockLibrary from "../stock/StockLibrary";
 import { px } from "../stock/px";
@@ -14,15 +15,15 @@ const config = {
   aiExample: "Fresh oranges on a white marble table",
   categories: PHOTO_CATEGORY_OPTIONS,
   options: (p) => [{
-    label: "JPG",
-    detail: `Full size · ${px(p.artboard)} px`,
+    label: p.format,
+    detail: `${p.format === "PNG" ? "Transparent, full size" : "Full size"} · ${px(p.artboard)} px`,
     size: p.bytes,
     pending: true,
-    format: "JPG",
-    ext: "jpg",
+    format: p.format,
+    ext: p.format.toLowerCase(),
   }],
   specs: (p) => [
-    ["Format", "JPG"],
+    ["Format", p.format === "PNG" ? "PNG (transparent)" : "JPG"],
     ["Size", `${px(p.artboard)} px`],
     ["Release", "Not required"],
   ],

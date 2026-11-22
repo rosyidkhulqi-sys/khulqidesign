@@ -1,4 +1,5 @@
-// Photos and mockups on /admin. A photo is one JPG: the full-size original
+// Photos and mockups on /admin. A photo is one JPG or PNG (transparent PNGs
+// keep their transparency in the previews): the full-size original
 // is what's sold. A mockup is a PSD with a JPG of the same name: the PSD is
 // sold, the JPG shows it. Both get a sharp thumbnail and a preview
 // (watermarked when Premium), and their title, description and keywords from
@@ -12,7 +13,7 @@ const extOf = (name) => name.split(".").pop().toLowerCase();
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "file";
 
 export const STOCK = {
-  photo: { prefix: "PH", folder: "photos", accept: ".jpg,.jpeg", noun: ["photo", "photos"] },
+  photo: { prefix: "PH", folder: "photos", accept: ".jpg,.jpeg,.png", noun: ["photo", "photos"] },
   mockup: { prefix: "MK", folder: "mockups", accept: ".psd,.jpg,.jpeg", noun: ["mockup", "mockups"] },
 };
 
@@ -21,7 +22,7 @@ export function groupFiles(kind, fileList) {
   const groups = new Map();
   for (const file of fileList) {
     const ext = extOf(file.name);
-    if (!["jpg", "jpeg", "psd"].includes(ext) || (kind === "photo" && ext === "psd")) continue;
+    if (!["jpg", "jpeg", "png", "psd"].includes(ext) || (kind === "photo" && ext === "psd") || (kind === "mockup" && ext === "png")) continue;
     const base = baseName(file.name);
     const g = groups.get(base) ?? { base };
     if (ext === "psd") g.psd = file;
@@ -41,7 +42,8 @@ async function gzipped(file) {
 
 export async function publishStock(kind, item, onStep) {
   const { prefix, folder: root } = STOCK[kind];
-  const images = await makeImages(item.jpg, item.license === "premium");
+  const png = extOf(item.jpg.name) === "png";
+  const images = await makeImages(item.jpg, item.license === "premium", png);
   const w = images.width;
   const h = images.height;
   // a PSD is stored compressed (lossless; downloads unpack it), a JPG as it is
@@ -52,14 +54,14 @@ export async function publishStock(kind, item, onStep) {
     const name = slug(item.title);
     const folder = `${root}/${code}`;
     const original = kind === "photo"
-      ? { bucket: "private", key: `${folder}/${name}.jpg`, file: item.jpg, contentType: "image/jpeg" }
+      ? { bucket: "private", key: `${folder}/${name}.${png ? "png" : "jpg"}`, file: item.jpg, contentType: png ? "image/png" : "image/jpeg" }
       : psdGz
         ? { bucket: "private", key: `${folder}/${name}.psd.gz`, file: psdGz, contentType: "application/gzip" }
         : { bucket: "private", key: `${folder}/${name}.psd`, file: item.psd, contentType: "image/vnd.adobe.photoshop" };
     const steps = [
       original,
       { bucket: "public", key: `${folder}/thumb.${images.thumb.type === "image/webp" ? "webp" : "jpg"}`, file: images.thumb, contentType: images.thumb.type },
-      { bucket: "public", key: `${folder}/preview.jpg`, file: images.preview, contentType: "image/jpeg" },
+      { bucket: "public", key: `${folder}/preview.${images.preview.type === "image/webp" ? "webp" : "jpg"}`, file: images.preview, contentType: images.preview.type },
     ];
     const total = steps.reduce((sum, s) => sum + s.file.size, 0);
     const sent = steps.map(() => 0);
@@ -73,7 +75,7 @@ export async function publishStock(kind, item, onStep) {
 
     onStep("Saving", 1);
     const file = kind === "photo"
-      ? { format: "JPG", key: original.key, bytes: item.jpg.size, label: "Full-size JPG", width: w, height: h }
+      ? { format: png ? "PNG" : "JPG", key: original.key, bytes: item.jpg.size, label: png ? "Full-size PNG" : "Full-size JPG", width: w, height: h }
       : { format: "PSD", key: original.key, bytes: item.psd.size, label: "Layered PSD", width: w, height: h };
     const { error } = await supabase.from("assets").insert({
       code,

@@ -156,7 +156,7 @@ function StockLibrary({ config, setPage, initialSearch = "", user = null }) {
           items.map((v) => (
             <div className="vector-card" key={v.id} role="button" tabIndex={0} aria-label={v.title}
                  onClick={() => setSelected(v)} onKeyDown={(e) => e.key === "Enter" && setSelected(v)}>
-              <div className="vector-thumb" style={{ aspectRatio: `${v.artboard[0]} / ${v.artboard[1]}` }}>
+              <div className={`vector-thumb ${v.format === "PNG" ? "is-transparent" : ""}`} style={{ aspectRatio: `${v.artboard[0]} / ${v.artboard[1]}` }}>
                 <img src={v.image} alt={v.title} loading="lazy" />
                 <span className={`vector-badge ${v.license}`}>{v.license === "free" ? "Free" : "Premium"}</span>
                 <span className="vector-format">{v.format}</span>
