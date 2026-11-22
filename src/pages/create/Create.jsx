@@ -64,7 +64,7 @@ import { supabase } from "../../lib/supabaseClient";
 import PublishTemplate from "./PublishTemplate";
 import { fetchTemplates, updateTemplate } from "./templatePublish";
 import { clearTemplateEdit, peekTemplateEdit } from "../../lib/templateEdit";
-import { fetchIconCatalog, fetchPublished, toCreatePart, toVector } from "../../lib/catalog";
+import { fetchCreateParts, fetchIconCatalog, fetchPublished, toVector } from "../../lib/catalog";
 import { askLogin } from "../../lib/authGate";
 import { aiReady } from "../../lib/ai";
 import { MODELS, removeBackground, upscale } from "../../lib/aiLocal";
@@ -361,6 +361,11 @@ function Create({ draft, clearDraft, user = null }) {
   const allDesigns = dbTemplates;
   const dbElements = useMemo(() => dbParts.filter((p) => p.kind === "element"), [dbParts]);
   const dbBackgrounds = useMemo(() => dbParts.filter((p) => p.kind === "background"), [dbParts]);
+  // every element and background the panels have shown (the overview, a
+  // search, a category page), by code, so whatever was clicked can be placed
+  const knownParts = useRef(new Map());
+  const learnParts = useMemo(() => (parts) => parts.forEach((p) => knownParts.current.set(p.id, p)), []);
+  const partById = (id) => knownParts.current.get(id) ?? libraryElements.find((e) => e.id === id);
 
   useEffect(() => {
     let alive = true;
@@ -373,15 +378,20 @@ function Create({ draft, clearDraft, user = null }) {
       .catch(() => {
         /* the built-in templates still show */
       });
-    fetchPublished("element")
-      .then((rows) => alive && setDbParts(rows.map(toCreatePart)))
+    // the newest elements and all backgrounds; the rest are read page by page
+    fetchCreateParts()
+      .then((parts) => {
+        if (!alive) return;
+        learnParts(parts);
+        setDbParts(parts);
+      })
       .catch(() => {
         /* the built-in elements still show */
       });
     return () => {
       alive = false;
     };
-  }, []);
+  }, [learnParts]);
   const editorRef = useRef(null);
 
   // follow the browser's full-screen state, including leaving it with Esc
@@ -1236,7 +1246,8 @@ function Create({ draft, clearDraft, user = null }) {
     }
     // element files: SVG stays editable vector, PNG goes in as an image
     if (kind === "element") {
-      const el = dbElements.find((e) => e.id === id) ?? libraryElements.find((e) => e.id === id);
+      const el = partById(id);
+      if (!el) return;
       if (el.type !== "svg") return addImage(el.url, point, el.premium);
       return fetch(el.url).then((r) => r.text()).then((markup) => addSvg(markup, point, el.premium));
     }
@@ -1244,7 +1255,10 @@ function Create({ draft, clearDraft, user = null }) {
       const vector = library.vectors.find((v) => v.id === id);
       return addImage(vector.previewImage ?? vector.image, point);
     }
-    if (kind === "background") return setBackgroundPhoto(dbBackgrounds.find((p) => p.id === id).url);
+    if (kind === "background") {
+      const photo = partById(id);
+      return photo && setBackgroundPhoto(photo.url);
+    }
     if (kind === "upload") {
       const u = uploads.find((x) => x.id === id);
       return u.type === "svg" ? addSvg(u.data, point) : addImage(u.data, point);
@@ -1543,7 +1557,7 @@ function Create({ draft, clearDraft, user = null }) {
       return v ? v.previewImage ?? v.image : null;
     }
     if (kind === "element") {
-      const el = dbElements.find((e) => e.id === id) ?? libraryElements.find((e) => e.id === id);
+      const el = partById(id);
       return el?.url && !/\.svg(\?|$)/i.test(el.url) ? el.url : null;
     }
     return null;
@@ -2716,6 +2730,7 @@ function Create({ draft, clearDraft, user = null }) {
                 templates={allDesigns}
                 uploaded={dbElements}
                 backgrounds={dbBackgrounds}
+                learn={learnParts}
                 photo={bgPhoto}
                 library={library}
                 dragItem={dragItem}
@@ -2726,7 +2741,7 @@ function Create({ draft, clearDraft, user = null }) {
 
             {!searching && tab === "templates" && <div className="cp-masonry">{allDesigns.map(templateTile)}</div>}
 
-            {!searching && tab === "elements" && <ElementsPanel dragItem={dragItem} uploaded={dbElements} onAddQr={addQr} />}
+            {!searching && tab === "elements" && <ElementsPanel dragItem={dragItem} uploaded={dbElements} learn={learnParts} onAddQr={addQr} />}
             {!searching && tab === "background" && (
               <BackgroundPanel
                 color={toHex(bg)}

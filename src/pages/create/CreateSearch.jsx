@@ -2,11 +2,12 @@
 // of its content. Results come in sections, the open tab's kind first, each
 // with a short row and "See all". What can't go on a page (logos and footage)
 // is linked to its own library page.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Icon from "./CreateIcons";
 import { basicIcons } from "./basicIcons";
 import { shapes } from "./createLibrary";
-import { BasicTile, ElementTile, PagedGrid, SetIconTile, ShapeTile, TableTiles } from "./CreateElements";
+import { BasicTile, DbGrid, ElementTile, PagedGrid, SetIconTile, ShapeTile, TableTiles } from "./CreateElements";
+import { fetchCreatePage } from "../../lib/catalog";
 import { saveRecent, withRecent } from "./createRecent";
 import { PhotoTile } from "./CreateBackground";
 import { QrPanel } from "./CreateQr";
@@ -55,14 +56,46 @@ const QR_SEARCH = /\b(qr|qrcode|barcode)\b/i;
 // and "table": the table styles come first
 const TABLE_SEARCH = /\b(tables?|tabel|grid table|spreadsheet)\b/i;
 
-function CreateSearch({ query, tab, templates, uploaded, backgrounds, photo, library, dragItem: placeItem, templateTile, onAddQr }) {
+// the words a database search would use: kind words only count alone
+const searchWords = (query) => {
+  const q = query.trim().toLowerCase();
+  const kindWords = q.includes(" ") ? KIND_WORDS : [];
+  const words = q.split(/\s+/).map((w) => w.replace(/[^\p{L}\p{N}]/gu, "")).filter((w) => w && !kindWords.includes(w));
+  return { kindWords, words };
+};
+
+function CreateSearch({ query, tab, templates, uploaded, backgrounds, photo, library, dragItem: placeItem, templateTile, onAddQr, learn }) {
   // the section open in full ("See all")
   const [view, setView] = useState(null);
   const dragItem = withRecent(placeItem, saveRecent);
 
+  // uploaded elements are searched by the database, all of them (the editor
+  // only holds the newest); undefined while it answers, null if it couldn't
+  const { kindWords, words } = searchWords(query);
+  const [found, setFound] = useState(undefined);
+  const askDb = words.length > 0;
+  useEffect(() => {
+    if (!askDb) return;
+    let alive = true;
+    fetchCreatePage({ text: query, kindWords, perPage: 60 })
+      .then((r) => {
+        if (!alive) return;
+        learn?.(r.parts);
+        setFound(r);
+      })
+      .catch(() => alive && setFound(null));
+    return () => {
+      alive = false;
+    };
+    // CreateSearch is keyed by the query, so this runs once per search
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const sources = useMemo(
     () => ({
       templates: indexed(templates),
+      // built-in parts; uploaded ones too until the database has answered
+      builtIn: indexed([...shapes, ...trialElements]),
       elements: indexed([...shapes, ...uploaded, ...trialElements]),
       icons: indexed([...basicIcons, ...library.icons]),
       vectors: indexed(library.vectors),
@@ -92,7 +125,12 @@ function CreateSearch({ query, tab, templates, uploaded, backgrounds, photo, lib
       tile: (p) => <PhotoTile key={p.id} photo={p} on={photo === p.url} dragItem={dragItem} />,
     },
   ]
-    .map((s) => ({ ...s, items: find(sources[s.id], query) }))
+    .map((s) => {
+      if (s.id !== "elements" || !found) return { ...s, items: find(sources[s.id], query) };
+      // the database's matches first, then the built-in ones
+      const builtIn = find(sources.builtIn, query);
+      return { ...s, items: [...found.parts, ...builtIn], total: found.total + builtIn.length, builtIn };
+    })
     .filter((s) => s.items.length > 0);
 
   // the open tab's kind comes first
@@ -106,7 +144,9 @@ function CreateSearch({ query, tab, templates, uploaded, backgrounds, photo, lib
         <button className="cp-back" onClick={() => setView(null)}>
           <Icon name="arrowLeft" size={16} /> {open.title}
         </button>
-        <PagedGrid items={open.items} columns={open.columns} renderTile={open.tile} />
+        {open.id === "elements" && found
+          ? <DbGrid query={{ text: query, kindWords }} after={open.builtIn} columns={open.columns} renderTile={open.tile} learn={learn} />
+          : <PagedGrid items={open.items} columns={open.columns} renderTile={open.tile} />}
       </>
     );
   }
@@ -135,8 +175,8 @@ function CreateSearch({ query, tab, templates, uploaded, backgrounds, photo, lib
           <div key={s.id} className="cp-found">
             <div className="cp-head">
               <p className="cp-label">{s.title}</p>
-              {s.items.length > short.length && (
-                <button className="cp-all" onClick={() => setView(s.id)}>See all ({s.items.length})</button>
+              {(s.total ?? s.items.length) > short.length && (
+                <button className="cp-all" onClick={() => setView(s.id)}>See all ({s.total ?? s.items.length})</button>
               )}
             </div>
             <div className={s.columns === "masonry" ? "cp-masonry" : `cp-grid ${s.columns}`}>{short.map(s.tile)}</div>

@@ -13,8 +13,11 @@ import { TABLE_STYLES, tableArt } from "./createTable";
 import { frameArt, photoFrames, shapeGroups, shapes, svgDataUrl } from "./createLibrary";
 import { clearRecent as forgetRecent, loadRecent, saveRecent, withRecent } from "./createRecent";
 import { elementCategories, elements as trialElements } from "../../data/elementsData";
-import { elementCategoryLabel, normalizeElementCategory } from "../../data/elementCategories";
-import { fetchIconCatalog } from "../../lib/catalog";
+
+// the built-in parts of a category, shown after its uploaded ones
+const trialOf = (id) => elementCategories.find((c) => c.id === id)?.items ?? [];
+import { ELEMENT_CATEGORIES, elementCategoryLabel, elementCategoryStorageValues, normalizeElementCategory } from "../../data/elementCategories";
+import { countCreateCategories, fetchCreatePage, fetchCreatePartsByCode, fetchIconCatalog } from "../../lib/catalog";
 
 // how many tiles a category grid adds each time the list scrolls to its end
 const PAGE = 60;
@@ -64,7 +67,7 @@ export function ShapeTile({ shape, dragItem }) {
   );
 }
 
-function ShapeTiles({ list, dragItem }) {
+function ShapeTiles({ list, dragItem, uploadedGrid, uploadedCount = 0 }) {
   return (
     <>
       {shapeGroups.map((group) => (
@@ -75,7 +78,12 @@ function ShapeTiles({ list, dragItem }) {
           </div>
         </section>
       ))}
-      {list.length > 0 && (
+      {uploadedGrid ? (
+        <section className="cp-shape-set">
+          <SectionHead title="Uploaded shapes" count={uploadedCount} />
+          {uploadedGrid}
+        </section>
+      ) : list.length > 0 && (
         <section className="cp-shape-set">
           <SectionHead title="Uploaded shapes" count={list.length} />
           <PagedGrid items={list} renderTile={(el) => <ElementTile key={el.id} el={el} dragItem={dragItem} />} />
@@ -185,6 +193,64 @@ export function PagedGrid({ items, renderTile, columns = "three" }) {
   );
 }
 
+// A grid read from the database a page at a time as it scrolls into view, so
+// a category or a search over tens of thousands of elements stays light;
+// \`after\` (built-in parts) follows once the database has no more. learn()
+// registers what arrived so a click can place it. Keyed by its query.
+export function DbGrid({ query, after = [], renderTile, learn, columns = "three" }) {
+  const [parts, setParts] = useState([]);
+  const [done, setDone] = useState(false);
+  const state = useRef({ page: 0, busy: false });
+  const end = useRef(null);
+  // the latest query and learn(), without restarting the observer each render
+  const latest = useRef({ query, learn });
+  useEffect(() => {
+    latest.current = { query, learn };
+  });
+
+  useEffect(() => {
+    const node = end.current;
+    if (!node || done) return;
+    let alive = true;
+    const load = async () => {
+      const st = state.current;
+      if (st.busy) return;
+      st.busy = true;
+      try {
+        const { query: q, learn: register } = latest.current;
+        const { parts: next, total } = await fetchCreatePage({ perPage: PAGE, ...q, page: st.page + 1 });
+        if (!alive) return;
+        st.page += 1;
+        register?.(next);
+        setParts((list) => {
+          const seen = new Set(list.map((p) => p.id));
+          return [...list, ...next.filter((p) => !seen.has(p.id))];
+        });
+        if (!next.length || st.page * (q.perPage ?? PAGE) >= total) setDone(true);
+      } catch {
+        if (alive) setDone(true);
+      } finally {
+        st.busy = false;
+      }
+    };
+    const watch = new IntersectionObserver((entries) => entries[0].isIntersecting && load());
+    watch.observe(node);
+    return () => {
+      alive = false;
+      watch.disconnect();
+    };
+  }, [done, parts.length]);
+
+  const seen = new Set(parts.map((p) => p.id));
+  const tail = done ? after.filter((p) => !seen.has(p.id)) : [];
+  return (
+    <>
+      <div className={columns === "masonry" ? "cp-masonry" : `cp-grid ${columns}`}>{[...parts, ...tail].map(renderTile)}</div>
+      {!done && <div ref={end} className="cp-more" aria-hidden="true" />}
+    </>
+  );
+}
+
 /* ---------- recently used ---------- */
 
 // a stored { kind, id } back as its tile, or null if the item is gone
@@ -221,9 +287,43 @@ function recentTile({ kind, id }, dragItem, elements, icons) {
 /* ---------- panel ---------- */
 
 // onAddQr(text): puts a new QR code on the page
-function ElementsPanel({ dragItem: placeItem, uploaded = [], onAddQr }) {
+function ElementsPanel({ dragItem: placeItem, uploaded = [], learn, onAddQr }) {
   const elements = useMemo(() => [...uploaded, ...trialElements], [uploaded]);
   const categories = useMemo(() => mergeCategories(uploaded), [uploaded]);
+  // how many each category really holds (the overview loads only the newest),
+  // and a picture for a category none of the newest belong to
+  const [dbCounts, setDbCounts] = useState(null);
+  const [covers, setCovers] = useState({});
+  useEffect(() => {
+    let alive = true;
+    countCreateCategories(ELEMENT_CATEGORIES.map((id) => [id, elementCategoryStorageValues(id)]))
+      .then(async (counts) => {
+        if (!alive) return;
+        setDbCounts(counts);
+        const missing = ELEMENT_CATEGORIES.filter(
+          (id) => counts[id] > 0 && !uploaded.some((el) => normalizeElementCategory(el.category) === id)
+        );
+        const found = await Promise.all(missing.map((id) =>
+          fetchCreatePage({ stored: elementCategoryStorageValues(id), perPage: 1 })
+            .then((r) => [id, r.parts[0]])
+            .catch(() => [id, null])
+        ));
+        if (alive) setCovers(Object.fromEntries(found.filter(([, part]) => part)));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [uploaded]);
+  const uploadedIn = (id) => uploaded.filter((el) => normalizeElementCategory(el.category) === id).length;
+  const countOf = (c) => (dbCounts ? c.items.length - uploadedIn(c.id) + (dbCounts[c.id] ?? 0) : c.items.length);
+  const allCategories = useMemo(() => {
+    const list = [...categories];
+    for (const id of ELEMENT_CATEGORIES) {
+      if (dbCounts?.[id] && !list.some((c) => c.id === id)) list.push({ id, name: elementCategoryLabel(id), items: [] });
+    }
+    return list.map((c) => ({ ...c, cover: c.cover ?? c.items[0]?.thumb ?? covers[c.id]?.thumb }));
+  }, [categories, dbCounts, covers]);
   const [iconCatalog, setIconCatalog] = useState({ icons: [], sets: [] });
   useEffect(() => {
     let alive = true;
@@ -241,14 +341,14 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [], onAddQr }) {
     icons: setIcons.filter((icon) => icon.setId === set.id),
   })).filter((group) => group.icons.length > 0), [iconCatalog.sets, setIcons]);
   const iconCount = basicIcons.length + setIcons.length;
-  const shapeCategory = categories.find((c) => c.id === "shapes");
-  const browsableCategories = categories.filter((c) => c.id !== "shapes" && c.items.length > 0);
+  const shapeCategory = allCategories.find((c) => c.id === "shapes");
+  const browsableCategories = allCategories.filter((c) => c.id !== "shapes" && countOf(c) > 0);
   // the open category, the existing icon catalog, built-in shapes, or recent items
   const [view, setView] = useState(null);
   const browseTiles = [
     ...browsableCategories.filter((c) => ["graphics", "infographics", "grids"].includes(c.id)).map((c) => ({
       ...c,
-      count: c.items.length,
+      count: countOf(c),
       picture: c.cover,
       onOpen: () => setView(c.id),
     })),
@@ -262,7 +362,7 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [], onAddQr }) {
     {
       id: "shapes",
       name: "Shapes",
-      count: shapes.length + (shapeCategory?.items.length ?? 0),
+      count: shapes.length + (shapeCategory ? countOf(shapeCategory) : 0),
       picture: shapeCategory?.cover ?? SHAPES_PREVIEW,
       onOpen: () => setView("shapes"),
     },
@@ -290,13 +390,13 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [], onAddQr }) {
     },
     ...browsableCategories.filter((c) => c.id === "frames" || c.id === "photos").map((c) => ({
       ...c,
-      count: c.items.length,
+      count: countOf(c),
       picture: c.cover,
       onOpen: () => setView(c.id),
     })),
     ...browsableCategories
       .filter((c) => !["graphics", "infographics", "grids", "frames", "photos"].includes(c.id))
-      .map((c) => ({ ...c, count: c.items.length, picture: c.cover, onOpen: () => setView(c.id) })),
+      .map((c) => ({ ...c, count: countOf(c), picture: c.cover, onOpen: () => setView(c.id) })),
   ];
   const [recent, setRecent] = useState(loadRecent);
 
@@ -313,13 +413,34 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [], onAddQr }) {
 
   const dragItem = withRecent(placeItem, remember);
 
-  const recentTiles = recent.map((r) => recentTile(r, dragItem, elements, setIcons)).filter(Boolean);
+  // recently used elements older than the overview's newest, read by code
+  const [older, setOlder] = useState([]);
+  useEffect(() => {
+    const known = new Set([...elements, ...older].map((e) => e.id));
+    const missing = recent.filter((r) => r.kind === "element" && /^KD-/.test(r.id) && !known.has(r.id)).map((r) => r.id);
+    if (!missing.length) return;
+    let alive = true;
+    fetchCreatePartsByCode(missing)
+      .then((parts) => {
+        if (!alive || !parts.length) return;
+        learn?.(parts);
+        setOlder((list) => [...list, ...parts]);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [recent, elements, older, learn]);
+
+  const recentTiles = recent.map((r) => recentTile(r, dragItem, [...elements, ...older], setIcons)).filter(Boolean);
 
   const elementTile = (el) => <ElementTile key={el.id} el={el} dragItem={dragItem} />;
 
   /* one section in full */
   if (view) {
-    const category = categories.find((c) => c.id === view);
+    const category = allCategories.find((c) => c.id === view);
+    // uploaded parts come from the database page by page, then the built-in ones
+    const fromDb = dbCounts && ELEMENT_CATEGORIES.includes(view);
     return (
       <>
         <button className="cp-back" onClick={() => setView(null)}>
@@ -327,9 +448,20 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [], onAddQr }) {
           {category?.name ?? (view === "recent" ? "Recently used" : view === "shapes" ? "Shapes" : view === "photo-frames" ? "Photo frames" : view === "qr" ? "QR code" : view === "tables" ? "Tables" : "Icons")}
         </button>
 
-        {category && view !== "shapes" && <PagedGrid items={category.items} renderTile={elementTile} />}
+        {category && view !== "shapes" && (fromDb
+          ? <DbGrid key={view} query={{ stored: elementCategoryStorageValues(view) }} after={trialOf(view)} renderTile={elementTile} learn={learn} />
+          : <PagedGrid items={category.items} renderTile={elementTile} />)}
 
-        {view === "shapes" && <ShapeTiles list={shapeCategory?.items ?? []} dragItem={dragItem} />}
+        {view === "shapes" && (
+          <ShapeTiles
+            list={shapeCategory?.items ?? []}
+            dragItem={dragItem}
+            uploadedCount={shapeCategory ? countOf(shapeCategory) : 0}
+            uploadedGrid={fromDb && shapeCategory && countOf(shapeCategory) > 0
+              ? <DbGrid key="shapes" query={{ stored: elementCategoryStorageValues("shapes") }} after={trialOf("shapes")} renderTile={elementTile} learn={learn} />
+              : null}
+          />
+        )}
 
         {view === "photo-frames" && (
           <>

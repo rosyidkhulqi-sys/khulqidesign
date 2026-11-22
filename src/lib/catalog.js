@@ -35,6 +35,59 @@ export function toCreatePart(row) {
   };
 }
 
+// ---- Create's elements, read from the database page by page, so the library
+// can hold tens of thousands without the editor loading them all (as on
+// Canva and MiriCanvas). Backgrounds are elements with style "background".
+const notBackground = (q) => q.or("style.is.null,style.neq.background");
+
+// the newest elements for the overview, and every background (a short list)
+export async function fetchCreateParts(newest = 200) {
+  const base = () => supabase.from("assets").select("*").eq("type", "element").eq("status", "published")
+    .order("published_at", { ascending: false });
+  const [elements, backgrounds] = await Promise.all([
+    notBackground(base()).limit(newest),
+    base().eq("style", "background").limit(500),
+  ]);
+  if (elements.error) throw elements.error;
+  if (backgrounds.error) throw backgrounds.error;
+  return [...(elements.data ?? []), ...(backgrounds.data ?? [])].map(toCreatePart);
+}
+
+// how many elements each stored category holds, counted by the database
+export async function countCreateCategories(categories) {
+  const counts = await Promise.all(categories.map(async ([id, stored]) => {
+    const { count } = await notBackground(
+      supabase.from("assets").select("id", { count: "exact", head: true }).eq("type", "element").eq("status", "published")
+    ).in("category", stored);
+    return [id, count ?? 0];
+  }));
+  return Object.fromEntries(counts);
+}
+
+// one page of elements: a category's (stored values), a search's, or both
+export async function fetchCreatePage({ text = "", kindWords = [], stored = null, backgrounds = false, page = 1, perPage = 60 }) {
+  const { rows, total } = await searchCatalog("element", {
+    text,
+    kindWords,
+    sort: "newest",
+    page,
+    perPage,
+    narrow: (q) => {
+      const kind = backgrounds ? q.eq("style", "background") : notBackground(q);
+      return stored ? kind.in("category", stored) : kind;
+    },
+  });
+  return { parts: rows.map(toCreatePart), total };
+}
+
+// particular elements by code (a "Recently used" item older than the overview)
+export async function fetchCreatePartsByCode(codes) {
+  if (!codes.length) return [];
+  const { data, error } = await supabase.from("assets").select("*").eq("type", "element").eq("status", "published").in("code", codes);
+  if (error) throw error;
+  return (data ?? []).map(toCreatePart);
+}
+
 // One page of a library, searched and filtered by the database, so a library
 // of any size stays fast. Every word must match the start of a word in the
 // title, keywords or the file's own title and description, in any order;
