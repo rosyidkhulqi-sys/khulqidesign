@@ -1413,6 +1413,33 @@ function Create({ draft, clearDraft, user = null }) {
     place(frame, point);
   };
 
+  // a filled frame back to an empty one of the same box, place and look
+  const emptyFrame = (filled) => {
+    const c = fc.current;
+    const f = photoFrames.find((x) => x.id === filled.kdFrame);
+    if (!f) return;
+    const w = filled.width;
+    const h = filled.height;
+    const m = Math.min(w, h) / 100;
+    const shape = new Path(f.path, { fill: "#d4d8de", strokeWidth: 0, scaleX: w / f.w, scaleY: h / f.h, left: 0, top: 0 });
+    const sign = [
+      new Path("M0 18 L8 8 L13 13 L17 9 L24 18Z", { fill: "#8a929c", strokeWidth: 0, scaleX: m * 1.4, scaleY: m * 1.4, left: w / 2 - 17 * m, top: h / 2 - 12 * m }),
+      new Circle({ radius: 3 * m * 1.4, fill: "#8a929c", left: w / 2 + 3 * m, top: h / 2 - 14 * m }),
+    ];
+    const frame = new Group([shape, ...sign], { kdFrame: filled.kdFrame });
+    frame.set({
+      left: filled.left, top: filled.top, scaleX: filled.scaleX, scaleY: filled.scaleY,
+      angle: filled.angle, flipX: filled.flipX, flipY: filled.flipY, opacity: filled.opacity, shadow: filled.shadow,
+    });
+    const index = c.getObjects().indexOf(filled);
+    c.remove(filled);
+    c.insertAt(index, frame);
+    frame.setCoords();
+    c.setActiveObject(frame);
+    setActive(frame);
+    render();
+  };
+
   // the frame under a point on the page, topmost first
   const frameAt = (point) =>
     [...fc.current.getObjects()].reverse().find((o) => o.kdFrame && o.visible && o.containsPoint(point));
@@ -2064,7 +2091,11 @@ function Create({ draft, clearDraft, user = null }) {
 
   const remove = () => {
     const c = fc.current;
-    c.getActiveObjects().forEach((o) => c.remove(o));
+    // as on Canva: deleting a framed photo empties the frame; delete again
+    // to remove the frame itself
+    const only = c.getActiveObjects();
+    if (only.length === 1 && framePhoto(only[0])) return emptyFrame(only[0]);
+    only.forEach((o) => c.remove(o));
     c.discardActiveObject();
     setActive(null);
     render();
