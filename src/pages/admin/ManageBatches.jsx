@@ -132,6 +132,10 @@ function ManageBatches({ type, refreshKey }) {
                     <button onClick={() => setOpen(open === b.id ? null : b.id)} disabled={working || Number(b.total) === 0}>
                       {open === b.id ? "Close" : "Open"}
                     </button>
+                    {/* more files for this batch (a second try after a failed upload, say):
+                        its name goes into the Batch field above and the drop area comes into view */}
+                    <button onClick={() => window.dispatchEvent(new CustomEvent("kd-add-to-batch", { detail: { type, name: b.name } }))}
+                            disabled={working}>Add files</button>
                     <button onClick={() => { setRenaming(b.id); setDraft(b.name); }} disabled={working}>Rename</button>
                     {allHidden ? (
                       <button onClick={() => run(b, () => setBatchStatus(b.id, "published"))} disabled={working}>Show all</button>

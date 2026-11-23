@@ -5,7 +5,8 @@ import { deleteFromR2 } from "../../lib/r2";
 // the batch's id, made on the server if new (an empty name means today's
 // dated batch); called once per publish
 export async function openBatch(type, name) {
-  const { data, error } = await supabase.rpc("open_upload_batch", { p_type: type, p_name: name ?? "" });
+  const clean = (name ?? "").replace(/\s+/g, " ").trim();
+  const { data, error } = await supabase.rpc("open_upload_batch", { p_type: type, p_name: clean });
   if (error) throw new Error(`Couldn't open the batch: ${error.message}`);
   return data;
 }

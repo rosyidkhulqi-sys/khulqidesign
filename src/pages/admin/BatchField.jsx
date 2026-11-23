@@ -41,6 +41,20 @@ function BatchField({ type, value, onChange, disabled }) {
     }
   };
 
+  // "Add files" on a batch below: this upload goes into that batch
+  useEffect(() => {
+    const onAdd = (e) => {
+      if (e.detail?.type !== type) return;
+      change(e.detail.name);
+      const field = document.querySelector(".ad-batch");
+      field?.scrollIntoView({ behavior: "smooth", block: "start" });
+      field?.classList.add("is-flash");
+      setTimeout(() => field?.classList.remove("is-flash"), 1200);
+    };
+    window.addEventListener("kd-add-to-batch", onAdd);
+    return () => window.removeEventListener("kd-add-to-batch", onAdd);
+  });
+
   // recent batches of this type, to add to one again
   const [recent, setRecent] = useState([]);
   useEffect(() => {
