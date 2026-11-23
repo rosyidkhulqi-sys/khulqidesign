@@ -7,7 +7,9 @@ function ConfirmDialog({ title, message, confirmLabel = "Delete", cancelLabel = 
   const [typed, setTyped] = useState("");
   const cancel = useRef(null);
   const input = useRef(null);
-  const ready = !typeToConfirm || typed.trim() === typeToConfirm;
+  // the name as typed, with spacing and capitals not counting
+  const tidy = (t) => t.replace(/\s+/g, " ").trim().toLowerCase();
+  const ready = !typeToConfirm || tidy(typed) === tidy(typeToConfirm);
 
   useEffect(() => {
     // start on the safe choice, or on the name field when one is asked for
