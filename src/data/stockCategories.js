@@ -8,6 +8,7 @@ export const PHOTO_CATEGORY_OPTIONS = [
   ["culture-religion", "Culture & Religion"],
   ["food", "Food & Drink"],
   ["fruits-vegetables", "Fruits & Vegetables"],
+  ["health", "Health & Medicine"],
   ["heritage", "Historic Sites & Landmarks"],
   ["holiday", "Holidays"],
   ["landscape", "Landscape"],
