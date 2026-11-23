@@ -37,6 +37,7 @@ function EditAsset({ row, type, onSaved, onCancel }) {
     style: row.style ?? logoStyles[0][0],
     license: row.license,
     price: row.price_cents ? row.price_cents / 100 : 199,
+    aiGenerated: Boolean(row.ai_generated),
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -69,6 +70,7 @@ function EditAsset({ row, type, onSaved, onCancel }) {
       license: form.license,
       price_cents: form.license === "exclusive" ? Math.round(price * 100) : null,
       ...(isLogo ? { industry: form.industry, style: form.style } : { category: form.category }),
+      ...(type === "photo" || type === "mockup" ? { ai_generated: form.aiGenerated } : {}),
     };
 
     setSaving(true);
@@ -162,6 +164,18 @@ function EditAsset({ row, type, onSaved, onCancel }) {
         </p>
       )}
       {error && <p className="ad-error is-wide">{error}</p>}
+
+      {(type === "photo" || type === "mockup") && (
+
+        <label className="ad-ai-switch">
+
+          <input type="checkbox" checked={form.aiGenerated} onChange={(e) => setForm((f) => ({ ...f, aiGenerated: e.target.checked }))} />
+
+          <span><strong>AI-generated</strong> · shows the AI label on the site</span>
+
+        </label>
+
+      )}
 
       <div className="ad-edit-actions">
         <button type="button" onClick={onCancel} disabled={saving}>Cancel</button>

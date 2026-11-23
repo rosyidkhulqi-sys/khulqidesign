@@ -21,6 +21,8 @@ function StockUpload({ kind, onPublished }) {
   const [batch, setBatch] = useState("");
   const [batchError, setBatchError] = useState(null);
   const [dragging, setDragging] = useState(false);
+  // every file dropped next is AI-made (a whole batch of AI photos)
+  const [allAi, setAllAi] = useState(false);
   const input = useRef(null);
   const urls = useRef([]);
   useEffect(() => () => urls.current.forEach((u) => URL.revokeObjectURL(u)), []);
@@ -35,7 +37,7 @@ function StockUpload({ kind, onPublished }) {
         if (thumb) urls.current.push(thumb);
         const lacks = missingFile(kind, g);
         return {
-          ...g, thumb, title: "", longTitle: "", description: "", keywords: [],
+          ...g, thumb, title: "", longTitle: "", description: "", keywords: [], aiGenerated: allAi,
           category: "other", license: "premium", progress: 0,
           status: lacks ? "incomplete" : "reading",
           message: lacks ? `Missing ${lacks}` : "Reading metadata",
@@ -47,6 +49,8 @@ function StockUpload({ kind, onPublished }) {
         const meta = await readMetadata(item.jpg);
         update(item.base, {
           ...meta,
+          // the file's own AI mark, or the batch switch
+          aiGenerated: meta.aiGenerated || allAi,
           title: shortTitle(meta.longTitle) || shortTitle(item.base.replace(/[-_]+/g, " ")),
           status: "ready",
           message: meta.keywords.length ? `${meta.keywords.length} keywords` : "No keywords in this file",
@@ -98,6 +102,14 @@ function StockUpload({ kind, onPublished }) {
     <>
       <DoneNote finished={finished} noun={noun} onClose={() => setFinished(null)} />
       <BatchField type={kind} value={batch} onChange={setBatch} disabled={publishing} />
+      <label className="ad-ai-switch">
+        <input type="checkbox" checked={allAi} disabled={publishing}
+               onChange={(e) => {
+                 setAllAi(e.target.checked);
+                 setItems((list) => list.map((it) => (it.status === "done" ? it : { ...it, aiGenerated: e.target.checked })));
+               }} />
+        <span><strong>AI-generated</strong> · every file in this upload gets the AI label (files whose metadata says AI get it anyway)</span>
+      </label>
       {batchError && <p className="ad-error">{batchError}</p>}
       <div
         className={`ad-drop ${dragging ? "is-over" : ""}`}
@@ -143,6 +155,11 @@ function StockUpload({ kind, onPublished }) {
                         <option value="free">Free</option>
                         <option value="premium">Premium</option>
                       </select>
+                      <label className={`ad-ai-chip ${it.aiGenerated ? "on" : ""}`} title="Made with generative AI">
+                        <input type="checkbox" checked={Boolean(it.aiGenerated)} disabled={locked}
+                               onChange={(e) => update(it.base, { aiGenerated: e.target.checked })} />
+                        AI
+                      </label>
                       <span className="ad-file">{it.base}</span>
                     </div>
                     {it.keywords.length > 0 && (

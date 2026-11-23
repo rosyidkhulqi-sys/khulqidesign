@@ -165,6 +165,8 @@ export function toStock(row) {
     downloads: row.downloads,
     keywords: row.keywords ?? [],
     bytes: mb(main.bytes),
+    // made with generative AI: labeled on the site
+    ai: Boolean(row.ai_generated),
   };
 }
 

@@ -639,3 +639,22 @@
 /* the chip box in the set editor keeps its own quiet input */
 .ad-icon-set-edit .kw-box input { flex: 1 0 140px; height: 24px; min-width: 0; padding: 0 6px; border: 0; background: transparent; color: var(--white); font-size: 12px; outline: none; }
 .ad-icon-set-members .ad-icon-grid { margin-top: 4px; }
+
+/* AI-generated: a batch switch and a chip per file */
+.ad-ai-switch { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; color: var(--muted); font-size: 13px; cursor: pointer; }
+.ad-ai-switch strong { color: var(--white); }
+.ad-ai-switch input { width: 16px; height: 16px; accent-color: var(--red); }
+.ad-ai-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ad-ai-chip input { width: 13px; height: 13px; accent-color: #8b5cf6; }
+.ad-ai-chip.on { border-color: #8b5cf6; color: #c4b5fd; background: rgba(139, 92, 246, 0.12); }

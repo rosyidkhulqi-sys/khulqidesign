@@ -24,6 +24,8 @@ function StockLibrary({ config, setPage, initialSearch = "", user = null }) {
   const [license, setLicense] = useState("all");
   const [orientation, setOrientation] = useState("all");
   const [category, setCategory] = useState("all");
+  // AI-generated: all, only AI, or without AI (as Magnific's filter)
+  const [ai, setAi] = useState("all");
   const [sort, setSort] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState(null);
@@ -52,6 +54,7 @@ function StockLibrary({ config, setPage, initialSearch = "", user = null }) {
           if (license !== "all") query = query.eq("license", license);
           if (orientation !== "all") query = query.eq("orientation", orientation);
           if (category !== "all") query = query.eq("category", category);
+          if (ai !== "all") query = query.eq("ai_generated", ai === "only");
           return query;
         },
       })
@@ -68,7 +71,7 @@ function StockLibrary({ config, setPage, initialSearch = "", user = null }) {
       alive = false;
       clearTimeout(timer);
     };
-  }, [type, title, kindWords, search, license, orientation, category, sort, currentPage]);
+  }, [type, title, kindWords, search, license, orientation, category, ai, sort, currentPage]);
 
   // more from the same category, for the asset view
   useEffect(() => {
@@ -83,11 +86,12 @@ function StockLibrary({ config, setPage, initialSearch = "", user = null }) {
   }, [type, selected]);
 
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
-  const hasFilter = license !== "all" || orientation !== "all" || category !== "all" || search;
+  const hasFilter = license !== "all" || orientation !== "all" || category !== "all" || ai !== "all" || search;
   const clearFilters = () => {
     setLicense("all");
     setOrientation("all");
     setCategory("all");
+    setAi("all");
     setSort("popular");
     setSearch("");
     setCurrentPage(1);
@@ -140,6 +144,11 @@ function StockLibrary({ config, setPage, initialSearch = "", user = null }) {
           <option value="all">Category</option>
           {categories.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
         </select>
+        <select value={ai} onChange={reset(setAi)} aria-label="AI-generated">
+          <option value="all">AI-generated</option>
+          <option value="only">Only AI</option>
+          <option value="none">Exclude AI</option>
+        </select>
         {hasFilter && <button className="clear-filters" onClick={clearFilters}>Clear filters</button>}
         <div className="vector-sort">
           <select value={sort} onChange={reset(setSort)}>
@@ -159,7 +168,10 @@ function StockLibrary({ config, setPage, initialSearch = "", user = null }) {
               <div className={`vector-thumb ${v.format === "PNG" ? "is-transparent" : ""}`} style={{ aspectRatio: `${v.artboard[0]} / ${v.artboard[1]}` }}>
                 <img src={v.image} alt={v.title} loading="lazy" />
                 <span className={`vector-badge ${v.license}`}>{v.license === "free" ? "Free" : "Premium"}</span>
-                <span className="vector-format">{v.format}</span>
+                <span className="vector-format">
+                  {v.format}
+                  {v.ai && <span className="vector-ai" title="Made with generative AI">AI</span>}
+                </span>
                 <div className="vector-actions" onClick={(e) => e.stopPropagation()}>
                   <button aria-label="Save"><ToolGlyph name="heart" size={16} /></button>
                 </div>
@@ -199,6 +211,7 @@ function StockLibrary({ config, setPage, initialSearch = "", user = null }) {
             ...config.specs(selected),
             ["Orientation", capitalize(selected.orientation)],
             ["Category", stockCategoryLabel(selected.category)],
+            ...(selected.ai ? [["AI-generated", "Yes · fictional people, places and products"]] : []),
           ]}
           related={related}
           user={user}

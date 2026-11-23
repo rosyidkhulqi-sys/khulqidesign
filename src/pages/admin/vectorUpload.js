@@ -90,7 +90,11 @@ export async function readMetadata(jpg) {
   const longTitle = text(meta.title) || text(meta.ObjectName) || text(meta.Headline);
   const description = text(meta.description) || text(meta.Caption) || text(meta["Caption-Abstract"]);
   const keywords = list(meta.subject).length ? list(meta.subject) : list(meta.Keywords);
-  return { longTitle, description, keywords };
+  // IPTC's digital source type, which Adobe, Midjourney and others write for
+  // generative AI images ("trainedAlgorithmicMedia")
+  const source = text(meta.DigitalSourceType ?? meta.digitalSourceType ?? "");
+  const aiGenerated = /trainedAlgorithmicMedia|compositeWithTrainedAlgorithmicMedia/i.test(source);
+  return { longTitle, description, keywords, aiGenerated };
 }
 
 // "%%BoundingBox: 0 0 3000 3000" in the EPS header gives the artboard in pt

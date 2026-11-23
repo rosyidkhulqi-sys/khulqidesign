@@ -89,6 +89,7 @@ export async function publishStock(kind, item, onStep) {
       keywords: item.keywords,
       category: item.category,
       license: item.license,
+      ai_generated: Boolean(item.aiGenerated),
       thumb_key: steps[1].key,
       preview_key: steps[2].key,
       files: [file],
