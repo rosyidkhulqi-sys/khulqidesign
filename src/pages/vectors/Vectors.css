@@ -123,6 +123,13 @@
   font-weight: 600;
   backdrop-filter: blur(6px);
 }
+.vector-badge.editorial::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f59e0b;
+}
 .vector-badge.premium::before {
   content: "";
   width: 6px;

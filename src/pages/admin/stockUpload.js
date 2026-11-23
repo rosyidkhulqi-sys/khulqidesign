@@ -43,7 +43,7 @@ async function gzipped(file) {
 export async function publishStock(kind, item, onStep) {
   const { prefix, folder: root } = STOCK[kind];
   const png = extOf(item.jpg.name) === "png";
-  const images = await makeImages(item.jpg, item.license === "premium", png);
+  const images = await makeImages(item.jpg, item.license !== "free", png);
   const w = images.width;
   const h = images.height;
   // a PSD is stored compressed (lossless; downloads unpack it), a JPG as it is
@@ -88,9 +88,10 @@ export async function publishStock(kind, item, onStep) {
       description: item.description || null,
       keywords: item.keywords,
       category: item.category,
-      license: item.license,
+      // Editorial is sold as Premium, for editorial use only
+      license: item.license === "editorial" ? "premium" : item.license,
       ai_generated: Boolean(item.aiGenerated),
-      editorial: kind === "photo" && Boolean(item.editorial),
+      editorial: kind === "photo" && item.license === "editorial",
       thumb_key: steps[1].key,
       preview_key: steps[2].key,
       files: [file],

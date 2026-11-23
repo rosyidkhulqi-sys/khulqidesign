@@ -660,3 +660,8 @@
 .ad-ai-chip.on { border-color: #8b5cf6; color: #c4b5fd; background: rgba(139, 92, 246, 0.12); }
 .ad-ai-chip.is-editorial input { accent-color: #f59e0b; }
 .ad-ai-chip.is-editorial.on { border-color: #f59e0b; color: #fcd34d; background: rgba(245, 158, 11, 0.12); }
+
+/* one row of defaults for a whole upload */
+.ad-upload-defaults { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: 0 0 14px; }
+.ad-upload-defaults > span { color: var(--muted); font-size: 13px; }
+.ad-upload-defaults .ad-ai-switch { margin: 0; }

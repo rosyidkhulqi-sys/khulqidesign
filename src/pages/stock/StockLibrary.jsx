@@ -178,11 +178,13 @@ function StockLibrary({ config, setPage, initialSearch = "", user = null }) {
                  onClick={() => setSelected(v)} onKeyDown={(e) => e.key === "Enter" && setSelected(v)}>
               <div className={`vector-thumb ${v.format === "PNG" ? "is-transparent" : ""}`} style={{ aspectRatio: `${v.artboard[0]} / ${v.artboard[1]}` }}>
                 <img src={v.image} alt={v.title} loading="lazy" />
-                <span className={`vector-badge ${v.license}`}>{v.license === "free" ? "Free" : "Premium"}</span>
+                {/* one badge, as microstocks show it: Free, Premium or Editorial */}
+                <span className={`vector-badge ${v.editorial ? "editorial" : v.license}`}>
+                  {v.editorial ? "Editorial" : v.license === "free" ? "Free" : "Premium"}
+                </span>
                 <span className="vector-format">
                   {v.format}
                   {v.ai && <span className="vector-ai" title="Made with generative AI">AI</span>}
-                  {v.editorial && <span className="vector-editorial" title="Editorial use only">Editorial</span>}
                 </span>
                 <div className="vector-actions" onClick={(e) => e.stopPropagation()}>
                   <button aria-label="Save"><ToolGlyph name="heart" size={16} /></button>

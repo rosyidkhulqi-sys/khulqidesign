@@ -23,8 +23,9 @@ function StockUpload({ kind, onPublished }) {
   const [dragging, setDragging] = useState(false);
   // every file dropped next is AI-made (a whole batch of AI photos)
   const [allAi, setAllAi] = useState(false);
-  // every file dropped next is editorial use only (people, brands, events)
-  const [allEditorial, setAllEditorial] = useState(false);
+  // the license every file in this upload starts with: Free, Premium or
+  // (photos) Editorial, as microstocks ask
+  const [allLicense, setAllLicense] = useState("premium");
   const input = useRef(null);
   const urls = useRef([]);
   useEffect(() => () => urls.current.forEach((u) => URL.revokeObjectURL(u)), []);
@@ -39,8 +40,8 @@ function StockUpload({ kind, onPublished }) {
         if (thumb) urls.current.push(thumb);
         const lacks = missingFile(kind, g);
         return {
-          ...g, thumb, title: "", longTitle: "", description: "", keywords: [], aiGenerated: allAi, editorial: allEditorial,
-          category: "other", license: "premium", progress: 0,
+          ...g, thumb, title: "", longTitle: "", description: "", keywords: [], aiGenerated: allAi,
+          category: "other", license: allLicense, progress: 0,
           status: lacks ? "incomplete" : "reading",
           message: lacks ? `Missing ${lacks}` : "Reading metadata",
         };
@@ -104,24 +105,27 @@ function StockUpload({ kind, onPublished }) {
     <>
       <DoneNote finished={finished} noun={noun} onClose={() => setFinished(null)} />
       <BatchField type={kind} value={batch} onChange={setBatch} disabled={publishing} />
-      <label className="ad-ai-switch">
-        <input type="checkbox" checked={allAi} disabled={publishing}
-               onChange={(e) => {
-                 setAllAi(e.target.checked);
-                 setItems((list) => list.map((it) => (it.status === "done" ? it : { ...it, aiGenerated: e.target.checked })));
-               }} />
-        <span><strong>AI-generated</strong> · every file in this upload gets the AI label (files whose metadata says AI get it anyway)</span>
-      </label>
-      {kind === "photo" && (
+      {/* one row for the whole upload: its license and the AI label */}
+      <div className="ad-upload-defaults">
+        <span>For this upload</span>
+        <select value={allLicense} disabled={publishing} aria-label="License for this upload"
+                onChange={(e) => {
+                  setAllLicense(e.target.value);
+                  setItems((list) => list.map((it) => (it.status === "done" ? it : { ...it, license: e.target.value })));
+                }}>
+          <option value="free">Free</option>
+          <option value="premium">Premium</option>
+          {kind === "photo" && <option value="editorial">Editorial</option>}
+        </select>
         <label className="ad-ai-switch">
-          <input type="checkbox" checked={allEditorial} disabled={publishing}
+          <input type="checkbox" checked={allAi} disabled={publishing}
                  onChange={(e) => {
-                   setAllEditorial(e.target.checked);
-                   setItems((list) => list.map((it) => (it.status === "done" ? it : { ...it, editorial: e.target.checked })));
+                   setAllAi(e.target.checked);
+                   setItems((list) => list.map((it) => (it.status === "done" ? it : { ...it, aiGenerated: e.target.checked })));
                  }} />
-          <span><strong>Editorial use only</strong> · recognizable people, brands or events without a release: for articles and education, not ads</span>
+          <span><strong>AI-generated</strong></span>
         </label>
-      )}
+      </div>
       {batchError && <p className="ad-error">{batchError}</p>}
       <div
         className={`ad-drop ${dragging ? "is-over" : ""}`}
@@ -166,19 +170,13 @@ function StockUpload({ kind, onPublished }) {
                               onChange={(e) => update(it.base, { license: e.target.value })}>
                         <option value="free">Free</option>
                         <option value="premium">Premium</option>
+                        {kind === "photo" && <option value="editorial">Editorial</option>}
                       </select>
                       <label className={`ad-ai-chip ${it.aiGenerated ? "on" : ""}`} title="Made with generative AI">
                         <input type="checkbox" checked={Boolean(it.aiGenerated)} disabled={locked}
                                onChange={(e) => update(it.base, { aiGenerated: e.target.checked })} />
                         AI
                       </label>
-                      {kind === "photo" && (
-                        <label className={`ad-ai-chip is-editorial ${it.editorial ? "on" : ""}`} title="Editorial use only">
-                          <input type="checkbox" checked={Boolean(it.editorial)} disabled={locked}
-                                 onChange={(e) => update(it.base, { editorial: e.target.checked })} />
-                          Editorial
-                        </label>
-                      )}
                       <span className="ad-file">{it.base}</span>
                     </div>
                     {it.keywords.length > 0 && (

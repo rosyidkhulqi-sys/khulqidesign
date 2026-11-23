@@ -35,10 +35,10 @@ function EditAsset({ row, type, onSaved, onCancel }) {
         : row.category ?? "other",
     industry: row.industry ?? industries[0][0],
     style: row.style ?? logoStyles[0][0],
-    license: row.license,
+    // a photo for editorial use shows as its own license choice
+    license: type === "photo" && row.editorial ? "editorial" : row.license,
     price: row.price_cents ? row.price_cents / 100 : 199,
     aiGenerated: Boolean(row.ai_generated),
-    editorial: Boolean(row.editorial),
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -49,7 +49,7 @@ function EditAsset({ row, type, onSaved, onCancel }) {
   const categories = type === "element" ? categoriesOf(row.style) : CATEGORIES[type] ?? [];
   // a value set before the list changed stays selectable
   const categoryOptions = categories.includes(form.category) ? categories : [form.category, ...categories];
-  const watermarkDiffers = hasWatermark(type, row.license) !== hasWatermark(type, form.license);
+  const watermarkDiffers = hasWatermark(type, row.license) !== hasWatermark(type, form.license === "editorial" ? "premium" : form.license);
 
   const save = async (e) => {
     e.preventDefault();
@@ -68,11 +68,11 @@ function EditAsset({ row, type, onSaved, onCancel }) {
       title,
       description: form.description.trim() || null,
       keywords: type === "element" ? parseKeywords(form.keywords).slice(0, MAX_KEYWORDS) : parseKeywords(form.keywords),
-      license: form.license,
+      license: form.license === "editorial" ? "premium" : form.license,
       price_cents: form.license === "exclusive" ? Math.round(price * 100) : null,
       ...(isLogo ? { industry: form.industry, style: form.style } : { category: form.category }),
       ...(type === "photo" || type === "mockup" ? { ai_generated: form.aiGenerated } : {}),
-      ...(type === "photo" ? { editorial: form.editorial } : {}),
+      ...(type === "photo" ? { editorial: form.license === "editorial" } : {}),
     };
 
     setSaving(true);
@@ -148,6 +148,7 @@ function EditAsset({ row, type, onSaved, onCancel }) {
         <select value={form.license} onChange={set("license")} disabled={sold}>
           <option value="free">Free</option>
           <option value="premium">Premium</option>
+          {type === "photo" && <option value="editorial">Editorial</option>}
           {isLogo && <option value="exclusive">Exclusive</option>}
         </select>
       </label>
@@ -177,13 +178,7 @@ function EditAsset({ row, type, onSaved, onCancel }) {
 
         </label>
       )}
-      {type === "photo" && (
-        <label className="ad-ai-switch">
-          <input type="checkbox" checked={form.editorial} onChange={(e) => setForm((f) => ({ ...f, editorial: e.target.checked }))} />
-          <span><strong>Editorial use only</strong> · not for ads, packaging or merchandise</span>
-        </label>
 
-      )}
 
       <div className="ad-edit-actions">
         <button type="button" onClick={onCancel} disabled={saving}>Cancel</button>
