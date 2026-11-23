@@ -108,15 +108,19 @@ function StockUpload({ kind, onPublished }) {
       {/* one row for the whole upload: its license and the AI label */}
       <div className="ad-upload-defaults">
         <span>For this upload</span>
-        <select value={allLicense} disabled={publishing} aria-label="License for this upload"
-                onChange={(e) => {
-                  setAllLicense(e.target.value);
-                  setItems((list) => list.map((it) => (it.status === "done" ? it : { ...it, license: e.target.value })));
-                }}>
-          <option value="free">Free</option>
-          <option value="premium">Premium</option>
-          {kind === "photo" && <option value="editorial">Editorial</option>}
-        </select>
+        {/* the three choices side by side, as the admin's tabs: no popup menu */}
+        <div className="ad-seg" role="radiogroup" aria-label="License for this upload">
+          {[["free", "Free"], ["premium", "Premium"], ...(kind === "photo" ? [["editorial", "Editorial"]] : [])].map(([value, label]) => (
+            <button key={value} type="button" role="radio" aria-checked={allLicense === value} disabled={publishing}
+                    className={allLicense === value ? "active" : ""}
+                    onClick={() => {
+                      setAllLicense(value);
+                      setItems((list) => list.map((it) => (it.status === "done" ? it : { ...it, license: value })));
+                    }}>
+              {label}
+            </button>
+          ))}
+        </div>
         <label className="ad-ai-switch">
           <input type="checkbox" checked={allAi} disabled={publishing}
                  onChange={(e) => {
