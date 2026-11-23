@@ -11,8 +11,14 @@ export async function decodeImage(file) {
     const url = URL.createObjectURL(file);
     try {
       const img = new Image();
-      img.src = url;
-      await img.decode();
+      // waits for the load itself: Safari's decode() rejects some big photos
+      // (48 MP iPhone shots, for one) that still load and draw fine
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = url;
+      });
+      if (!img.naturalWidth) throw new Error("empty");
       // a detached <img> reports its natural size; close() matches ImageBitmap
       img.close = () => URL.revokeObjectURL(url);
       return img;
