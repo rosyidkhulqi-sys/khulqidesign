@@ -169,8 +169,11 @@ async function renderImage(bitmap, max, watermark, quality = 0.9, type = "image/
   ctx.drawImage(source, 0, 0, w, h);
   if (watermark) drawWatermark(ctx, w, h);
   let blob = await new Promise((resolve) => canvas.toBlob(resolve, type, quality));
-  // a browser without a WebP encoder hands back a PNG: use JPEG then
-  if (blob && blob.type !== type) blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+  // a browser without a WebP encoder (Safari) hands back a PNG: keep that
+  // when the picture is transparent (JPEG would turn it black), else JPEG
+  if (blob && blob.type !== type && !(alpha && blob.type === "image/png")) {
+    blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+  }
   if (!blob) throw new Error("This browser couldn't make the preview");
   return blob;
 }

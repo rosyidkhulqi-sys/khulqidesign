@@ -60,8 +60,8 @@ export async function publishStock(kind, item, onStep) {
         : { bucket: "private", key: `${folder}/${name}.psd`, file: item.psd, contentType: "image/vnd.adobe.photoshop" };
     const steps = [
       original,
-      { bucket: "public", key: `${folder}/thumb.${images.thumb.type === "image/webp" ? "webp" : "jpg"}`, file: images.thumb, contentType: images.thumb.type },
-      { bucket: "public", key: `${folder}/preview.${images.preview.type === "image/webp" ? "webp" : "jpg"}`, file: images.preview, contentType: images.preview.type },
+      { bucket: "public", key: `${folder}/thumb.${{ "image/webp": "webp", "image/png": "png" }[images.thumb.type] ?? "jpg"}`, file: images.thumb, contentType: images.thumb.type },
+      { bucket: "public", key: `${folder}/preview.${{ "image/webp": "webp", "image/png": "png" }[images.preview.type] ?? "jpg"}`, file: images.preview, contentType: images.preview.type },
     ];
     const total = steps.reduce((sum, s) => sum + s.file.size, 0);
     const sent = steps.map(() => 0);
