@@ -17,7 +17,23 @@ const glyphs = {
   ),
 };
 
+// one of a library's pinned covers, the same for the whole visit and a
+// different one on another visit
+function pickCover(library) {
+  const key = `kd-cover-${library.page}`;
+  try {
+    const kept = sessionStorage.getItem(key);
+    if (kept && library.images.includes(kept)) return kept;
+    const pick = library.images[Math.floor(Math.random() * library.images.length)];
+    sessionStorage.setItem(key, pick);
+    return pick;
+  } catch {
+    return library.images[0];
+  }
+}
+
 function LibraryCover({ library, className = "" }) {
+  if (library.images) return <img className={className} src={pickCover(library)} alt="" loading="lazy" />;
   // footage: its picture with a small play sign, so it reads as video
   if (library.image && library.play) {
     return (
