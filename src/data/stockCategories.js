@@ -1,16 +1,23 @@
 // Categories for the Photos and Mockups libraries, as Adobe Stock and
 // Magnific sort them. Stored as the ids; labels are for people.
 export const PHOTO_CATEGORY_OPTIONS = [
+  ["animals", "Animals"],
   ["backgrounds", "Backgrounds & Textures"],
   ["buildings", "Buildings & Architecture"],
   ["business", "Business"],
+  ["culture-religion", "Culture & Religion"],
   ["food", "Food & Drink"],
+  ["fruits-vegetables", "Fruits & Vegetables"],
+  ["heritage", "Historic Sites & Landmarks"],
   ["holiday", "Holidays"],
   ["landscape", "Landscape"],
   ["lifestyle", "Lifestyle"],
   ["nature", "Nature"],
+  ["objects", "Objects & Still Life"],
   ["people", "People"],
   ["plants", "Plants & Flowers"],
+  ["sky", "Sky & Weather"],
+  ["sports", "Sports & Fitness"],
   ["technology", "Technology"],
   ["travel", "Travel"],
   ["other", "Other"],
