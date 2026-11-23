@@ -46,6 +46,9 @@ function BatchField({ type, value, onChange, disabled }) {
     const onAdd = (e) => {
       if (e.detail?.type !== type) return;
       change(e.detail.name);
+      // and the file picker opens right away, as the button says (still
+      // inside the click, so the browser allows it)
+      document.querySelector('.ad-drop input[type="file"]')?.click();
       const field = document.querySelector(".ad-batch");
       field?.scrollIntoView({ behavior: "smooth", block: "start" });
       field?.classList.add("is-flash");
