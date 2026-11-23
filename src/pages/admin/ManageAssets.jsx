@@ -23,7 +23,7 @@ import ManageBatches from "./ManageBatches";
 import { deleteAsset } from "./batches";
 
 const LABEL = { vector: "vectors", icon: "icons", logo: "logos", footage: "clips", template: "templates", element: "elements", photo: "photos", mockup: "mockups" };
-const FIELDS = "id, code, ref_code, source_name, title, description, keywords, category, industry, style, license, ai_generated, price_cents, sold_at, status, thumb_key, preview_key, preview_video_key, files, created_at, batch_id, batch:upload_batches(name)";
+const FIELDS = "id, code, ref_code, source_name, title, description, keywords, category, industry, style, license, ai_generated, editorial, price_cents, sold_at, status, thumb_key, preview_key, preview_video_key, files, created_at, batch_id, batch:upload_batches(name)";
 const PAGE_SIZE = 50;
 const NO_FILTERS = { search: "", batch: "", category: "", kind: "", month: "", license: "", status: "", sort: "newest" };
 

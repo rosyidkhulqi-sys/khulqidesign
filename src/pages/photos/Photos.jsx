@@ -25,7 +25,7 @@ const config = {
   specs: (p) => [
     ["Format", p.format === "PNG" ? "PNG (transparent)" : "JPG"],
     ["Size", `${px(p.artboard)} px`],
-    ["Release", "Not required"],
+    ["Release", p.editorial ? "None (editorial use only)" : "Not required"],
   ],
   empty: { title: "Photos are on their way", text: "Our first photographs are being added. Check back soon." },
 };

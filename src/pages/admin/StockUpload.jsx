@@ -23,6 +23,8 @@ function StockUpload({ kind, onPublished }) {
   const [dragging, setDragging] = useState(false);
   // every file dropped next is AI-made (a whole batch of AI photos)
   const [allAi, setAllAi] = useState(false);
+  // every file dropped next is editorial use only (people, brands, events)
+  const [allEditorial, setAllEditorial] = useState(false);
   const input = useRef(null);
   const urls = useRef([]);
   useEffect(() => () => urls.current.forEach((u) => URL.revokeObjectURL(u)), []);
@@ -37,7 +39,7 @@ function StockUpload({ kind, onPublished }) {
         if (thumb) urls.current.push(thumb);
         const lacks = missingFile(kind, g);
         return {
-          ...g, thumb, title: "", longTitle: "", description: "", keywords: [], aiGenerated: allAi,
+          ...g, thumb, title: "", longTitle: "", description: "", keywords: [], aiGenerated: allAi, editorial: allEditorial,
           category: "other", license: "premium", progress: 0,
           status: lacks ? "incomplete" : "reading",
           message: lacks ? `Missing ${lacks}` : "Reading metadata",
@@ -110,6 +112,16 @@ function StockUpload({ kind, onPublished }) {
                }} />
         <span><strong>AI-generated</strong> · every file in this upload gets the AI label (files whose metadata says AI get it anyway)</span>
       </label>
+      {kind === "photo" && (
+        <label className="ad-ai-switch">
+          <input type="checkbox" checked={allEditorial} disabled={publishing}
+                 onChange={(e) => {
+                   setAllEditorial(e.target.checked);
+                   setItems((list) => list.map((it) => (it.status === "done" ? it : { ...it, editorial: e.target.checked })));
+                 }} />
+          <span><strong>Editorial use only</strong> · recognizable people, brands or events without a release: for articles and education, not ads</span>
+        </label>
+      )}
       {batchError && <p className="ad-error">{batchError}</p>}
       <div
         className={`ad-drop ${dragging ? "is-over" : ""}`}
@@ -160,6 +172,13 @@ function StockUpload({ kind, onPublished }) {
                                onChange={(e) => update(it.base, { aiGenerated: e.target.checked })} />
                         AI
                       </label>
+                      {kind === "photo" && (
+                        <label className={`ad-ai-chip is-editorial ${it.editorial ? "on" : ""}`} title="Editorial use only">
+                          <input type="checkbox" checked={Boolean(it.editorial)} disabled={locked}
+                                 onChange={(e) => update(it.base, { editorial: e.target.checked })} />
+                          Editorial
+                        </label>
+                      )}
                       <span className="ad-file">{it.base}</span>
                     </div>
                     {it.keywords.length > 0 && (

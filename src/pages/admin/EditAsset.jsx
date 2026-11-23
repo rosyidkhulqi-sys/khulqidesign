@@ -38,6 +38,7 @@ function EditAsset({ row, type, onSaved, onCancel }) {
     license: row.license,
     price: row.price_cents ? row.price_cents / 100 : 199,
     aiGenerated: Boolean(row.ai_generated),
+    editorial: Boolean(row.editorial),
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -71,6 +72,7 @@ function EditAsset({ row, type, onSaved, onCancel }) {
       price_cents: form.license === "exclusive" ? Math.round(price * 100) : null,
       ...(isLogo ? { industry: form.industry, style: form.style } : { category: form.category }),
       ...(type === "photo" || type === "mockup" ? { ai_generated: form.aiGenerated } : {}),
+      ...(type === "photo" ? { editorial: form.editorial } : {}),
     };
 
     setSaving(true);
@@ -173,6 +175,12 @@ function EditAsset({ row, type, onSaved, onCancel }) {
 
           <span><strong>AI-generated</strong> · shows the AI label on the site</span>
 
+        </label>
+      )}
+      {type === "photo" && (
+        <label className="ad-ai-switch">
+          <input type="checkbox" checked={form.editorial} onChange={(e) => setForm((f) => ({ ...f, editorial: e.target.checked }))} />
+          <span><strong>Editorial use only</strong> · not for ads, packaging or merchandise</span>
         </label>
 
       )}

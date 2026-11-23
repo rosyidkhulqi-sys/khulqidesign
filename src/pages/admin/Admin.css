@@ -658,3 +658,5 @@
 }
 .ad-ai-chip input { width: 13px; height: 13px; accent-color: #8b5cf6; }
 .ad-ai-chip.on { border-color: #8b5cf6; color: #c4b5fd; background: rgba(139, 92, 246, 0.12); }
+.ad-ai-chip.is-editorial input { accent-color: #f59e0b; }
+.ad-ai-chip.is-editorial.on { border-color: #f59e0b; color: #fcd34d; background: rgba(245, 158, 11, 0.12); }

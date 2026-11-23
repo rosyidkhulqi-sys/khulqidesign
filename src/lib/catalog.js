@@ -167,6 +167,8 @@ export function toStock(row) {
     bytes: mb(main.bytes),
     // made with generative AI: labeled on the site
     ai: Boolean(row.ai_generated),
+    // editorial use only: articles and education, not advertising
+    editorial: Boolean(row.editorial),
   };
 }
 

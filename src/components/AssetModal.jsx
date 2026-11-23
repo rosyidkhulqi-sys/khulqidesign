@@ -281,6 +281,14 @@ function AssetModal({
               ))}
             </div>
 
+            {/* editorial photos: said before the license, as Adobe Stock does */}
+            {asset.editorial && (
+              <p className="asset-note is-editorial">
+                <strong>Editorial use only.</strong> For articles, blogs, news and education.
+                Not for advertising, packaging, merchandise or any promotion.
+              </p>
+            )}
+
             {premium ? (
               <>
                 <p className="asset-label">License</p>
@@ -292,13 +300,16 @@ function AssetModal({
                     Standard
                     <small>Web, social, print up to 500k copies</small>
                   </button>
-                  <button
-                    className={licenseType === "extended" ? "active" : ""}
-                    onClick={() => setLicenseType("extended")}
-                  >
-                    Extended
-                    <small>Unlimited copies, merchandise & resale</small>
-                  </button>
+                  {/* merchandise and resale aren't allowed for editorial photos */}
+                  {!asset.editorial && (
+                    <button
+                      className={licenseType === "extended" ? "active" : ""}
+                      onClick={() => setLicenseType("extended")}
+                    >
+                      Extended
+                      <small>Unlimited copies, merchandise & resale</small>
+                    </button>
+                  )}
                 </div>
               </>
             ) : (

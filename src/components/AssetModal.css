@@ -431,3 +431,6 @@
   cursor: pointer;
 }
 .asset-lightbox .asset-zoom-hint { right: 50%; bottom: 16px; transform: translateX(50%); }
+
+.asset-note.is-editorial { border: 1px solid rgba(245, 158, 11, 0.45); background: rgba(245, 158, 11, 0.08); color: #f5d9a8; }
+.asset-note.is-editorial strong { color: #fbbf24; }
