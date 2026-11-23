@@ -196,6 +196,35 @@ export function ManageAssetRows({ type = "vector", refreshKey, batchId = null, e
     setPicked(new Set());
   };
 
+  // the license of the picked files at once: Free, Premium or (photos)
+  // Editorial, which is Premium for editorial use only
+  const bulkLicense = async (choice) => {
+    const chosen = rows.filter((r) => picked.has(r.id));
+    const toPaid = chosen.filter((r) => r.license === "free" && choice !== "free").length;
+    if (toPaid) {
+      const sure = await askConfirm({
+        title: `Make ${chosen.length} ${chosen.length === 1 ? "file" : "files"} ${choice === "editorial" ? "Editorial" : "Premium"}?`,
+        message: `${toPaid} of them ${toPaid === 1 ? "was" : "were"} Free, so ${toPaid === 1 ? "its preview has" : "their previews have"} no watermark (it's added at upload). Upload ${toPaid === 1 ? "it" : "them"} again as ${choice === "editorial" ? "Editorial" : "Premium"} for a watermarked preview, or ask for the previews to be remade.`,
+        confirmLabel: "Change license",
+      });
+      if (!sure) return;
+    }
+    const changes = {
+      license: choice === "editorial" ? "premium" : choice,
+      ...(type === "photo" ? { editorial: choice === "editorial" } : {}),
+    };
+    setBulk("Saving…");
+    setError(null);
+    const { error: e } = await supabase.from("assets").update(changes).in("id", [...picked]);
+    setBulk(null);
+    if (e) {
+      setError(e.message);
+      return;
+    }
+    setRows((list) => list.map((r) => (picked.has(r.id) ? { ...r, ...changes } : r)));
+    setPicked(new Set());
+  };
+
   const bulkDelete = async () => {
     const chosen = rows.filter((r) => picked.has(r.id));
     const sure = await askConfirm({
@@ -320,6 +349,15 @@ export function ManageAssetRows({ type = "vector", refreshKey, batchId = null, e
           </label>
           {picked.size > 0 && (
             <>
+              {type !== "logo" && (
+                <select className="ad-bulk-license" value="" disabled={Boolean(bulk)} aria-label="Set license"
+                        onChange={(e) => e.target.value && bulkLicense(e.target.value)}>
+                  <option value="">Set license…</option>
+                  <option value="free">Free</option>
+                  <option value="premium">Premium</option>
+                  {type === "photo" && <option value="editorial">Editorial</option>}
+                </select>
+              )}
               <button onClick={() => bulkStatus("hidden")} disabled={Boolean(bulk)}>Hide</button>
               <button onClick={() => bulkStatus("published")} disabled={Boolean(bulk)}>Show</button>
               <button className="ad-delete" onClick={bulkDelete} disabled={Boolean(bulk)}>Delete</button>
