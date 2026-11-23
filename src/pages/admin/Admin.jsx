@@ -202,7 +202,7 @@ function Admin({ user, setPage }) {
       ) : tab === "footage" ? (
         <FootageUpload onPublished={() => setPublished((n) => n + 1)} />
       ) : tab === "photo" || tab === "mockup" ? (
-        <StockUpload key={tab} kind={tab} onPublished={() => setPublished((n) => n + 1)} />
+        <StockUpload key={`upload-${tab}`} kind={tab} onPublished={() => setPublished((n) => n + 1)} />
       ) : tab === "element" ? (
         <ElementUpload onPublished={() => setPublished((n) => n + 1)} />
       ) : tab === "template" ? (
