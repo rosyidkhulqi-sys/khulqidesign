@@ -495,18 +495,38 @@
 /* the batch an upload goes into */
 .ad-batch { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .ad-batch.is-taken input { border-color: #ff5c66; }
-.ad-batch-taken { margin: -4px 0 12px; color: #ff8b92; font-size: 13px; }
+/* the warning sits under the field, lined up with it */
+.ad-batch-taken {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 420px;
+  margin: -4px 0 14px 56px;
+  color: #ff8b92;
+  font-size: 13px;
+  line-height: 1.4;
+}
 .ad-batch-taken button {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: #fff;
+  flex: none;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid #333;
+  border-radius: 999px;
+  background: #1a1a1c;
+  color: var(--white);
   font: inherit;
   font-weight: 600;
-  text-decoration: underline;
   cursor: pointer;
 }
-.ad-batch span { color: #aeb0b2; font-size: 14px; font-weight: 600; }
+.ad-batch-taken button:hover { border-color: #555; }
+.ad-batch > span { width: 44px; flex: none; color: #aeb0b2; font-size: 14px; font-weight: 600; }
+/* a name picked from the list keeps the dark field (no browser autofill tint) */
+.ad-batch input:-webkit-autofill,
+.ad-batch input:autofill {
+  -webkit-box-shadow: 0 0 0 40px #0b0b0c inset;
+  -webkit-text-fill-color: var(--white);
+  caret-color: var(--white);
+}
 .ad-batch input {
   flex: 1;
   max-width: 420px;

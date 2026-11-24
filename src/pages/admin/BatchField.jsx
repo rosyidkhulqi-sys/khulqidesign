@@ -111,7 +111,7 @@ function BatchField({ type, value, onChange, disabled }) {
     </label>
     {warn && (
       <p className="ad-batch-taken" role="alert">
-        "{value.trim()}" already exists. Type a new name, or{" "}
+        <span>"{value.trim()}" already exists. Type a new name, or add these files to it.</span>
         <button type="button" onClick={() => { allowAddingTo(type, value); setAllowed((n) => n + 1); }}>
           Add to it
         </button>
