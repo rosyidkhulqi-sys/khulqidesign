@@ -162,6 +162,9 @@ function AssetModal({
   // sold per item at a price per license tier (fonts): bought, not downloaded
   // with a plan
   const paid = asset.license === "paid";
+  // a listing with several previews (a font) shows them as a gallery
+  const gallery = asset.gallery?.length > 1 ? asset.gallery : null;
+  const [shown, setShown] = useState(0);
   const option = options[choice];
 
   const download = async () => {
@@ -231,7 +234,7 @@ function AssetModal({
                 <video src={asset.file} poster={asset.image} autoPlay muted loop playsInline controls />
               ) : (
                 // uploaded assets have a larger preview; the watermark is in its pixels
-                <ZoomImage src={asset.previewImage || asset.image} alt={asset.title} />
+                <ZoomImage src={gallery ? gallery[shown] : asset.previewImage || asset.image} alt={asset.title} />
               )}
 
               {premium && !asset.previewImage && (
@@ -242,6 +245,16 @@ function AssetModal({
                 </div>
               )}
             </div>
+
+            {gallery && (
+              <div className="asset-gallery">
+                {gallery.map((src, i) => (
+                  <button key={src} className={shown === i ? "active" : ""} onClick={() => setShown(i)} aria-label={`Preview ${i + 1}`}>
+                    <img src={src} alt="" loading="lazy" />
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div className="asset-keywords">
               <p>Keywords</p>
@@ -292,6 +305,7 @@ function AssetModal({
               </p>
             )}
 
+            {paid && asset.description && <p className="asset-description">{asset.description}</p>}
             {paid ? (
               <p className="asset-note">
                 One payment, yours to keep: OTF, TTF and WOFF2 files with the license, in one ZIP.

@@ -171,6 +171,9 @@ export function toStock(row) {
     editorial: Boolean(row.editorial),
     // fonts: a price per license tier, sold per item
     prices: row.prices ?? null,
+    // several preview pictures, the cover first (fonts)
+    gallery: (row.gallery ?? []).map((g) => publicUrl(g.key)),
+    description: row.description ?? "",
   };
 }
 

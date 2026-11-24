@@ -1,19 +1,27 @@
-// The Fonts tab on /admin: drop one family's files (OTF, TTF, WOFF2 and the
-// license file), check its name, category and tier prices, publish. The
-// family name is read from the font itself.
-import { useRef, useState } from "react";
+// The Fonts tab on /admin, as a Creative Market listing: drop the buyer's
+// ZIP (or loose OTF, TTF, WOFF2 and license files) and up to 8 preview
+// pictures, check the name, the description (what's included is written
+// from the ZIP) and the price of each license tier, publish.
+import { useEffect, useMemo, useRef, useState } from "react";
 import DoneNote from "./DoneNote";
 import BatchField from "./BatchField";
 import KeywordChips from "./KeywordChips";
 import NumberInput from "../../components/NumberInput";
 import { openBatch } from "./batches";
 import {
-  FONT_ACCEPT, FONT_CATEGORIES, FONT_TIERS, missingParts, publishFont, readFontNames, sortFontFiles,
+  FONT_ACCEPT, FONT_CATEGORIES, FONT_EXTS, FONT_TIERS, IMAGE_EXTS, LICENSE_EXTS, MAX_PREVIEWS,
+  describePackage, missingParts, publishFont, readFontNames, readZip,
 } from "./fontPublish";
 
+const extOf = (name) => name.split(".").pop().toLowerCase();
+const mb = (bytes) => `${(bytes / 1_000_000).toFixed(bytes < 1_000_000 ? 2 : 1)} MB`;
+
 const blank = () => ({
-  fonts: [],
-  licenses: [],
+  zip: null,
+  loose: [],
+  pack: null,
+  font: null,
+  previews: [],
   title: "",
   description: "",
   keywords: [],
@@ -21,12 +29,11 @@ const blank = () => ({
   prices: Object.fromEntries(FONT_TIERS.map(([id, , price]) => [id, price])),
 });
 
-const mb = (bytes) => `${(bytes / 1_000_000).toFixed(bytes < 1_000_000 ? 2 : 1)} MB`;
-
 function FontUpload({ onPublished }) {
   const [item, setItem] = useState(blank);
   const [batch, setBatch] = useState("");
   const [dragging, setDragging] = useState(false);
+  const [reading, setReading] = useState(false);
   const [status, setStatus] = useState(null);
   const [error, setError] = useState(null);
   const [publishing, setPublishing] = useState(false);
@@ -34,35 +41,60 @@ function FontUpload({ onPublished }) {
   const input = useRef(null);
   const patch = (changes) => setItem((it) => ({ ...it, ...changes }));
 
+  // small pictures of the previews, freed when they change
+  const thumbs = useMemo(() => item.previews.map((f) => URL.createObjectURL(f)), [item.previews]);
+  useEffect(() => () => thumbs.forEach((u) => URL.revokeObjectURL(u)), [thumbs]);
+
   const addFiles = async (dropped) => {
-    const { fonts, licenses } = sortFontFiles(dropped);
-    const known = new Set([...item.fonts, ...item.licenses].map((f) => f.name));
-    const next = {
-      fonts: [...item.fonts, ...fonts.filter((f) => !known.has(f.name))],
-      licenses: [...item.licenses, ...licenses.filter((f) => !known.has(f.name))],
-    };
-    let title = item.title;
-    if (!title) {
-      for (const f of next.fonts) {
-        const names = await readFontNames(f).catch(() => null);
-        if (names) {
-          title = names.family;
-          break;
-        }
-      }
-    }
     setError(null);
-    patch({ ...next, title });
+    setReading(true);
+    try {
+      const zip = dropped.find((f) => extOf(f.name) === "zip");
+      const images = dropped.filter((f) => IMAGE_EXTS.includes(extOf(f.name)))
+        .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+      const loose = dropped.filter((f) => [...FONT_EXTS, ...LICENSE_EXTS].includes(extOf(f.name)));
+      const next = {};
+
+      if (zip) {
+        const read = await readZip(zip);
+        Object.assign(next, { zip, loose: [], pack: read, font: read.font });
+      } else if (loose.length) {
+        const all = [...item.loose, ...loose.filter((f) => !item.loose.some((x) => x.name === f.name))];
+        Object.assign(next, {
+          zip: null,
+          loose: all,
+          pack: describePackage(all.map((f) => f.name)),
+          font: all.find((f) => ["otf", "ttf"].includes(extOf(f.name))) ?? null,
+        });
+      }
+
+      const previews = [...item.previews, ...images.filter((f) => !item.previews.some((x) => x.name === f.name))];
+      if (previews.length > MAX_PREVIEWS) setError(`Up to ${MAX_PREVIEWS} previews: the first ${MAX_PREVIEWS} are kept.`);
+      next.previews = previews.slice(0, MAX_PREVIEWS);
+
+      const font = next.font ?? item.font;
+      if (!item.title && font) {
+        const names = await readFontNames(font).catch(() => null);
+        if (names) next.title = names.family;
+      }
+      // the description starts with what's in the package; written over only
+      // while it's still the written one
+      const pack = next.pack ?? item.pack;
+      if (pack && (!item.description || item.description === item.pack?.included)) next.description = pack.included;
+      patch(next);
+    } catch (e) {
+      setError(`Couldn't read the files: ${e.message}`);
+    } finally {
+      setReading(false);
+    }
   };
 
-  const removeFile = (name) => setItem((it) => ({
-    ...it,
-    fonts: it.fonts.filter((f) => f.name !== name),
-    licenses: it.licenses.filter((f) => f.name !== name),
-  }));
+  const removePackage = () => patch({ zip: null, loose: [], pack: null, font: null });
+  const removePreview = (i) => patch({ previews: item.previews.filter((_, j) => j !== i) });
+  const makeCover = (i) => patch({ previews: [item.previews[i], ...item.previews.filter((_, j) => j !== i)] });
 
-  const lacks = missingParts(item);
-  const files = [...item.fonts, ...item.licenses];
+  const lacks = item.pack ? missingParts(item) : [];
+  const ready = item.pack && lacks.length === 0;
 
   const publish = async () => {
     if (!item.title.trim()) {
@@ -73,9 +105,9 @@ function FontUpload({ onPublished }) {
     setError(null);
     try {
       const batchId = await openBatch("font", batch);
-      const code = await publishFont({ ...item, batchId, title: item.title.trim() }, (message, progress) =>
+      await publishFont({ ...item, batchId, title: item.title.trim() }, (message, progress) =>
         setStatus({ message, progress }));
-      setFinished({ published: 1, failed: 0, where: batch.trim() || null, code });
+      setFinished({ published: 1, failed: 0, where: batch.trim() || null });
       setItem(blank());
       onPublished?.();
     } catch (e) {
@@ -96,33 +128,56 @@ function FontUpload({ onPublished }) {
         onDragLeave={() => setDragging(false)}
         onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles([...e.dataTransfer.files]); }}
       >
-        <strong>Drop one font family here</strong>
+        <strong>{reading ? "Reading…" : "Drop the font's ZIP and its previews here"}</strong>
         <span>
-          Its OTF, TTF and WOFF2 files and the license file (PDF or TXT) go to the buyer as one ZIP.
-          The site shows a specimen drawn from the font, never the font file. Sold per item, not in the subscription.
+          The ZIP is what the buyer gets, as it is (or drop loose OTF, TTF, WOFF2 and license files).
+          Add up to {MAX_PREVIEWS} JPG or PNG previews: the first is the cover. Sold per item, not in the subscription.
         </span>
-        <button onClick={() => input.current?.click()} disabled={publishing}>Choose files</button>
+        <button onClick={() => input.current?.click()} disabled={publishing || reading}>Choose files</button>
         <input ref={input} type="file" multiple accept={FONT_ACCEPT} hidden
                onChange={(e) => { addFiles([...e.target.files]); e.target.value = ""; }} />
       </div>
 
-      {files.length > 0 && (
+      {(item.pack || item.previews.length > 0) && (
         <div className="ad-font">
-          <ul className="ad-font-files">
-            {files.map((f) => (
-              <li key={f.name}>
-                <span>{f.name}</span>
-                <span className="ad-file">{mb(f.size)}</span>
+          {item.pack ? (
+            <div className="ad-font-pack">
+              <div>
+                <strong>{item.zip ? item.zip.name : `${item.loose.length} files, packed into one ZIP`}</strong>
+                <span className="ad-file">
+                  {item.zip ? `${mb(item.zip.size)} · ` : ""}{item.pack.fonts.length} font files ({item.pack.formats.join(", ") || "none"})
+                  {item.pack.hasLicense ? " · license" : ""}
+                </span>
+              </div>
+              {!publishing && <button className="ad-remove" onClick={removePackage}>Remove</button>}
+            </div>
+          ) : (
+            <p className="ad-error">Still needs the font's ZIP (or its OTF or TTF and license files).</p>
+          )}
+          {lacks.length > 0 && <p className="ad-error">The package still needs {lacks.join(" and ")}.</p>}
+
+          {/* the previews in order: the first is the cover, as on Creative Market */}
+          <div className="ad-font-previews">
+            {item.previews.map((f, i) => (
+              <figure key={f.name} className={i === 0 ? "is-cover" : ""}>
+                {thumbs[i] && <img src={thumbs[i]} alt="" />}
+                <figcaption>
+                  {i === 0 ? "Cover" : (
+                    <button type="button" onClick={() => makeCover(i)} disabled={publishing}>Make cover</button>
+                  )}
+                </figcaption>
                 {!publishing && (
-                  <button className="ad-remove" onClick={() => removeFile(f.name)} aria-label={`Remove ${f.name}`}>Remove</button>
+                  <button type="button" className="ad-icon-remove" onClick={() => removePreview(i)} aria-label={`Remove ${f.name}`}>×</button>
                 )}
-              </li>
+              </figure>
             ))}
-          </ul>
-          {lacks.length > 0 && <p className="ad-error">Still needs {lacks.join(", ")}.</p>}
+            {item.previews.length === 0 && (
+              <p className="ad-note">No previews yet: a specimen will be drawn from the font.</p>
+            )}
+          </div>
 
           <div className="ad-fields">
-            <input value={item.title} placeholder="Font name, e.g. Bauhaus Grotesk" maxLength={80} disabled={publishing}
+            <input value={item.title} placeholder="Font name, e.g. Omanut" maxLength={80} disabled={publishing}
                    onChange={(e) => patch({ title: e.target.value })} aria-label="Font name" />
             <div className="ad-row">
               <select value={item.category} disabled={publishing} aria-label="Category"
@@ -130,11 +185,12 @@ function FontUpload({ onPublished }) {
                 {FONT_CATEGORIES.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
               </select>
             </div>
-            <input value={item.description} placeholder="Short description (optional)" maxLength={300} disabled={publishing}
-                   onChange={(e) => patch({ description: e.target.value })} aria-label="Description" />
+            <textarea value={item.description} rows={4} maxLength={1200} disabled={publishing}
+                      placeholder="Description: the font's character, what's included, languages"
+                      onChange={(e) => patch({ description: e.target.value })} aria-label="Description" />
             <KeywordChips compact label="Keywords" value={item.keywords} min={3} max={30}
                           onChange={(list) => patch({ keywords: list })} />
-            {/* one price per license tier, as font shops sell them */}
+            {/* your own price per license tier, as font shops sell them */}
             <div className="ad-font-prices">
               {FONT_TIERS.map(([id, label]) => (
                 <label key={id} className="ad-price">
@@ -148,8 +204,12 @@ function FontUpload({ onPublished }) {
           </div>
 
           <div className="ad-bar">
-            <span>{status ? `${status.message}${status.progress ? ` · ${Math.round(status.progress * 100)}%` : ""}` : `${item.fonts.length} font files · ${item.licenses.length} license`}</span>
-            <button className="ad-primary" onClick={publish} disabled={publishing || lacks.length > 0}>
+            <span>
+              {status
+                ? `${status.message}${status.progress ? ` · ${Math.round(status.progress * 100)}%` : ""}`
+                : `${item.previews.length} of ${MAX_PREVIEWS} previews`}
+            </span>
+            <button className="ad-primary" onClick={publish} disabled={publishing || reading || !ready}>
               {publishing ? "Publishing…" : "Publish font"}
             </button>
           </div>

@@ -1,8 +1,9 @@
-// Fonts on /admin: one upload is one font family, the owner's own typeface,
-// sold per item as on Creative Market (not part of the subscription). The
-// OTF, TTF and WOFF2 files and the license file go to the buyer as one ZIP
-// in the private bucket; the site shows a specimen picture drawn here from
-// the font itself, so the font file is never public.
+// Fonts on /admin: one upload is one font, the owner's own typeface, sold
+// per item as on Creative Market (not part of the subscription). The buyer's
+// package is one ZIP, uploaded as it is (or made here from loose OTF, TTF,
+// WOFF2 and license files) and kept in the private bucket. The site shows up
+// to 8 preview pictures (the first is the cover); without any, a specimen is
+// drawn from the font itself. The font file is never public.
 import JSZip from "jszip";
 import { supabase } from "../../lib/supabaseClient";
 import { uploadToR2 } from "../../lib/r2";
@@ -10,7 +11,9 @@ import { makeImages } from "./vectorUpload";
 
 export const FONT_EXTS = ["otf", "ttf", "woff2", "woff"];
 export const LICENSE_EXTS = ["pdf", "txt", "md", "rtf"];
-export const FONT_ACCEPT = [...FONT_EXTS, ...LICENSE_EXTS].map((e) => `.${e}`).join(",");
+export const IMAGE_EXTS = ["jpg", "jpeg", "png", "webp"];
+export const FONT_ACCEPT = [...FONT_EXTS, ...LICENSE_EXTS, ...IMAGE_EXTS, "zip"].map((e) => `.${e}`).join(",");
+export const MAX_PREVIEWS = 8;
 
 // the license tiers, as font shops sell them, with starting prices in USD
 export const FONT_TIERS = [
@@ -23,27 +26,55 @@ export const FONT_TIERS = [
 export { FONT_CATEGORIES } from "../../data/fontCategories";
 
 const extOf = (name) => name.split(".").pop().toLowerCase();
+const baseOf = (path) => path.split("/").pop();
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "font";
+const isLicense = (path) => LICENSE_EXTS.includes(extOf(path)) && /licen[cs]e|eula|terms/i.test(baseOf(path));
 
-// the dropped files sorted into fonts and license files
-export function sortFontFiles(fileList) {
-  const fonts = [];
-  const licenses = [];
-  for (const file of fileList) {
-    const ext = extOf(file.name);
-    if (FONT_EXTS.includes(ext)) fonts.push(file);
-    else if (LICENSE_EXTS.includes(ext)) licenses.push(file);
-  }
-  return { fonts, licenses };
+// What's inside a package, from its file paths (a ZIP's, or loose files'):
+// the font files, the license, how many versions, as a short list for the
+// description ("What's included").
+export function describePackage(paths) {
+  const files = paths.filter((p) => !p.endsWith("/") && !p.includes("__MACOSX") && !baseOf(p).startsWith("."));
+  const fonts = files.filter((p) => FONT_EXTS.includes(extOf(p)));
+  const formats = [...new Set(fonts.map((p) => extOf(p).toUpperCase()))];
+  const licenses = files.filter(isLicense);
+  // folders holding fonts: each a version or a weight
+  const folders = new Set(fonts.map((p) => p.split("/").slice(0, -1).join("/")));
+  const lines = [];
+  if (formats.length) lines.push(`${fonts.length} font files (${formats.join(", ")})${folders.size > 1 ? ` in ${folders.size} folders` : ""}`);
+  if (licenses.length) lines.push(`License (${licenses.map(baseOf).join(", ")})`);
+  const other = files.length - fonts.length - licenses.length;
+  if (other > 0) lines.push(`${other} more ${other === 1 ? "file" : "files"} (readme, previews)`);
+  return {
+    files,
+    fonts,
+    formats,
+    hasLicense: licenses.length > 0,
+    included: lines.length ? `What's included: ${lines.join(" · ")}.` : "",
+  };
 }
 
-// what the package still lacks before it can go up
-export function missingParts({ fonts, licenses }) {
-  const exts = new Set(fonts.map((f) => extOf(f.name)));
+// a ZIP's paths and the font to read the name from (the "LATEST" folder's,
+// else the last version's, a Regular first)
+export async function readZip(zipFile) {
+  const zip = await JSZip.loadAsync(zipFile);
+  const paths = Object.keys(zip.files);
+  const pack = describePackage(paths);
+  const desktop = pack.fonts.filter((p) => ["otf", "ttf"].includes(extOf(p)));
+  const ranked = [...desktop].sort((a, b) => {
+    const score = (p) => (/latest/i.test(p) ? 2 : 0) + (/regular|book|normal/i.test(baseOf(p)) ? 1 : 0);
+    return score(b) - score(a) || b.localeCompare(a, undefined, { numeric: true });
+  });
+  const chosen = ranked[0];
+  const font = chosen ? new File([await zip.file(chosen).async("blob")], baseOf(chosen)) : null;
+  return { ...pack, font };
+}
+
+// what the upload still lacks before it can go up
+export function missingParts(item) {
   const lacks = [];
-  if (!exts.has("otf") && !exts.has("ttf")) lacks.push("an OTF or TTF");
-  if (!exts.has("woff2")) lacks.push("a WOFF2");
-  if (!licenses.length) lacks.push("the license file");
+  if (!item.pack?.formats.some((f) => f === "OTF" || f === "TTF")) lacks.push("an OTF or TTF font");
+  if (!item.pack?.hasLicense) lacks.push("a license file (named license, licence or EULA)");
   return lacks;
 }
 
@@ -125,33 +156,34 @@ async function drawSpecimen(fontFile, family) {
   }
 }
 
-// the font the specimen is drawn with: a Regular OTF/TTF, else the first
-function specimenFont(fonts) {
-  const desktop = fonts.filter((f) => ["otf", "ttf"].includes(extOf(f.name)));
-  return desktop.find((f) => /regular|book|normal/i.test(f.name)) ?? desktop[0] ?? fonts[0];
-}
-
 export async function publishFont(item, onStep) {
-  onStep("Drawing the specimen", 0);
-  const specimen = await drawSpecimen(specimenFont(item.fonts), item.title);
-  const images = await makeImages(specimen, false);
+  // the pictures: the uploaded previews (the first is the cover), or a
+  // specimen drawn from the font
+  onStep("Making the previews", 0);
+  const sources = item.previews.length ? item.previews : [await drawSpecimen(item.font, item.title)];
+  const pictures = [];
+  for (const source of sources.slice(0, MAX_PREVIEWS)) pictures.push(await makeImages(source, false));
 
-  onStep("Packing the ZIP", 0);
-  const zip = new JSZip();
-  const folder = zip.folder(slug(item.title));
-  for (const file of [...item.fonts, ...item.licenses]) folder.file(file.name, file);
-  const pack = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
+  // the buyer's package: the ZIP as uploaded, or one made from loose files
+  let pack = item.zip;
+  if (!pack) {
+    onStep("Packing the ZIP", 0);
+    const zip = new JSZip();
+    const folder = zip.folder(slug(item.title));
+    for (const file of item.loose) folder.file(file.name, file);
+    pack = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
+  }
 
   const prices = Object.fromEntries(FONT_TIERS.map(([id]) => [id, Number(item.prices[id]) || null]).filter(([, p]) => p));
+  const ext = (blob) => ({ "image/webp": "webp", "image/png": "png" }[blob.type] ?? "jpg");
 
   for (let attempt = 0; attempt < 3; attempt++) {
     const code = `KD-FN-${String(Math.floor(1_000_000 + Math.random() * 9_000_000))}`;
     const dir = `fonts/${code}`;
-    const ext = (blob) => ({ "image/webp": "webp", "image/png": "png" }[blob.type] ?? "jpg");
     const steps = [
       { bucket: "private", key: `${dir}/${slug(item.title)}.zip`, file: pack, contentType: "application/zip" },
-      { bucket: "public", key: `${dir}/thumb.${ext(images.thumb)}`, file: images.thumb, contentType: images.thumb.type },
-      { bucket: "public", key: `${dir}/preview.${ext(images.preview)}`, file: images.preview, contentType: images.preview.type },
+      { bucket: "public", key: `${dir}/thumb.${ext(pictures[0].thumb)}`, file: pictures[0].thumb, contentType: pictures[0].thumb.type },
+      ...pictures.map((p, i) => ({ bucket: "public", key: `${dir}/preview-${i + 1}.${ext(p.preview)}`, file: p.preview, contentType: p.preview.type })),
     ];
     const total = steps.reduce((sum, s) => sum + s.file.size, 0);
     const sent = steps.map(() => 0);
@@ -164,10 +196,11 @@ export async function publishFont(item, onStep) {
     })));
 
     onStep("Saving", 1);
+    const previews = steps.slice(2);
     const { error } = await supabase.from("assets").insert({
       code,
       batch_id: item.batchId ?? null,
-      source_name: item.title,
+      source_name: item.zip?.name ?? item.title,
       type: "font",
       status: "published",
       title: item.title,
@@ -178,17 +211,13 @@ export async function publishFont(item, onStep) {
       license: "paid",
       prices,
       thumb_key: steps[1].key,
-      preview_key: steps[2].key,
-      files: [{
-        format: "ZIP",
-        key: steps[0].key,
-        bytes: pack.size,
-        label: "Font package",
-        contents: [...item.fonts, ...item.licenses].map((f) => f.name),
-      }],
-      width: images.width,
-      height: images.height,
-      orientation: "landscape",
+      preview_key: previews[0].key,
+      // every preview picture, the cover first, for the gallery
+      gallery: previews.map((p, i) => ({ key: p.key, width: pictures[i].width, height: pictures[i].height })),
+      files: [{ format: "ZIP", key: steps[0].key, bytes: pack.size, label: "Font package", contents: item.pack.files.map(baseOf) }],
+      width: pictures[0].width,
+      height: pictures[0].height,
+      orientation: pictures[0].width === pictures[0].height ? "square" : pictures[0].width > pictures[0].height ? "landscape" : "portrait",
     });
     if (!error) return code;
     if (error.code !== "23505") throw new Error(error.message);
