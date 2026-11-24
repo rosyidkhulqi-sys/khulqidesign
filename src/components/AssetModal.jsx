@@ -5,7 +5,7 @@ import { PremiumPrompt, ToolGlyph } from "./IconControls";
 import { Sparkle } from "./AiSearchButton";
 import "./AssetModal.css";
 
-const kindLabel = { icon: "Icon", vector: "Vector", footage: "Footage", photo: "Photo", mockup: "Mockup" };
+const kindLabel = { icon: "Icon", vector: "Vector", footage: "Footage", photo: "Photo", mockup: "Mockup", font: "Font" };
 
 // stock files carry up to 50 keywords for search; only a few are shown,
 // so the view stays clean
@@ -159,6 +159,9 @@ function AssetModal({
   }, [onClose]);
 
   const premium = asset.license === "premium";
+  // sold per item at a price per license tier (fonts): bought, not downloaded
+  // with a plan
+  const paid = asset.license === "paid";
   const option = options[choice];
 
   const download = async () => {
@@ -255,14 +258,14 @@ function AssetModal({
           {/* DETAILS */}
           <div className="asset-right">
             <span className={`asset-license ${asset.license}`}>
-              {premium ? "Premium" : "Free"} {kindLabel[kind]}
+              {paid ? `${kindLabel[kind]} · sold per item` : `${premium ? "Premium" : "Free"} ${kindLabel[kind]}`}
             </span>
             <h2>{asset.title}</h2>
             <p className="asset-meta">
               ID {asset.code} · by <strong>Khulqidesign</strong>
             </p>
 
-            <p className="asset-label">Download options</p>
+            <p className="asset-label">{paid ? "License" : "Download options"}</p>
             <div className="asset-options">
               {options.map((o, i) => (
                 <label key={o.label} className={choice === i ? "active" : ""}>
@@ -289,7 +292,12 @@ function AssetModal({
               </p>
             )}
 
-            {premium ? (
+            {paid ? (
+              <p className="asset-note">
+                One payment, yours to keep: OTF, TTF and WOFF2 files with the license, in one ZIP.
+                Fonts are sold one by one, not with the subscription.
+              </p>
+            ) : premium ? (
               <>
                 <p className="asset-label">License</p>
                 <div className="asset-licenses">
@@ -320,10 +328,18 @@ function AssetModal({
             )}
 
             <div className="asset-buttons">
-              <button className="asset-download" onClick={download} disabled={busy}>
-                <ToolGlyph name="download" />
-                {busy ? "Preparing…" : `Download ${option.label}`}
-              </button>
+              {paid ? (
+                // checkout comes with payments; the price is shown now
+                <button className="asset-download" disabled title="Checkout opens soon">
+                  Buy {option.label} · ${option.price}
+                  <span className="ai-soon">Soon</span>
+                </button>
+              ) : (
+                <button className="asset-download" onClick={download} disabled={busy}>
+                  <ToolGlyph name="download" />
+                  {busy ? "Preparing…" : `Download ${option.label}`}
+                </button>
+              )}
               <button
                 className={`asset-like ${liked ? "liked" : ""}`}
                 onClick={() => setLiked(!liked)}

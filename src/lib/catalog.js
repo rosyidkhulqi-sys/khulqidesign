@@ -169,6 +169,8 @@ export function toStock(row) {
     ai: Boolean(row.ai_generated),
     // editorial use only: articles and education, not advertising
     editorial: Boolean(row.editorial),
+    // fonts: a price per license tier, sold per item
+    prices: row.prices ?? null,
   };
 }
 

@@ -9,7 +9,7 @@ const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || "sb_publishable_IxJSv
 const CDN = process.env.VITE_R2_PUBLIC_URL || "https://cdn.khulqidesign.com";
 
 // library page -> asset type in the database
-export const PAGE_TYPES = { icons: "icon", vectors: "vector", logos: "logo", footage: "footage", photos: "photo", mockups: "mockup" };
+export const PAGE_TYPES = { icons: "icon", vectors: "vector", logos: "logo", footage: "footage", photos: "photo", mockups: "mockup", fonts: "font" };
 
 export const cdn = (key) => (key ? `${CDN}/${key.split("/").map(encodeURIComponent).join("/")}` : null);
 

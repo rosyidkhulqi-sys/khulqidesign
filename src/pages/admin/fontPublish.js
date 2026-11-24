@@ -20,14 +20,7 @@ export const FONT_TIERS = [
   ["extended", "Extended", 149],
 ];
 
-export const FONT_CATEGORIES = [
-  ["sans-serif", "Sans serif"],
-  ["serif", "Serif"],
-  ["display", "Display"],
-  ["script", "Script"],
-  ["handwritten", "Handwritten"],
-  ["monospace", "Monospace"],
-];
+export { FONT_CATEGORIES } from "../../data/fontCategories";
 
 const extOf = (name) => name.split(".").pop().toLowerCase();
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "font";

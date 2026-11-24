@@ -11,6 +11,7 @@ import SkeletonCards from "../../components/SkeletonCards";
 import { fetchAssetByCode, searchCatalog, toStock } from "../../lib/catalog";
 import { useAssetUrl } from "../../lib/useAssetUrl";
 import { stockCategoryLabel } from "../../data/stockCategories";
+import { fromPrice } from "./px";
 
 const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 const PER_PAGE = 24;
@@ -133,26 +134,34 @@ function StockLibrary({ config, setPage, initialSearch = "", user = null }) {
       </div>
 
       <div className="vector-filters">
-        <select value={license} onChange={reset(setLicense)}>
-          <option value="all">License</option>
-          <option value="free">Free</option>
-          <option value="premium">Premium</option>
-        </select>
-        <select value={orientation} onChange={reset(setOrientation)}>
-          <option value="all">Orientation</option>
-          <option value="landscape">Landscape</option>
-          <option value="portrait">Portrait</option>
-          <option value="square">Square</option>
-        </select>
+        {/* fonts are all sold per item, in one shape: no license or
+            orientation to choose */}
+        {!config.paid && (
+          <>
+            <select value={license} onChange={reset(setLicense)}>
+              <option value="all">License</option>
+              <option value="free">Free</option>
+              <option value="premium">Premium</option>
+            </select>
+            <select value={orientation} onChange={reset(setOrientation)}>
+              <option value="all">Orientation</option>
+              <option value="landscape">Landscape</option>
+              <option value="portrait">Portrait</option>
+              <option value="square">Square</option>
+            </select>
+          </>
+        )}
         <select value={category} onChange={reset(setCategory)} aria-label="Category">
           <option value="all">Category</option>
           {categories.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
         </select>
-        <select value={ai} onChange={reset(setAi)} aria-label="AI-generated">
-          <option value="all">AI-generated</option>
-          <option value="only">Only AI</option>
-          <option value="none">Exclude AI</option>
-        </select>
+        {!config.paid && (
+          <select value={ai} onChange={reset(setAi)} aria-label="AI-generated">
+            <option value="all">AI-generated</option>
+            <option value="only">Only AI</option>
+            <option value="none">Exclude AI</option>
+          </select>
+        )}
         {type === "photo" && (
           <select value={usage} onChange={reset(setUsage)} aria-label="Usage">
             <option value="all">Usage</option>
@@ -180,10 +189,12 @@ function StockLibrary({ config, setPage, initialSearch = "", user = null }) {
                 <img src={v.image} alt={v.title} loading="lazy" />
                 {/* one badge, as microstocks show it: Free, Premium or Editorial */}
                 <span className={`vector-badge ${v.editorial ? "editorial" : v.license}`}>
-                  {v.editorial ? "Editorial" : v.license === "free" ? "Free" : "Premium"}
+                  {v.license === "paid"
+                    ? fromPrice(v.prices) ? `From $${fromPrice(v.prices)}` : "Paid"
+                    : v.editorial ? "Editorial" : v.license === "free" ? "Free" : "Premium"}
                 </span>
                 <span className="vector-format">
-                  {v.format}
+                  {config.formatLabel ? config.formatLabel(v) : v.format}
                   {v.ai && <span className="vector-ai" title="Made with generative AI">AI</span>}
                 </span>
                 <div className="vector-actions" onClick={(e) => e.stopPropagation()}>
@@ -223,8 +234,8 @@ function StockLibrary({ config, setPage, initialSearch = "", user = null }) {
           specs={[
             ["File ID", selected.code],
             ...config.specs(selected),
-            ["Orientation", capitalize(selected.orientation)],
-            ["Category", stockCategoryLabel(selected.category)],
+            ...(config.paid ? [] : [["Orientation", capitalize(selected.orientation)]]),
+            ["Category", config.categoryLabel ? config.categoryLabel(selected.category) : stockCategoryLabel(selected.category)],
             ...(selected.ai ? [["AI-generated", "Yes · fictional people, places and products"]] : []),
             ...(selected.editorial ? [["Usage", "Editorial use only · articles, blogs, education; not ads, packaging or merchandise"]] : []),
           ]}

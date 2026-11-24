@@ -18,6 +18,7 @@ const Ai = lazy(() => import("./pages/ai/Ai"));
 const Logos = lazy(() => import("./pages/logos/Logos"));
 const Photos = lazy(() => import("./pages/photos/Photos"));
 const Mockups = lazy(() => import("./pages/mockups/Mockups"));
+const Fonts = lazy(() => import("./pages/fonts/Fonts"));
 const Assets = lazy(() => import("./pages/assets/Assets"));
 const Pricing = lazy(() => import("./pages/pricing/Pricing"));
 const License = lazy(() => import("./pages/license/License"));
@@ -179,6 +180,11 @@ function App() {
     mockups: (
       <Suspense fallback={null}>
         <Mockups key={searchQuery} setPage={go} initialSearch={searchQuery} user={user} />
+      </Suspense>
+    ),
+    fonts: (
+      <Suspense fallback={null}>
+        <Fonts key={searchQuery} setPage={go} initialSearch={searchQuery} user={user} />
       </Suspense>
     ),
     assets: (
