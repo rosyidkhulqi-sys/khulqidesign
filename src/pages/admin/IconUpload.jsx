@@ -1,4 +1,5 @@
 // The Icons tab on /admin: pick or create a set, drop SVGs, publish.
+import { askConfirm } from "../../lib/confirm";
 import { useEffect, useRef, useState } from "react";
 import BatchField from "./BatchField";
 import { openBatch } from "./batches";
@@ -393,6 +394,15 @@ function IconUpload({ onPublished }) {
               {items.length} {items.length === 1 ? "icon" : "icons"}{done > 0 && ` · ${done} published`}
               {styleOfSet && ` · set style ${styleOfSet}`}
             </span>
+            {/* empties this upload (nothing published is touched) */}
+            <button onClick={async () => {
+              const sure = await askConfirm({
+                title: `Remove all ${items.length} icons from this upload?`,
+                message: "They're only taken off this list; nothing on the site changes.",
+                confirmLabel: "Remove all",
+              });
+              if (sure) setItems((l) => l.filter((it) => it.status === "done" || it.status === "uploading"));
+            }} disabled={publishing}>Remove all</button>
             <button className="ad-primary" onClick={publishAll} disabled={publishing || ready === 0}>
               {publishing ? "Publishing…" : `Publish ${ready}`}
             </button>
