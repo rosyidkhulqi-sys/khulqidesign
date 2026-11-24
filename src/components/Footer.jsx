@@ -13,6 +13,7 @@ const products = [
   ["logos", "Logos"],
   ["templates", "Templates"],
   ["mockups", "Mockups"],
+  ["fonts", "Fonts"],
   ["footage", "Footage"],
   ["create", "Create"],
 ];

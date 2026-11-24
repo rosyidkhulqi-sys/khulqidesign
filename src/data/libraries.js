@@ -11,6 +11,7 @@ export const libraries = [
   { page: "templates", title: "Templates", type: "template", unit: ["template", "templates"], image: "/covers/menu-templates.jpg", blurb: "Posters, posts, decks, edit in Create" },
   { page: "mockups", title: "Mockups", type: "mockup", unit: ["mockup", "mockups"], glyph: "mockup", tint: "#1D4E9E", badge: "New", blurb: "Layered PSD mockups with smart objects" },
   { page: "footage", title: "Footage", type: "footage", unit: ["clip", "clips"], image: "/covers/menu-footage.jpg", play: true, blurb: "4K motion backgrounds and loops" },
+  { page: "fonts", title: "Fonts", type: "font", unit: ["font", "fonts"], glyph: "font", tint: "#9E1F2B", badge: "New", blurb: "Our own typefaces, bought one by one" },
 ];
 
 export const libraryPages = new Set([...libraries.map((l) => l.page), "assets"]);

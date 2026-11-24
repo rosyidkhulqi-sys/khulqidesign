@@ -15,6 +15,12 @@ const glyphs = {
       <rect x="31" y="18" width="12" height="21" rx="3" />
     </svg>
   ),
+  // "Aa", set in the site's own type, as font shops show a typeface
+  font: (
+    <svg viewBox="0 0 48 48" aria-hidden="true">
+      <text x="24" y="33" textAnchor="middle" fill="currentColor" fontSize="24" fontWeight="700" fontFamily="inherit">Aa</text>
+    </svg>
+  ),
 };
 
 // one of a library's pinned covers, the same for the whole visit and a

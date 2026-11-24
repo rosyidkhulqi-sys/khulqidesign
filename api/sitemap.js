@@ -3,7 +3,7 @@
 // so a new upload is listed without a new deploy.
 import { PAGE_TYPES, SITE, assetUrl, escapeHtml, rest } from "./_seo.js";
 
-const PAGES = ["", "assets", "icons", "vectors", "photos", "logos", "templates", "mockups", "footage", "create", "ai", "pricing", "license", "about", "refund", "terms", "privacy"];
+const PAGES = ["", "assets", "icons", "vectors", "photos", "logos", "templates", "mockups", "footage", "fonts", "create", "ai", "pricing", "license", "about", "refund", "terms", "privacy"];
 const MAX = 45000; // one sitemap holds 50,000 addresses; split before that
 
 export async function GET() {
