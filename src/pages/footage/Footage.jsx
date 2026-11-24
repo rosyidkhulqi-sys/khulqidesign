@@ -333,7 +333,7 @@ function Footage({ setPage, initialSearch = "", user = null }) {
       <div className="footage-grid">
         {catalogLoading ? <SkeletonCards count={12} cardClass="footage-card" ratios={["16 / 9", "16 / 9", "9 / 16", "16 / 9", "1 / 1"]} /> : items.length > 0 ? (
           items.map((c) => (
-            <FootageCard key={c.id} clip={c} onOpen={() => setSelected(c)} />
+            <FootageCard key={c.code ?? c.id} clip={c} onOpen={() => setSelected(c)} />
           ))
         ) : (
           <div className="no-results">
@@ -379,7 +379,7 @@ function Footage({ setPage, initialSearch = "", user = null }) {
 
       {selected && (
         <AssetModal
-          key={selected.id}
+          key={selected.code ?? selected.id}
           asset={selected}
           kind="footage"
           options={clipOptions(selected)}

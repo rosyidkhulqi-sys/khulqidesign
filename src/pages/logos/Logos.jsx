@@ -264,7 +264,7 @@ function Logos({ setPage, initialSearch = "", user = null }) {
       {/* GRID */}
       <div className="logo-grid">
         {catalogLoading ? <SkeletonCards count={12} cardClass="logo-card" /> : items.length > 0 ? (
-          items.map((l) => <LogoCard key={l.id} logo={l} onOpen={() => setSelected(l)} />)
+          items.map((l) => <LogoCard key={l.code ?? l.id} logo={l} onOpen={() => setSelected(l)} />)
         ) : (
           <div className="no-results">
             <h3>No logos found</h3>
@@ -309,7 +309,7 @@ function Logos({ setPage, initialSearch = "", user = null }) {
 
       {selected && (
         <LogoModal
-          key={selected.id}
+          key={selected.code ?? selected.id}
           logo={selected}
           related={related}
           user={user}

@@ -174,7 +174,7 @@ function StockLibrary({ config, setPage, initialSearch = "", user = null }) {
       <div className="vector-grid is-bare">
         {loading ? <SkeletonCards count={12} cardClass="vector-card" ratios={["4 / 3", "3 / 4", "16 / 9", "1 / 1"]} /> : items.length > 0 ? (
           items.map((v) => (
-            <div className="vector-card" key={v.id} role="button" tabIndex={0} aria-label={v.title}
+            <div className="vector-card" key={v.code ?? v.id} role="button" tabIndex={0} aria-label={v.title}
                  onClick={() => setSelected(v)} onKeyDown={(e) => e.key === "Enter" && setSelected(v)}>
               <div className={`vector-thumb ${v.format === "PNG" ? "is-transparent" : ""}`} style={{ aspectRatio: `${v.artboard[0]} / ${v.artboard[1]}` }}>
                 <img src={v.image} alt={v.title} loading="lazy" />
@@ -216,7 +216,7 @@ function StockLibrary({ config, setPage, initialSearch = "", user = null }) {
 
       {selected && (
         <AssetModal
-          key={selected.id}
+          key={selected.code ?? selected.id}
           asset={selected}
           kind={type}
           options={config.options(selected)}

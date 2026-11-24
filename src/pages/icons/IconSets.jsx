@@ -168,7 +168,7 @@ function IconSetView({
               const open = () => onOpenIcon(icon, recolor ? { color } : null, px);
               return (
                 <div
-                  key={icon.id}
+                  key={icon.code ?? icon.id}
                   className="icon-card"
                   role="button"
                   tabIndex={0}

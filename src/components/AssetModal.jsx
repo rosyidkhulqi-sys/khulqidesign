@@ -390,7 +390,7 @@ function AssetModal({
             </p>
             <div className="asset-related-grid">
               {related.map((r) => (
-                <button key={r.id} onClick={() => onSelect(r)} className={`is-${kind}`}>
+                <button key={r.code ?? r.id} onClick={() => onSelect(r)} className={`is-${kind}`}>
                   <img src={r.image} alt={r.title} loading="lazy" />
                 </button>
               ))}

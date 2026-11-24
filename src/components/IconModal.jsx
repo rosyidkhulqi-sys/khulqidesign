@@ -427,7 +427,7 @@ function IconModal({
                 const current = m.image === icon.image;
                 return (
                   <button
-                    key={m.id}
+                    key={m.code ?? m.id}
                     className={`is-icon ${current ? "current" : ""}`}
                     onClick={() => !current && onSelect(m)}
                     aria-label={m.name}
@@ -447,7 +447,7 @@ function IconModal({
             <p className="asset-label">Similar icons</p>
             <div className="asset-related-grid">
               {related.map((r) => (
-                <button key={r.id} onClick={() => onSelect(r)} className="is-icon" aria-label={r.name}>
+                <button key={r.code ?? r.id} onClick={() => onSelect(r)} className="is-icon" aria-label={r.name}>
                   <img src={r.image} alt="" loading="lazy" />
                 </button>
               ))}

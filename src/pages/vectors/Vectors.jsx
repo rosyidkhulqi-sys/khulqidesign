@@ -235,7 +235,7 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
           items.map((v) => (
             <div
               className="vector-card"
-              key={v.id}
+              key={v.code ?? v.id}
               role="button"
               tabIndex={0}
               aria-label={v.title}
@@ -304,7 +304,7 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
 
       {selected && (
         <AssetModal
-          key={selected.id}
+          key={selected.code ?? selected.id}
           asset={selected}
           kind="vector"
           options={vectorOptions(selected)}

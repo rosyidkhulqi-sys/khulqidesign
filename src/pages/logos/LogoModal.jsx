@@ -352,7 +352,7 @@ function LogoModal({ logo, related = [], user = null, onAuth, onSelect, onTag, o
             <p className="asset-label">Similar logos</p>
             <div className="asset-related-grid">
               {related.map((r) => (
-                <button key={r.id} onClick={() => onSelect(r)} className="is-icon" aria-label={r.title}>
+                <button key={r.code ?? r.id} onClick={() => onSelect(r)} className="is-icon" aria-label={r.title}>
                   <img className="lm-related" src={r.image} alt="" loading="lazy" />
                 </button>
               ))}

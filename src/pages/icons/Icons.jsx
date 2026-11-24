@@ -171,7 +171,7 @@ function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
 
   const modal = selected && (
     <IconModal
-      key={selected.id}
+      key={selected.code ?? selected.id}
       icon={selected}
       initialEdits={openWith?.edits}
       initialSize={openWith?.px}
@@ -333,7 +333,7 @@ function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
               currentIcons.map((icon) => (
                 <div
                   className="icon-card"
-                  key={icon.id}
+                  key={icon.code ?? icon.id}
                   role="button"
                   tabIndex={0}
                   aria-label={`${icon.name} icon`}
