@@ -10,7 +10,7 @@ import NumberInput from "../../components/NumberInput";
 import { openBatch } from "./batches";
 import {
   FONT_ACCEPT, FONT_CATEGORIES, FONT_EXTS, FONT_TIERS, IMAGE_EXTS, LICENSE_EXTS, MAX_PREVIEWS,
-  describePackage, missingParts, publishFont, readFontNames, readZip, withAdded,
+  describePackage, isLicense, missingParts, publishFont, readFontNames, readZip, withAdded,
 } from "./fontPublish";
 
 const extOf = (name) => name.split(".").pop().toLowerCase();
@@ -58,10 +58,15 @@ function FontUpload({ onPublished }) {
       const next = {};
 
       // a license dropped beside a ZIP is put into the ZIP when it goes up
+      // (only license files, and only ones the ZIP doesn't have already)
       const licenses = loose.filter((f) => LICENSE_EXTS.includes(extOf(f.name)));
       if (zip || (item.zip && licenses.length && licenses.length === loose.length)) {
         const read = zip ? await readZip(zip) : item.pack;
-        const added = [...(zip ? [] : item.added), ...licenses.filter((f) => !item.added.some((x) => x.name === f.name))];
+        const inZip = new Set(read.files.map((p) => p.split("/").pop()));
+        const added = [...(zip ? [] : item.added), ...licenses.filter((f) =>
+          isLicense(f.name) && !inZip.has(f.name) && !item.added.some((x) => x.name === f.name))];
+        // the ZIP's own previews, when none were dropped beside it
+        if (zip && !images.length && !item.previews.length && read.previews?.length) images.push(...read.previews);
         Object.assign(next, {
           zip: zip ?? item.zip,
           loose: [],
@@ -186,7 +191,7 @@ function FontUpload({ onPublished }) {
               </figure>
             ))}
             {item.previews.length === 0 && (
-              <p className="ad-note">No previews yet: a specimen will be drawn from the font.</p>
+              <p className="ad-note ad-font-nopreview">No previews yet: drop JPG or PNG pictures, or a specimen will be drawn from the font.</p>
             )}
           </div>
 

@@ -28,7 +28,7 @@ export { FONT_CATEGORIES } from "../../data/fontCategories";
 const extOf = (name) => name.split(".").pop().toLowerCase();
 const baseOf = (path) => path.split("/").pop();
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "font";
-const isLicense = (path) => LICENSE_EXTS.includes(extOf(path)) && /licen[cs]e|eula|terms/i.test(baseOf(path));
+export const isLicense = (path) => LICENSE_EXTS.includes(extOf(path)) && /licen[cs]e|eula|terms/i.test(baseOf(path));
 
 // What's inside a package, from its file paths (a ZIP's, or loose files'):
 // the font files, the license, how many versions, as a short list for the
@@ -67,7 +67,16 @@ export async function readZip(zipFile) {
   });
   const chosen = ranked[0];
   const font = chosen ? new File([await zip.file(chosen).async("blob")], baseOf(chosen)) : null;
-  return { ...pack, font };
+  // its preview pictures (a "preview" folder's first), shown on the site
+  const images = pack.files.filter((p) => IMAGE_EXTS.includes(extOf(p)))
+    .sort((a, b) => Number(!/preview/i.test(b)) - Number(!/preview/i.test(a)) || a.localeCompare(b, undefined, { numeric: true }))
+    .slice(0, MAX_PREVIEWS);
+  const previews = [];
+  for (const p of images) {
+    const type = extOf(p) === "png" ? "image/png" : extOf(p) === "webp" ? "image/webp" : "image/jpeg";
+    previews.push(new File([await zip.file(p).async("blob")], baseOf(p), { type }));
+  }
+  return { ...pack, font, previews };
 }
 
 // a package with license files added to it (dropped beside its ZIP)

@@ -793,3 +793,4 @@
 .ad-font-previews figcaption button { padding: 0; border: 0; background: none; color: #fff; font: inherit; text-decoration: underline; cursor: pointer; }
 .ad-font-previews .ad-icon-remove { top: 6px; right: 6px; }
 .ad-font textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #333; border-radius: 8px; background: #0b0b0c; color: var(--white); font: inherit; font-size: 14px; resize: vertical; }
+.ad-font-nopreview { grid-column: 1 / -1; margin: 0; }
