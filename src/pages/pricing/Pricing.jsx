@@ -45,7 +45,6 @@ const premiumGroups = [
     "Premium logos (non-exclusive)",
     "Create elements and templates",
     "Remove background and upscale, unlimited",
-    "AI credits each month for image and video tools",
   ]],
 ];
 
@@ -76,7 +75,7 @@ const faqs = [
   ],
   [
     "How do AI credits work?",
-    "Animate, recolor and remove background don't use credits. Tools that generate new images or video do: Premium includes credits every month, and you can top up anytime.",
+    "Animate, recolor, remove background and upscale don't use credits. Tools that make new images or video do, and their credits come with KD AI, an add-on sold apart from Premium (as Canva's AI Pass and Adobe's generative credits), monthly or as top-ups. Premium stays one simple price for the library.",
   ],
   [
     "What is a Founding member?",
@@ -245,6 +244,21 @@ function Pricing({ setPage, user = null }) {
             {paid ? "You're already a member" : <>Become a founding member <span className="ai-soon">Coming soon</span></>}
           </button>
         )}
+      </div>
+
+      {/* KD AI: generative tools as their own add-on with credits, apart
+          from Premium (each generation costs, so it's paid by use), as
+          Canva's AI Pass and Adobe's generative credits are */}
+      <div className="pr-exclusive pr-ai">
+        <div>
+          <p className="pr-kicker">Add-on · works with Free or Premium</p>
+          <h3>KD AI</h3>
+          <p>
+            Credits for the tools that make something new: AI photos, image to video and templates
+            from a sentence. Monthly or as top-ups, and Premium members pay less.
+          </p>
+        </div>
+        <button disabled>See KD AI <span className="ai-soon">Coming soon</span></button>
       </div>
 
       {/* EXCLUSIVE LOGOS — outside the plans */}
