@@ -26,7 +26,7 @@ const ALLOWED_ORIGINS = [
 ];
 
 // every object lives under one of these folders
-const PREFIXES = ["icons/", "vectors/", "logos/", "footage/", "templates/", "elements/", "sets/", "photos/", "mockups/"];
+const PREFIXES = ["icons/", "vectors/", "logos/", "footage/", "templates/", "elements/", "sets/", "photos/", "mockups/", "fonts/"];
 const EXPIRES = 600;
 // download links are short: long enough to start, too short to pass around
 const DOWNLOAD_EXPIRES = 300;
@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
     const gzip = result.key.endsWith(".gz");
     const ext = result.key.replace(/\.gz$/, "").split(".").pop();
     const name = `${result.code}-${String(result.title).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50)}.${ext}`;
-    const type = { eps: "application/postscript", jpg: "image/jpeg", jpeg: "image/jpeg", ai: "application/postscript", psd: "image/vnd.adobe.photoshop", png: "image/png" }[ext.toLowerCase()];
+    const type = { eps: "application/postscript", jpg: "image/jpeg", jpeg: "image/jpeg", ai: "application/postscript", psd: "image/vnd.adobe.photoshop", png: "image/png", zip: "application/zip" }[ext.toLowerCase()];
     const signed = await r2.sign(
       new Request(
         `${objectUrlFor(env("R2_PRIVATE_BUCKET"), result.key)}?X-Amz-Expires=${DOWNLOAD_EXPIRES}` +

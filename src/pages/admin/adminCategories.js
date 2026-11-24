@@ -5,6 +5,7 @@ import { VECTOR_CATEGORIES } from "../../data/vectorCategories";
 import { ICON_CATEGORIES } from "./iconPublish";
 import { FOOTAGE_CATEGORIES } from "./footagePublish";
 import { MOCKUP_CATEGORY_OPTIONS, PHOTO_CATEGORY_OPTIONS } from "../../data/stockCategories";
+import { FONT_CATEGORIES } from "./fontPublish";
 
 export const CATEGORIES = {
   vector: VECTOR_CATEGORIES,
@@ -13,4 +14,5 @@ export const CATEGORIES = {
   template: TEMPLATE_CATEGORIES,
   photo: PHOTO_CATEGORY_OPTIONS.map(([id]) => id),
   mockup: MOCKUP_CATEGORY_OPTIONS.map(([id]) => id),
+  font: FONT_CATEGORIES.map(([id]) => id),
 };

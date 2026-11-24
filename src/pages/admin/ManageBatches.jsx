@@ -8,8 +8,8 @@ import { publicUrl } from "../../lib/r2";
 import { ManageAssetRows } from "./ManageAssets";
 import { batchOverview, deleteBatch, renameBatch, setBatchStatus } from "./batches";
 
-const LABEL = { vector: "vectors", icon: "icons", logo: "logos", footage: "clips", template: "templates", element: "elements", photo: "photos", mockup: "mockups" };
-const ONE = { vector: "vector", icon: "icon", logo: "logo", footage: "clip", template: "template", element: "element", photo: "photo", mockup: "mockup" };
+const LABEL = { vector: "vectors", icon: "icons", logo: "logos", footage: "clips", template: "templates", element: "elements", photo: "photos", mockup: "mockups", font: "fonts" };
+const ONE = { vector: "vector", icon: "icon", logo: "logo", footage: "clip", template: "template", element: "element", photo: "photo", mockup: "mockup", font: "font" };
 
 const dateOf = (iso) => new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 

@@ -774,3 +774,12 @@
 .ad-icon-remove:focus-visible { opacity: 1; }
 .ad-icon-remove:hover { background: var(--red); }
 @media (hover: none) { .ad-icon-remove { opacity: 1; } }
+
+/* the Fonts tab: one family's files, its details and tier prices */
+.ad-font { display: grid; gap: 14px; margin-top: 16px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: rgba(0, 0, 0, 0.16); }
+.ad-font-files { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.ad-font-files li { display: flex; align-items: center; gap: 12px; font-size: 14px; }
+.ad-font-files li > span:first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ad-font .ad-fields { display: grid; gap: 10px; }
+.ad-font-prices { display: flex; flex-wrap: wrap; gap: 10px 18px; }
+.ad-font-prices .ad-price span { margin-right: 6px; color: #aeb0b2; font-weight: 600; }

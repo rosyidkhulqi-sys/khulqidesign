@@ -10,6 +10,7 @@ import { publicUrl } from "../../lib/r2";
 import { industries } from "../../data/logosData";
 import { VECTOR_CATEGORY_OPTIONS, vectorCategoryStorageValues } from "../../data/vectorCategories";
 import { MOCKUP_CATEGORY_OPTIONS, PHOTO_CATEGORY_OPTIONS } from "../../data/stockCategories";
+import { FONT_CATEGORIES } from "./fontPublish";
 import {
   backgroundCategoryLabel,
   elementCategoryLabel,
@@ -22,7 +23,7 @@ import ManageIconSets from "./ManageIconSets";
 import ManageBatches from "./ManageBatches";
 import { deleteAsset } from "./batches";
 
-const LABEL = { vector: "vectors", icon: "icons", logo: "logos", footage: "clips", template: "templates", element: "elements", photo: "photos", mockup: "mockups" };
+const LABEL = { vector: "vectors", icon: "icons", logo: "logos", footage: "clips", template: "templates", element: "elements", photo: "photos", mockup: "mockups", font: "fonts" };
 const FIELDS = "id, code, ref_code, source_name, title, description, keywords, category, industry, style, license, ai_generated, editorial, price_cents, sold_at, status, thumb_key, preview_key, preview_video_key, files, created_at, batch_id, batch:upload_batches(name)";
 const PAGE_SIZE = 50;
 const NO_FILTERS = { search: "", batch: "", category: "", kind: "", month: "", license: "", status: "", sort: "newest" };
@@ -35,6 +36,7 @@ function categoryOptions(type, kind = "") {
   if (type === "vector") return VECTOR_CATEGORY_OPTIONS;
   if (type === "photo") return PHOTO_CATEGORY_OPTIONS;
   if (type === "mockup") return MOCKUP_CATEGORY_OPTIONS;
+  if (type === "font") return FONT_CATEGORIES;
   const list = type === "element"
     ? kind === "background"
       ? BACKGROUND_CATEGORIES
@@ -349,7 +351,7 @@ export function ManageAssetRows({ type = "vector", refreshKey, batchId = null, e
           </label>
           {picked.size > 0 && (
             <>
-              {type !== "logo" && (
+              {type !== "logo" && type !== "font" && (
                 <select className="ad-bulk-license" value="" disabled={Boolean(bulk)} aria-label="Set license"
                         onChange={(e) => e.target.value && bulkLicense(e.target.value)}>
                   <option value="">Set license…</option>

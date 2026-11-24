@@ -4,6 +4,7 @@
 // database and the r2-sign function check the role again on every write.
 import { useEffect, useRef, useState } from "react";
 import DoneNote from "./DoneNote";
+import FontUpload from "./FontUpload";
 import BatchField from "./BatchField";
 import { openBatch } from "./batches";
 import "../vectors/Vectors.css";
@@ -31,6 +32,7 @@ const TABS = [
   ["template", "Templates", "made in Create"],
   ["mockup", "Mockups", "PSD + JPG preview"],
   ["element", "Elements", "SVG, PNG and JPG for Create"],
+  ["font", "Fonts", "OTF, TTF, WOFF2 + license"],
 ];
 import {
   pairFiles,
@@ -203,6 +205,8 @@ function Admin({ user, setPage }) {
         <FootageUpload onPublished={() => setPublished((n) => n + 1)} />
       ) : tab === "photo" || tab === "mockup" ? (
         <StockUpload key={`upload-${tab}`} kind={tab} onPublished={() => setPublished((n) => n + 1)} />
+      ) : tab === "font" ? (
+        <FontUpload onPublished={() => setPublished((n) => n + 1)} />
       ) : tab === "element" ? (
         <ElementUpload onPublished={() => setPublished((n) => n + 1)} />
       ) : tab === "template" ? (

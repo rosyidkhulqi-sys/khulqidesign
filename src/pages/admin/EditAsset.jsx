@@ -145,7 +145,9 @@ function EditAsset({ row, type, onSaved, onCancel }) {
 
       <label>
         License
-        <select value={form.license} onChange={set("license")} disabled={sold}>
+        <select value={form.license} onChange={set("license")} disabled={sold || type === "font"}>
+          {/* a font is sold per item at its tier prices, never Free or Premium */}
+          {type === "font" && <option value="paid">Paid per item</option>}
           <option value="free">Free</option>
           <option value="premium">Premium</option>
           {type === "photo" && <option value="editorial">Editorial</option>}
