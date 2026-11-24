@@ -207,7 +207,7 @@
   border-radius: 8px;
   background: #f4f4f5;
 }
-.ad-icon-preview img { width: 56%; height: 56%; object-fit: contain; }
+.ad-icon-preview img { width: 70%; height: 70%; object-fit: contain; }
 .ad-icon-status { color: #8d939b; font-size: 12px; line-height: 1.4; }
 .is-done .ad-icon-status { color: #8fd19e; }
 .is-error .ad-icon-status,
