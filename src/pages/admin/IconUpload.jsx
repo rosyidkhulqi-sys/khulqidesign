@@ -119,11 +119,14 @@ function IconUpload({ onPublished }) {
     for (const item of fresh) {
       try {
         const svg = await readSvg(item.file);
+        // a title and keywords written into the SVG (KD Create) come first;
+        // without them the name starts the keywords: the whole name first
+        // ("add user"), then its words, the last (usually the subject) first
+        const name = svg.meta.title || item.name;
         update(item.key, {
           svg,
-          // the name starts the keywords: the whole name first ("add user"),
-          // then its words, the last (usually the subject) before the others
-          keywords: keywordsFromName(item.name),
+          name,
+          keywords: svg.meta.keywords.length ? svg.meta.keywords.join(", ") : keywordsFromName(name),
           status: "ready",
           message: "",
         });

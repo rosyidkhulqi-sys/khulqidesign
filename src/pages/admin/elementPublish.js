@@ -43,7 +43,7 @@ const clean = (node) => node?.textContent.replace(/\s+/g, " ").trim() ?? "";
 
 // SVG metadata lives in the file itself: <title> and <desc>, and Dublin Core
 // (title, description, subject) when Illustrator or Inkscape wrote it
-function svgMetadata(svg) {
+export function svgMetadata(svg) {
   const own = (name) => [...svg.children].find((n) => n.localName === name);
   const dublin = (name) => svg.getElementsByTagNameNS("http://purl.org/dc/elements/1.1/", name)[0];
   const subject = dublin("subject");

@@ -7,6 +7,7 @@
 import { supabase } from "../../lib/supabaseClient";
 import { signUploads, uploadToR2 } from "../../lib/r2";
 import { loadIconSvg } from "../../lib/iconEditor";
+import { svgMetadata } from "./elementPublish";
 
 export const ICON_STYLES = ["outline", "glyph", "flat", "gradient", "hand-drawn"];
 export const ICON_CATEGORIES = ["business", "social", "ui", "holiday", "nature", "food", "education", "medical", "travel", "other"];
@@ -30,9 +31,24 @@ export function nameFromFile(fileName) {
 export const splitKeywords = (text) =>
   [...new Set(text.split(/[,;\n]/).map((k) => k.trim().toLowerCase()).filter(Boolean))];
 
+// the title and keywords written into the SVG (Dublin Core in its
+// <metadata>, as KD Create, Illustrator or Inkscape write them), as for
+// elements; nothing when the file has none
+async function svgMeta(file) {
+  try {
+    const svg = new DOMParser().parseFromString(await file.text(), "image/svg+xml").documentElement;
+    if (svg.nodeName !== "svg") return { title: "", keywords: [] };
+    const m = svgMetadata(svg);
+    return { title: m.longTitle, keywords: splitKeywords(m.keywords.join(",")) };
+  } catch {
+    return { title: "", keywords: [] };
+  }
+}
+
 // read and clean one SVG; also guess its style from what it paints
 export async function readSvg(file) {
   const url = URL.createObjectURL(file);
+  const meta = await svgMeta(file);
   try {
     const source = await loadIconSvg(url);
     const markup = source.inner;
@@ -45,7 +61,7 @@ export async function readSvg(file) {
       markup +
       `</svg>`;
     const [, , w, h] = source.viewBox.split(/[\s,]+/).map(Number);
-    return { clean, style, colors: source.colors.length, width: Math.round(w) || 512, height: Math.round(h) || 512 };
+    return { clean, style, colors: source.colors.length, width: Math.round(w) || 512, height: Math.round(h) || 512, meta };
   } finally {
     URL.revokeObjectURL(url);
   }
