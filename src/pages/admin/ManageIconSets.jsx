@@ -539,6 +539,26 @@ function ManageIconSets({ refreshKey }) {
     setBusy(null);
   };
 
+  // "Select all" and "Delete N" above an open set's icons (list or edit view)
+  const pickBar = (set) => {
+    const icons = members[set.id] ?? [];
+    const count = icons.filter((icon) => picked.has(icon.id)).length;
+    return (
+      <div className="ad-icon-pick-bar">
+        <label>
+          <input type="checkbox" checked={icons.length > 0 && count === icons.length}
+                 onChange={(e) => setPicked(e.target.checked ? new Set(icons.map((icon) => icon.id)) : new Set())} />
+          Select all
+        </label>
+        {count > 0 && (
+          <button className="ad-delete" onClick={() => removePicked(set)} disabled={busy === `pick-${set.id}`}>
+            {busy === `pick-${set.id}` ? "Deleting…" : `Delete ${count}`}
+          </button>
+        )}
+      </div>
+    );
+  };
+
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const filtered = Object.keys(blankFilters).some((key) => key !== "sort" && filters[key]);
 
@@ -672,13 +692,19 @@ function ManageIconSets({ refreshKey }) {
                 ) : members[set.id].length === 0 ? (
                   <p className="ad-note">This set has no icons.</p>
                 ) : editingSet === set.id ? (
+                  <>
+                  {pickBar(set)}
                   <div className="ad-icon-grid">
                     {members[set.id].map((icon) => {
                       const draft = iconDrafts[icon.id] ?? { title: icon.title ?? "", keywords: "" };
                       const change = (patch) => setIconDrafts((all) => ({ ...all, [icon.id]: { ...draft, ...patch } }));
                       return (
                         <div className="ad-icon" key={icon.id}>
-                          <div className="ad-icon-preview">{icon.thumb_key && <img src={publicUrl(icon.thumb_key)} alt="" loading="lazy" />}</div>
+                          <div className="ad-icon-preview">
+                            {icon.thumb_key && <img src={publicUrl(icon.thumb_key)} alt="" loading="lazy" />}
+                            <input type="checkbox" className="ad-icon-pick is-corner" checked={picked.has(icon.id)}
+                                   onChange={() => togglePick(icon.id)} aria-label={`Select ${icon.title}`} />
+                          </div>
                           <input value={draft.title} maxLength={60} spellCheck lang="en" aria-label="Icon name"
                                  onChange={(e) => change({ title: e.target.value })} />
                           <KeywordChips
@@ -694,20 +720,9 @@ function ManageIconSets({ refreshKey }) {
                       );
                     })}
                   </div>
+                  </>
                 ) : [
-                  <div className="ad-icon-pick-bar" key="pick-bar">
-                    <label>
-                      <input type="checkbox"
-                             checked={members[set.id].every((icon) => picked.has(icon.id))}
-                             onChange={(e) => setPicked(e.target.checked ? new Set(members[set.id].map((icon) => icon.id)) : new Set())} />
-                      Select all
-                    </label>
-                    {members[set.id].some((icon) => picked.has(icon.id)) && (
-                      <button className="ad-delete" onClick={() => removePicked(set)} disabled={busy === `pick-${set.id}`}>
-                        {busy === `pick-${set.id}` ? "Deleting…" : `Delete ${members[set.id].filter((icon) => picked.has(icon.id)).length}`}
-                      </button>
-                    )}
-                  </div>,
+                  <div key="pick-bar">{pickBar(set)}</div>,
                   ...members[set.id].map((icon) => (
                   <div className={`ad-icon-set-member ${icon.status === "hidden" ? "is-hidden" : ""}`} key={icon.id}>
                     <input type="checkbox" className="ad-icon-pick" checked={picked.has(icon.id)}
