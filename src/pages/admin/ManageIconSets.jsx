@@ -489,6 +489,56 @@ function ManageIconSets({ refreshKey }) {
     setBusy(null);
   };
 
+  // icons checked in the open set, to delete several at once
+  const [picked, setPicked] = useState(() => new Set());
+  const togglePick = (id) => setPicked((all) => {
+    const next = new Set(all);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    return next;
+  });
+
+  const removePicked = async (set) => {
+    const list = (members[set.id] ?? []).filter((icon) => picked.has(icon.id));
+    if (!list.length) return;
+    // one icon asks once; several ask to type the count, as a batch asks
+    // for its name
+    const sure = await askConfirm({
+      title: list.length === 1 ? `Delete ${list[0].code}?` : `Delete ${list.length} icons?`,
+      message: list.length === 1
+        ? `“${list[0].title}” and its files are removed from storage. This can't be undone.`
+        : `${list.length} icons from “${set.name}” and their files are removed from storage. This can't be undone.`,
+      typeToConfirm: list.length > 1 ? `delete ${list.length}` : null,
+    });
+    if (!sure) return;
+    setBusy(`pick-${set.id}`);
+    setError(null);
+    const gone = [];
+    let kept = 0;
+    for (let i = 0; i < list.length; i += 50) {
+      const part = list.slice(i, i + 50);
+      const { error: deleteError } = await supabase.from("assets").delete().in("id", part.map((icon) => icon.id));
+      if (!deleteError) {
+        gone.push(...part);
+        continue;
+      }
+      // one with download history blocks the group: go one by one
+      for (const icon of part) {
+        const { error: oneError } = await supabase.from("assets").delete().eq("id", icon.id);
+        if (oneError) kept += 1;
+        else gone.push(icon);
+      }
+    }
+    const fileFailures = gone.length ? await deleteObjects(gone) : [];
+    const goneIds = new Set(gone.map((icon) => icon.id));
+    setMembers((current) => ({ ...current, [set.id]: current[set.id].filter((item) => !goneIds.has(item.id)) }));
+    setSets((all) => all.map((item) => item.id === set.id ? { ...item, iconCount: Math.max(0, item.iconCount - gone.length) } : item));
+    setPicked(new Set());
+    if (kept) setError(`${kept} ${kept === 1 ? "icon has" : "icons have"} download history, so hide ${kept === 1 ? "it" : "them"} instead of deleting.`);
+    else if (fileFailures.length) setError(`${gone.length} icons were removed from the catalog, but some R2 files could not be deleted.`);
+    setBusy(null);
+  };
+
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const filtered = Object.keys(blankFilters).some((key) => key !== "sort" && filters[key]);
 
@@ -644,8 +694,24 @@ function ManageIconSets({ refreshKey }) {
                       );
                     })}
                   </div>
-                ) : members[set.id].map((icon) => (
+                ) : [
+                  <div className="ad-icon-pick-bar" key="pick-bar">
+                    <label>
+                      <input type="checkbox"
+                             checked={members[set.id].every((icon) => picked.has(icon.id))}
+                             onChange={(e) => setPicked(e.target.checked ? new Set(members[set.id].map((icon) => icon.id)) : new Set())} />
+                      Select all
+                    </label>
+                    {members[set.id].some((icon) => picked.has(icon.id)) && (
+                      <button className="ad-delete" onClick={() => removePicked(set)} disabled={busy === `pick-${set.id}`}>
+                        {busy === `pick-${set.id}` ? "Deleting…" : `Delete ${members[set.id].filter((icon) => picked.has(icon.id)).length}`}
+                      </button>
+                    )}
+                  </div>,
+                  ...members[set.id].map((icon) => (
                   <div className={`ad-icon-set-member ${icon.status === "hidden" ? "is-hidden" : ""}`} key={icon.id}>
+                    <input type="checkbox" className="ad-icon-pick" checked={picked.has(icon.id)}
+                           onChange={() => togglePick(icon.id)} aria-label={`Select ${icon.title}`} />
                     <div className="ad-thumb is-icon">{icon.thumb_key && <img src={publicUrl(icon.thumb_key)} alt="" loading="lazy" />}</div>
                     <div className="ad-fields">
                       <strong>{icon.title}</strong>
@@ -671,7 +737,8 @@ function ManageIconSets({ refreshKey }) {
                       />
                     )}
                   </div>
-                ))}
+                  )),
+                ]}
               </div>
             )}
           </section>
