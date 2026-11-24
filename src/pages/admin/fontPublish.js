@@ -70,11 +70,16 @@ export async function readZip(zipFile) {
   return { ...pack, font };
 }
 
+// a package with license files added to it (dropped beside its ZIP)
+export function withAdded(pack, added) {
+  return describePackage([...pack.files, ...added.map((f) => f.name)]);
+}
+
 // what the upload still lacks before it can go up
 export function missingParts(item) {
   const lacks = [];
   if (!item.pack?.formats.some((f) => f === "OTF" || f === "TTF")) lacks.push("an OTF or TTF font");
-  if (!item.pack?.hasLicense) lacks.push("a license file (named license, licence or EULA)");
+  if (!item.pack?.hasLicense) lacks.push("a license file (named license, licence or EULA: drop it here and it goes into the ZIP)");
   return lacks;
 }
 
@@ -166,6 +171,16 @@ export async function publishFont(item, onStep) {
 
   // the buyer's package: the ZIP as uploaded, or one made from loose files
   let pack = item.zip;
+  if (pack && item.added?.length) {
+    // the license files dropped beside it go into the ZIP, next to the fonts
+    // (inside its one top folder when it has one)
+    onStep("Adding the license to the ZIP", 0);
+    const zip = await JSZip.loadAsync(pack);
+    const tops = new Set(Object.keys(zip.files).filter((p) => !p.includes("__MACOSX")).map((p) => p.split("/")[0]));
+    const root = tops.size === 1 && zip.files[`${[...tops][0]}/`] ? `${[...tops][0]}/` : "";
+    for (const file of item.added) zip.file(`${root}${file.name}`, file);
+    pack = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
+  }
   if (!pack) {
     onStep("Packing the ZIP", 0);
     const zip = new JSZip();

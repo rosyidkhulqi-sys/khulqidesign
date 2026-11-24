@@ -10,7 +10,7 @@ import NumberInput from "../../components/NumberInput";
 import { openBatch } from "./batches";
 import {
   FONT_ACCEPT, FONT_CATEGORIES, FONT_EXTS, FONT_TIERS, IMAGE_EXTS, LICENSE_EXTS, MAX_PREVIEWS,
-  describePackage, missingParts, publishFont, readFontNames, readZip,
+  describePackage, missingParts, publishFont, readFontNames, readZip, withAdded,
 } from "./fontPublish";
 
 const extOf = (name) => name.split(".").pop().toLowerCase();
@@ -19,6 +19,8 @@ const mb = (bytes) => `${(bytes / 1_000_000).toFixed(bytes < 1_000_000 ? 2 : 1)}
 const blank = () => ({
   zip: null,
   loose: [],
+  // license files to put into the ZIP
+  added: [],
   pack: null,
   font: null,
   previews: [],
@@ -55,9 +57,18 @@ function FontUpload({ onPublished }) {
       const loose = dropped.filter((f) => [...FONT_EXTS, ...LICENSE_EXTS].includes(extOf(f.name)));
       const next = {};
 
-      if (zip) {
-        const read = await readZip(zip);
-        Object.assign(next, { zip, loose: [], pack: read, font: read.font });
+      // a license dropped beside a ZIP is put into the ZIP when it goes up
+      const licenses = loose.filter((f) => LICENSE_EXTS.includes(extOf(f.name)));
+      if (zip || (item.zip && licenses.length && licenses.length === loose.length)) {
+        const read = zip ? await readZip(zip) : item.pack;
+        const added = [...(zip ? [] : item.added), ...licenses.filter((f) => !item.added.some((x) => x.name === f.name))];
+        Object.assign(next, {
+          zip: zip ?? item.zip,
+          loose: [],
+          added,
+          pack: added.length ? withAdded(read, added) : read,
+          font: zip ? read.font : item.font,
+        });
       } else if (loose.length) {
         const all = [...item.loose, ...loose.filter((f) => !item.loose.some((x) => x.name === f.name))];
         Object.assign(next, {
@@ -89,7 +100,7 @@ function FontUpload({ onPublished }) {
     }
   };
 
-  const removePackage = () => patch({ zip: null, loose: [], pack: null, font: null });
+  const removePackage = () => patch({ zip: null, loose: [], added: [], pack: null, font: null });
   const removePreview = (i) => patch({ previews: item.previews.filter((_, j) => j !== i) });
   const makeCover = (i) => patch({ previews: [item.previews[i], ...item.previews.filter((_, j) => j !== i)] });
 
@@ -148,6 +159,9 @@ function FontUpload({ onPublished }) {
                   {item.zip ? `${mb(item.zip.size)} · ` : ""}{item.pack.fonts.length} font files ({item.pack.formats.join(", ") || "none"})
                   {item.pack.hasLicense ? " · license" : ""}
                 </span>
+                {item.added.length > 0 && (
+                  <span className="ad-file">Added into the ZIP: {item.added.map((f) => f.name).join(", ")}</span>
+                )}
               </div>
               {!publishing && <button className="ad-remove" onClick={removePackage}>Remove</button>}
             </div>
