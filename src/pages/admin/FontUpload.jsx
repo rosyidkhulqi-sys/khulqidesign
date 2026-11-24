@@ -93,10 +93,6 @@ function FontUpload({ onPublished }) {
         const names = await readFontNames(font).catch(() => null);
         if (names) next.title = names.family;
       }
-      // the description starts with what's in the package; written over only
-      // while it's still the written one
-      const pack = next.pack ?? item.pack;
-      if (pack && (!item.description || item.description === item.pack?.included)) next.description = pack.included;
       patch(next);
     } catch (e) {
       setError(`Couldn't read the files: ${e.message}`);
@@ -205,7 +201,7 @@ function FontUpload({ onPublished }) {
               </select>
             </div>
             <textarea value={item.description} rows={4} maxLength={1200} disabled={publishing}
-                      placeholder="Description: the font's character, what's included, languages"
+                      placeholder="Description (optional): the font's character and what it suits. The files are listed on the page already."
                       onChange={(e) => patch({ description: e.target.value })} aria-label="Description" />
             <KeywordChips compact label="Keywords" value={item.keywords} min={3} max={30}
                           onChange={(list) => patch({ keywords: list })} />
