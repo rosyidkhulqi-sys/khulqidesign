@@ -191,8 +191,19 @@ function IconUpload({ onPublished }) {
   const [copyQuery, setCopyQuery] = useState("");
   const setLabel = (s) => `${s.name} · ${capitalize(s.style ?? "")} · ${s.code}`;
 
+  // a new set with the name and style of one already uploaded: the icons
+  // most likely belong in that one (the same name in another style is fine)
+  const tidy = (s) => (s ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+  const twin = !chosen && tidy(draft.name)
+    ? sets.find((s) => tidy(s.name) === tidy(draft.name) && s.style === draft.style)
+    : null;
+
   const publishAll = async () => {
     setError(null);
+    if (twin) {
+      setError(`A ${twin.style} set named "${twin.name}" already exists. Choose "Use that set", or give this set another name.`);
+      return;
+    }
     let set = chosen;
     // the set picked may have been deleted since this page loaded (under
     // Uploaded icon sets): say so instead of failing every icon
@@ -351,7 +362,14 @@ function IconUpload({ onPublished }) {
           {!chosen && (
             <div className="ad-set-form">
               <input placeholder="Set name, e.g. Shopping & Promo" value={draft.name} maxLength={60} disabled={lockSet}
-                     onChange={(e) => setDraft({ ...draft, name: e.target.value })} aria-label="Set name" />
+                     onChange={(e) => setDraft({ ...draft, name: e.target.value })} aria-label="Set name"
+                     style={twin ? { borderColor: "#ff5c66" } : undefined} />
+              {twin && (
+                <p className="ad-batch-taken" style={{ marginLeft: 0 }} role="alert">
+                  <span>A {capitalize(twin.style ?? "")} set named "{twin.name}" already exists.</span>
+                  <button type="button" onClick={() => setSetId(twin.id)}>Use that set</button>
+                </p>
+              )}
               <div className="ad-row">
                 <select value={draft.style} disabled={lockSet} onChange={(e) => setDraft({ ...draft, style: e.target.value })} aria-label="Style">
                   {ICON_STYLES.map((s) => <option key={s} value={s}>{capitalize(s)}</option>)}
