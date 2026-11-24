@@ -6,6 +6,7 @@ import { openBatch } from "./batches";
 import KeywordChips from "./KeywordChips";
 import { clearDraft, loadDraft, saveDraft } from "../../lib/drafts";
 import { runPool } from "../../lib/uploadPool";
+import { supabase } from "../../lib/supabaseClient";
 import {
   GENERIC_ICON_WORDS,
   ICON_CATEGORIES,
@@ -193,6 +194,17 @@ function IconUpload({ onPublished }) {
   const publishAll = async () => {
     setError(null);
     let set = chosen;
+    // the set picked may have been deleted since this page loaded (under
+    // Uploaded icon sets): say so instead of failing every icon
+    if (set) {
+      const { data: still } = await supabase.from("asset_sets").select("id").eq("id", set.id).maybeSingle();
+      if (!still) {
+        setSets((list) => list.filter((s) => s.id !== set.id));
+        setSetId("");
+        setError(`The set "${set.name}" was deleted. Choose another set, or make a new one with + New set.`);
+        return;
+      }
+    }
     if (!set) {
       if (!draft.name.trim()) {
         setError("Give the new set a name first.");
