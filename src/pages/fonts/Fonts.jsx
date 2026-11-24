@@ -29,10 +29,21 @@ const config = {
   options: (f) => TIERS
     .filter(([id]) => f.prices?.[id])
     .map(([id, name, detail]) => ({ label: name, detail, size: `$${f.prices[id]}`, price: f.prices[id], tier: id })),
-  specs: (f) => [
-    ["Files", (f.files?.[0]?.contents ?? []).join(", ") || "OTF, TTF, WOFF2"],
-    ["Package", f.bytes ? `ZIP · ${f.bytes}` : "ZIP"],
-  ],
+  // what's in the ZIP, summed up: its font formats, license and readme
+  // (a package of several versions lists the same names many times)
+  specs: (f) => {
+    const names = [...new Set((f.files?.[0]?.contents ?? []).map((n) => n.split("/").pop()))];
+    const ext = (n) => n.split(".").pop().toUpperCase();
+    const formats = [...new Set(names.filter((n) => /\.(otf|ttf|woff2?)$/i.test(n)).map(ext))]
+      .sort((a, b) => ["OTF", "TTF", "WOFF2", "WOFF"].indexOf(a) - ["OTF", "TTF", "WOFF2", "WOFF"].indexOf(b));
+    const licenses = [...new Set(names.filter((n) => /licen[cs]e|eula/i.test(n)).map(ext))];
+    const fonts = (f.files?.[0]?.contents ?? []).filter((n) => /\.(otf|ttf|woff2?)$/i.test(n)).length;
+    return [
+      ["Formats", formats.join(", ") || "OTF, TTF, WOFF2"],
+      ...(licenses.length ? [["License", `EULA (${licenses.join(", ")})`]] : []),
+      ["Package", `ZIP${fonts ? ` · ${fonts} font files` : ""}${f.bytes ? ` · ${f.bytes}` : ""}`],
+    ];
+  },
   empty: { title: "Fonts are on their way", text: "Our first typefaces are being drawn. Check back soon." },
 };
 
