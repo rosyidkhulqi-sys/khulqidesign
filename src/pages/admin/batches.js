@@ -2,10 +2,33 @@
 import { supabase } from "../../lib/supabaseClient";
 import { deleteFromR2 } from "../../lib/r2";
 
+export const cleanBatchName = (name) => (name ?? "").replace(/\s+/g, " ").trim();
+
+// existing batches the admin chose to add to ("Add files", or "Add to it"
+// under the field); any other name already taken is refused, so a new upload
+// never lands in an old batch by mistake
+const addingTo = new Set();
+const addKey = (type, name) => `${type}:${cleanBatchName(name).toLowerCase()}`;
+export const allowAddingTo = (type, name) => addingTo.add(addKey(type, name));
+export const isAddingTo = (type, name) => addingTo.has(addKey(type, name));
+
+// whether a batch of this type already has this name (spacing and capitals
+// ignored, as the database stores names tidied)
+export async function batchExists(type, name) {
+  const clean = cleanBatchName(name);
+  if (!clean) return false;
+  const { data } = await supabase.from("upload_batches").select("name").eq("type", type)
+    .ilike("name", clean.replace(/[%_\\]/g, "\\$&")).limit(1);
+  return Boolean(data?.length);
+}
+
 // the batch's id, made on the server if new (an empty name means today's
 // dated batch); called once per publish
 export async function openBatch(type, name) {
-  const clean = (name ?? "").replace(/\s+/g, " ").trim();
+  const clean = cleanBatchName(name);
+  if (clean && !isAddingTo(type, clean) && (await batchExists(type, clean))) {
+    throw new Error(`A batch named "${clean}" already exists. Type a new name, or choose "Add to it" to add these files to that batch.`);
+  }
   const { data, error } = await supabase.rpc("open_upload_batch", { p_type: type, p_name: clean });
   if (error) throw new Error(`Couldn't open the batch: ${error.message}`);
   return data;

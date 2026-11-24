@@ -3,6 +3,7 @@
 // name of an existing batch adds to it.
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
+import { allowAddingTo, batchExists, isAddingTo } from "./batches";
 
 const PREFIX = { vector: "VC", icon: "IC", logo: "LG", footage: "FT", element: "EL", template: "TP", photo: "PH", mockup: "MK" };
 
@@ -45,6 +46,7 @@ function BatchField({ type, value, onChange, disabled }) {
   useEffect(() => {
     const onAdd = (e) => {
       if (e.detail?.type !== type) return;
+      allowAddingTo(type, e.detail.name);
       change(e.detail.name);
       // and the file picker opens right away, as the button says (still
       // inside the click, so the browser allows it)
@@ -74,8 +76,25 @@ function BatchField({ type, value, onChange, disabled }) {
     };
   }, [type]);
 
+  // a name already taken, checked as it's typed (and again after a publish,
+  // which may have just made it): shown in red until changed or chosen
+  const [taken, setTaken] = useState(null);
+  const [, setAllowed] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    const timer = setTimeout(() => {
+      batchExists(type, value).then((yes) => alive && setTaken(yes ? value : null)).catch(() => {});
+    }, 300);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [type, value, disabled]);
+  const warn = taken && taken === value && !isAddingTo(type, value);
+
   return (
-    <label className="ad-batch">
+    <>
+    <label className={`ad-batch ${warn ? "is-taken" : ""}`}>
       <span>Batch</span>
       <input
         value={value}
@@ -90,6 +109,15 @@ function BatchField({ type, value, onChange, disabled }) {
         {recent.map((n) => <option key={n} value={n} />)}
       </datalist>
     </label>
+    {warn && (
+      <p className="ad-batch-taken" role="alert">
+        "{value.trim()}" already exists. Type a new name, or{" "}
+        <button type="button" onClick={() => { allowAddingTo(type, value); setAllowed((n) => n + 1); }}>
+          Add to it
+        </button>
+      </p>
+    )}
+    </>
   );
 }
 

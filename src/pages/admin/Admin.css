@@ -494,6 +494,18 @@
 
 /* the batch an upload goes into */
 .ad-batch { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.ad-batch.is-taken input { border-color: #ff5c66; }
+.ad-batch-taken { margin: -4px 0 12px; color: #ff8b92; font-size: 13px; }
+.ad-batch-taken button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
 .ad-batch span { color: #aeb0b2; font-size: 14px; font-weight: 600; }
 .ad-batch input {
   flex: 1;
