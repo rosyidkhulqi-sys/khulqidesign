@@ -24,7 +24,7 @@ const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const emptySet = { name: "", style: "outline", category: "business", license: "free", description: "", keywords: "" };
 const DRAFT_KEY = "icon-upload";
 // icons published at the same time
-const ICONS_AT_ONCE = 6;
+const ICONS_AT_ONCE = 12;
 
 // "Add user" -> "add user, user, add"; "Money bag" -> "money bag, bag, money"
 const keywordsFromName = (name) => {
