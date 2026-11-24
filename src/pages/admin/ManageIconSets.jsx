@@ -237,7 +237,8 @@ function ManageIconSets({ refreshKey }) {
         setBusy(null);
       }
     }
-    const shared = new Set([...(set.keywords ?? []), set.style, "icon"].filter(Boolean));
+    // the set's keywords stay on the set, so an icon's list is all its own
+    const shared = new Set([set.style, "icon"].filter(Boolean));
     setIconDrafts(Object.fromEntries(icons.map((icon) => [icon.id, {
       title: icon.title ?? "",
       keywords: (icon.keywords ?? []).filter((k) => !shared.has(k)).join(", "),
@@ -292,14 +293,12 @@ function ManageIconSets({ refreshKey }) {
 
     // the set's words are shared by every icon; "icon" and style words never
     // go in (the page and the style filter say that)
-    const oldSharedTerms = new Set([...(set.keywords ?? []), set.style, "icon"].filter(Boolean));
-    const nextSharedTerms = keywords.filter((word) => !GENERIC_ICON_WORDS.has(word));
+    const oldSharedTerms = new Set([set.style, "icon"].filter(Boolean));
     const iconChanges = previousIcons.map((icon) => ({
       id: icon.id,
       title: iconDrafts[icon.id]?.title.trim() || icon.title,
       keywords: [...new Set([
         ...(iconDrafts[icon.id] ? splitKeywords(iconDrafts[icon.id].keywords) : (icon.keywords ?? []).filter((word) => !oldSharedTerms.has(word))),
-        ...nextSharedTerms,
       ])].filter((word) => !GENERIC_ICON_WORDS.has(word)),
       style: changes.style,
       category: changes.category,
@@ -669,7 +668,7 @@ function ManageIconSets({ refreshKey }) {
                 />
                 <KeywordChips
                   compact
-                  label="Keywords for every icon in the set"
+                  label="Set keywords (find the set; each icon keeps its own)"
                   value={splitKeywords(setDraft.keywords)}
                   onChange={(list) => setSetDraft((draft) => ({ ...draft, keywords: list.join(", ") }))}
                   min={2}

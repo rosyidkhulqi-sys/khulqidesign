@@ -390,7 +390,7 @@ function IconUpload({ onPublished }) {
                      onChange={(e) => setDraft({ ...draft, description: e.target.value })} aria-label="Description" />
               <KeywordChips
                 compact
-                label="Keywords for every icon in the set"
+                label="Set keywords (find the set; each icon keeps its own)"
                 value={splitKeywords(draft.keywords)}
                 onChange={(list) => setDraft({ ...draft, keywords: list.join(", ") })}
                 min={2}

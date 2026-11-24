@@ -140,7 +140,9 @@ export async function publishIcon(item, set, onStep) {
   const cleanBlob = new Blob([svg.clean], { type: "image/svg+xml" });
   // what the icon shows, as on The Noun Project: no "icon", "outline" or
   // "vector" (the Icons page and its style filter already say that)
-  const keywords = [...new Set([...item.keywords, ...(set.keywords ?? [])])].filter((k) => !GENERIC_ICON_WORDS.has(k.toLowerCase()));
+  // only the icon's own words: the set's keywords stay on the set, or every
+  // icon would match them ("user" finding a ticket and a cloud)
+  const keywords = [...new Set(item.keywords)].filter((k) => !GENERIC_ICON_WORDS.has(k.toLowerCase()));
 
   for (let attempt = 0; attempt < 3; attempt++) {
     // the first try uses the code and links prepared for the whole batch
