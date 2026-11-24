@@ -403,7 +403,14 @@ function IconUpload({ onPublished }) {
               const locked = publishing || it.status === "done" || it.status === "uploading";
               return (
                 <div className={`ad-icon is-${it.status}`} key={it.key}>
-                  <div className="ad-icon-preview"><img src={it.preview} alt="" /></div>
+                  <div className="ad-icon-preview">
+                    <img src={it.preview} alt="" />
+                    {/* out of this upload before publishing, in the corner where it's seen */}
+                    {!locked && (
+                      <button className="ad-icon-remove" aria-label={`Remove ${it.name || "icon"}`} title="Remove"
+                              onClick={() => setItems((l) => l.filter((x) => x.key !== it.key))}>×</button>
+                    )}
+                  </div>
                   <input value={it.name} maxLength={60} disabled={locked} aria-label="Icon name" spellCheck lang="en"
                          onChange={(e) => update(it.key, { name: e.target.value })} />
                   <KeywordChips
@@ -421,9 +428,6 @@ function IconUpload({ onPublished }) {
                       <option value="free">Free</option>
                       <option value="premium">Premium</option>
                     </select>
-                    {!locked && (
-                      <button className="ad-remove" onClick={() => setItems((l) => l.filter((x) => x.key !== it.key))}>Remove</button>
-                    )}
                   </div>
                   {it.message && <span className="ad-icon-status">{it.message}</span>}
                   {it.status === "uploading" && (

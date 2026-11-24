@@ -688,3 +688,28 @@
 
 /* the Batch field lights up when a batch's "Add files" fills it */
 .ad-batch.is-flash input { border-color: var(--red); box-shadow: 0 0 0 3px rgba(240, 32, 45, 0.25); transition: box-shadow 0.3s, border-color 0.3s; }
+
+/* an icon's remove button, on the preview's corner */
+.ad-icon-preview { position: relative; }
+.ad-icon-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(20, 20, 20, 0.75);
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+}
+.ad-icon:hover .ad-icon-remove,
+.ad-icon-remove:focus-visible { opacity: 1; }
+.ad-icon-remove:hover { background: var(--red); }
+@media (hover: none) { .ad-icon-remove { opacity: 1; } }
