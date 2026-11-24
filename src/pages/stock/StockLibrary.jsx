@@ -187,20 +187,31 @@ function StockLibrary({ config, setPage, initialSearch = "", user = null }) {
                  onClick={() => setSelected(v)} onKeyDown={(e) => e.key === "Enter" && setSelected(v)}>
               <div className={`vector-thumb ${v.format === "PNG" ? "is-transparent" : ""}`} style={{ aspectRatio: `${v.artboard[0]} / ${v.artboard[1]}` }}>
                 <img src={v.image} alt={v.title} loading="lazy" />
-                {/* one badge, as microstocks show it: Free, Premium or Editorial */}
-                <span className={`vector-badge ${v.editorial ? "editorial" : v.license}`}>
-                  {v.license === "paid"
-                    ? fromPrice(v.prices) ? `From $${fromPrice(v.prices)}` : "Paid"
-                    : v.editorial ? "Editorial" : v.license === "free" ? "Free" : "Premium"}
-                </span>
-                <span className="vector-format">
-                  {config.formatLabel ? config.formatLabel(v) : v.format}
-                  {v.ai && <span className="vector-ai" title="Made with generative AI">AI</span>}
-                </span>
+                {/* one badge, as microstocks show it: Free, Premium or Editorial;
+                    an item sold per license (a font) keeps its cover clean
+                    and says its name and price below, as Creative Market does */}
+                {!config.paid && (
+                  <>
+                    <span className={`vector-badge ${v.editorial ? "editorial" : v.license}`}>
+                      {v.editorial ? "Editorial" : v.license === "free" ? "Free" : "Premium"}
+                    </span>
+                    <span className="vector-format">
+                      {v.format}
+                      {v.ai && <span className="vector-ai" title="Made with generative AI">AI</span>}
+                    </span>
+                  </>
+                )}
                 <div className="vector-actions" onClick={(e) => e.stopPropagation()}>
                   <button aria-label="Save"><ToolGlyph name="heart" size={16} /></button>
                 </div>
               </div>
+              {config.paid && (
+                <div className="stock-caption">
+                  <strong>{v.title}</strong>
+                  <span>{fromPrice(v.prices) ? `From $${fromPrice(v.prices)}` : ""}</span>
+                  {config.formatLabel && <small>{config.formatLabel(v)}</small>}
+                </div>
+              )}
             </div>
           ))
         ) : (

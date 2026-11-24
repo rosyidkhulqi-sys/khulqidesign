@@ -221,3 +221,9 @@
   font-size: 10px;
   font-weight: 700;
 }
+
+/* a font's card: the clean cover, then its name, price and formats below */
+.stock-caption { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 10px 2px 0; }
+.stock-caption strong { overflow: hidden; font-size: 15px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.stock-caption span { font-size: 14px; font-weight: 600; }
+.stock-caption small { grid-column: 1 / -1; color: var(--muted, #8d939b); font-size: 12px; }

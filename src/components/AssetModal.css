@@ -436,8 +436,10 @@
 .asset-note.is-editorial strong { color: #fbbf24; }
 
 /* a listing's previews (a font), the cover first: pick one to see it large */
-.asset-gallery { display: flex; gap: 8px; margin-top: 10px; overflow-x: auto; padding-bottom: 4px; }
-.asset-gallery button { flex: none; width: 84px; padding: 0; overflow: hidden; border: 2px solid transparent; border-radius: 8px; background: none; cursor: pointer; }
+/* every preview fits one row, shared evenly: no sideways scrolling */
+.asset-gallery { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; margin-top: 10px; }
+.asset-gallery button { min-width: 0; padding: 0; overflow: hidden; border: 2px solid transparent; border-radius: 8px; background: none; cursor: pointer; opacity: 0.75; transition: opacity 0.15s; }
+.asset-gallery button:hover, .asset-gallery button.active { opacity: 1; }
 .asset-gallery button.active { border-color: var(--red, #ff3b47); }
 .asset-gallery img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; }
 .asset-description { margin: 0 0 12px; color: inherit; font-size: 14px; line-height: 1.55; white-space: pre-line; opacity: 0.85; }
