@@ -1,22 +1,19 @@
-// The AI tab of Create. Image cleanup and upscaling run locally; Color ideas
-// too (color theory, free for everyone). Generating an element and writing
+// The AI tab of Create. Image cleanup and upscaling run locally. Generating an element and writing
 // text use the AI service: an admin trial for now, each use logged with its
 // cost to price KD AI credits.
 import { useRef, useState } from "react";
 import { Sparkle } from "../../components/AiSearchButton";
 import { createElement, saveAiElement, writeText } from "../../lib/aiCreate";
-import { colorIdeas } from "../../lib/colorIdeas";
 
 const tools = [
   ["element", "Generate an element", "Describe an illustration or an element, and it's drawn as a vector and placed on the page."],
   ["text", "Write text", "Headlines and captions in the tone you choose."],
-  ["colors", "Color ideas", "Palettes that suit the colors already in your design."],
 ];
 const TONES = ["Friendly", "Bold", "Elegant", "Playful", "Professional"];
 
 // cutoutQuota: today's Remove background use { used, limit }, limit null = no limit
 function AiPanel({ aiReady, isAdmin, hasSelectedImage, operation, models, cutoutQuota, onRun, onUpload,
-  onAddElement, onAddText, getColors, onPickColor, hasSelection, selectionSvg, selectionSaved, onSelectionSaved, selectionMeta }) {
+  onAddElement, onAddText, selectionSvg, selectionSaved, onSelectionSaved, selectionMeta }) {
   const [saving, setSaving] = useState(false);
   const fileInput = useRef(null);
   const [open, setOpen] = useState(null);
@@ -26,16 +23,14 @@ function AiPanel({ aiReady, isAdmin, hasSelectedImage, operation, models, cutout
   const [working, setWorking] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
-  const [palettes, setPalettes] = useState([]);
 
   const openTool = (id) => {
     setOpen(open === id ? null : id);
     setResult(null);
     setError(null);
-    if (id === "colors") setPalettes(colorIdeas(getColors()));
   };
-  // only Color ideas is open to everyone; the others to admins for now
-  const usable = (id) => id === "colors" || isAdmin;
+  // the AI service is open to admins for now
+  const usable = () => isAdmin;
 
   const run = async (e) => {
     e.preventDefault();
@@ -159,13 +154,13 @@ function AiPanel({ aiReady, isAdmin, hasSelectedImage, operation, models, cutout
               <strong>
                 {name}
                 <span className="ai-soon">
-                  {id === "colors" ? "Free" : isAdmin ? "Admin trial" : aiReady ? "In development" : "Coming soon"}
+                  {isAdmin ? "Admin trial" : aiReady ? "In development" : "Coming soon"}
                 </span>
               </strong>
               <span>{text}</span>
             </button>
 
-            {open === id && id !== "colors" && (
+            {open === id && (
               <form className="cp-ai-form" onSubmit={run}>
                 <textarea rows={3} value={prompt} maxLength={600} disabled={working}
                           placeholder={id === "element" ? "e.g. a coffee cup with steam, warm colors" : "e.g. a weekend sale at a small bakery"}
@@ -213,22 +208,6 @@ function AiPanel({ aiReady, isAdmin, hasSelectedImage, operation, models, cutout
               </form>
             )}
 
-            {open === id && id === "colors" && (
-              <div className="cp-ai-form">
-                {palettes.map(([name, colors]) => (
-                  <div key={name} className="cp-ai-palette">
-                    <span>{name}</span>
-                    <div>
-                      {colors.map((c) => (
-                        <button key={c} style={{ background: c }} title={c} aria-label={`Use ${c}`}
-                                onClick={() => onPickColor(c)} />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-                <p className="cp-hint">{hasSelection ? "Click a color to give it to the selected item." : "Select an item, then click a color to give it to it."}</p>
-              </div>
-            )}
           </div>
         ))}
       </div>

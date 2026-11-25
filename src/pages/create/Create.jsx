@@ -51,7 +51,6 @@ import { beginCrop } from "./createCrop";
 import ProjectsPanel from "./CreateProjects";
 import LayersPanel from "./CreateLayers";
 import AiPanel from "./CreateAi";
-import { designColors } from "../../lib/colorIdeas";
 import {
   currentProjectId,
   deleteProject,
@@ -2914,7 +2913,6 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
               <AiPanel
                 aiReady={aiReady}
                 isAdmin={isAdmin}
-                hasSelection={Boolean(active)}
                 onAddElement={(svg, meta) => addSvg(svg, undefined, false, meta)}
                 selectionMeta={active?.kdAi ?? null}
                 // the selected vector (an AI element or a drawn group) as a
@@ -2929,8 +2927,6 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                 selectionSaved={active?.kdSavedAs ?? null}
                 onSelectionSaved={(code) => active && setProp({ kdSavedAs: code })}
                 onAddText={(text, kind) => addText({ ...(kind === "caption" ? textPresets[2] : textPresets[0]), label: text })}
-                getColors={() => designColors(fc.current?.getObjects() ?? [])}
-                onPickColor={(hex) => active && setProp({ fill: hex })}
                 hasSelectedImage={active instanceof FabricImage}
                 operation={aiOperation}
                 models={MODELS}

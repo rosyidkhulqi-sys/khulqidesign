@@ -2441,10 +2441,5 @@
 .cp-ai-options button { padding: 9px 11px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; background: rgba(255, 255, 255, 0.04); color: inherit; font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
 .cp-ai-options button:hover { border-color: rgba(255, 255, 255, 0.3); }
 .cp-ai-cost { margin: 0; color: rgba(255, 255, 255, 0.45); font-size: 11px; }
-.cp-ai-palette { display: grid; gap: 4px; }
-.cp-ai-palette > span { color: rgba(255, 255, 255, 0.6); font-size: 12px; }
-.cp-ai-palette > div { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
-.cp-ai-palette button { height: 30px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 6px; cursor: pointer; }
-.cp-ai-palette button:hover { transform: translateY(-1px); }
 .cp-ai-save { height: 34px; border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 10px; background: transparent; color: inherit; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 .cp-ai-save:disabled { opacity: 0.7; cursor: default; }
