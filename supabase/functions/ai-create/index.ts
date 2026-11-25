@@ -33,6 +33,7 @@ Rules for the SVG:
 - xmlns="http://www.w3.org/2000/svg" and the viewBox; paths, basic shapes, groups, linear and radial gradients only.
 - No <script>, <foreignObject>, <image>, <text> (unless asked), filters, event attributes, external links or fonts.
 - Compact: no comments, rounded coordinates (at most 1 decimal).
+- Every shape must be visible: no invisible helper shapes (fill="none" without a stroke, zero width or radius, opacity 0) and nothing outside the viewBox.
 If the request can't be drawn (it asks for a real brand's logo, a real person, or harmful content), draw a simple neutral placeholder shape instead and name it "Placeholder".`;
 
 const TEXT_SCHEMA = {

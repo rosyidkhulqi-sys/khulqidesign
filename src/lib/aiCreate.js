@@ -1,7 +1,7 @@
 // Create's AI tab (admin trial): an AI vector element and AI text, in the
 // ai-create Edge Function. Each use is logged with its cost.
 import { supabase } from "./supabaseClient";
-import { safeSvg } from "./aiSvg";
+import { drawSvg, safeSvg } from "./aiSvg";
 
 const MESSAGES = {
   sign_in_required: "Log in first.",
@@ -27,12 +27,52 @@ async function call(body) {
   return data;
 }
 
+// The drawing cut to what's actually drawn: the empty margin around it is
+// taken off the viewBox (measured from the drawn pixels), so its selection
+// box fits the object, as the library's elements do.
+async function trimSvg(svg) {
+  const doc = new DOMParser().parseFromString(svg, "image/svg+xml");
+  const root = doc.querySelector("svg");
+  const vb = (root?.getAttribute("viewBox") || "").split(/[\s,]+/).map(Number);
+  // shapes that draw nothing (no fill and no stroke, zero size, fully
+  // transparent) still widen the editor's selection box: take them out
+  const none = (v) => v == null ? false : /^(none|transparent)$/i.test(v.trim()) || /^0(\.0*)?$/.test(v.trim());
+  const paint = (el, prop) => {
+    for (let n = el; n && n.nodeType === 1; n = n.parentNode) {
+      const v = n.getAttribute(prop) ?? n.style?.getPropertyValue(prop);
+      if (v) return v;
+    }
+    return null;
+  };
+  root.querySelectorAll("path, rect, circle, ellipse, line, polyline, polygon").forEach((el) => {
+    const zero = ["rx", "ry", "r", "width", "height"].some((a) => el.hasAttribute(a) && Number(el.getAttribute(a)) === 0);
+    const fill = paint(el, "fill");
+    const stroke = paint(el, "stroke");
+    const noFill = none(fill) || (fill === null && el.tagName === "line");
+    const noStroke = stroke === null || none(stroke) || none(paint(el, "stroke-width"));
+    if (zero || (noFill && noStroke) || none(paint(el, "opacity"))) el.remove();
+  });
+  svg = new XMLSerializer().serializeToString(root);
+  const { bands } = await drawSvg(svg, 1024);
+  if (Math.max(bands.left + bands.right, bands.top + bands.bottom) >= 0.98) return svg;
+  // a hair of room so antialiased edges aren't clipped
+  const pad = 0.004;
+  const x = vb[0] + vb[2] * Math.max(0, bands.left - pad);
+  const y = vb[1] + vb[3] * Math.max(0, bands.top - pad);
+  const w = vb[2] * Math.min(1, 1 - bands.left - bands.right + pad * 2);
+  const h = vb[3] * Math.min(1, 1 - bands.top - bands.bottom + pad * 2);
+  root.setAttribute("viewBox", [x, y, w, h].map((n) => Math.round(n * 10) / 10).join(" "));
+  root.removeAttribute("width");
+  root.removeAttribute("height");
+  return new XMLSerializer().serializeToString(root);
+}
+
 // -> { svg, title, usage }
 export async function createElement(prompt) {
   const data = await call({ mode: "element", prompt });
   const svg = safeSvg(data.svg);
   if (!svg) throw new Error(MESSAGES.bad_svg);
-  return { ...data, svg };
+  return { ...data, svg: await trimSvg(svg).catch(() => svg) };
 }
 
 // -> { options: [4 strings], usage }; kind: "headline" or "caption"
