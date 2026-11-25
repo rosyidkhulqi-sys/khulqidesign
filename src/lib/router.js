@@ -18,6 +18,7 @@ export const pageTitles = {
   photos: "Photos",
   mockups: "Mockups",
   fonts: "Fonts",
+  search: "Search",
   assets: "All assets",
   create: "Create",
   downloads: "Your downloads",
@@ -111,7 +112,7 @@ export function titleFor(page) {
 }
 
 // pages that are personal or for the owner: kept out of search results
-const PRIVATE_PAGES = new Set(["admin", "account", "downloads", "login", "register", "notfound"]);
+const PRIVATE_PAGES = new Set(["admin", "account", "downloads", "login", "register", "notfound", "search"]);
 
 // the canonical address (always without www) and whether search engines may
 // list the page; called whenever the page changes

@@ -20,6 +20,7 @@ const Photos = lazy(() => import("./pages/photos/Photos"));
 const Mockups = lazy(() => import("./pages/mockups/Mockups"));
 const Fonts = lazy(() => import("./pages/fonts/Fonts"));
 const Assets = lazy(() => import("./pages/assets/Assets"));
+const Search = lazy(() => import("./pages/search/Search"));
 const Pricing = lazy(() => import("./pages/pricing/Pricing"));
 const License = lazy(() => import("./pages/license/License"));
 const About = lazy(() => import("./pages/about/About"));
@@ -190,6 +191,11 @@ function App() {
     assets: (
       <Suspense fallback={null}>
         <Assets setPage={go} />
+      </Suspense>
+    ),
+    search: (
+      <Suspense fallback={null}>
+        <Search key={searchQuery} setPage={go} initialSearch={searchQuery} />
       </Suspense>
     ),
     downloads: (

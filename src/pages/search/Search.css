@@ -1,0 +1,19 @@
+.search-page .icon-search { margin-bottom: 28px; }
+.search-note { color: var(--muted, #8d939b); }
+.search-group { margin-bottom: 36px; }
+.search-group-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+.search-group-head h2 { margin: 0; font-size: 20px; }
+.search-group-head h2 span { margin-left: 8px; color: var(--muted, #8d939b); font-size: 14px; font-weight: 500; }
+.search-group-head button { padding: 0; border: 0; background: none; color: inherit; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.search-group-head button:hover { text-decoration: underline; }
+.search-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.search-row button { padding: 0; overflow: hidden; border: 0; border-radius: 10px; background: #f4f4f5; cursor: pointer; aspect-ratio: 4 / 3; }
+.search-row img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s; }
+.search-row button:hover img { transform: scale(1.03); }
+/* icons sit whole on their light card, as on the Icons page */
+.search-row.is-icon button { aspect-ratio: 1; }
+.search-row.is-icon img { object-fit: contain; padding: 22%; box-sizing: border-box; }
+.search-libraries { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 12px; }
+.search-libraries button { height: 36px; padding: 0 14px; border: 1px solid var(--line, #2a2a2e); border-radius: 999px; background: none; color: inherit; font: inherit; cursor: pointer; }
+@media (max-width: 900px) { .search-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .search-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } }

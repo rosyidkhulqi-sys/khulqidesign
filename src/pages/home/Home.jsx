@@ -91,7 +91,8 @@ function searchTarget(query) {
   if (/vector|illustration|background|pattern/.test(q)) return "vectors";
   if (/template|poster|flyer|social|presentation|card/.test(q)) return "templates";
   if (/footage|video|clip|aerial|timelapse|loop/.test(q)) return "footage";
-  return "icons";
+  // other words: every library, grouped
+  return "search";
 }
 
 // the hero's changing word, one library after another
