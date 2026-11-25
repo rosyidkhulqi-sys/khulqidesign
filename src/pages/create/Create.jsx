@@ -1054,11 +1054,14 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     render();
   };
 
-  const addSvg = async (markup, point, premium = false) => {
+  // meta: an AI element's title, keywords and category, kept on it so an
+  // admin can save it to Elements later
+  const addSvg = async (markup, point, premium = false, meta = null) => {
     const { objects, options } = await loadSVGFromString(markup);
     const obj = util.groupSVGElements(objects.filter(Boolean), options);
     obj.scaleToWidth(unit() * 0.3);
     obj.kdPremium = premium || undefined;
+    if (meta) obj.kdAi = meta;
     place(obj, point);
   };
 
@@ -2912,7 +2915,8 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                 aiReady={aiReady}
                 isAdmin={isAdmin}
                 hasSelection={Boolean(active)}
-                onAddElement={(svg) => addSvg(svg)}
+                onAddElement={(svg, meta) => addSvg(svg, undefined, false, meta)}
+                selectionMeta={active?.kdAi ?? null}
                 // the selected vector (an AI element or a drawn group) as a
                 // standalone SVG, for admins to keep in Elements
                 selectionSvg={isAdmin && active && !(active instanceof FabricImage) && !(active instanceof Textbox) && !active.kdFrame

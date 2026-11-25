@@ -82,7 +82,7 @@ const STOP = new Set(["a", "an", "the", "and", "or", "with", "of", "in", "on", "
 
 // An AI element kept as a Create element (admin), so what was paid for once
 // is used by everyone after: an SVG in the AI elements batch, marked AI-made.
-export async function saveAiElement({ svg, title, prompt }) {
+export async function saveAiElement({ svg, title, prompt = "", keywords = null, category = "graphics" }) {
   const [{ publishElement }, { openBatch, allowAddingTo }] = await Promise.all([
     import("../pages/admin/elementPublish"),
     import("../pages/admin/batches"),
@@ -99,8 +99,9 @@ export async function saveAiElement({ svg, title, prompt }) {
     height: Math.round(vb[3]) || 512,
     base: title,
     title,
-    keywords: [...new Set(words)].slice(0, 20),
-    category: "graphics",
+    // the AI's own stock keywords when it wrote them, else words of the name
+    keywords: keywords?.length ? keywords.slice(0, 25) : [...new Set(words)].slice(0, 20),
+    category,
     kind: "element",
     license: "premium",
     aiGenerated: true,

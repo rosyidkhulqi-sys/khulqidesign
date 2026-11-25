@@ -16,7 +16,7 @@ const TONES = ["Friendly", "Bold", "Elegant", "Playful", "Professional"];
 
 // cutoutQuota: today's Remove background use { used, limit }, limit null = no limit
 function AiPanel({ aiReady, isAdmin, hasSelectedImage, operation, models, cutoutQuota, onRun, onUpload,
-  onAddElement, onAddText, getColors, onPickColor, hasSelection, selectionSvg, selectionSaved, onSelectionSaved }) {
+  onAddElement, onAddText, getColors, onPickColor, hasSelection, selectionSvg, selectionSaved, onSelectionSaved, selectionMeta }) {
   const [saving, setSaving] = useState(false);
   const fileInput = useRef(null);
   const [open, setOpen] = useState(null);
@@ -46,8 +46,9 @@ function AiPanel({ aiReady, isAdmin, hasSelectedImage, operation, models, cutout
     try {
       if (open === "element") {
         const made = await createElement(prompt.trim());
-        onAddElement(made.svg, made.title);
-        setResult({ note: `Placed “${made.title}” on the page`, usage: made.usage, element: { svg: made.svg, title: made.title, prompt: prompt.trim() } });
+        const meta = { title: made.title, keywords: made.keywords, category: made.category, prompt: prompt.trim() };
+        onAddElement(made.svg, meta);
+        setResult({ note: `Placed “${made.title}” on the page`, usage: made.usage, element: { svg: made.svg, ...meta } });
       } else {
         const made = await writeText(prompt.trim(), tone.toLowerCase(), textKind);
         setResult({ options: made.options, usage: made.usage });
@@ -127,12 +128,14 @@ function AiPanel({ aiReady, isAdmin, hasSelectedImage, operation, models, cutout
         <div className="cp-ai-form">
           <button type="button" className="cp-ai-save" disabled={saving || Boolean(selectionSaved)}
                   onClick={async () => {
-                    const name = window.prompt("Name for this element (a few words)", "Coffee mug");
-                    if (!name?.trim()) return;
+                    // an AI element carries the title, keywords and category the
+                    // AI wrote; anything else asks for a name
+                    const meta = selectionMeta ?? { title: window.prompt("Name for this element (a few words)", "")?.trim() };
+                    if (!meta.title) return;
                     setSaving(true);
                     setError(null);
                     try {
-                      onSelectionSaved(await saveAiElement({ svg: selectionSvg(), title: name.trim().slice(0, 60), prompt: name }));
+                      onSelectionSaved(await saveAiElement({ svg: selectionSvg(), ...meta, title: meta.title.slice(0, 60) }));
                     } catch (err) {
                       setError(err.message);
                     } finally {
@@ -141,6 +144,9 @@ function AiPanel({ aiReady, isAdmin, hasSelectedImage, operation, models, cutout
                   }}>
             {saving ? "Saving…" : selectionSaved ? `Saved to Elements · ${selectionSaved}` : "Save selection to Elements"}
           </button>
+          {selectionMeta && !selectionSaved && (
+            <p className="cp-hint">“{selectionMeta.title}” · {selectionMeta.category} · {selectionMeta.keywords?.length ?? 0} keywords</p>
+          )}
         </div>
       )}
 

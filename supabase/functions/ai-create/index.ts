@@ -14,10 +14,20 @@ const MAX_SVG = 60_000;
 const ELEMENT_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["svg", "title"],
+  required: ["svg", "title", "keywords", "category"],
   properties: {
     svg: { type: "string", description: "One standalone SVG, from <svg to </svg>" },
-    title: { type: "string", description: "A short English name for the element, 1 to 4 words" },
+    title: { type: "string", description: "A short English name for the element, 1 to 4 words, as a stock site titles it" },
+    keywords: {
+      type: "array",
+      items: { type: "string" },
+      description: "15 to 25 English stock keywords, most important first: the subject, its parts, style, mood, uses and themes; lowercase, one or two words each, no duplicates",
+    },
+    category: {
+      type: "string",
+      enum: ["graphics", "infographics", "shapes", "frames"],
+      description: "graphics: illustrations and objects; infographics: charts, arrows, steps; shapes: plain geometric shapes; frames: borders and frames",
+    },
   },
 };
 
@@ -113,8 +123,11 @@ Deno.serve(async (req) => {
       throw Object.assign(new Error("bad svg"), { code: "bad_svg" });
     }
     const title = String(answer?.title ?? "AI element").slice(0, 60);
-    const id = await logGeneration({ user_id: who.userId, kind, prompt, result: { title, svg } }, tally, started);
-    return reply({ id, svg, title, usage: usageOf(tally, started) }, 200, origin);
+    const keywords = [...new Set((Array.isArray(answer?.keywords) ? answer.keywords : [])
+      .map((k: unknown) => String(k).toLowerCase().trim()).filter((k: string) => k && k.length <= 30))].slice(0, 25);
+    const category = ["graphics", "infographics", "shapes", "frames"].includes(answer?.category) ? answer.category : "graphics";
+    const id = await logGeneration({ user_id: who.userId, kind, prompt, result: { title, keywords, category, svg } }, tally, started);
+    return reply({ id, svg, title, keywords, category, usage: usageOf(tally, started) }, 200, origin);
   } catch (e) {
     // deno-lint-ignore no-explicit-any
     const code = (e as any)?.code;
