@@ -29,6 +29,12 @@ Style:
 - Clear silhouettes that read at small sizes. Consistent stroke widths and corner rounding if strokes are used.
 - No text or letters unless asked.
 
+Craft (the drawing must look finished, with no visible mistakes):
+- Highlights, shadows and patterns on a shape stay inside it: put the base shape in a <clipPath> and draw them clipped to it, so nothing pokes out past its edge.
+- Parts that touch meet exactly (shared coordinates): a handle meets the body, a lid sits on its rim, with no gaps or overlaps that show.
+- Symmetric things are symmetric; curves are smooth; no stray points or spikes.
+- Before answering, check each shape against the others as if you saw the picture, and fix anything that sticks out or doesn't line up.
+
 Rules for the SVG:
 - xmlns="http://www.w3.org/2000/svg" and the viewBox; paths, basic shapes, groups, linear and radial gradients only.
 - No <script>, <foreignObject>, <image>, <text> (unless asked), filters, event attributes, external links or fonts.
@@ -97,7 +103,7 @@ Deno.serve(async (req) => {
 
     const answer = await askJson(client, {
       model: modelFor("AI_ELEMENT_MODEL", SONNET),
-      effort: "medium",
+      effort: "high",
       system: ELEMENT_SYSTEM,
       message: `Draw: ${prompt}`,
       schema: ELEMENT_SCHEMA,
