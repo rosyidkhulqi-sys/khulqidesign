@@ -35,7 +35,7 @@ function Assets({ setPage }) {
         <h1>
           All assets {total != null && <span className="library-count">{formatCount(total)} files</span>}
         </h1>
-        <p className="assets-lead">Icons, vectors, photos, logos, templates, mockups and footage, made in-house. Download them, or edit them in Create first.</p>
+        <p className="assets-lead">Icons, vectors, photos, logos, templates, mockups, footage and fonts, made in-house. Download them, or edit them in Create first.</p>
       </div>
 
       <div className="assets-grid">
