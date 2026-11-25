@@ -2913,6 +2913,17 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                 isAdmin={isAdmin}
                 hasSelection={Boolean(active)}
                 onAddElement={(svg) => addSvg(svg)}
+                // the selected vector (an AI element or a drawn group) as a
+                // standalone SVG, for admins to keep in Elements
+                selectionSvg={isAdmin && active && !(active instanceof FabricImage) && !(active instanceof Textbox) && !active.kdFrame
+                  ? () => {
+                      const b = active.getBoundingRect();
+                      const vb = [b.left, b.top, b.width, b.height].map((n) => Math.round(n * 10) / 10).join(" ");
+                      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}">${active.toSVG()}</svg>`;
+                    }
+                  : null}
+                selectionSaved={active?.kdSavedAs ?? null}
+                onSelectionSaved={(code) => active && setProp({ kdSavedAs: code })}
                 onAddText={(text, kind) => addText({ ...(kind === "caption" ? textPresets[2] : textPresets[0]), label: text })}
                 getColors={() => designColors(fc.current?.getObjects() ?? [])}
                 onPickColor={(hex) => active && setProp({ fill: hex })}
