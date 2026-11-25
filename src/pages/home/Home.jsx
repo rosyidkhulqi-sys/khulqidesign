@@ -84,6 +84,9 @@ const plans = [
 // send a hero search to the library that best matches the words typed
 function searchTarget(query) {
   const q = query.toLowerCase();
+  if (/\bfonts?\b|typeface|typography|lettering/.test(q)) return "fonts";
+  if (/mockup|mock-up|psd/.test(q)) return "mockups";
+  if (/photo|photograph|picture|stock image/.test(q)) return "photos";
   if (/logo|brand|monogram|mascot/.test(q)) return "logos";
   if (/vector|illustration|background|pattern/.test(q)) return "vectors";
   if (/template|poster|flyer|social|presentation|card/.test(q)) return "templates";

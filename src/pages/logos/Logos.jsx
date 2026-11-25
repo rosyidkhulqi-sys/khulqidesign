@@ -12,6 +12,7 @@ import { fetchAssetByCode, searchCatalog, toLogo } from "../../lib/catalog";
 import { useAssetUrl } from "../../lib/useAssetUrl";
 import SkeletonCards from "../../components/SkeletonCards";
 import { supabase } from "../../lib/supabaseClient";
+import LibrarySwitch from "../../components/LibrarySwitch";
 
 const licenseLabel = { free: "Free", premium: "Premium", exclusive: "Exclusive" };
 
@@ -181,9 +182,7 @@ function Logos({ setPage, initialSearch = "", user = null }) {
 
       {/* SEARCH */}
       <div className="icon-search">
-        <select className="search-type" value="logos" onChange={() => {}}>
-          <option value="logos">Logos</option>
-        </select>
+        <LibrarySwitch current="logos" search={search} setPage={setPage} />
         <input
           type="text"
           placeholder="Search logos, coffee, barber, monogram, mascot..."

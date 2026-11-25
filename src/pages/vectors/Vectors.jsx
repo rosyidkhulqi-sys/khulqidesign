@@ -8,6 +8,7 @@ import { fetchAssetByCode, searchCatalog, toVector } from "../../lib/catalog";
 import { useAssetUrl } from "../../lib/useAssetUrl";
 import { VECTOR_CATEGORY_OPTIONS, vectorCategoryLabel, vectorCategoryStorageValues } from "../../data/vectorCategories";
 import SkeletonCards from "../../components/SkeletonCards";
+import LibrarySwitch from "../../components/LibrarySwitch";
 
 const formats = ["EPS", "AI", "SVG", "PNG", "JPG"];
 
@@ -160,9 +161,7 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
 
       {/* SEARCH */}
       <div className="icon-search">
-        <select className="search-type" value="vectors" onChange={() => {}}>
-          <option value="vectors">Vectors</option>
-        </select>
+        <LibrarySwitch current="vectors" search={search} setPage={setPage} />
         <input
           type="text"
           placeholder="Search vectors, backgrounds, illustrations, patterns..."

@@ -8,6 +8,7 @@ import { ToolGlyph } from "../../components/IconControls";
 import { fetchAssetByCode, searchCatalog, toClip } from "../../lib/catalog";
 import { useAssetUrl } from "../../lib/useAssetUrl";
 import SkeletonCards from "../../components/SkeletonCards";
+import LibrarySwitch from "../../components/LibrarySwitch";
 
 const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
@@ -254,9 +255,7 @@ function Footage({ setPage, initialSearch = "", user = null }) {
 
       {/* SEARCH */}
       <div className="icon-search">
-        <select className="search-type" value="footage" onChange={() => {}}>
-          <option value="footage">Footage</option>
-        </select>
+        <LibrarySwitch current="footage" search={search} setPage={setPage} />
         <input
           type="text"
           placeholder="Search footage, aerial, timelapse, slow motion, loops..."

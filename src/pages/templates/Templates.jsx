@@ -7,6 +7,7 @@ import Breadcrumb from "../../components/Breadcrumb";
 import AiSearchButton from "../../components/AiSearchButton";
 import { matchesSearch } from "../../lib/search";
 import SkeletonCards from "../../components/SkeletonCards";
+import LibrarySwitch from "../../components/LibrarySwitch";
 
 // the width in pixels of a template picture made `longSide` on its longer edge
 const pxWide = (t, longSide) => Math.round(t.w * Math.min(1, longSide / Math.max(t.w, t.h)));
@@ -83,9 +84,7 @@ function Templates({ setPage, onCustomize, initialSearch = "" }) {
 
       {/* SEARCH */}
       <div className="icon-search">
-        <select className="search-type" value="templates" onChange={() => {}}>
-          <option value="templates">Templates</option>
-        </select>
+        <LibrarySwitch current="templates" search={search} setPage={setPage} />
         <input
           type="text"
           placeholder="Search templates, social media, poster, presentation..."

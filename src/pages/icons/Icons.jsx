@@ -11,6 +11,7 @@ import { fetchAssetByCode, fetchIconCatalog, toIcon } from "../../lib/catalog";
 import { useAssetUrl } from "../../lib/useAssetUrl";
 import { matchesSearch } from "../../lib/search";
 import SkeletonCards from "../../components/SkeletonCards";
+import LibrarySwitch from "../../components/LibrarySwitch";
 
 // the price filter's "paid" means a Premium license
 const matchesPrice = (price, license) =>
@@ -233,10 +234,10 @@ function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
       {/* SEARCH */}
       <div className="icon-search">
         {/* what to search: single icons or icon sets */}
-        <select className="search-type" value={type} onChange={pick(setType)} aria-label="Show">
+        <LibrarySwitch current="icons" value={type} search={search} setPage={setPage} onLocal={pick(setType)}>
           <option value="icon">Icons</option>
           <option value="set">Icon sets</option>
-        </select>
+        </LibrarySwitch>
         <input
           type="text"
           placeholder="Search icons, sets, business, social, UI..."

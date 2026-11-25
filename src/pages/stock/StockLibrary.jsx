@@ -12,6 +12,7 @@ import { fetchAssetByCode, searchCatalog, toStock } from "../../lib/catalog";
 import { useAssetUrl } from "../../lib/useAssetUrl";
 import { stockCategoryLabel } from "../../data/stockCategories";
 import { fromPrice } from "./px";
+import LibrarySwitch from "../../components/LibrarySwitch";
 
 const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 const PER_PAGE = 24;
@@ -117,9 +118,7 @@ function StockLibrary({ config, setPage, initialSearch = "", user = null }) {
       </div>
 
       <div className="icon-search">
-        <select className="search-type" value={page} onChange={() => {}}>
-          <option value={page}>{title}</option>
-        </select>
+        <LibrarySwitch current={page} search={search} setPage={setPage} />
         <input type="text" placeholder={config.placeholder} value={search} onChange={reset(setSearch)} />
         {search && (
           <button className="clear-search" onClick={() => setSearch("")} aria-label="Clear search">×</button>
