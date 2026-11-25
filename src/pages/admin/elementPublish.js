@@ -168,6 +168,8 @@ export async function publishElement(item, onStep) {
       // element or background
       style: item.kind,
       license: item.license,
+      // made with generative AI (Create's AI elements): labeled as such
+      ai_generated: Boolean(item.aiGenerated),
       thumb_key: thumbKey,
       preview_key: thumbKey,
       files: [{ format: item.format, key: mainKey, bytes: main.blob.size, label: "For Create", bucket: "public" }],

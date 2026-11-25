@@ -77,3 +77,33 @@ export async function createElement(prompt) {
 
 // -> { options: [4 strings], usage }; kind: "headline" or "caption"
 export const writeText = (prompt, tone, kind) => call({ mode: "text", prompt, tone, kind });
+
+const STOP = new Set(["a", "an", "the", "and", "or", "with", "of", "in", "on", "for", "to", "create", "draw", "make", "flat", "illustration", "vector", "style", "cute", "colors", "colours", "warm", "cool"]);
+
+// An AI element kept as a Create element (admin), so what was paid for once
+// is used by everyone after: an SVG in the AI elements batch, marked AI-made.
+export async function saveAiElement({ svg, title, prompt }) {
+  const [{ publishElement }, { openBatch, allowAddingTo }] = await Promise.all([
+    import("../pages/admin/elementPublish"),
+    import("../pages/admin/batches"),
+  ]);
+  const vb = (new DOMParser().parseFromString(svg, "image/svg+xml").querySelector("svg")?.getAttribute("viewBox") || "0 0 512 512")
+    .split(/[\s,]+/).map(Number);
+  const words = `${title} ${prompt}`.toLowerCase().split(/[^a-z]+/).filter((w) => w.length > 2 && !STOP.has(w));
+  allowAddingTo("element", "EL AI elements");
+  const batchId = await openBatch("element", "EL AI elements");
+  return publishElement({
+    format: "SVG",
+    file: new Blob([svg], { type: "image/svg+xml" }),
+    width: Math.round(vb[2]) || 512,
+    height: Math.round(vb[3]) || 512,
+    base: title,
+    title,
+    keywords: [...new Set(words)].slice(0, 20),
+    category: "graphics",
+    kind: "element",
+    license: "premium",
+    aiGenerated: true,
+    batchId,
+  }, () => {});
+}

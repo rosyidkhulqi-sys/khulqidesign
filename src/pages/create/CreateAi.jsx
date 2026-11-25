@@ -4,7 +4,7 @@
 // cost to price KD AI credits.
 import { useRef, useState } from "react";
 import { Sparkle } from "../../components/AiSearchButton";
-import { createElement, writeText } from "../../lib/aiCreate";
+import { createElement, saveAiElement, writeText } from "../../lib/aiCreate";
 import { colorIdeas } from "../../lib/colorIdeas";
 
 const tools = [
@@ -46,7 +46,7 @@ function AiPanel({ aiReady, isAdmin, hasSelectedImage, operation, models, cutout
       if (open === "element") {
         const made = await createElement(prompt.trim());
         onAddElement(made.svg, made.title);
-        setResult({ note: `Placed “${made.title}” on the page`, usage: made.usage });
+        setResult({ note: `Placed “${made.title}” on the page`, usage: made.usage, element: { svg: made.svg, title: made.title, prompt: prompt.trim() } });
       } else {
         const made = await writeText(prompt.trim(), tone.toLowerCase(), textKind);
         setResult({ options: made.options, usage: made.usage });
@@ -157,6 +157,22 @@ function AiPanel({ aiReady, isAdmin, hasSelectedImage, operation, models, cutout
                 </button>
                 {error && <p className="cp-ai-error" role="alert">{error}</p>}
                 {result?.note && <p className="cp-hint">{result.note}</p>}
+                {/* keep a good one: paid for once, then in Elements for everyone */}
+                {result?.element && (
+                  <button type="button" className="cp-ai-save" disabled={result.saving || Boolean(result.saved)}
+                          onClick={async () => {
+                            setResult((r) => ({ ...r, saving: true }));
+                            try {
+                              const code = await saveAiElement(result.element);
+                              setResult((r) => ({ ...r, saving: false, saved: code }));
+                            } catch (err) {
+                              setResult((r) => ({ ...r, saving: false }));
+                              setError(err.message);
+                            }
+                          }}>
+                    {result.saved ? `Saved to Elements · ${result.saved}` : result.saving ? "Saving…" : "Save to Elements"}
+                  </button>
+                )}
                 {result?.options && (
                   <div className="cp-ai-options">
                     {result.options.map((o) => (
