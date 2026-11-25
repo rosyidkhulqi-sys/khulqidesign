@@ -51,6 +51,7 @@ import { beginCrop } from "./createCrop";
 import ProjectsPanel from "./CreateProjects";
 import LayersPanel from "./CreateLayers";
 import AiPanel from "./CreateAi";
+import { designColors } from "../../lib/colorIdeas";
 import {
   currentProjectId,
   deleteProject,
@@ -2909,6 +2910,12 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
             {tab === "ai" && (
               <AiPanel
                 aiReady={aiReady}
+                isAdmin={isAdmin}
+                hasSelection={Boolean(active)}
+                onAddElement={(svg) => addSvg(svg)}
+                onAddText={(text, kind) => addText({ ...(kind === "caption" ? textPresets[2] : textPresets[0]), label: text })}
+                getColors={() => designColors(fc.current?.getObjects() ?? [])}
+                onPickColor={(hex) => active && setProp({ fill: hex })}
                 hasSelectedImage={active instanceof FabricImage}
                 operation={aiOperation}
                 models={MODELS}

@@ -1,17 +1,62 @@
-// The AI tab of Create. Image cleanup and upscaling run locally; the other
-// tools need the site's AI backend before they can be used.
-import { useRef } from "react";
+// The AI tab of Create. Image cleanup and upscaling run locally; Color ideas
+// too (color theory, free for everyone). Generating an element and writing
+// text use the AI service: an admin trial for now, each use logged with its
+// cost to price KD AI credits.
+import { useRef, useState } from "react";
 import { Sparkle } from "../../components/AiSearchButton";
+import { createElement, writeText } from "../../lib/aiCreate";
+import { colorIdeas } from "../../lib/colorIdeas";
 
 const tools = [
-  ["Generate an image", "Describe a picture or an element and place it on the page."],
-  ["Write text", "Headlines and captions in the tone you choose."],
-  ["Color ideas", "Palettes that suit the colors already in your design."],
+  ["element", "Generate an element", "Describe an illustration or an element, and it's drawn as a vector and placed on the page."],
+  ["text", "Write text", "Headlines and captions in the tone you choose."],
+  ["colors", "Color ideas", "Palettes that suit the colors already in your design."],
 ];
+const TONES = ["Friendly", "Bold", "Elegant", "Playful", "Professional"];
 
 // cutoutQuota: today's Remove background use { used, limit }, limit null = no limit
-function AiPanel({ aiReady, hasSelectedImage, operation, models, cutoutQuota, onRun, onUpload }) {
+function AiPanel({ aiReady, isAdmin, hasSelectedImage, operation, models, cutoutQuota, onRun, onUpload,
+  onAddElement, onAddText, getColors, onPickColor, hasSelection }) {
   const fileInput = useRef(null);
+  const [open, setOpen] = useState(null);
+  const [prompt, setPrompt] = useState("");
+  const [tone, setTone] = useState(TONES[0]);
+  const [textKind, setTextKind] = useState("headline");
+  const [working, setWorking] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+  const [palettes, setPalettes] = useState([]);
+
+  const openTool = (id) => {
+    setOpen(open === id ? null : id);
+    setResult(null);
+    setError(null);
+    if (id === "colors") setPalettes(colorIdeas(getColors()));
+  };
+  // only Color ideas is open to everyone; the others to admins for now
+  const usable = (id) => id === "colors" || isAdmin;
+
+  const run = async (e) => {
+    e.preventDefault();
+    if (!prompt.trim() || working) return;
+    setWorking(true);
+    setError(null);
+    setResult(null);
+    try {
+      if (open === "element") {
+        const made = await createElement(prompt.trim());
+        onAddElement(made.svg, made.title);
+        setResult({ note: `Placed “${made.title}” on the page`, usage: made.usage });
+      } else {
+        const made = await writeText(prompt.trim(), tone.toLowerCase(), textKind);
+        setResult({ options: made.options, usage: made.usage });
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setWorking(false);
+    }
+  };
   const busy = Boolean(operation && !operation.error);
   const cutoutBadge = !cutoutQuota
     ? `Free · ${models.cutout.mb} MB model`
@@ -79,14 +124,67 @@ function AiPanel({ aiReady, hasSelectedImage, operation, models, cutoutQuota, on
       <p className="cp-label">More AI tools</p>
 
       <div className="cp-ai-list">
-        {tools.map(([name, text]) => (
-          <button key={name} className="cp-ai-tool" disabled>
-            <strong>
-              {name}
-              <span className="ai-soon">{aiReady ? "In development" : "Coming soon"}</span>
-            </strong>
-            <span>{text}</span>
-          </button>
+        {tools.map(([id, name, text]) => (
+          <div key={id} className={`cp-ai-block ${open === id ? "is-open" : ""}`}>
+            <button className="cp-ai-tool" disabled={!usable(id)} onClick={() => openTool(id)} aria-expanded={open === id}>
+              <strong>
+                {name}
+                <span className="ai-soon">
+                  {id === "colors" ? "Free" : isAdmin ? "Admin trial" : aiReady ? "In development" : "Coming soon"}
+                </span>
+              </strong>
+              <span>{text}</span>
+            </button>
+
+            {open === id && id !== "colors" && (
+              <form className="cp-ai-form" onSubmit={run}>
+                <textarea rows={3} value={prompt} maxLength={600} disabled={working}
+                          placeholder={id === "element" ? "e.g. a coffee cup with steam, warm colors" : "e.g. a weekend sale at a small bakery"}
+                          onChange={(e) => setPrompt(e.target.value)} />
+                {id === "text" && (
+                  <div className="cp-ai-row">
+                    <select value={textKind} onChange={(e) => setTextKind(e.target.value)} aria-label="Kind of text">
+                      <option value="headline">Headlines</option>
+                      <option value="caption">Captions</option>
+                    </select>
+                    <select value={tone} onChange={(e) => setTone(e.target.value)} aria-label="Tone">
+                      {TONES.map((t) => <option key={t}>{t}</option>)}
+                    </select>
+                  </div>
+                )}
+                <button className="cp-ai-go" disabled={working || !prompt.trim()}>
+                  {working ? (id === "element" ? "Drawing…" : "Writing…") : id === "element" ? "Generate" : "Write"}
+                </button>
+                {error && <p className="cp-ai-error" role="alert">{error}</p>}
+                {result?.note && <p className="cp-hint">{result.note}</p>}
+                {result?.options && (
+                  <div className="cp-ai-options">
+                    {result.options.map((o) => (
+                      <button key={o} type="button" onClick={() => onAddText(o, textKind)} title="Add to the page">{o}</button>
+                    ))}
+                  </div>
+                )}
+                {result?.usage && <p className="cp-ai-cost">${result.usage.costUsd} · {result.usage.seconds}s · {result.usage.model}</p>}
+              </form>
+            )}
+
+            {open === id && id === "colors" && (
+              <div className="cp-ai-form">
+                {palettes.map(([name, colors]) => (
+                  <div key={name} className="cp-ai-palette">
+                    <span>{name}</span>
+                    <div>
+                      {colors.map((c) => (
+                        <button key={c} style={{ background: c }} title={c} aria-label={`Use ${c}`}
+                                onClick={() => onPickColor(c)} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                <p className="cp-hint">{hasSelection ? "Click a color to give it to the selected item." : "Select an item, then click a color to give it to it."}</p>
+              </div>
+            )}
+          </div>
         ))}
       </div>
       <p className="cp-hint">The first use downloads each local AI model once. It stays on this device for later use.</p>
