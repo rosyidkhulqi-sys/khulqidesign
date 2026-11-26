@@ -1,7 +1,8 @@
 // The Background tab of the Create editor, laid out like VistaCreate's: one
 // click fills the whole page with a color or a photo. The page keeps a single
 // background, so choosing one replaces the last.
-import { PagedGrid } from "./CreateElements";
+import { DbGrid, PremiumMark } from "./CreateElements";
+import { fetchCreatePhotos } from "../../lib/catalog";
 
 const COLORS = [
   "#ffffff", "#f4f1ea", "#d9d9d9", "#8a8f98", "#1d1d1d", "#000000",
@@ -13,11 +14,15 @@ export function PhotoTile({ photo, on, dragItem }) {
   return (
     <button className={`cp-tile wide ${on ? "is-on" : ""}`} {...dragItem("background", photo.id)} title={photo.name}>
       <img src={photo.thumb} alt={photo.name} draggable={false} loading="lazy" crossOrigin="anonymous" />
+      {photo.premium && <PremiumMark />}
     </button>
   );
 }
 
-function BackgroundPanel({ color, photo, photos, onColor, onEditColor, dragItem }) {
+// the Photos library's Backgrounds & Textures, then backgrounds made for Create
+const BACKGROUND_PHOTOS = { category: "backgrounds" };
+
+function BackgroundPanel({ color, photo, photos, onColor, onEditColor, dragItem, learn }) {
   return (
     <>
           <p className="cp-label">Color</p>
@@ -40,21 +45,15 @@ function BackgroundPanel({ color, photo, photos, onColor, onEditColor, dragItem 
             <strong>{color.toUpperCase()}</strong>
           </button>
 
-      {photos.length > 0 && (
-        <>
-          <p className="cp-label">Photos</p>
-          <PagedGrid
-            items={photos}
-            columns="two"
-            renderTile={(p) => <PhotoTile key={p.id} photo={p} on={photo === p.url} dragItem={dragItem} />}
-          />
-        </>
-      )}
-
-      {/* a note for the owner only, while nothing has been uploaded */}
-      {import.meta.env.DEV && photos.length === 0 && (
-        <p className="cp-hint">Upload JPG files in Admin, Elements, and they appear here.</p>
-      )}
+      <p className="cp-label">Photos</p>
+      <DbGrid
+        query={BACKGROUND_PHOTOS}
+        fetchPage={fetchCreatePhotos}
+        after={photos}
+        learn={learn}
+        columns="two"
+        renderTile={(p) => <PhotoTile key={p.id} photo={p} on={photo === p.url} dragItem={dragItem} />}
+      />
     </>
   );
 }

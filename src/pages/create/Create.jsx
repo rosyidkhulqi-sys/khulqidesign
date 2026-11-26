@@ -1288,6 +1288,23 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     if (quick && quick !== src) sharpen(img, src);
   };
 
+  // a picture that covers the whole page, behind everything else
+  const addCoverImage = async (photo) => {
+    const c = fc.current;
+    const b = boardRef.current;
+    const img = await FabricImage.fromURL(photo.thumb, { crossOrigin: "anonymous" });
+    const k = Math.max(b.w / img.width, b.h / img.height);
+    img.set({ scaleX: k, scaleY: k, left: (b.w - img.width * k) / 2, top: (b.h - img.height * k) / 2 });
+    img.kdPremium = true;
+    img.kdStock = photo.stock;
+    c.insertAt(0, img);
+    img.setCoords();
+    c.setActiveObject(img);
+    setActive(img);
+    render();
+    sharpen(img, photo.url);
+  };
+
   // swaps a placed picture for its full-size file, keeping its size on the
   // page and any crop; nothing happens if it was deleted meanwhile
   const sharpen = async (img, src) => {
@@ -1344,7 +1361,13 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     }
     if (kind === "background") {
       const photo = partById(id);
-      return photo && setBackgroundPhoto(photo.url);
+      if (!photo) return;
+      // a Premium library photo would hide its watermark in the page's
+      // background: it goes in as a Premium picture covering the page, at the back
+      if (photo.stock && photo.premium) return addCoverImage(photo);
+      // a library photo shows its thumbnail at once, then the full picture
+      if (photo.stock) return setBackgroundPhoto(photo.url, photo.thumb);
+      return setBackgroundPhoto(photo.url);
     }
     if (kind === "upload") {
       const u = uploads.find((x) => x.id === id);
@@ -2268,8 +2291,18 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
 
   // a canvas background: it fills the page, stays behind every element, and
   // saves, undoes and exports with the design
-  const setBackgroundPhoto = async (src) => {
+  // quick: a smaller copy shown first, until the full picture has arrived
+  const setBackgroundPhoto = async (src, quick = undefined) => {
     const request = ++bgRequest.current;
+    if (quick) {
+      const small = await imageCover(quick, boardRef.current.w, boardRef.current.h).catch(() => null);
+      if (request !== bgRequest.current) return;
+      if (small) {
+        fc.current.backgroundImage = small;
+        setBgPhoto(src);
+        fc.current.requestRenderAll();
+      }
+    }
     const img = await imageCover(src, boardRef.current.w, boardRef.current.h);
     if (request !== bgRequest.current) return;
     fc.current.backgroundImage = img;
@@ -2949,6 +2982,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                 color={toHex(bg)}
                 photo={bgPhoto}
                 photos={dbBackgrounds}
+                learn={learnParts}
                 onColor={setBackground}
                 onEditColor={() => openColorEditor("background", toHex(bg))}
                 dragItem={dragItem}

@@ -108,14 +108,14 @@ export function toCreatePhoto(row) {
   };
 }
 
-// one page of photos, free ones first; a search's, or all of them
-export async function fetchCreatePhotos({ text = "", kindWords = [], page = 1, perPage = 60 } = {}) {
+// one page of photos, free ones first; a search's, a category's, or all
+export async function fetchCreatePhotos({ text = "", kindWords = [], category = null, page = 1, perPage = 60 } = {}) {
   const { rows, total } = await searchCatalog("photo", {
     text,
     kindWords,
     page,
     perPage,
-    narrow: (q) => q.order("license", { ascending: true }),
+    narrow: (q) => (category ? q.eq("category", category) : q).order("license", { ascending: true }),
   });
   return { parts: rows.map(toCreatePhoto), total };
 }
