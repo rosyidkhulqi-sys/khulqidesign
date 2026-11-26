@@ -1,8 +1,43 @@
 {
   "rewrites": [
-    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
-    { "source": "/:page(icons|vectors|logos|footage|photos|mockups|fonts)/:slug", "destination": "/api/asset?page=:page&slug=:slug" },
-    { "source": "/:page(assets|icons|vectors|logos|footage|photos|mockups|fonts|templates|create|pricing|license|about)", "destination": "/api/page?page=:page" },
-    { "source": "/((?!.*\\.).*)", "destination": "/index.html" }
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
+      "source": "/:page(icons|vectors|logos|footage|photos|mockups|fonts)/:slug",
+      "destination": "/api/asset?page=:page&slug=:slug"
+    },
+    {
+      "source": "/:page(assets|icons|vectors|logos|footage|photos|mockups|fonts|templates|create|pricing|license|about)",
+      "destination": "/api/page?page=:page"
+    },
+    {
+      "source": "/((?!.*\\.).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    }
   ]
 }
