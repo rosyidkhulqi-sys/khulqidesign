@@ -92,6 +92,9 @@ const PROPS_KEY = "kd-create-props";
 // zoom slider range, in percent
 const ZOOM_MIN = 10;
 const ZOOM_MAX = 300;
+// the modifier key as the visitor's keyboard labels it, for shortcut hints
+const MOD = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl";
+const ZOOM_TIP = `Zoom: ${MOD} + scroll or pinch · ${MOD} + / ${MOD} −`;
 // height of the page bar above the artboard and Add page below it
 const PAGE_CHROME = 96;
 const DRAG_TYPE = "application/x-kd-item";
@@ -3478,7 +3481,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
             <button
               className={`cb-fit ${zoomMode === "fit" ? "on" : ""}`}
               onClick={() => setZoomMode("fit")}
-              title="Fit the page to the screen"
+              title={`Fit the page to the screen (${MOD} 0)`}
             >
               Fit
             </button>
@@ -3490,8 +3493,9 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
               value={Math.round(zoom * 100)}
               onChange={(e) => setZoomMode(Number(e.target.value) / 100)}
               aria-label="Zoom"
+              title={ZOOM_TIP}
             />
-            <span className="cb-zoom">{Math.round(zoom * 100)}%</span>
+            <span className="cb-zoom" title={ZOOM_TIP}>{Math.round(zoom * 100)}%</span>
             <span className="cb-sep" />
             <button
               className="cb-icon"
