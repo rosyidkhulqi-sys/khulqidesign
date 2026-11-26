@@ -267,6 +267,8 @@ export async function publishVector(item, onStep) {
       keywords: item.keywords,
       category: item.category,
       license: item.license,
+      // made with generative AI (read from the JPG's metadata, or ticked)
+      ai_generated: Boolean(item.aiGenerated),
       thumb_key: steps[2].key,
       preview_key: steps[3].key,
       files: [

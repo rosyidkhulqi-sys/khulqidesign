@@ -301,6 +301,11 @@ function Admin({ user, setPage }) {
                         <option value="free">Free</option>
                         <option value="premium">Premium</option>
                       </select>
+                      <label className={`ad-ai-chip ${it.aiGenerated ? "on" : ""}`} title="Made with generative AI">
+                        <input type="checkbox" checked={Boolean(it.aiGenerated)} disabled={locked}
+                               onChange={(e) => update(it.base, { aiGenerated: e.target.checked })} />
+                        AI
+                      </label>
                       <span className="ad-file">{it.base}</span>
                     </div>
                     {it.keywords.length > 0 && (

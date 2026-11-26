@@ -50,6 +50,7 @@ function vectorSpecs(v) {
     ["Orientation", capitalize(v.orientation)],
     ["Category", vectorCategoryLabel(v.category)],
     ["Release", "Not required"],
+    ...(v.ai ? [["AI-generated", "Yes · fictional people, places and products"]] : []),
   ];
 }
 
@@ -59,6 +60,8 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
   const [license, setLicense] = useState("all");
   const [orientation, setOrientation] = useState("all");
   const [category, setCategory] = useState("all");
+  // AI-generated: all, only AI, or without AI (as on Photos)
+  const [ai, setAi] = useState("all");
   const [sort, setSort] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState(null);
@@ -95,6 +98,7 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
           if (license !== "all") query = query.eq("license", license);
           if (orientation !== "all") query = query.eq("orientation", orientation);
           if (category !== "all") query = query.in("category", vectorCategoryStorageValues(category));
+          if (ai !== "all") query = query.eq("ai_generated", ai === "only");
           return query;
         },
       })
@@ -111,7 +115,7 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
       alive = false;
       clearTimeout(timer);
     };
-  }, [search, format, license, orientation, category, sort, currentPage]);
+  }, [search, format, license, orientation, category, ai, sort, currentPage]);
 
   // more from the same category, for the detail view
   useEffect(() => {
@@ -135,13 +139,14 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
     setLicense("all");
     setOrientation("all");
     setCategory("all");
+    setAi("all");
     setSort("popular");
     setSearch("");
     setCurrentPage(1);
   };
 
   const hasFilter =
-    format !== "all" || license !== "all" || orientation !== "all" || category !== "all" || search;
+    format !== "all" || license !== "all" || orientation !== "all" || category !== "all" || ai !== "all" || search;
 
   const searchTag = (tag) => {
     setSelected(null);
@@ -204,6 +209,11 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
           <option value="portrait">Portrait</option>
           <option value="square">Square</option>
         </select>
+        <select value={ai} onChange={reset(setAi)} aria-label="AI-generated">
+          <option value="all">AI-generated</option>
+          <option value="only">Only AI</option>
+          <option value="none">Exclude AI</option>
+        </select>
 
         <select value={category} onChange={reset(setCategory)} aria-label="Category">
           <option value="all">Category</option>
@@ -247,7 +257,10 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
                 <span className={`vector-badge ${v.license}`}>
                   {v.license === "free" ? "Free" : "Premium"}
                 </span>
-                <span className="vector-format">{v.format}</span>
+                <span className="vector-format">
+                  {v.format}
+                  {v.ai && <span className="vector-ai" title="Made with generative AI">AI</span>}
+                </span>
                 {/* downloads go through the detail view, where the license is shown */}
                 <div className="vector-actions" onClick={(e) => e.stopPropagation()}>
                   <button aria-label="Save">

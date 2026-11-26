@@ -57,6 +57,7 @@ function clipSpecs(clip) {
     ["Audio", "No audio"],
     ["Release", "Not required"],
     ["Category", capitalize(clip.category)],
+    ...(clip.ai ? [["AI-generated", "Yes · fictional people, places and products"]] : []),
   ];
 }
 
@@ -131,7 +132,10 @@ function FootageCard({ clip, onOpen }) {
         <span className={`vector-badge ${clip.license}`}>
           {clip.license === "free" ? "Free" : "Premium"}
         </span>
-        <span className="footage-res">{clip.resolution}</span>
+        <span className="footage-res">
+          {clip.resolution}
+          {clip.ai && <span className="vector-ai" title="Made with generative AI">AI</span>}
+        </span>
         <span className="footage-duration">
           <ToolGlyph name="play" size={9} filled />
           {formatTime(clip.duration)}
@@ -149,6 +153,8 @@ function Footage({ setPage, initialSearch = "", user = null }) {
   const [duration, setDuration] = useState("all");
   const [orientation, setOrientation] = useState("all");
   const [license, setLicense] = useState("all");
+  // AI-generated: all, only AI, or without AI (as on Photos)
+  const [ai, setAi] = useState("all");
   const [sort, setSort] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState(null);
@@ -190,6 +196,7 @@ function Footage({ setPage, initialSearch = "", user = null }) {
           if (duration === "long") query = query.gte("duration_s", 30.5);
           if (orientation !== "all") query = query.eq("orientation", orientation);
           if (license !== "all") query = query.eq("license", license);
+          if (ai !== "all") query = query.eq("ai_generated", ai === "only");
           return query;
         },
       })
@@ -206,7 +213,7 @@ function Footage({ setPage, initialSearch = "", user = null }) {
       alive = false;
       clearTimeout(timer);
     };
-  }, [search, resolution, fps, duration, orientation, license, sort, currentPage]);
+  }, [search, resolution, fps, duration, orientation, license, ai, sort, currentPage]);
 
   // more from the same category, for the detail view
   useEffect(() => {
@@ -228,6 +235,7 @@ function Footage({ setPage, initialSearch = "", user = null }) {
     setDuration("all");
     setOrientation("all");
     setLicense("all");
+    setAi("all");
     setSort("popular");
     setSearch("");
     setCurrentPage(1);
@@ -235,7 +243,7 @@ function Footage({ setPage, initialSearch = "", user = null }) {
 
   const hasFilter =
     resolution !== "all" || fps !== "all" || duration !== "all" ||
-    orientation !== "all" || license !== "all" || search;
+    orientation !== "all" || license !== "all" || ai !== "all" || search;
 
   const searchTag = (tag) => {
     setSelected(null);
@@ -304,6 +312,12 @@ function Footage({ setPage, initialSearch = "", user = null }) {
           <option value="horizontal">Horizontal 16:9</option>
           <option value="vertical">Vertical 9:16</option>
           <option value="square">Square 1:1</option>
+        </select>
+
+        <select value={ai} onChange={reset(setAi)} aria-label="AI-generated">
+          <option value="all">AI-generated</option>
+          <option value="only">Only AI</option>
+          <option value="none">Exclude AI</option>
         </select>
 
         <select value={license} onChange={reset(setLicense)}>

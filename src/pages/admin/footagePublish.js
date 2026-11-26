@@ -288,6 +288,7 @@ export async function publishClip(item, onStep) {
       keywords: item.keywords,
       category: item.category,
       license: item.license,
+      ai_generated: Boolean(item.aiGenerated),
       thumb_key: publics[0].key,
       preview_key: publics[1].key,
       preview_video_key: publics[2].key,

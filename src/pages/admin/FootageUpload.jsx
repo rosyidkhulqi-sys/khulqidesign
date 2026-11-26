@@ -173,6 +173,11 @@ function FootageUpload({ onPublished }) {
                         <option value="free">Free</option>
                         <option value="premium">Premium</option>
                       </select>
+                      <label className={`ad-ai-chip ${it.aiGenerated ? "on" : ""}`} title="Made with generative AI">
+                        <input type="checkbox" checked={Boolean(it.aiGenerated)} disabled={locked || !p}
+                               onChange={(e) => update(it.base, { aiGenerated: e.target.checked })} />
+                        AI
+                      </label>
                       <span className="ad-file">
                         {it.files.map((f) => `${f.name.split(".").pop().toUpperCase()} ${mb(f.size)}`).join(" + ")}
                       </span>

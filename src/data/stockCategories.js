@@ -11,6 +11,9 @@ export const PHOTO_CATEGORY_OPTIONS = [
   ["health", "Health & Medicine"],
   ["heritage", "Historic Sites & Landmarks"],
   ["holiday", "Holidays"],
+  // drawn pictures sold as JPG or PNG (no EPS), as Adobe Stock files them
+  // under Images, not Vectors
+  ["illustration", "Illustrations"],
   ["landscape", "Landscape"],
   ["lifestyle", "Lifestyle"],
   ["nature", "Nature"],

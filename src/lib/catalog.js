@@ -140,6 +140,7 @@ export function toVector(row) {
     orientation: row.orientation || orientationOf(artboard[0], artboard[1]),
     downloads: row.downloads,
     keywords: row.keywords ?? [],
+    ai: Boolean(row.ai_generated),
   };
 }
 
@@ -285,6 +286,7 @@ export function toClip(row) {
     keywords: row.keywords ?? [],
     // originals sit in the private bucket; signed download links come next
     originals: row.files,
+    ai: Boolean(row.ai_generated),
   };
 }
 
