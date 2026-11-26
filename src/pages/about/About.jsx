@@ -144,14 +144,12 @@ function About({ setPage }) {
 
       <div className="ab-story">
         <h2>Design that's easy to <em>find, change and use.</em></h2>
+        {/* the product first, as global platforms introduce themselves; no
+            country or founder up front */}
         <p>
-          Khulqidesign is a design asset platform from Indonesia, built for designers and
-          businesses around the world. We bring icons, vectors, logos, templates and footage
-          together with the tools to make them your own.
-        </p>
-        <p>
-          Khulqidesign was founded by Khulqi Rosyid, a graphic designer who has been creating
-          digital assets since 2018.
+          Khulqidesign is a design asset platform for designers, teams and institutions.
+          We bring icons, vectors, logos, templates and footage together with the tools to
+          make them your own.
         </p>
       </div>
 
