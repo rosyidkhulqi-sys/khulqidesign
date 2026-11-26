@@ -2,5 +2,5 @@
 // them without loading the canvas library.
 export const TEMPLATE_CATEGORIES = [
   "social media", "story", "thumbnail", "presentation", "flyer", "poster",
-  "banner", "business card", "invitation", "resume", "other",
+  "banner", "business card", "invitation", "greeting card", "resume", "other",
 ];
