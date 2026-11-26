@@ -1276,13 +1276,42 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   // premium: a Premium library item, free to try and Premium to download
   // stock: { asset, format } for a Photos library item (its clean file is
   // fetched at export for Premium accounts)
-  const addImage = async (src, point, premium = false, stock = undefined) => {
-    const img = await FabricImage.fromURL(src, { crossOrigin: "anonymous" });
+  // quick: a smaller copy already on screen (the tile's thumbnail), placed at
+  // once; the full picture replaces it when it has arrived, at the same size
+  const addImage = async (src, point, premium = false, stock = undefined, quick = undefined) => {
+    const img = await FabricImage.fromURL(quick ?? src, { crossOrigin: "anonymous" });
     const b = boardRef.current;
     img.scale(Math.min((b.w * 0.5) / img.width, (b.h * 0.5) / img.height));
     img.kdPremium = premium || undefined;
     img.kdStock = stock;
     place(img, point);
+    if (quick && quick !== src) sharpen(img, src);
+  };
+
+  // swaps a placed picture for its full-size file, keeping its size on the
+  // page and any crop; nothing happens if it was deleted meanwhile
+  const sharpen = async (img, src) => {
+    try {
+      const full = await util.loadImage(src, { crossOrigin: "anonymous" });
+      if (!img.canvas) return;
+      const ratio = full.naturalWidth / img.width;
+      const { scaleX, scaleY, cropX = 0, cropY = 0 } = img;
+      const shown = { w: img.width, h: img.height };
+      img.setElement(full);
+      img.set({
+        width: shown.w * ratio,
+        height: shown.h * ratio,
+        cropX: cropX * ratio,
+        cropY: cropY * ratio,
+        scaleX: scaleX / ratio,
+        scaleY: scaleY / ratio,
+      });
+      img.setCoords();
+      img.canvas.requestRenderAll();
+      commit();
+    } catch {
+      /* the smaller copy stays */
+    }
   };
 
   const addItem = ({ kind, id }, point) => {
@@ -1301,7 +1330,8 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     if (kind === "element") {
       const el = partById(id);
       if (!el) return;
-      if (el.type !== "svg") return addImage(el.url, point, el.premium, el.stock);
+      // a library photo shows its thumbnail at once, then sharpens
+      if (el.type !== "svg") return addImage(el.url, point, el.premium, el.stock, el.stock ? el.thumb : undefined);
       return fetch(el.url).then((r) => r.text()).then((markup) => addSvg(markup, point, el.premium));
     }
     if (kind === "vector") {
