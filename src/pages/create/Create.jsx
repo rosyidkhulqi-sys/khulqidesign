@@ -1293,7 +1293,9 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   const sharpen = async (img, src) => {
     try {
       const full = await util.loadImage(src, { crossOrigin: "anonymous" });
-      if (!img.canvas) return;
+      // on the page, alone or inside a frame
+      const holder = img.group ?? img;
+      if (!holder.canvas) return;
       const ratio = full.naturalWidth / img.width;
       const { scaleX, scaleY, cropX = 0, cropY = 0 } = img;
       const shown = { w: img.width, h: img.height };
@@ -1305,9 +1307,11 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
         cropY: cropY * ratio,
         scaleX: scaleX / ratio,
         scaleY: scaleY / ratio,
+        dirty: true,
       });
       img.setCoords();
-      img.canvas.requestRenderAll();
+      if (img.group) img.group.set("dirty", true);
+      fc.current.requestRenderAll();
       commit();
     } catch {
       /* the smaller copy stays */
@@ -1526,7 +1530,9 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     [...fc.current.getObjects()].reverse().find((o) => o.kdFrame && o.visible && o.containsPoint(point));
 
   // puts a photo into a frame: it covers the frame's box and is cut to its shape
-  const fillFrame = async (frame, src) => {
+  // quick: a smaller copy already on screen, shown at once and sharpened
+  // when the full picture arrives (as addImage does)
+  const fillFrame = async (frame, src, quick = undefined) => {
     const c = fc.current;
     const f = photoFrames.find((x) => x.id === frame.kdFrame);
     if (!f) return;
@@ -1534,7 +1540,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     const h = frame.height;
     // the whole photo, scaled to cover the box and centered on it, as on
     // Canva: the frame is a window, so Adjust photo can move it to any part
-    const img = await FabricImage.fromURL(src, { crossOrigin: "anonymous" });
+    const img = await FabricImage.fromURL(quick ?? src, { crossOrigin: "anonymous" });
     const k = Math.max(w / img.width, h / img.height);
     img.set({ scaleX: k, scaleY: k, left: (w - img.width * k) / 2, top: (h - img.height * k) / 2 });
     // a fixed layout the size of the box: moving or zooming the photo inside
@@ -1559,6 +1565,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     c.setActiveObject(filled);
     setActive(filled);
     render();
+    if (quick && quick !== src) sharpen(img, src);
   };
 
   // the photo inside a filled frame, or null
@@ -1726,8 +1733,11 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
         return fillFrame(frame, u.data);
       }
       if (data) {
-        const src = await pictureOf(JSON.parse(data));
-        if (src) return fillFrame(frame, src);
+        const item = JSON.parse(data);
+        const src = await pictureOf(item);
+        // a library photo shows its thumbnail at once, then sharpens
+        const part = item.kind === "element" ? partById(item.id) : null;
+        if (src) return fillFrame(frame, src, part?.stock ? part.thumb : undefined);
       }
     }
     if (files.length) return handleFiles(e.dataTransfer.files, point);
