@@ -8,7 +8,9 @@
 //            in full; cancelling is not a refund
 // Each section is [id, heading, [paragraphs...]].
 
-export const OWNER = "Khulqi Design";
+// the brand, one word as everywhere on the site (a lawyer confirms the
+// registered business name before payments open)
+export const OWNER = "Khulqidesign";
 export const COUNTRY = "Indonesia";
 export const CONTACT = "khulqidesign@mail.com";
 export const UPDATED = "November 2026";
