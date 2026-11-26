@@ -108,9 +108,11 @@ function RotatingWord({ words, every = 2200 }) {
   }, [words, every]);
   return (
     <>
-      {/* screen readers hear the whole list once, not a word every two seconds */}
+      {/* screen readers and search engines read the whole list once; the
+          changing word is drawn by CSS (not page text), so the two never run
+          together as "footagelogos" in a search result */}
       <span className="home-sr-only">{words.join(", ")}</span>
-      <span className="home-rotate" key={i} aria-hidden="true">{words[i]}</span>
+      <span className="home-rotate" key={i} data-word={words[i]} aria-hidden="true" />
     </>
   );
 }
