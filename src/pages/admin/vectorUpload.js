@@ -182,11 +182,29 @@ async function renderImage(bitmap, max, watermark, quality = 0.9, type = "image/
   return blob;
 }
 
+// whether any pixel is see-through; checked on a smaller copy (an edge that
+// fades out still shows there). Most PNGs (AI pictures) cover the whole frame
+function hasTransparency(bitmap) {
+  const scale = Math.min(1, 1024 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  for (let i = 3; i < data.length; i += 4) if (data[i] < 255) return true;
+  return false;
+}
+
 // Premium previews carry the watermark in their pixels; free ones don't
 // alpha: keep transparency (a PNG), in WebP pictures
 export async function makeImages(jpg, watermark, alpha = false) {
   const bitmap = await decodeImage(jpg);
   try {
+    // a PNG without see-through parts gets light previews (WebP or JPEG), not
+    // heavy PNG ones (Safari can't write WebP, so a "transparent" preview
+    // there would be a 10 MB PNG)
+    if (alpha) alpha = hasTransparency(bitmap);
     return {
       width: bitmap.width,
       height: bitmap.height,
