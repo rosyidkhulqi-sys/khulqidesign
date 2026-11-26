@@ -88,6 +88,37 @@ export async function fetchCreatePartsByCode(codes) {
   return (data ?? []).map(toCreatePart);
 }
 
+// ---- the Photos library inside Create: one upload, used in two places (as
+// Canva and Adobe Express use their own stock). The preview (2800 px) goes on
+// the page; a free one has no watermark. A Premium one opens on the Photos
+// page for now, until Premium in Create unlocks it at export.
+export function toCreatePhoto(row) {
+  return {
+    id: row.code,
+    url: publicUrl(row.preview_key),
+    thumb: publicUrl(row.thumb_key),
+    type: "image",
+    kind: "photo",
+    category: row.category || "other",
+    name: row.title,
+    keywords: row.keywords ?? [],
+    premium: row.license !== "free",
+    ratio: (row.width || 1) / (row.height || 1),
+  };
+}
+
+// one page of photos, free ones first; a search's, or all of them
+export async function fetchCreatePhotos({ text = "", kindWords = [], page = 1, perPage = 60 } = {}) {
+  const { rows, total } = await searchCatalog("photo", {
+    text,
+    kindWords,
+    page,
+    perPage,
+    narrow: (q) => q.order("license", { ascending: true }),
+  });
+  return { parts: rows.map(toCreatePhoto), total };
+}
+
 // One page of a library, searched and filtered by the database, so a library
 // of any size stays fast. Every word must match the start of a word in the
 // title, keywords or the file's own title and description, in any order;

@@ -6,8 +6,8 @@ import { useEffect, useMemo, useState } from "react";
 import Icon from "./CreateIcons";
 import { basicIcons } from "./basicIcons";
 import { shapes } from "./createLibrary";
-import { BasicTile, DbGrid, ElementTile, PagedGrid, SetIconTile, ShapeTile, TableTiles } from "./CreateElements";
-import { fetchCreatePage } from "../../lib/catalog";
+import { BasicTile, DbGrid, ElementTile, PagedGrid, SetIconTile, ShapeTile, StockPhotoTile, TableTiles } from "./CreateElements";
+import { fetchCreatePage, fetchCreatePhotos } from "../../lib/catalog";
 import { saveRecent, withRecent } from "./createRecent";
 import { PhotoTile } from "./CreateBackground";
 import { QrPanel } from "./CreateQr";
@@ -73,6 +73,8 @@ function CreateSearch({ query, tab, templates, uploaded, backgrounds, photo, lib
   // only holds the newest); undefined while it answers, null if it couldn't
   const { kindWords, words } = searchWords(query);
   const [found, setFound] = useState(undefined);
+  // the Photos library, searched the same way
+  const [photos, setPhotos] = useState(null);
   const askDb = words.length > 0;
   useEffect(() => {
     if (!askDb) return;
@@ -84,6 +86,13 @@ function CreateSearch({ query, tab, templates, uploaded, backgrounds, photo, lib
         setFound(r);
       })
       .catch(() => alive && setFound(null));
+    fetchCreatePhotos({ text: query, kindWords, perPage: 60 })
+      .then((r) => {
+        if (!alive) return;
+        learn?.(r.parts);
+        setPhotos(r);
+      })
+      .catch(() => {});
     return () => {
       alive = false;
     };
@@ -118,6 +127,7 @@ function CreateSearch({ query, tab, templates, uploaded, backgrounds, photo, lib
     { id: "elements", title: "Elements", columns: "three", tile: elementTile },
     { id: "icons", title: "Icons", columns: "three", tile: iconTile },
     { id: "vectors", title: "Vectors", columns: "two", tile: (v) => <VectorTile key={v.id} vector={v} dragItem={dragItem} /> },
+    { id: "photos", title: "Photos", columns: "two", tile: (p) => <StockPhotoTile key={p.id} photo={p} dragItem={dragItem} /> },
     {
       id: "backgrounds",
       title: "Backgrounds",
@@ -126,6 +136,7 @@ function CreateSearch({ query, tab, templates, uploaded, backgrounds, photo, lib
     },
   ]
     .map((s) => {
+      if (s.id === "photos") return { ...s, items: photos?.parts ?? [], total: photos?.total };
       if (s.id !== "elements" || !found) return { ...s, items: find(sources[s.id], query) };
       // the database's matches first, then the built-in ones
       const builtIn = find(sources.builtIn, query);
@@ -144,7 +155,9 @@ function CreateSearch({ query, tab, templates, uploaded, backgrounds, photo, lib
         <button className="cp-back" onClick={() => setView(null)}>
           <Icon name="arrowLeft" size={16} /> {open.title}
         </button>
-        {open.id === "elements" && found
+        {open.id === "photos"
+          ? <DbGrid query={{ text: query, kindWords }} fetchPage={fetchCreatePhotos} columns={open.columns} renderTile={open.tile} learn={learn} />
+          : open.id === "elements" && found
           ? <DbGrid query={{ text: query, kindWords }} after={open.builtIn} columns={open.columns} renderTile={open.tile} learn={learn} />
           : <PagedGrid items={open.items} columns={open.columns} renderTile={open.tile} />}
       </>

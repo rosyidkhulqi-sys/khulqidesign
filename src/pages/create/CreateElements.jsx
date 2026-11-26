@@ -17,7 +17,8 @@ import { elementCategories, elements as trialElements } from "../../data/element
 // the built-in parts of a category, shown after its uploaded ones
 const trialOf = (id) => elementCategories.find((c) => c.id === id)?.items ?? [];
 import { ELEMENT_CATEGORIES, elementCategoryLabel, elementCategoryStorageValues, normalizeElementCategory } from "../../data/elementCategories";
-import { countCreateCategories, fetchCreatePage, fetchCreatePartsByCode, fetchIconCatalog } from "../../lib/catalog";
+import { countCreateCategories, fetchCreatePage, fetchCreatePartsByCode, fetchCreatePhotos, fetchIconCatalog } from "../../lib/catalog";
+import { pathFor } from "../../lib/router";
 
 // how many tiles a category grid adds each time the list scrolls to its end
 const PAGE = 60;
@@ -140,6 +141,20 @@ export function ElementTile({ el, dragItem }) {
   );
 }
 
+// a photo from the Photos library: a free one goes on the page; a Premium one
+// opens on the Photos page, so its watermarked preview never reaches a design
+export function StockPhotoTile({ photo, dragItem }) {
+  const action = photo.premium
+    ? { onClick: () => window.open(pathFor("photos", photo.name), "_blank", "noopener") }
+    : dragItem("element", photo.id);
+  return (
+    <button className="cp-tile wide" {...action} title={photo.name}>
+      <img src={photo.thumb} alt={photo.name} draggable={false} loading="lazy" crossOrigin="anonymous" />
+      {photo.premium && <PremiumMark />}
+    </button>
+  );
+}
+
 export function BasicTile({ icon, dragItem }) {
   return (
     <button className="cp-tile" {...dragItem("basic", icon.id)} title={icon.name}>
@@ -197,15 +212,17 @@ export function PagedGrid({ items, renderTile, columns = "three" }) {
 // a category or a search over tens of thousands of elements stays light;
 // \`after\` (built-in parts) follows once the database has no more. learn()
 // registers what arrived so a click can place it. Keyed by its query.
-export function DbGrid({ query, after = [], renderTile, learn, columns = "three" }) {
+// fetchPage: where the pages come from (elements unless given; photos use
+// fetchCreatePhotos)
+export function DbGrid({ query, after = [], renderTile, learn, columns = "three", fetchPage = fetchCreatePage }) {
   const [parts, setParts] = useState([]);
   const [done, setDone] = useState(false);
   const state = useRef({ page: 0, busy: false });
   const end = useRef(null);
   // the latest query and learn(), without restarting the observer each render
-  const latest = useRef({ query, learn });
+  const latest = useRef({ query, learn, fetchPage });
   useEffect(() => {
-    latest.current = { query, learn };
+    latest.current = { query, learn, fetchPage };
   });
 
   useEffect(() => {
@@ -217,8 +234,8 @@ export function DbGrid({ query, after = [], renderTile, learn, columns = "three"
       if (st.busy) return;
       st.busy = true;
       try {
-        const { query: q, learn: register } = latest.current;
-        const { parts: next, total } = await fetchCreatePage({ perPage: PAGE, ...q, page: st.page + 1 });
+        const { query: q, learn: register, fetchPage: fetcher } = latest.current;
+        const { parts: next, total } = await fetcher({ perPage: PAGE, ...q, page: st.page + 1 });
         if (!alive) return;
         st.page += 1;
         register?.(next);
@@ -335,6 +352,15 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [], learn, onAddQr }) {
       .catch(() => {});
     return () => { alive = false; };
   }, []);
+  // the Photos library: how many it holds and a cover, read once
+  const [stockPhotos, setStockPhotos] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    fetchCreatePhotos({ perPage: 1 })
+      .then((r) => alive && setStockPhotos({ total: r.total, cover: r.parts[0]?.thumb }))
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
   const setIcons = iconCatalog.icons;
   const setGroups = useMemo(() => iconCatalog.sets.map((set) => ({
     set,
@@ -394,6 +420,10 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [], learn, onAddQr }) {
       picture: c.cover,
       onOpen: () => setView(c.id),
     })),
+    // the Photos library itself, not a copy of it
+    ...(stockPhotos?.total
+      ? [{ id: "stock-photos", name: "Photos", count: stockPhotos.total, picture: stockPhotos.cover, onOpen: () => setView("stock-photos") }]
+      : []),
     ...browsableCategories
       .filter((c) => !["graphics", "infographics", "grids", "frames", "photos"].includes(c.id))
       .map((c) => ({ ...c, count: countOf(c), picture: c.cover, onOpen: () => setView(c.id) })),
@@ -445,7 +475,7 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [], learn, onAddQr }) {
       <>
         <button className="cp-back" onClick={() => setView(null)}>
           <Icon name="arrowLeft" size={16} />
-          {category?.name ?? (view === "recent" ? "Recently used" : view === "shapes" ? "Shapes" : view === "photo-frames" ? "Photo frames" : view === "qr" ? "QR code" : view === "tables" ? "Tables" : "Icons")}
+          {category?.name ?? (view === "recent" ? "Recently used" : view === "shapes" ? "Shapes" : view === "photo-frames" ? "Photo frames" : view === "stock-photos" ? "Photos" : view === "qr" ? "QR code" : view === "tables" ? "Tables" : "Icons")}
         </button>
 
         {category && view !== "shapes" && (fromDb
@@ -475,6 +505,11 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [], learn, onAddQr }) {
         {view === "qr" && <QrPanel onAdd={(text) => onAddQr?.(text)} />}
 
         {view === "tables" && <TableTiles dragItem={dragItem} />}
+
+        {view === "stock-photos" && (
+          <DbGrid key="stock-photos" query={{}} fetchPage={fetchCreatePhotos} columns="two" learn={learn}
+                  renderTile={(p) => <StockPhotoTile key={p.id} photo={p} dragItem={dragItem} />} />
+        )}
 
         {view === "recent" && (
           <>
