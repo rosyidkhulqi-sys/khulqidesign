@@ -1554,8 +1554,10 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
 
   // puts a photo into a frame: it covers the frame's box and is cut to its shape
   // quick: a smaller copy already on screen, shown at once and sharpened
-  // when the full picture arrives (as addImage does)
-  const fillFrame = async (frame, src, quick = undefined) => {
+  // when the full picture arrives (as addImage does). part: the library item,
+  // so a Premium photo makes the filled frame a Premium item (counted at
+  // download, as on Canva)
+  const fillFrame = async (frame, src, quick = undefined, part = undefined) => {
     const c = fc.current;
     const f = photoFrames.find((x) => x.id === frame.kdFrame);
     if (!f) return;
@@ -1577,6 +1579,8 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     // the shape stretched to the frame's box, so a template's wide or tall
     // photo box keeps its proportions (frames added here are square anyway)
     filled.clipPath = new Path(f.path, { scaleX: w / f.w, scaleY: h / f.h, left: -w / 2, top: -h / 2 });
+    filled.kdPremium = part?.premium || undefined;
+    img.kdStock = part?.stock;
     filled.set({
       left: frame.left, top: frame.top, scaleX: frame.scaleX, scaleY: frame.scaleY,
       angle: frame.angle, flipX: frame.flipX, flipY: frame.flipY, opacity: frame.opacity, shadow: frame.shadow,
@@ -1708,9 +1712,6 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     }
     if (kind === "element") {
       const el = partById(id);
-      // a Premium photo's preview is watermarked: it goes on the page as a
-      // Premium item, not into a frame
-      if (el?.stock && el.premium) return null;
       return el?.url && !/\.svg(\?|$)/i.test(el.url) ? el.url : null;
     }
     return null;
@@ -1760,7 +1761,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
         const src = await pictureOf(item);
         // a library photo shows its thumbnail at once, then sharpens
         const part = item.kind === "element" ? partById(item.id) : null;
-        if (src) return fillFrame(frame, src, part?.stock ? part.thumb : undefined);
+        if (src) return fillFrame(frame, src, part?.stock ? part.thumb : undefined, part ?? undefined);
       }
     }
     if (files.length) return handleFiles(e.dataTransfer.files, point);
