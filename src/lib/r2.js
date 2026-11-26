@@ -42,16 +42,37 @@ const PART_SIZE = 10 * 1024 * 1024;
 const PARTS_AT_ONCE = 3;
 
 // one PUT of a body to a signed URL; onLoaded(bytes so far)
+// an upload that sends nothing for this long is stuck (a dropped connection
+// the browser never reports): it's cut off and tried again
+const STALL_MS = 45_000;
+
 function put(url, body, type, onLoaded) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
+    let last = Date.now();
+    const watch = setInterval(() => {
+      if (Date.now() - last > STALL_MS) {
+        clearInterval(watch);
+        xhr.abort();
+        reject(new Error("The upload stalled"));
+      }
+    }, 5000);
+    const done = (fn) => (...args) => {
+      clearInterval(watch);
+      fn(...args);
+    };
     xhr.open("PUT", url);
     if (type) xhr.setRequestHeader("Content-Type", type);
-    xhr.upload.onprogress = (e) => e.lengthComputable && onLoaded?.(e.loaded);
-    xhr.onload = () =>
-      xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`R2 upload failed (${xhr.status})`));
-    xhr.onerror = () => reject(new Error("Network error while uploading to R2"));
-    xhr.ontimeout = () => reject(new Error("The upload timed out"));
+    xhr.upload.onprogress = (e) => {
+      last = Date.now();
+      if (e.lengthComputable) onLoaded?.(e.loaded);
+    };
+    // the upload is sent; R2 may take a moment to answer: still alive
+    xhr.upload.onload = () => { last = Date.now(); };
+    xhr.onload = done(() =>
+      xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`R2 upload failed (${xhr.status})`)));
+    xhr.onerror = done(() => reject(new Error("Network error while uploading to R2")));
+    xhr.ontimeout = done(() => reject(new Error("The upload timed out")));
     xhr.send(body);
   });
 }
