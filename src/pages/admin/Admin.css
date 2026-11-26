@@ -332,6 +332,23 @@
 .ad-edit select:focus,
 .ad-edit textarea:focus { border-color: #555; }
 .ad-edit-note { grid-column: 1 / -1; margin: 0; color: #e8b44c; font-size: 13px; line-height: 1.5; }
+/* license change: pick the original, Save rebuilds the preview */
+.ad-rebuild { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ad-rebuild-pick {
+  height: 36px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 1px solid #3a3c3f;
+  border-radius: 10px;
+  color: #f2f2f2;
+  cursor: pointer;
+}
+.ad-rebuild-pick:hover { border-color: #5a5c60; }
 .ad-edit-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; }
 .ad-edit-actions button:not(.ad-primary) {
   height: 40px;

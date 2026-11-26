@@ -10,7 +10,8 @@ import {
   elementCategoryLabel,
   normalizeElementCategory,
 } from "./elementPublish";
-import { parseKeywords } from "./vectorUpload";
+import { makeImages, parseKeywords } from "./vectorUpload";
+import { uploadToR2 } from "../../lib/r2";
 import { normalizeVectorCategory, vectorCategoryLabel } from "../../data/vectorCategories";
 import { stockCategoryLabel } from "../../data/stockCategories";
 import NumberInput from "../../components/NumberInput";
@@ -21,6 +22,29 @@ const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 // these types get a watermark baked into their preview when they aren't free
 const hasWatermark = (type, license) => ["vector", "logo", "footage", "photo", "mockup"].includes(type) && license !== "free";
+
+// types whose preview is drawn from one JPG or PNG, so the admin can rebuild
+// it here from that file when the license changes
+const REBUILDS = ["photo", "vector"];
+
+// a new preview, with or without the watermark, drawn from the original the
+// admin picks. It goes to a new key next to the old one, so the CDN and
+// browsers don't keep showing the cached old picture; the old file stays,
+// since a published template may still show it until it's updated.
+async function rebuildPreview(row, file, watermark) {
+  const png = /\.png$/i.test(file.name);
+  const images = await makeImages(file, watermark, png);
+  const original = row.files?.[0];
+  // a photo's original has its size on record: a different picture is refused
+  if (original?.width && (images.width !== original.width || images.height !== original.height)) {
+    throw new Error(`This file is ${images.width}×${images.height}, the original is ${original.width}×${original.height}. Pick the same file that was uploaded.`);
+  }
+  const folder = row.preview_key.replace(/\/[^/]+$/, "");
+  const ext = { "image/webp": "webp", "image/png": "png" }[images.preview.type] ?? "jpg";
+  const key = `${folder}/preview-${Date.now().toString(36)}.${ext}`;
+  await uploadToR2({ bucket: "public", key, file: images.preview, contentType: images.preview.type });
+  return key;
+}
 
 // row: the asset. onSaved(changes) after saving, onCancel() to close.
 function EditAsset({ row, type, onSaved, onCancel }) {
@@ -43,6 +67,8 @@ function EditAsset({ row, type, onSaved, onCancel }) {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  // the original JPG or PNG, picked to rebuild the preview for a new license
+  const [original, setOriginal] = useState(null);
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
   const isLogo = type === "logo";
@@ -50,7 +76,9 @@ function EditAsset({ row, type, onSaved, onCancel }) {
   const categories = type === "element" ? categoriesOf(row.style) : CATEGORIES[type] ?? [];
   // a value set before the list changed stays selectable
   const categoryOptions = categories.includes(form.category) ? categories : [form.category, ...categories];
-  const watermarkDiffers = hasWatermark(type, row.license) !== hasWatermark(type, form.license === "editorial" ? "premium" : form.license);
+  const watermarkNext = hasWatermark(type, form.license === "editorial" ? "premium" : form.license);
+  const watermarkDiffers = hasWatermark(type, row.license) !== watermarkNext;
+  const canRebuild = watermarkDiffers && REBUILDS.includes(type) && Boolean(row.preview_key);
 
   const save = async (e) => {
     e.preventDefault();
@@ -78,8 +106,22 @@ function EditAsset({ row, type, onSaved, onCancel }) {
       ...(type === "photo" ? { editorial: form.license === "editorial" } : {}),
     };
 
+    if (canRebuild && !original) {
+      setError("Pick the original file first, so the preview matches the new license.");
+      return;
+    }
+
     setSaving(true);
     setError(null);
+    if (canRebuild) {
+      try {
+        changes.preview_key = await rebuildPreview(row, original, watermarkNext);
+      } catch (err) {
+        setSaving(false);
+        setError(err.message);
+        return;
+      }
+    }
     const { error: e2 } = await supabase.from("assets").update(changes).eq("id", row.id);
     setSaving(false);
     if (e2) setError(e2.message);
@@ -166,7 +208,19 @@ function EditAsset({ row, type, onSaved, onCancel }) {
       )}
 
       {sold && <p className="ad-edit-note">This logo is sold, so its license and price can't change.</p>}
-      {watermarkDiffers && (
+      {canRebuild ? (
+        <div className="ad-edit-note ad-rebuild">
+          <span>
+            {watermarkNext ? "Premium previews carry a watermark." : "Free previews have no watermark."}{" "}
+            Pick the original {type === "vector" ? "JPG" : "JPG or PNG"} ({row.source_name ?? "the uploaded file"}) and Save rebuilds the preview.
+          </span>
+          <label className="ad-rebuild-pick">
+            {original ? original.name : "Choose original"}
+            <input type="file" accept={type === "vector" ? ".jpg,.jpeg" : ".jpg,.jpeg,.png"} hidden
+                   onChange={(e) => setOriginal(e.target.files?.[0] ?? null)} />
+          </label>
+        </div>
+      ) : watermarkDiffers && (
         <p className="ad-edit-note">
           The preview image won't change with the license: its watermark was added at upload. To change it, delete this asset and upload it again.
         </p>
@@ -194,7 +248,7 @@ function EditAsset({ row, type, onSaved, onCancel }) {
 
       <div className="ad-edit-actions">
         <button type="button" onClick={onCancel} disabled={saving}>Cancel</button>
-        <button type="submit" className="ad-primary" disabled={saving}>{saving ? "Saving…" : "Save"}</button>
+        <button type="submit" className="ad-primary" disabled={saving}>{saving ? (canRebuild ? "Rebuilding preview…" : "Saving…") : "Save"}</button>
       </div>
     </form>
   );
