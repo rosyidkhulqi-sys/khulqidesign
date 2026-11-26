@@ -2,6 +2,7 @@
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     { "source": "/:page(icons|vectors|logos|footage|photos|mockups|fonts)/:slug", "destination": "/api/asset?page=:page&slug=:slug" },
+    { "source": "/:page(assets|icons|vectors|logos|footage|photos|mockups|fonts|templates|create|pricing|license|about)", "destination": "/api/page?page=:page" },
     { "source": "/((?!.*\\.).*)", "destination": "/index.html" }
   ]
 }
