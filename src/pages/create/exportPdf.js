@@ -7,6 +7,7 @@
 // someone asks for a PDF.
 import { StaticCanvas } from "fabric";
 import { loadFontsOf } from "./createFonts";
+import { premiumAreas, stampDataUrl } from "./draftMark";
 
 // print formats get their real paper size; screen formats count 96 px an inch
 const PAPER_MM = {
@@ -22,8 +23,9 @@ export function paperOf(board) {
   return PAPER_MM[`${board.w}x${board.h}`] ?? [board.w * MM_PER_PX, board.h * MM_PER_PX];
 }
 
-// pages: Fabric JSON per page; onProgress(0..1). Resolves a PDF Blob.
-export async function buildPdf(pages, board, onProgress) {
+// pages: Fabric JSON per page; onProgress(0..1); draft: Premium items carry
+// the watermark (a free account's draft). Resolves a PDF Blob.
+export async function buildPdf(pages, board, onProgress, { draft = false } = {}) {
   const { jsPDF } = await import("jspdf");
   await loadFontsOf(pages);
 
@@ -43,7 +45,8 @@ export async function buildPdf(pages, board, onProgress) {
       // a page left see-through prints white, not black
       if (!c.backgroundColor) c.backgroundColor = "#ffffff";
       c.renderAll();
-      const picture = c.toDataURL({ format: "jpeg", quality: 0.92, multiplier });
+      let picture = c.toDataURL({ format: "jpeg", quality: 0.92, multiplier });
+      if (draft) picture = await stampDataUrl(picture, premiumAreas(c), multiplier);
       doc.addImage(picture, "JPEG", 0, 0, w, h, undefined, "FAST");
     } finally {
       c.dispose();

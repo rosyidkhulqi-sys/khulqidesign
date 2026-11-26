@@ -2177,6 +2177,19 @@
 }
 .ct-dropdown .ct-premium-note .is-gold { border-color: transparent; background: #f5c94a; color: #0a0b0d; font-weight: 600; }
 .ct-dropdown .ct-premium-note button:hover { border-color: rgba(255, 255, 255, 0.3); }
+/* the draft line: quiet text links, not a third pair of buttons */
+.ct-premium-note p.ct-draft { display: block; color: var(--muted, #9aa0a6); font-size: 11.5px; }
+.ct-dropdown .ct-premium-note .ct-draft button {
+  display: inline;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--white);
+  font-size: 11.5px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
 /* BRAND TAB */
 .cb { display: grid; gap: 20px; }

@@ -2378,9 +2378,11 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     commit();
   };
 
-  const exportFile = (format) => {
-    // Premium items can be tried freely; downloading them needs Premium
-    const premium = canPremium ? 0 : premiumCount();
+  // draft: a free account's download of a design with Premium items, which
+  // carry the watermark (JPG or PDF, as Canva's draft)
+  const exportFile = (format, draft = false) => {
+    // Premium items can be tried freely; downloading them clean needs Premium
+    const premium = canPremium || draft ? 0 : premiumCount();
     if (premium > 0) {
       setExportNote({ premium });
       setMenu("download");
@@ -2434,7 +2436,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
       const pages = currentPages();
       setPdfProgress(0);
       import("./exportPdf")
-        .then(({ buildPdf }) => buildPdf(pages, b, setPdfProgress))
+        .then(({ buildPdf }) => buildPdf(pages, b, setPdfProgress, { draft }))
         .then((blob) => {
           const href = URL.createObjectURL(blob);
           save(href, `${slug || "khulqidesign"}-${b.w}x${b.h}.pdf`);
@@ -2468,7 +2470,15 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     const pageTag = list.length > 1 ? `-page-${index + 1}` : "";
     // a 2x or 3x picture says so in its name, as designers name retina files
     const scaleTag = format !== "svg" && exportScale > 1 ? `@${exportScale}x` : "";
-    save(url, `${slug || "khulqidesign"}-${b.w}x${b.h}${pageTag}${scaleTag}.${format}`);
+    const file = `${slug || "khulqidesign"}-${b.w}x${b.h}${pageTag}${scaleTag}`;
+    if (draft) {
+      import("./draftMark")
+        .then(({ premiumAreas, stampDataUrl }) => stampDataUrl(url, premiumAreas(c), exportScale))
+        .then((stamped) => save(stamped, `${file}-draft.jpg`))
+        .catch(() => window.alert("The draft couldn't be made. Try again."));
+      return;
+    }
+    save(url, `${file}.${format}`);
   };
 
   /* ---------- canvas lifecycle ---------- */
@@ -2889,6 +2899,13 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                         <a href="/pricing" className="is-gold">Upgrade</a>
                         <button onClick={removePremium} title="Take the Premium items out of every page">Remove</button>
                       </div>
+                      {/* as Canva's draft: to see or show it, not to use */}
+                      <p className="ct-draft">
+                        Or a draft with the watermark:{" "}
+                        <button onClick={() => { setMenu(null); setExportNote(null); exportFile("jpg", true); }}>JPG</button>
+                        {" · "}
+                        <button onClick={() => { setMenu(null); setExportNote(null); exportFile("pdf", true); }}>PDF</button>
+                      </p>
                     </div>
                   ) : exportNote && (
                     <p className="ct-export-note">
