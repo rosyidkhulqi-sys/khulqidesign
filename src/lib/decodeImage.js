@@ -24,6 +24,10 @@ export async function decodeImage(file) {
       return img;
     } catch {
       URL.revokeObjectURL(url);
+      // a file moved, renamed or edited after it was added can't be read at
+      // all any more; that's not the picture's fault
+      const readable = await file.slice(0, 16).arrayBuffer().then(() => true, () => false);
+      if (!readable) throw new Error("This file was moved or changed after it was added. Remove it and add it again from its folder.");
       throw new Error("This picture can't be read. Save it again as an RGB JPG and try once more.");
     }
   }
