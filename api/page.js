@@ -113,7 +113,7 @@ export async function GET(request) {
     .replace("</head>", `    ${head}\n  </head>`)
     .replace(
       '<div id="root"></div>',
-      `<div id="root"><main><h1>${escapeHtml(name)}</h1><p>${escapeHtml(description)}</p>` +
+      `<div id="root"><main class="seo-shell"><h1>${escapeHtml(name)}</h1><p>${escapeHtml(description)}</p>` +
         (items ? `<ul>${items}</ul>` : "") +
         `<nav><a href="/">Khulqidesign</a> · ${nav} · <a href="/pricing">Pricing</a></nav></main></div>`,
     );

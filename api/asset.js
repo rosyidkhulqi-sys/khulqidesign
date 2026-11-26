@@ -101,7 +101,7 @@ export async function GET(request) {
     .replace("</head>", `    ${head}\n  </head>`)
     .replace(
       '<div id="root"></div>',
-      `<div id="root"><main><h1>${escapeHtml(row.title)}</h1><p>${escapeHtml(description)}</p>` +
+      `<div id="root"><main class="seo-shell"><h1>${escapeHtml(row.title)}</h1><p>${escapeHtml(description)}</p>` +
         (image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(row.title)}" />` : "") +
         `<p><a href="/${page}">More ${escapeHtml(kind.toLowerCase())}s on Khulqidesign</a></p></main></div>`,
     );
