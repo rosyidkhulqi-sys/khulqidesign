@@ -9,9 +9,9 @@ function AuthLayout({ setPage, children }) {
 
   return (
     <main className="auth-page">
-      <a className="auth-brand" href="#" onClick={goHome} aria-label="Khulqi Design home">
+      <a className="auth-brand" href="#" onClick={goHome} aria-label="Khulqidesign home">
         <img src="/logo.png" alt="" />
-        <img src="/KD Logogram.png" alt="Khulqi Design" />
+        <img src="/KD Logogram.png" alt="Khulqidesign" />
       </a>
 
       <div className="auth-card">{children}</div>

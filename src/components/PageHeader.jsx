@@ -69,9 +69,9 @@ function PageHeader({ page, setPage, user, onLogout }) {
   return (
     <>
       <header className="site-header">
-        <a className="site-brand" href={pathFor("home")} onClick={go("home")} aria-label="Khulqi Design home">
+        <a className="site-brand" href={pathFor("home")} onClick={go("home")} aria-label="Khulqidesign home">
           <img src="/logo.png" alt="" className="site-brand-mark" />
-          <img src="/KD Logogram.png" alt="Khulqi Design" className="site-brand-word" />
+          <img src="/KD Logogram.png" alt="Khulqidesign" className="site-brand-word" />
         </a>
 
         <nav className="site-nav" aria-label="Primary navigation">
