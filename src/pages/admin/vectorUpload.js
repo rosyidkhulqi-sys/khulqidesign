@@ -287,6 +287,8 @@ export async function publishVector(item, onStep) {
       license: item.license,
       // made with generative AI (read from the JPG's metadata, or ticked)
       ai_generated: Boolean(item.aiGenerated),
+      // ticked as a clean background: offered in Create's Background tab too
+      use_in_create: item.category === "background-texture" && Boolean(item.useInCreate),
       thumb_key: steps[2].key,
       preview_key: steps[3].key,
       files: [

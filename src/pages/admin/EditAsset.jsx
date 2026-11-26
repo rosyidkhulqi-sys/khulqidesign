@@ -39,6 +39,7 @@ function EditAsset({ row, type, onSaved, onCancel }) {
     license: type === "photo" && row.editorial ? "editorial" : row.license,
     price: row.price_cents ? row.price_cents / 100 : 199,
     aiGenerated: Boolean(row.ai_generated),
+    useInCreate: Boolean(row.use_in_create),
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -71,7 +72,9 @@ function EditAsset({ row, type, onSaved, onCancel }) {
       license: form.license === "editorial" ? "premium" : form.license,
       price_cents: form.license === "exclusive" ? Math.round(price * 100) : null,
       ...(isLogo ? { industry: form.industry, style: form.style } : { category: form.category }),
-      ...(type === "photo" || type === "mockup" ? { ai_generated: form.aiGenerated } : {}),
+      ...(["photo", "mockup", "vector", "footage"].includes(type) ? { ai_generated: form.aiGenerated } : {}),
+      // only a background vector can be offered in Create
+      ...(type === "vector" ? { use_in_create: form.category === "background-texture" && form.useInCreate } : {}),
       ...(type === "photo" ? { editorial: form.license === "editorial" } : {}),
     };
 
@@ -170,7 +173,14 @@ function EditAsset({ row, type, onSaved, onCancel }) {
       )}
       {error && <p className="ad-error is-wide">{error}</p>}
 
-      {(type === "photo" || type === "mockup") && (
+      {type === "vector" && form.category === "background-texture" && (
+        <label className="ad-ai-switch is-create">
+          <input type="checkbox" checked={form.useInCreate} onChange={(e) => setForm((f) => ({ ...f, useInCreate: e.target.checked }))} />
+          <span><strong>Use in Create</strong> · a background in Create's Background tab (only when it has no text and is one background)</span>
+        </label>
+      )}
+
+      {["photo", "mockup", "vector", "footage"].includes(type) && (
 
         <label className="ad-ai-switch">
 

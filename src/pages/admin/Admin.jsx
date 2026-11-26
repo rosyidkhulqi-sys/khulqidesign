@@ -306,6 +306,14 @@ function Admin({ user, setPage }) {
                                onChange={(e) => update(it.base, { aiGenerated: e.target.checked })} />
                         AI
                       </label>
+                      {/* a clean background (no text, one picture) is also offered in Create */}
+                      {it.category === "background-texture" && (
+                        <label className={`ad-ai-chip is-create ${it.useInCreate ? "on" : ""}`} title="Also a background in Create: tick only when it has no text and is one background">
+                          <input type="checkbox" checked={Boolean(it.useInCreate)} disabled={locked}
+                                 onChange={(e) => update(it.base, { useInCreate: e.target.checked })} />
+                          Create
+                        </label>
+                      )}
                       <span className="ad-file">{it.base}</span>
                     </div>
                     {it.keywords.length > 0 && (

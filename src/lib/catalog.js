@@ -103,8 +103,9 @@ export function toCreatePhoto(row) {
     name: row.title,
     keywords: row.keywords ?? [],
     premium: row.license !== "free",
-    // which file a Premium account's export swaps the preview for
-    stock: { asset: row.id, format: row.files?.[0]?.format ?? "JPG" },
+    // which file a Premium account's export swaps the preview for (a
+    // vector's JPG, not its EPS)
+    stock: { asset: row.id, format: row.type === "vector" ? "JPG" : row.files?.[0]?.format ?? "JPG" },
   };
 }
 
@@ -118,6 +119,23 @@ export async function fetchCreatePhotos({ text = "", kindWords = [], category = 
     narrow: (q) => (category ? q.eq("category", category) : q).order("license", { ascending: true }),
   });
   return { parts: rows.map(toCreatePhoto), total };
+}
+
+// Create's Background tab: the Photos library's Backgrounds & Textures and the
+// vector backgrounds ticked "Use in Create", free ones first
+export async function fetchCreateBackgrounds({ page = 1, perPage = 60 } = {}) {
+  const from = (page - 1) * perPage;
+  const { data, count, error } = await supabase
+    .from("assets")
+    .select("*", { count: "exact" })
+    .eq("status", "published")
+    .or("and(type.eq.photo,category.eq.backgrounds),and(type.eq.vector,use_in_create.is.true)")
+    .order("license", { ascending: true })
+    .order("downloads", { ascending: false })
+    .order("published_at", { ascending: false })
+    .range(from, from + perPage - 1);
+  if (error) throw error;
+  return { parts: (data ?? []).map(toCreatePhoto), total: count ?? 0 };
 }
 
 // One page of a library, searched and filtered by the database, so a library

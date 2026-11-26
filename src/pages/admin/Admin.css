@@ -720,6 +720,9 @@
 .ad-ai-chip input { width: 13px; height: 13px; accent-color: #8b5cf6; }
 .ad-ai-chip.on { border-color: #8b5cf6; color: #c4b5fd; background: rgba(139, 92, 246, 0.12); }
 .ad-ai-chip.is-editorial input { accent-color: #f59e0b; }
+/* Use in Create: green, apart from the AI purple */
+.ad-ai-chip.is-create input { accent-color: #22c55e; }
+.ad-ai-chip.is-create.on { border-color: #22c55e; color: #86efac; background: rgba(34, 197, 94, 0.12); }
 .ad-ai-chip.is-editorial.on { border-color: #f59e0b; color: #fcd34d; background: rgba(245, 158, 11, 0.12); }
 
 /* one row of defaults for a whole upload */
