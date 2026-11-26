@@ -459,6 +459,32 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
       ? Math.max(0.05, Math.min((stage.w - 80) / board.w, (stage.h - 80 - PAGE_CHROME) / board.h))
       : zoomMode;
 
+  // Zoom from the mouse and keyboard, as in Canva and Figma: Ctrl/⌘ + wheel
+  // (and a trackpad pinch, which browsers send as Ctrl + wheel) zooms around
+  // the pointer; ⌘/Ctrl + and − step, ⌘/Ctrl 0 fits the page. `anchor` keeps
+  // the point under the pointer in place once the new size is laid out.
+  const zoomAnchor = useRef(null);
+  const zoomTo = (next, anchor) => {
+    const z = Math.min(ZOOM_MAX / 100, Math.max(ZOOM_MIN / 100, next));
+    if (Math.abs(z - zoom) < 0.001) return;
+    const el = stageRef.current;
+    if (el) {
+      const r = el.getBoundingClientRect();
+      const x = anchor ? anchor.x - r.left : r.width / 2;
+      const y = anchor ? anchor.y - r.top : r.height / 2;
+      zoomAnchor.current = { x, y, left: el.scrollLeft + x, top: el.scrollTop + y, ratio: z / zoom };
+    }
+    setZoomMode(z);
+  };
+  const zoomStep = (dir) => zoomTo(zoom * (dir > 0 ? 1.25 : 0.8));
+  const onWheel = useEffectEvent((e) => {
+    if (!(e.ctrlKey || e.metaKey)) return;
+    e.preventDefault();
+    // a mouse wheel notch is about 100, a pinch a few units: both feel even
+    const delta = Math.max(-50, Math.min(50, e.deltaY));
+    zoomTo(zoom * Math.exp(-delta * 0.01), { x: e.clientX, y: e.clientY });
+  });
+
   // the Layers panel lists the top element first, the canvas the bottom one
   const [layers, setLayers] = useState([]);
   const refresh = () => {
@@ -2607,6 +2633,16 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     } else if (mod && e.key.toLowerCase() === "a") {
       e.preventDefault();
       selectAll();
+    } else if (mod && (e.key === "=" || e.key === "+")) {
+      // the page zooms, not the browser
+      e.preventDefault();
+      zoomStep(1);
+    } else if (mod && e.key === "-") {
+      e.preventDefault();
+      zoomStep(-1);
+    } else if (mod && e.key === "0") {
+      e.preventDefault();
+      setZoomMode("fit");
     } else if (e.key.startsWith("Arrow") && obj && !mod) {
       e.preventDefault();
       const step = e.shiftKey ? 10 : 1;
@@ -2682,11 +2718,27 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     return () => observer.disconnect();
   }, []);
 
+  // not passive, so Ctrl/⌘ + wheel can stop the browser's own page zoom
+  useEffect(() => {
+    const el = stageRef.current;
+    const handler = (e) => onWheel(e);
+    el.addEventListener("wheel", handler, { passive: false });
+    return () => el.removeEventListener("wheel", handler);
+  }, []);
+
   useEffect(() => {
     const c = fc.current;
     c.setZoom(zoom);
     c.setDimensions({ width: Math.round(board.w * zoom), height: Math.round(board.h * zoom) });
     c.requestRenderAll();
+    // a zoom from the wheel or keys: the point under the pointer stays put
+    const a = zoomAnchor.current;
+    const el = stageRef.current;
+    if (a && el) {
+      zoomAnchor.current = null;
+      el.scrollLeft = a.left * a.ratio - a.x;
+      el.scrollTop = a.top * a.ratio - a.y;
+    }
   }, [board, zoom]);
 
   /* ---------- render ---------- */
