@@ -161,6 +161,9 @@ export function toStock(row) {
     previewImage: publicUrl(row.preview_key),
     files: row.files,
     format: main.format ?? "JPG",
+    // a PNG with see-through parts: shown on a checkerboard. One that covers
+    // its whole frame (an AI picture) gets a JPEG preview, and no checkerboard
+    transparent: main.format === "PNG" && !/\.jpe?g$/i.test(row.preview_key ?? ""),
     artboard: size,
     orientation: row.orientation || orientationOf(size[0], size[1]),
     downloads: row.downloads,

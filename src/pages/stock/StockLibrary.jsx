@@ -184,7 +184,7 @@ function StockLibrary({ config, setPage, initialSearch = "", user = null }) {
           items.map((v) => (
             <div className="vector-card" key={v.code ?? v.id} role="button" tabIndex={0} aria-label={v.title}
                  onClick={() => setSelected(v)} onKeyDown={(e) => e.key === "Enter" && setSelected(v)}>
-              <div className={`vector-thumb ${v.format === "PNG" ? "is-transparent" : ""}`} style={{ aspectRatio: `${v.artboard[0]} / ${v.artboard[1]}` }}>
+              <div className={`vector-thumb ${v.transparent ? "is-transparent" : ""}`} style={{ aspectRatio: `${v.artboard[0]} / ${v.artboard[1]}` }}>
                 <img src={v.image} alt={v.title} loading="lazy" />
                 {/* one badge, as microstocks show it: Free, Premium or Editorial;
                     an item sold per license (a font) keeps its cover clean
