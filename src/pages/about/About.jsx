@@ -227,6 +227,14 @@ function About({ setPage }) {
         </ul>
       </div>
 
+      {/* the founder, at the end of the story (after "made by us"), not in
+          the opening lines search engines quote */}
+      <p className="ab-kicker">Founder</p>
+      <p className="ab-lead">
+        Khulqidesign was founded by Khulqi Rosyid, a graphic designer who has been creating
+        digital assets since 2018.
+      </p>
+
     </section>
   );
 }
