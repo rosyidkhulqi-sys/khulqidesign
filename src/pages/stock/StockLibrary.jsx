@@ -10,6 +10,7 @@ import { ToolGlyph } from "../../components/IconControls";
 import SkeletonCards from "../../components/SkeletonCards";
 import { fetchAssetByCode, searchCatalog, toStock } from "../../lib/catalog";
 import { useAssetUrl } from "../../lib/useAssetUrl";
+import { categoryOfPath, showCategory } from "../../lib/router";
 import { stockCategoryLabel } from "../../data/stockCategories";
 import { fromPrice } from "./px";
 import LibrarySwitch from "../../components/LibrarySwitch";
@@ -25,7 +26,15 @@ function StockLibrary({ config, setPage, initialSearch = "", user = null }) {
   const [search, setSearch] = useState(initialSearch);
   const [license, setLicense] = useState("all");
   const [orientation, setOrientation] = useState("all");
-  const [category, setCategory] = useState("all");
+  // a category address (/photos/food) opens the library on it
+  const [category, setCategory] = useState(() => {
+    const id = categoryOfPath();
+    return categories.some(([c]) => c === id) ? id : "all";
+  });
+  // and picking one gives it that address, title and canonical link
+  useEffect(() => {
+    showCategory(page, category, categories.find(([c]) => c === category)?.[1]);
+  }, [page, category, categories]);
   // AI-generated: all, only AI, or without AI (as Magnific's filter)
   const [ai, setAi] = useState("all");
   // usage: commercial use, or editorial use only (as Adobe Stock's filter)

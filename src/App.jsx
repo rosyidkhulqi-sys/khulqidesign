@@ -2,7 +2,7 @@ import Footer from "./components/Footer";
 import PageHeader from "./components/PageHeader";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "./lib/supabaseClient";
-import { forgetReturn, pathFor, readLocation, rememberReturn, titleFor, updateHeadFor } from "./lib/router";
+import { forgetReturn, pageHead, pathFor, readLocation, rememberReturn } from "./lib/router";
 import { ASK_LOGIN } from "./lib/authGate";
 import LoginDialog from "./components/LoginDialog";
 import "./styles/App.css";
@@ -89,9 +89,9 @@ function App() {
   }, []);
 
   // the browser tab names the page, for people and for search engines
+  // (a library's category names it, once the library has said which)
   useEffect(() => {
-    document.title = titleFor(page);
-    updateHeadFor(page);
+    pageHead(page);
   }, [page]);
 
   const go = (nextPage, query = "") => {

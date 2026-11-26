@@ -62,6 +62,14 @@ export function assetCodeOf(pathname = window.location.pathname) {
   return m ? m[1].toUpperCase() : null;
 }
 
+// a library's category in the address: /photos/food, /vectors/animals (no
+// asset code at the end). Only a word; the library checks it's one of its own
+export function categoryOfPath(pathname = window.location.pathname) {
+  const [page, rest, extra] = pathname.replace(/^\/+|\/+$/g, "").toLowerCase().split("/");
+  if (!ASSET_PAGES[page] || !rest || extra || CODE_AT_END.test(rest)) return null;
+  return /^[a-z0-9-]{2,40}$/.test(rest) ? rest : null;
+}
+
 // the page and search query the current address points to
 export function readLocation() {
   const { pathname, search } = window.location;
@@ -70,6 +78,8 @@ export function readLocation() {
   if (slug === "" || slug === "index.html") return { page: "home", query };
   // an asset address shows its library page with the asset open
   if (assetCodeOf(pathname)) return { page: slug.split("/")[0], query };
+  // a category address shows its library, filtered
+  if (categoryOfPath(pathname)) return { page: slug.split("/")[0], query };
   return { page: known.has(slug) && slug !== "home" ? slug : "notfound", query };
 }
 
@@ -139,13 +149,40 @@ export function updateHeadFor(page, path = page === "home" ? "/" : `/${page}`) {
   }
 }
 
+// the category a library shows, so its address, tab title and canonical link
+// name it ("Food & Drink · Photos", /photos/food), as Adobe Stock and Freepik do
+const shown = { page: null, category: null, label: null };
+
+// the head of a page: a library's category when one is picked
+export function pageHead(page) {
+  if (shown.page === page && shown.category) {
+    document.title = `${shown.label} · ${pageTitles[page] ?? page} · Khulqidesign`;
+    updateHeadFor(page, `/${page}/${shown.category}`);
+  } else {
+    document.title = titleFor(page);
+    updateHeadFor(page);
+  }
+}
+
+// a library picked a category ("all" for none): the address follows (one
+// entry, replaced, so Back leaves the library), unless an asset is open
+export function showCategory(page, category, label) {
+  shown.page = page;
+  shown.category = category && category !== "all" ? category : null;
+  shown.label = label;
+  if (!assetCodeOf()) {
+    const next = (shown.category ? `/${page}/${shown.category}` : `/${page}`) + window.location.search;
+    if (next !== window.location.pathname + window.location.search) window.history.replaceState(window.history.state, "", next);
+    pageHead(page);
+  }
+}
+
 // an open asset names the tab and the canonical address; closing it restores
-// the library page's
+// the library page's (and its category's)
 const KINDS = { icons: "Icon", vectors: "Vector", logos: "Logo", footage: "Stock footage" };
 export function assetHead(page, asset) {
   if (!asset) {
-    document.title = titleFor(page);
-    updateHeadFor(page);
+    pageHead(page);
     return;
   }
   document.title = `${asset.title ?? asset.name} · ${KINDS[page] ?? pageTitles[page]} · Khulqidesign`;

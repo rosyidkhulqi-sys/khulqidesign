@@ -2,6 +2,7 @@
 // address, read fresh from the catalog (cached on the CDN for a few hours),
 // so a new upload is listed without a new deploy.
 import { PAGE_TYPES, SITE, assetUrl, escapeHtml, rest } from "./_seo.js";
+import { CATEGORIES, storedValues } from "./_listing.js";
 
 const PAGES = ["", "assets", "icons", "vectors", "photos", "logos", "templates", "mockups", "footage", "fonts", "create", "ai", "pricing", "license", "about", "refund", "terms", "privacy"];
 const MAX = 45000; // one sitemap holds 50,000 addresses; split before that
@@ -10,6 +11,20 @@ export async function GET() {
   const urls = PAGES.map((p) => `  <url><loc>${SITE}/${p}</loc></url>`);
   const typeToPage = Object.fromEntries(Object.entries(PAGE_TYPES).map(([page, type]) => [type, page]));
   const types = Object.values(PAGE_TYPES).join(",");
+
+  // each category that holds at least one asset has its own page
+  const checks = Object.entries(CATEGORIES).flatMap(([page, options]) =>
+    options.map(async ([id]) => {
+      try {
+        const values = storedValues(page, id).map(encodeURIComponent).join(",");
+        const [row] = await rest(`assets?select=code&type=eq.${PAGE_TYPES[page]}&status=eq.published&category=in.(${values})&limit=1`);
+        return row ? `  <url><loc>${SITE}/${page}/${id}</loc></url>` : null;
+      } catch {
+        return null;
+      }
+    }),
+  );
+  urls.push(...(await Promise.all(checks)).filter(Boolean));
 
   for (let from = 0; urls.length < MAX; from += 1000) {
     let rows;

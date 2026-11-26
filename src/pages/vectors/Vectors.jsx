@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { categoryOfPath, showCategory } from "../../lib/router";
 import "./Vectors.css";
 import AssetModal from "../../components/AssetModal";
 import Breadcrumb from "../../components/Breadcrumb";
@@ -59,7 +60,15 @@ function Vectors({ setPage, initialSearch = "", user = null }) {
   const [format, setFormat] = useState("all");
   const [license, setLicense] = useState("all");
   const [orientation, setOrientation] = useState("all");
-  const [category, setCategory] = useState("all");
+  // a category address (/vectors/animals) opens the library on it, and
+  // picking one gives it that address, title and canonical link
+  const [category, setCategory] = useState(() => {
+    const id = categoryOfPath();
+    return VECTOR_CATEGORY_OPTIONS.some(([c]) => c === id) ? id : "all";
+  });
+  useEffect(() => {
+    showCategory("vectors", category, VECTOR_CATEGORY_OPTIONS.find(([c]) => c === category)?.[1]);
+  }, [category]);
   // AI-generated: all, only AI, or without AI (as on Photos)
   const [ai, setAi] = useState("all");
   const [sort, setSort] = useState("popular");
