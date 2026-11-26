@@ -288,7 +288,7 @@ export async function fetchIconCatalog() {
     fetchAllIcons(),
     supabase
       .from("asset_sets")
-      .select("id, name, style, license, description, created_at")
+      .select("id, code, name, style, license, description, created_at")
       .eq("type", "icon")
       .eq("status", "published")
       .order("created_at", { ascending: false }),
@@ -303,6 +303,7 @@ export async function fetchIconCatalog() {
     .filter((set) => used.has(set.id))
     .map((set) => ({
       id: set.id,
+      code: set.code,
       name: set.name,
       style: set.style,
       license: set.license,

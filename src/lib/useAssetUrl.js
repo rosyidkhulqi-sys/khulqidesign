@@ -3,16 +3,25 @@
 // from inside the dialog replaces it), closing it goes back to the list, and
 // Back, Forward or a shared link open the right one.
 //   load(code) -> Promise<asset | null>, for an address opened directly
+//   skip(code): an address that isn't one of these assets (an icon set's),
+//   left to the page
 import { useEffect, useEffectEvent, useRef } from "react";
 import { assetCodeOf, assetHead, assetPath } from "./router";
 
-export function useAssetUrl(page, selected, setSelected, load) {
+// the code of an asset of this kind in the address, or null
+const ownCodeOf = (skip) => {
+  const code = assetCodeOf();
+  return code && !skip?.(code) ? code : null;
+};
+
+export function useAssetUrl(page, selected, setSelected, load, skip = undefined) {
+  const ownCode = () => ownCodeOf(skip);
   // an asset named by the address is being fetched: leave the address alone
   const loading = useRef(false);
 
   // the address names an asset: open it (or close when it no longer does)
   const followAddress = useEffectEvent(() => {
-    const code = assetCodeOf();
+    const code = ownCode();
     if (!code) {
       if (selected) setSelected(null);
       return;
@@ -22,7 +31,7 @@ export function useAssetUrl(page, selected, setSelected, load) {
     // not found or offline: the library shows, under its own address
     const fail = () => {
       loading.current = false;
-      if (assetCodeOf() === code) window.history.replaceState(null, "", `/${page}`);
+      if (ownCode() === code) window.history.replaceState(null, "", `/${page}`);
     };
     load(code)
       .then((asset) => {
@@ -41,7 +50,7 @@ export function useAssetUrl(page, selected, setSelected, load) {
 
   // the address, tab title and canonical link follow the open asset
   useEffect(() => {
-    const code = assetCodeOf();
+    const code = ownCodeOf(skip);
     const { history } = window;
     if (selected) {
       const next = assetPath(page, selected);
@@ -59,5 +68,5 @@ export function useAssetUrl(page, selected, setSelected, load) {
       else history.replaceState(null, "", `/${page}`);
     }
     assetHead(page, selected);
-  }, [page, selected]);
+  }, [page, selected, skip]);
 }

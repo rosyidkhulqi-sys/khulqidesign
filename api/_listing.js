@@ -5,7 +5,7 @@
 // written in, and inside #root a plain heading, a short text and, for a
 // library, its newest assets as links with pictures. Everyone gets the same
 // page (nothing hidden for robots); the app then starts and draws it in full.
-import { PAGE_TYPES, SITE, assetUrl, cdn, escapeHtml, jsonLd, rest } from "./_seo.js";
+import { PAGE_TYPES, SITE, assetUrl, cdn, escapeHtml, jsonLd, rest, slugify } from "./_seo.js";
 import { MOCKUP_CATEGORY_OPTIONS, PHOTO_CATEGORY_OPTIONS } from "../src/data/stockCategories.js";
 import { VECTOR_CATEGORY_OPTIONS, vectorCategoryStorageValues } from "../src/data/vectorCategories.js";
 import { FONT_CATEGORIES } from "../src/data/fontCategories.js";
@@ -42,6 +42,87 @@ export const categoryLabel = (page, id) => CATEGORIES[page]?.find(([c]) => c ===
 const LIBRARIES = ["icons", "vectors", "photos", "logos", "mockups", "footage", "fonts", "templates"];
 
 const NEWEST = 48;
+
+// an icon set's own address, as the app gives it (router.js setPath)
+export const setUrl = (set) =>
+  `${SITE}/icons/${[slugify(set.name), set.code.toLowerCase()].filter(Boolean).join("-")}`;
+
+// An icon set's page (/icons/<words>-kd-is-<digits>): search engines list the
+// sets, and each set links its icons. null when there's no such set.
+export async function renderIconSet(requestUrl, code) {
+  let set;
+  let icons = [];
+  try {
+    [set] = await rest(`asset_sets?select=id,code,name,style,license,description,keywords&type=eq.icon&status=eq.published&code=eq.${encodeURIComponent(code)}`);
+    if (set) {
+      icons = await rest(`assets?select=code,title,keywords,thumb_key&type=eq.icon&status=eq.published&set_id=eq.${set.id}&order=published_at.desc`, { to: 499 });
+    }
+  } catch {
+    return null;
+  }
+  if (!set || !icons.length) return null;
+
+  const shellRes = await fetch(new URL("/index.html", requestUrl));
+  let html = await shellRes.text();
+
+  const canonical = setUrl(set);
+  const title = `${set.name} · Icon set · Khulqidesign`;
+  const words = [...new Set(icons.flatMap((i) => i.keywords ?? []))].slice(0, 12).join(", ");
+  const description = set.description ||
+    `${icons.length} ${set.style ? `${set.style} ` : ""}icons in one matching set, SVG and PNG${set.license === "free" ? ", free" : ""}: ${words}.`;
+
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: title,
+    description,
+    url: canonical,
+    isPartOf: { "@type": "WebSite", name: "Khulqidesign", url: `${SITE}/` },
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: icons.length,
+      itemListElement: icons.slice(0, 100).map((icon, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: assetUrl("icons", icon),
+        name: icon.title,
+      })),
+    },
+  };
+  const head = [
+    `<title>${escapeHtml(title)}</title>`,
+    `<meta name="description" content="${escapeHtml(description)}" />`,
+    `<link rel="canonical" href="${escapeHtml(canonical)}" />`,
+    `<meta property="og:type" content="website" />`,
+    `<meta property="og:url" content="${escapeHtml(canonical)}" />`,
+    `<meta property="og:title" content="${escapeHtml(title)}" />`,
+    `<meta property="og:description" content="${escapeHtml(description)}" />`,
+    `<script type="application/ld+json">${jsonLd(data)}</script>`,
+  ].join("\n    ");
+  const items = icons
+    .map((icon) => `<li><a href="${escapeHtml(assetUrl("icons", icon))}">` +
+      (icon.thumb_key ? `<img src="${escapeHtml(cdn(icon.thumb_key))}" alt="${escapeHtml(icon.title)}" loading="lazy" width="64" />` : "") +
+      `${escapeHtml(icon.title)}</a></li>`)
+    .join("");
+
+  html = html
+    .replace(/<title>[\s\S]*?<\/title>\s*/, "")
+    .replace(/<meta\s+name="description"[\s\S]*?\/>\s*/, "")
+    .replace(/<link rel="canonical"[^>]*>\s*/, "")
+    .replace(/<meta property="og:(type|url|title|description)"[^>]*>\s*/g, "")
+    .replace("</head>", `    ${head}\n  </head>`)
+    .replace(
+      '<div id="root"></div>',
+      `<div id="root"><main class="seo-shell"><h1>${escapeHtml(set.name)}</h1><p>${escapeHtml(description)}</p>` +
+        `<ul>${items}</ul><nav><a href="/icons">All icons</a> · <a href="/">Khulqidesign</a></nav></main></div>`,
+    );
+  return new Response(html, {
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+    },
+  });
+}
 
 // the page as a Response; null for a page or category this site doesn't have
 export async function renderListing(requestUrl, page, category = null) {

@@ -54,6 +54,12 @@ export const slugify = (text = "") =>
 export const assetPath = (page, asset) =>
   `/${page}/${[slugify(asset.title ?? asset.name), asset.code.toLowerCase()].filter(Boolean).join("-")}`;
 
+// An icon set has its own address too, in the same form: /icons/<name
+// words>-kd-is-<digits>. Search engines list the sets, not every single icon
+export const SET_CODE = /^KD-IS-/;
+export const setPath = (set) =>
+  `/icons/${[slugify(set.name), set.code.toLowerCase()].filter(Boolean).join("-")}`;
+
 // the asset code in the address ("KD-VC-1329331"), or null
 export function assetCodeOf(pathname = window.location.pathname) {
   const [page, rest, extra] = pathname.replace(/^\/+|\/+$/g, "").toLowerCase().split("/");
@@ -152,16 +158,29 @@ export function updateHeadFor(page, path = page === "home" ? "/" : `/${page}`) {
 // the category a library shows, so its address, tab title and canonical link
 // name it ("Food & Drink · Photos", /photos/food), as Adobe Stock and Freepik do
 const shown = { page: null, category: null, label: null };
+// a view inside a library with its own address (an icon set): its title and path
+const view = { page: null, title: null, path: null };
 
-// the head of a page: a library's category when one is picked
+// the head of a page: an open view (an icon set), or a library's category
 export function pageHead(page) {
-  if (shown.page === page && shown.category) {
+  if (view.page === page && view.title) {
+    document.title = view.title;
+    updateHeadFor(page, view.path);
+  } else if (shown.page === page && shown.category) {
     document.title = `${shown.label} · ${pageTitles[page] ?? page} · Khulqidesign`;
     updateHeadFor(page, `/${page}/${shown.category}`);
   } else {
     document.title = titleFor(page);
     updateHeadFor(page);
   }
+}
+
+// a view with its own address opened (head: { title, path }) or closed (null)
+export function showView(page, head) {
+  view.page = page;
+  view.title = head?.title ?? null;
+  view.path = head?.path ?? null;
+  pageHead(page);
 }
 
 // a library picked a category ("all" for none): the address follows (one

@@ -1,6 +1,6 @@
 import "./Icons.css";
 import "../vectors/Vectors.css";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import "../../components/Footer.css";
 import { ToolGlyph } from "../../components/IconControls";
 import Breadcrumb from "../../components/Breadcrumb";
@@ -9,6 +9,7 @@ import IconModal from "../../components/IconModal";
 import IconSetView, { SetCard } from "./IconSets";
 import { fetchAssetByCode, fetchIconCatalog, toIcon } from "../../lib/catalog";
 import { useAssetUrl } from "../../lib/useAssetUrl";
+import { SET_CODE, assetCodeOf, setPath, showView } from "../../lib/router";
 import { matchesSearch } from "../../lib/search";
 import SkeletonCards from "../../components/SkeletonCards";
 import LibrarySwitch from "../../components/LibrarySwitch";
@@ -19,6 +20,13 @@ const matchesPrice = (price, license) =>
 
 const wordStarts = (keywords, q) =>
   keywords.some((k) => k.split(" ").some((word) => word.startsWith(q)));
+
+// an icon set's code in the address (/icons/<words>-kd-is-<digits>), or null
+const isSetCode = (code) => SET_CODE.test(code);
+const setCodeInAddress = () => {
+  const code = assetCodeOf();
+  return code && isSetCode(code) ? code : null;
+};
 
 function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
   const [search, setSearch] = useState(initialSearch);
@@ -33,8 +41,9 @@ function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState(null);
   // the open icon has its own address (shareable, and listed for search engines)
+  // (an icon set's address is left to the set view below)
   useAssetUrl("icons", selected, setSelected, (code) =>
-    fetchAssetByCode("icon", code).then((row) => row && toIcon(row)));
+    fetchAssetByCode("icon", code).then((row) => row && toIcon(row)), isSetCode);
   // color and size an icon opens with when picked from a customized set
   const [openWith, setOpenWith] = useState(null);
   // the icon set page shown in place of the library, or null
@@ -145,6 +154,57 @@ function Icons({ setPage, initialSearch = "", user = null, onAnimate }) {
     setSearch(tag);
     setCurrentPage(1);
   };
+
+  // The open set has its own address, tab title and canonical link, as an
+  // icon does: opening one adds a history entry, Back closes it, and a shared
+  // link opens it once the catalog has loaded.
+  // the address named a set before the catalog arrived
+  const waitingFor = useRef(setCodeInAddress());
+  const followSetAddress = useEffectEvent(() => {
+    const code = setCodeInAddress();
+    if (!code) {
+      if (openSet) setOpenSet(null);
+      return;
+    }
+    if (catalogLoading) {
+      waitingFor.current = code;
+      return;
+    }
+    waitingFor.current = null;
+    const set = iconSets.find((s) => s.code === code);
+    if (set) {
+      if (openSet?.id !== set.id) setOpenSet(set);
+    } else {
+      // an unknown or hidden set: the library, under its own address
+      window.history.replaceState(null, "", "/icons");
+    }
+  });
+  useEffect(() => {
+    window.addEventListener("popstate", followSetAddress);
+    return () => window.removeEventListener("popstate", followSetAddress);
+  }, []);
+  useEffect(() => {
+    if (!catalogLoading && waitingFor.current) followSetAddress();
+  }, [catalogLoading]);
+  useEffect(() => {
+    const { history } = window;
+    const code = setCodeInAddress();
+    if (openSet?.code) {
+      const next = setPath(openSet);
+      if (window.location.pathname !== next) {
+        // from one set to another: one entry, so Back returns to the library
+        if (code) history.replaceState({ kdSet: true }, "", next);
+        else history.pushState({ kdSet: true }, "", next);
+      }
+      showView("icons", { title: `${openSet.name} · Icon set · Khulqidesign`, path: next });
+      return;
+    }
+    showView("icons", null);
+    if (code && !waitingFor.current) {
+      if (history.state?.kdSet) history.back();
+      else history.replaceState(null, "", "/icons");
+    }
+  }, [openSet]);
 
   const showSet = (set) => {
     setSelected(null);

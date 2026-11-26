@@ -2,7 +2,7 @@
 // address, read fresh from the catalog (cached on the CDN for a few hours),
 // so a new upload is listed without a new deploy.
 import { PAGE_TYPES, SITE, assetUrl, escapeHtml, rest } from "./_seo.js";
-import { CATEGORIES, storedValues } from "./_listing.js";
+import { CATEGORIES, setUrl, storedValues } from "./_listing.js";
 
 const PAGES = ["", "assets", "icons", "vectors", "photos", "logos", "templates", "mockups", "footage", "fonts", "create", "ai", "pricing", "license", "about", "refund", "terms", "privacy"];
 const MAX = 45000; // one sitemap holds 50,000 addresses; split before that
@@ -10,7 +10,17 @@ const MAX = 45000; // one sitemap holds 50,000 addresses; split before that
 export async function GET() {
   const urls = PAGES.map((p) => `  <url><loc>${SITE}/${p}</loc></url>`);
   const typeToPage = Object.fromEntries(Object.entries(PAGE_TYPES).map(([page, type]) => [type, page]));
-  const types = Object.values(PAGE_TYPES).join(",");
+  // icons are listed by their sets (each set page links its icons), as one
+  // set page says more than dozens of near-alike single-icon pages
+  const types = Object.values(PAGE_TYPES).filter((t) => t !== "icon").join(",");
+  try {
+    const sets = await rest("asset_sets?select=id,code,name&type=eq.icon&status=eq.published");
+    const used = await rest("assets?select=set_id&type=eq.icon&status=eq.published&set_id=not.is.null", { to: 49999 });
+    const withIcons = new Set(used.map((r) => r.set_id));
+    for (const set of sets) if (withIcons.has(set.id)) urls.push(`  <url><loc>${escapeHtml(setUrl(set))}</loc></url>`);
+  } catch {
+    /* the sets wait for the next read */
+  }
 
   // each category that holds at least one asset has its own page
   const checks = Object.entries(CATEGORIES).flatMap(([page, options]) =>

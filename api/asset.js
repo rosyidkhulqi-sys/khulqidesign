@@ -4,7 +4,7 @@
 // plus a plain heading and picture inside #root for crawlers that don't run
 // JavaScript. The app then starts as usual and opens the asset.
 import { PAGE_TYPES, SITE, assetUrl, cdn, escapeHtml, jsonLd, rest } from "./_seo.js";
-import { renderListing } from "./_listing.js";
+import { renderIconSet, renderListing } from "./_listing.js";
 
 const KINDS = { icon: "Icon", vector: "Vector", logo: "Logo", footage: "Stock footage", photo: "Photo", mockup: "Mockup", font: "Font" };
 const CODE_AT_END = /(?:^|-)(kd-[a-z]{2}-\d{5,9})$/;
@@ -52,6 +52,12 @@ export async function GET(request) {
   const slug = (url.searchParams.get("slug") || "").toLowerCase();
   const type = PAGE_TYPES[page];
   const code = slug.match(CODE_AT_END)?.[1]?.toUpperCase();
+
+  // an icon set's code: the set's page
+  if (page === "icons" && code?.startsWith("KD-IS-")) {
+    const setPage = await renderIconSet(url, code);
+    if (setPage) return setPage;
+  }
 
   // no asset code: a category of the library (/photos/food), if it is one
   if (!code) {
