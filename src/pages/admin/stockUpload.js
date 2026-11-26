@@ -4,7 +4,7 @@
 // sold, the JPG shows it. Both get a sharp thumbnail and a preview
 // (watermarked when Premium), and their title, description and keywords from
 // the JPG's metadata, as vectors do.
-import { supabase } from "../../lib/supabaseClient";
+import { insertAsset } from "../../lib/insertAsset";
 import { uploadToR2 } from "../../lib/r2";
 import { makeImages } from "./vectorUpload";
 
@@ -77,7 +77,7 @@ export async function publishStock(kind, item, onStep) {
     const file = kind === "photo"
       ? { format: png ? "PNG" : "JPG", key: original.key, bytes: item.jpg.size, label: png ? "Full-size PNG" : "Full-size JPG", width: w, height: h }
       : { format: "PSD", key: original.key, bytes: item.psd.size, label: "Layered PSD", width: w, height: h };
-    const { error } = await supabase.from("assets").insert({
+    const error = await insertAsset({
       code,
       batch_id: item.batchId ?? null,
       source_name: item.base,

@@ -6,7 +6,7 @@
 // Adobe Stock and Shutterstock read gives title, description and keywords.
 // Originals go to private-files; poster, thumbnail and preview to
 // public-files.
-import { supabase } from "../../lib/supabaseClient";
+import { insertAsset } from "../../lib/insertAsset";
 import { uploadToR2 } from "../../lib/r2";
 import { drawWatermark, shortTitle } from "./vectorUpload";
 
@@ -276,7 +276,7 @@ export async function publishClip(item, onStep) {
 
     onStep("Saving", 1);
     const { width, height, duration } = item.playable;
-    const { error } = await supabase.from("assets").insert({
+    const error = await insertAsset({
       code,
       batch_id: item.batchId ?? null,
       source_name: item.base,

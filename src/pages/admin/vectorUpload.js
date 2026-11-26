@@ -5,7 +5,7 @@
 // all four files to R2 and write the catalogue row.
 import { decodeImage } from "../../lib/decodeImage";
 import exifr from "exifr";
-import { supabase } from "../../lib/supabaseClient";
+import { insertAsset } from "../../lib/insertAsset";
 import { uploadToR2 } from "../../lib/r2";
 
 const baseName = (name) => name.replace(/\.[^.]+$/, "");
@@ -255,7 +255,7 @@ export async function publishVector(item, onStep) {
     })));
 
     onStep("Saving", 1);
-    const { error } = await supabase.from("assets").insert({
+    const error = await insertAsset({
       code,
       batch_id: item.batchId ?? null,
       source_name: item.base,

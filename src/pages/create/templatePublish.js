@@ -8,6 +8,7 @@
 // template. (Premium templates get locked to signed links with downloads.)
 import { StaticCanvas } from "fabric";
 import { supabase } from "../../lib/supabaseClient";
+import { insertAsset } from "../../lib/insertAsset";
 import { publicUrl, uploadToR2 } from "../../lib/r2";
 
 export { TEMPLATE_CATEGORIES } from "../../data/templateCategories";
@@ -94,7 +95,7 @@ export async function publishTemplate(design, info, onStep) {
     }
 
     onStep("Saving", 1);
-    const { error } = await supabase.from("assets").insert({
+    const error = await insertAsset({
       code,
       type: "template",
       status: "published",

@@ -5,6 +5,7 @@
 // then the original goes to private-files and the cleaned copy, which the
 // editor and the grid read, to public-files.
 import { supabase } from "../../lib/supabaseClient";
+import { insertAsset } from "../../lib/insertAsset";
 import { signUploads, uploadToR2 } from "../../lib/r2";
 import { loadIconSvg } from "../../lib/iconEditor";
 import { svgMetadata } from "./elementPublish";
@@ -162,7 +163,7 @@ export async function publishIcon(item, set, onStep) {
     ]);
 
     onStep("Saving", 1);
-    const { error } = await supabase.from("assets").insert({
+    const error = await insertAsset({
       code,
       batch_id: item.batchId ?? null,
       source_name: item.file.name.replace(/\.svg$/i, ""),

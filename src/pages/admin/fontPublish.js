@@ -5,7 +5,7 @@
 // to 8 preview pictures (the first is the cover); without any, a specimen is
 // drawn from the font itself. The font file is never public.
 import JSZip from "jszip";
-import { supabase } from "../../lib/supabaseClient";
+import { insertAsset } from "../../lib/insertAsset";
 import { uploadToR2 } from "../../lib/r2";
 import { makeImages } from "./vectorUpload";
 
@@ -221,7 +221,7 @@ export async function publishFont(item, onStep) {
 
     onStep("Saving", 1);
     const previews = steps.slice(2);
-    const { error } = await supabase.from("assets").insert({
+    const error = await insertAsset({
       code,
       batch_id: item.batchId ?? null,
       source_name: item.zip?.name ?? item.title,

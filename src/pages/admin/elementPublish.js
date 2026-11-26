@@ -3,7 +3,7 @@
 // backgrounds (usually JPG). The editor needs the file itself, so it lives in
 // the public bucket, at most 3000 px on its long side.
 import { decodeImage } from "../../lib/decodeImage";
-import { supabase } from "../../lib/supabaseClient";
+import { insertAsset } from "../../lib/insertAsset";
 import { uploadToR2 } from "../../lib/r2";
 import { parseKeywords, readMetadata, shortTitle } from "./vectorUpload";
 import {
@@ -154,7 +154,7 @@ export async function publishElement(item, onStep) {
     }
 
     onStep("Saving", 1);
-    const { error } = await supabase.from("assets").insert({
+    const error = await insertAsset({
       code,
       batch_id: item.batchId ?? null,
       source_name: baseName(item.base),

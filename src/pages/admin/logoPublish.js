@@ -5,7 +5,7 @@
 // the watermark in the pixels of both the thumbnail and the preview.
 // Exclusive logos carry a USD price and are sold once.
 import { decodeImage } from "../../lib/decodeImage";
-import { supabase } from "../../lib/supabaseClient";
+import { insertAsset } from "../../lib/insertAsset";
 import { uploadToR2 } from "../../lib/r2";
 import { drawWatermark, readMetadata, shortTitle } from "./vectorUpload";
 
@@ -102,7 +102,7 @@ export async function publishLogo(item, onStep) {
     }
 
     onStep("Saving", 1);
-    const { error } = await supabase.from("assets").insert({
+    const error = await insertAsset({
       code,
       batch_id: item.batchId ?? null,
       source_name: item.base,
