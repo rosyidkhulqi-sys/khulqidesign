@@ -113,7 +113,7 @@ const exportFormats = [
 const isLocked = (obj) => Boolean(obj?.lockMovementX);
 // saved with a design, so a locked element stays locked after undo or reload
 // saved with each object: its locks, and a basic shape's sides and corner
-const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls", "kdShape", "kdFrame", "kdPremium", "kdQr", "kdTable", "kdRole", "kdAnim"];
+const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls", "kdShape", "kdFrame", "kdPremium", "kdQr", "kdTable", "kdRole", "kdAnim", "kdStock"];
 
 // Premium items in a saved page (inside groups too), and the page without them
 const countPremium = (objects = []) =>
@@ -1274,11 +1274,14 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   };
 
   // premium: a Premium library item, free to try and Premium to download
-  const addImage = async (src, point, premium = false) => {
+  // stock: { asset, format } for a Photos library item (its clean file is
+  // fetched at export for Premium accounts)
+  const addImage = async (src, point, premium = false, stock = undefined) => {
     const img = await FabricImage.fromURL(src, { crossOrigin: "anonymous" });
     const b = boardRef.current;
     img.scale(Math.min((b.w * 0.5) / img.width, (b.h * 0.5) / img.height));
     img.kdPremium = premium || undefined;
+    img.kdStock = stock;
     place(img, point);
   };
 
@@ -1298,7 +1301,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     if (kind === "element") {
       const el = partById(id);
       if (!el) return;
-      if (el.type !== "svg") return addImage(el.url, point, el.premium);
+      if (el.type !== "svg") return addImage(el.url, point, el.premium, el.stock);
       return fetch(el.url).then((r) => r.text()).then((markup) => addSvg(markup, point, el.premium));
     }
     if (kind === "vector") {
@@ -1645,6 +1648,9 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     }
     if (kind === "element") {
       const el = partById(id);
+      // a Premium photo's preview is watermarked: it goes on the page as a
+      // Premium item, not into a frame
+      if (el?.stock && el.premium) return null;
       return el?.url && !/\.svg(\?|$)/i.test(el.url) ? el.url : null;
     }
     return null;

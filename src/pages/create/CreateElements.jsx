@@ -18,7 +18,6 @@ import { elementCategories, elements as trialElements } from "../../data/element
 const trialOf = (id) => elementCategories.find((c) => c.id === id)?.items ?? [];
 import { ELEMENT_CATEGORIES, elementCategoryLabel, elementCategoryStorageValues, normalizeElementCategory } from "../../data/elementCategories";
 import { countCreateCategories, fetchCreatePage, fetchCreatePartsByCode, fetchCreatePhotos, fetchIconCatalog } from "../../lib/catalog";
-import { pathFor } from "../../lib/router";
 
 // how many tiles a category grid adds each time the list scrolls to its end
 const PAGE = 60;
@@ -141,14 +140,11 @@ export function ElementTile({ el, dragItem }) {
   );
 }
 
-// a photo from the Photos library: a free one goes on the page; a Premium one
-// opens on the Photos page, so its watermarked preview never reaches a design
+// a photo from the Photos library, on the page as any element: a Premium one
+// with its watermark and crown, free to try, downloaded with Premium (as Canva)
 export function StockPhotoTile({ photo, dragItem }) {
-  const action = photo.premium
-    ? { onClick: () => window.open(pathFor("photos", photo.name), "_blank", "noopener") }
-    : dragItem("element", photo.id);
   return (
-    <button className="cp-tile wide" {...action} title={photo.name}>
+    <button className="cp-tile wide" {...dragItem("element", photo.id)} title={photo.name}>
       <img src={photo.thumb} alt={photo.name} draggable={false} loading="lazy" crossOrigin="anonymous" />
       {photo.premium && <PremiumMark />}
     </button>

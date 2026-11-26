@@ -90,8 +90,8 @@ export async function fetchCreatePartsByCode(codes) {
 
 // ---- the Photos library inside Create: one upload, used in two places (as
 // Canva and Adobe Express use their own stock). The preview (2800 px) goes on
-// the page; a free one has no watermark. A Premium one opens on the Photos
-// page for now, until Premium in Create unlocks it at export.
+// the page; a free one has no watermark. A Premium one goes on with its
+// watermarked preview, as a Premium item: tried freely, downloaded with Premium.
 export function toCreatePhoto(row) {
   return {
     id: row.code,
@@ -103,7 +103,8 @@ export function toCreatePhoto(row) {
     name: row.title,
     keywords: row.keywords ?? [],
     premium: row.license !== "free",
-    ratio: (row.width || 1) / (row.height || 1),
+    // which file a Premium account's export swaps the preview for
+    stock: { asset: row.id, format: row.files?.[0]?.format ?? "JPG" },
   };
 }
 
