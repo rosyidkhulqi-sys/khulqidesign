@@ -69,7 +69,9 @@ export async function publishStock(kind, item, onStep) {
       ...step,
       onProgress: (p) => {
         sent[i] = p * step.file.size;
-        onStep("Uploading", sent.reduce((a, b) => a + b, 0) / total);
+        const done = sent.reduce((a, b) => a + b, 0) / total;
+        // every byte is sent: what's left is R2 confirming, not uploading
+        onStep(done >= 0.999 ? "Finishing" : "Uploading", done);
       },
     })));
 

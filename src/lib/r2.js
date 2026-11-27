@@ -14,8 +14,18 @@ export const PUBLIC_URL = import.meta.env.VITE_R2_PUBLIC_URL || "https://cdn.khu
 export const publicUrl = (key) =>
   key ? `${PUBLIC_URL}/${key.split("/").map(encodeURIComponent).join("/")}` : null;
 
+// a signing call that hasn't answered by now never will (a dropped request
+// the browser doesn't report): it fails, and the retries around it try again
+// instead of the upload waiting forever with a full bar
+const SIGN_TIMEOUT_MS = 30_000;
+
 async function sign(body) {
-  const { data, error } = await supabase.functions.invoke("r2-sign", { body });
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error("The server didn't answer")), SIGN_TIMEOUT_MS);
+  });
+  const { data, error } = await Promise.race([supabase.functions.invoke("r2-sign", { body }), timeout])
+    .finally(() => clearTimeout(timer));
   if (error) {
     // the function answers with { error } on 4xx; surface that message
     let message = error.message;
