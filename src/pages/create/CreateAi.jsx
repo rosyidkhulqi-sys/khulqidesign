@@ -12,8 +12,10 @@ const tools = [
 const TONES = ["Friendly", "Bold", "Elegant", "Playful", "Professional"];
 
 // cutoutQuota: today's Remove background use { used, limit }, limit null = no limit
+// recut: "clear" | "keep" | null, the other way to cut the selected image's
+// enclosed areas (a logo's O), done by onRecut
 function AiPanel({ aiReady, isAdmin, hasSelectedImage, operation, models, cutoutQuota, onRun, onUpload,
-  onAddElement, onAddText, selectionSvg, selectionSaved, onSelectionSaved, selectionMeta }) {
+  onAddElement, onAddText, selectionSvg, selectionSaved, onSelectionSaved, selectionMeta, recut, onRecut }) {
   const [saving, setSaving] = useState(false);
   const fileInput = useRef(null);
   const [open, setOpen] = useState(null);
@@ -82,6 +84,14 @@ function AiPanel({ aiReady, isAdmin, hasSelectedImage, operation, models, cutout
               <strong>Remove background <span className="ai-soon">{cutoutBadge}</span></strong>
               <span>Cut out the subject, then keep editing the design on the page.</span>
             </button>
+            {recut && (
+              <button className="cp-ai-recut" disabled={busy} onClick={onRecut}
+                      title={recut === "clear"
+                        ? "Also clear the background color inside the subject, like the hole of an O in a logo"
+                        : "Keep the background color inside the subject (highlights, white details)"}>
+                {recut === "clear" ? "Clear enclosed areas too" : "Keep enclosed areas"}
+              </button>
+            )}
             <div className="cp-ai-tool cp-ai-upscale">
               <strong>Upscale image <span className="ai-soon">Free · {models.upscale.mb} MB model</span></strong>
               <span>Make the selected image larger and sharper for export.</span>

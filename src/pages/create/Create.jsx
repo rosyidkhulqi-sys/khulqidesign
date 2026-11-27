@@ -387,6 +387,10 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   const [templateEdit, setTemplateEdit] = useState(peekTemplateEdit);
   const [templateSave, setTemplateSave] = useState(null);
   const [aiOperation, setAiOperation] = useState(null);
+  // the last Remove background that kept background color inside the subject
+  // (a logo's O): { image, input, bounds, whole }, so the AI tab can cut the
+  // same picture again with those areas cleared (or kept again)
+  const [lastCut, setLastCut] = useState(null);
   const aiBusy = Boolean(aiOperation && !aiOperation.error);
   // Remove background today: { used, limit } (Free 5 a day, Premium no limit)
   const [cutoutQuota, setCutoutQuota] = useState(null);
@@ -1536,6 +1540,9 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
       setActive(replacement);
       refresh();
       commit();
+      setLastCut(operation === "cutout" && processed.enclosedAreas
+        ? { image: replacement, input, bounds: cropBounds, whole: false }
+        : null);
       setAiOperation(null);
     } catch (error) {
       setAiOperation({
@@ -1544,6 +1551,63 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
         limit: error.code === "daily_limit",
       });
       if (operation === "cutout") fetchCutoutQuota().then(setCutoutQuota).catch(() => {});
+    }
+  };
+
+  // the last cut again from its original picture, with the background color
+  // inside the subject cleared (or kept again); it stays where it was on the
+  // page, and it's the same cut, so the day's allowance isn't used again
+  const recutImage = async () => {
+    const c = fc.current;
+    const image = c?.getActiveObject();
+    if (!lastCut || image !== lastCut.image || aiBusy) return;
+    const whole = !lastCut.whole;
+    const operation = "cutout";
+    setAiOperation({ operation, step: "Preparing image", progress: 0 });
+    try {
+      const onStep = (step, progress) => setAiOperation({ operation, step, progress });
+      const { blob, bounds } = await removeBackground(lastCut.input, onStep, { cropToSubject: true, clearEnclosed: whole });
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error("Could not prepare the processed image."));
+        reader.readAsDataURL(blob);
+      });
+      const replacement = await FabricImage.fromURL(dataUrl);
+      if (!c.getObjects().includes(image)) throw new Error("The selected image changed before processing finished. Please try again.");
+      // both cuts are in the original picture's pixels: move by the
+      // difference of their centers, at the same scale
+      const old = lastCut.bounds;
+      const dx = bounds.left + bounds.width / 2 - (old.left + old.width / 2);
+      const dy = bounds.top + bounds.height / 2 - (old.top + old.height / 2);
+      const m = image.calcTransformMatrix();
+      replacement.set({
+        left: m[4] + m[0] * dx + m[2] * dy,
+        top: m[5] + m[1] * dx + m[3] * dy,
+        originX: "center",
+        originY: "center",
+        scaleX: image.scaleX,
+        scaleY: image.scaleY,
+        angle: image.angle,
+        opacity: image.opacity,
+        flipX: image.flipX,
+        flipY: image.flipY,
+        skewX: image.skewX,
+        skewY: image.skewY,
+      });
+      replacement.setCoords();
+      const index = c.getObjects().indexOf(image);
+      c.remove(image);
+      c.insertAt(Math.max(0, index), replacement);
+      c.setActiveObject(replacement);
+      c.requestRenderAll();
+      setActive(replacement);
+      refresh();
+      commit();
+      setLastCut({ ...lastCut, image: replacement, bounds, whole });
+      setAiOperation(null);
+    } catch (error) {
+      setAiOperation({ operation, error: error.message || "The image couldn't be processed. Try again." });
     }
   };
 
@@ -3116,6 +3180,10 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                 models={MODELS}
                 cutoutQuota={cutoutQuota}
                 onRun={runImageAi}
+                // the selected image is the last cut and kept background
+                // color inside it (or had it cleared): offer the other way
+                recut={lastCut && active === lastCut.image ? (lastCut.whole ? "keep" : "clear") : null}
+                onRecut={recutImage}
                 onUpload={handleFiles}
               />
             )}
