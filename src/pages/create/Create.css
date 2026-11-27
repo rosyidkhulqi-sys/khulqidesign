@@ -859,6 +859,8 @@
 }
 .cb-fit:hover,
 .cb-icon:hover { background: rgba(255, 255, 255, 0.08); color: white; }
+/* a switched-on tool (the Hand), marked as Fit is */
+.cb-icon.on { border-color: rgba(255, 255, 255, 0.5); color: white; }
 .cb-sep { width: 1px; height: 18px; background: rgba(255, 255, 255, 0.1); }
 .cb-icon:disabled { opacity: 0.35; cursor: default; background: transparent; }
 

@@ -410,6 +410,14 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   const [uploadOver, setUploadOver] = useState(false);
   // Space held over the page: null, "ready" (a hand) or "dragging" (a grab)
   const [handMode, setHandMode] = useState(null);
+  // the Hand button in the bottom bar: the hand stays on without Space
+  const [handLock, setHandLock] = useState(false);
+  const handLockRef = useRef(false);
+  const toggleHand = (on) => {
+    handLockRef.current = on;
+    setHandLock(on);
+    setHandMode(on ? "ready" : null);
+  };
   const aiBusy = Boolean(aiOperation && !aiOperation.error);
   // Remove background today: { used, limit } (Free 5 a day, Premium no limit)
   const [cutoutQuota, setCutoutQuota] = useState(null);
@@ -2869,7 +2877,14 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
       t?.tagName === "INPUT" || t?.tagName === "TEXTAREA" || t?.tagName === "SELECT" || t?.isContentEditable
       || fc.current?.getActiveObject()?.isEditing;
     const control = (t) => Boolean(t?.closest?.("button, a, [role='button'], [role='radio'], [role='tab']"));
+    const on = () => held || handLockRef.current;
     const keyDown = (e) => {
+      if (e.key === "Escape" && handLockRef.current && !typing(e.target)) {
+        handLockRef.current = false;
+        setHandLock(false);
+        if (!held && !drag) setHandMode(null);
+        return;
+      }
       if (e.code !== "Space" || typing(e.target) || (control(e.target) && !over)) return;
       e.preventDefault();
       if (!held) {
@@ -2880,16 +2895,16 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     const keyUp = (e) => {
       if (e.code !== "Space" || !held) return;
       held = false;
-      if (!drag) setHandMode(null);
+      if (!drag && !handLockRef.current) setHandMode(null);
     };
     // Fabric listens to mouse events: with Space held they stop at the stage
     const block = (e) => {
-      if (!held) return;
+      if (!on()) return;
       e.stopPropagation();
       e.preventDefault();
     };
     const start = (e) => {
-      if (!held || e.button !== 0) return;
+      if (!on() || e.button !== 0) return;
       e.stopPropagation();
       e.preventDefault();
       drag = { x: e.clientX, y: e.clientY, left: el.scrollLeft, top: el.scrollTop };
@@ -2903,13 +2918,13 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     const end = () => {
       if (!drag) return;
       drag = null;
-      setHandMode(held ? "ready" : null);
+      setHandMode(on() ? "ready" : null);
     };
     // leaving the window mid-press would leave the hand on
     const reset = () => {
       held = false;
       drag = null;
-      setHandMode(null);
+      setHandMode(handLockRef.current ? "ready" : null);
     };
     const enter = () => { over = true; };
     const leave = () => { over = false; };
@@ -3697,6 +3712,15 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                 <Icon name="chevronRight" size={16} />
               </button>
             </div>
+            <button
+              className={`cb-icon ${handLock ? "on" : ""}`}
+              onClick={() => toggleHand(!handLock)}
+              aria-pressed={handLock}
+              aria-label="Hand tool"
+              title={handLock ? "Hand tool on: drag to move around (Esc to stop)" : "Hand tool: drag to move around (hold Space)"}
+            >
+              <Icon name="hand" size={16} />
+            </button>
             <button
               className={`cb-fit ${zoomMode === "fit" ? "on" : ""}`}
               onClick={() => setZoomMode("fit")}
