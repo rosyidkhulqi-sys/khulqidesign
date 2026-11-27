@@ -207,10 +207,10 @@ async function bitmapOf(file, maxSide) {
 // ------------------------------------------------------- remove background
 
 // A logo or graphic on a plain background (the whole border one color, like
-// cream or white) is cut by color instead of by the model: the model keeps
-// background-colored areas inside the subject (the cream in a logo), while a
-// color key clears them everywhere, as a designer would. It also needs no
-// model download. Returns the background color, or null for a photo.
+// cream or white) is cut by color instead of by the model: sharper edges than
+// the model's 320 px map, and no model download. Only the background that
+// touches the border goes (see borderReach); background-colored areas inside
+// the subject stay. Returns the background color, or null for a photo.
 function flatBackgroundOf(bitmap) {
   const side = 256;
   const scale = Math.min(1, side / Math.max(bitmap.width, bitmap.height));
@@ -238,12 +238,65 @@ function flatBackgroundOf(bitmap) {
 // from FAR it's subject, a soft edge in between
 const KEY_NEAR = 20;
 const KEY_FAR = 64;
+// the map of background reached from the border is worked out at this size
+const REACH_SIDE = 2048;
+
+// Which background touches the border, as remove.bg and Photoshop's
+// Contiguous wand see it: a fill from the edge through background-colored
+// pixels only, so an outline stops it and the white of a highlight, a
+// trophy's plaque or a logo's counter inside the subject stays. Grown by one
+// pixel so the subject's soft edge is still cleaned. Returns { reach, rw, rh }.
+function borderReach(bitmap, bg) {
+  const scale = Math.min(1, REACH_SIDE / Math.max(bitmap.width, bitmap.height));
+  const rw = Math.max(1, Math.round(bitmap.width * scale));
+  const rh = Math.max(1, Math.round(bitmap.height * scale));
+  const ctx = canvasOf(rw, rh).getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(bitmap, 0, 0, rw, rh);
+  const { data } = ctx.getImageData(0, 0, rw, rh);
+  const isBg = (p) => Math.hypot(data[p * 4] - bg[0], data[p * 4 + 1] - bg[1], data[p * 4 + 2] - bg[2]) < KEY_NEAR;
+  const seen = new Uint8Array(rw * rh);
+  const stack = [];
+  const push = (p) => {
+    if (!seen[p] && isBg(p)) {
+      seen[p] = 1;
+      stack.push(p);
+    }
+  };
+  for (let x = 0; x < rw; x++) {
+    push(x);
+    push((rh - 1) * rw + x);
+  }
+  for (let y = 0; y < rh; y++) {
+    push(y * rw);
+    push(y * rw + rw - 1);
+  }
+  while (stack.length) {
+    const p = stack.pop();
+    const x = p % rw;
+    if (x > 0) push(p - 1);
+    if (x < rw - 1) push(p + 1);
+    if (p >= rw) push(p - rw);
+    if (p < rw * (rh - 1)) push(p + rw);
+  }
+  const reach = new Uint8Array(rw * rh);
+  for (let p = 0; p < rw * rh; p++) {
+    if (!seen[p]) continue;
+    const x = p % rw;
+    reach[p] = 1;
+    if (x > 0) reach[p - 1] = 1;
+    if (x < rw - 1) reach[p + 1] = 1;
+    if (p >= rw) reach[p - rw] = 1;
+    if (p < rw * (rh - 1)) reach[p + rw] = 1;
+  }
+  return { reach, rw, rh };
+}
 
 async function keyOutBackground(bitmap, bg, onStep, cropToSubject) {
   const { width: w, height: h } = bitmap;
   const full = canvasOf(w, h);
   const output = full.getContext("2d", { willReadFrequently: true });
   output.drawImage(bitmap, 0, 0);
+  const { reach, rw, rh } = borderReach(bitmap, bg);
   bitmap.close();
   let minX = w;
   let minY = h;
@@ -255,6 +308,21 @@ async function keyOutBackground(bitmap, bg, onStep, cropToSubject) {
     const img = output.getImageData(0, y, w, rows);
     const d = img.data;
     for (let i = 0; i < d.length; i += 4) {
+      const pixel = i >> 2;
+      const rx = (((pixel % w) * rw) / w) | 0;
+      const ry = (((y + ((pixel / w) | 0)) * rh) / h) | 0;
+      // background-colored but enclosed by the subject: part of the picture
+      if (!reach[ry * rw + rx]) {
+        if (cropToSubject && d[i + 3] > 8) {
+          const x = pixel % w;
+          const py = y + ((pixel / w) | 0);
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, py);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, py);
+        }
+        continue;
+      }
       const dist = Math.hypot(d[i] - bg[0], d[i + 1] - bg[1], d[i + 2] - bg[2]);
       const a = Math.max(0, Math.min(1, (dist - KEY_NEAR) / (KEY_FAR - KEY_NEAR)));
       // an edge pixel mixes subject and background: take the background out
@@ -263,7 +331,6 @@ async function keyOutBackground(bitmap, bg, onStep, cropToSubject) {
       }
       d[i + 3] = Math.round(a * (d[i + 3] / 255) * 255);
       if (cropToSubject && d[i + 3] > 8) {
-        const pixel = i >> 2;
         const x = pixel % w;
         const py = y + ((pixel / w) | 0);
         minX = Math.min(minX, x);
