@@ -65,6 +65,11 @@ function StockUpload({ kind, onPublished }) {
   };
 
   const ready = items.filter((it) => it.status === "ready" || it.status === "error").length;
+  // the whole upload's progress: how many files are through, and the bytes of
+  // those still sending, as Google Drive shows one line for a big upload
+  const [run, setRun] = useState(null);
+  const sending = items.reduce((sum, it) => sum + (it.status === "uploading" ? it.progress || 0 : 0), 0);
+  const percent = run ? Math.min(100, Math.round(((run.through + sending) / run.total) * 100)) : 0;
 
   const publishAll = async () => {
     setPublishing(true);
@@ -80,21 +85,28 @@ function StockUpload({ kind, onPublished }) {
     }
     setBatchError(null);
     const queue = items.filter((it) => it.status === "ready" || it.status === "error");
+    setRun({ total: queue.length, through: 0, published: 0 });
+    const through = (ok) => setRun((r) => r && { ...r, through: r.through + 1, published: r.published + (ok ? 1 : 0) });
     await runPool(queue, AT_ONCE, async (item) => {
       if (!item.title.trim()) {
         update(item.base, { status: "error", message: "Add a title first" });
+        through(false);
         return;
       }
       update(item.base, { status: "uploading", progress: 0, message: "Preparing" });
       try {
         const code = await publishStock(kind, { ...item, batchId, title: item.title.trim() }, (message, progress) =>
           update(item.base, { message, progress }));
+        // the file counts as through and stops counting as sending in one render
         update(item.base, { status: "done", progress: 1, message: `Published as ${code}` });
+        through(true);
         published += 1;
       } catch (e) {
         update(item.base, { status: "error", message: e.message });
+        through(false);
       }
     });
+    setRun(null);
     setItems((list) => list.filter((it) => it.status !== "done"));
     if (published) setFinished({ published, failed: queue.length - published, where: batch.trim() || null });
     setPublishing(false);
@@ -151,7 +163,14 @@ function StockUpload({ kind, onPublished }) {
       {items.length > 0 && (
         <>
           <div className="ad-bar">
-            <span>{items.length} {items.length === 1 ? noun[0] : noun[1]}</span>
+            {run ? (
+              <div className="ad-overall" role="status">
+                <span>{run.published} of {run.total} published · {percent}%</span>
+                <div className="ad-progress"><span style={{ width: `${percent}%` }} /></div>
+              </div>
+            ) : (
+              <span>{items.length} {items.length === 1 ? noun[0] : noun[1]}</span>
+            )}
             <button className="ad-primary" onClick={publishAll} disabled={publishing || ready === 0}>
               {publishing ? "Publishing…" : `Publish ${ready}`}
             </button>

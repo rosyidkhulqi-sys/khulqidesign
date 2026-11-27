@@ -57,6 +57,8 @@
   margin: 22px 0 12px;
 }
 .ad-bar > span { margin-right: auto; color: #aeb0b2; font-size: 14px; }
+/* the whole upload's progress, in place of the count while publishing */
+.ad-overall { display: grid; gap: 6px; flex: 0 1 320px; margin-right: auto; color: #aeb0b2; font-size: 14px; font-variant-numeric: tabular-nums; }
 .ad-bar > button:not(.ad-primary) {
   height: 40px;
   padding: 0 14px;
