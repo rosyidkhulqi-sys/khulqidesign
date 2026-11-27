@@ -14,6 +14,7 @@ import { categoryOfPath, showCategory } from "../../lib/router";
 import { stockCategoryLabel } from "../../data/stockCategories";
 import { fromPrice } from "./px";
 import LibrarySwitch from "../../components/LibrarySwitch";
+import MasonryColumns from "../../components/MasonryColumns";
 
 const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 const PER_PAGE = 24;
@@ -188,9 +189,13 @@ function StockLibrary({ config, setPage, initialSearch = "", user = null }) {
 
       {error && <p className="no-results" role="alert">{error}</p>}
 
-      <div className="vector-grid is-bare">
-        {loading ? <SkeletonCards count={12} cardClass="vector-card" ratios={["4 / 3", "3 / 4", "16 / 9", "1 / 1"]} /> : items.length > 0 ? (
-          items.map((v) => (
+      {!loading && items.length > 0 ? (
+        <MasonryColumns
+          items={items}
+          className="vector-grid is-bare"
+          ratio={(v) => (v.artboard?.[0] ? v.artboard[1] / v.artboard[0] : 1)}
+        >
+          {(v) => (
             <div className="vector-card" key={v.code ?? v.id} role="button" tabIndex={0} aria-label={v.title}
                  onClick={() => setSelected(v)} onKeyDown={(e) => e.key === "Enter" && setSelected(v)}>
               <div className={`vector-thumb ${v.transparent ? "is-transparent" : ""}`} style={{ aspectRatio: `${v.artboard[0]} / ${v.artboard[1]}` }}>
@@ -221,16 +226,20 @@ function StockLibrary({ config, setPage, initialSearch = "", user = null }) {
                 </div>
               )}
             </div>
-          ))
-        ) : (
-          <div className="no-results">
-            {/* a library still being filled says so, instead of "nothing found" */}
-            <h3>{hasFilter ? `No ${noun[1]} found` : config.empty.title}</h3>
-            <p>{hasFilter ? "Try another search or filter." : config.empty.text}</p>
-            {hasFilter && <button className="clear-filters" onClick={clearFilters}>Clear filters</button>}
-          </div>
-        )}
-      </div>
+          )}
+        </MasonryColumns>
+      ) : (
+        <div className="vector-grid is-bare">
+          {loading ? <SkeletonCards count={12} cardClass="vector-card" ratios={["4 / 3", "3 / 4", "16 / 9", "1 / 1"]} /> : (
+            <div className="no-results">
+              {/* a library still being filled says so, instead of "nothing found" */}
+              <h3>{hasFilter ? `No ${noun[1]} found` : config.empty.title}</h3>
+              <p>{hasFilter ? "Try another search or filter." : config.empty.text}</p>
+              {hasFilter && <button className="clear-filters" onClick={clearFilters}>Clear filters</button>}
+            </div>
+          )}
+        </div>
+      )}
 
       {totalPages > 1 && (
         <div className="pagination">

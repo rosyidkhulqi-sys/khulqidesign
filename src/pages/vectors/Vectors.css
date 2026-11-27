@@ -72,6 +72,11 @@
 /* pictures only (Vectors): the same gap down as across */
 .vector-grid.is-bare .vector-card { margin-bottom: 16px; }
 @media (max-width: 640px) { .vector-grid.is-bare .vector-card { margin-bottom: 10px; } }
+/* filled row by row (MasonryColumns): flex columns instead of CSS columns */
+.vector-grid.is-masonry { columns: auto; display: flex; align-items: flex-start; gap: 16px; }
+.vector-grid.is-masonry .masonry-column { flex: 1 1 0; min-width: 0; }
+.vector-grid.is-masonry .vector-card { display: block; }
+@media (max-width: 640px) { .vector-grid.is-masonry { gap: 10px; } }
 
 .vector-card {
   display: inline-block;
