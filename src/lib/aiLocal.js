@@ -246,12 +246,38 @@ const KEY_FAR = 64;
 const VISIBLE = 24;
 // the map of background reached from the border is worked out at this size
 const REACH_SIDE = 2048;
+// Defringe: an AI picture's edge is a soft mix of subject and background
+// several pixels wide. Measured against a fixed FAR, a half-white green edge
+// pixel counts as solid and stays as a white line on a dark or colored
+// background. So on the edge (EDGE_BAND map pixels past the background) a
+// pixel's alpha is measured against the most solid subject color within
+// EDGE_RADIUS pixels: half way to that color is half transparent, and its color
+// is taken back to the subject's. Pixels further than EDGE_MAX from the
+// background are solid anyway and skip the search.
+const EDGE_BAND = 3;
+const EDGE_RADIUS = 4;
+const EDGE_MAX = 200;
+
+// a mask grown by one pixel (4 neighbours)
+function grow(mask, rw, rh) {
+  const out = new Uint8Array(mask);
+  for (let p = 0; p < rw * rh; p++) {
+    if (!mask[p]) continue;
+    const x = p % rw;
+    if (x > 0) out[p - 1] = 1;
+    if (x < rw - 1) out[p + 1] = 1;
+    if (p >= rw) out[p - rw] = 1;
+    if (p < rw * (rh - 1)) out[p + rw] = 1;
+  }
+  return out;
+}
 
 // Which background touches the border, as remove.bg and Photoshop's
 // Contiguous wand see it: a fill from the edge through background-colored
 // pixels only, so an outline stops it and the white of a highlight, a
 // trophy's plaque or a logo's counter inside the subject stays. Grown by one
-// pixel so the subject's soft edge is still cleaned. Returns { reach, rw, rh }.
+// pixel so the subject's soft edge is still cleaned. Returns { reach, band,
+// rw, rh }: band is the reach grown a few pixels more, the subject's edge.
 function borderReach(bitmap, bg) {
   const scale = Math.min(1, REACH_SIDE / Math.max(bitmap.width, bitmap.height));
   const rw = Math.max(1, Math.round(bitmap.width * scale));
@@ -284,17 +310,11 @@ function borderReach(bitmap, bg) {
     if (p >= rw) push(p - rw);
     if (p < rw * (rh - 1)) push(p + rw);
   }
-  const reach = new Uint8Array(rw * rh);
-  for (let p = 0; p < rw * rh; p++) {
-    if (!seen[p]) continue;
-    const x = p % rw;
-    reach[p] = 1;
-    if (x > 0) reach[p - 1] = 1;
-    if (x < rw - 1) reach[p + 1] = 1;
-    if (p >= rw) reach[p - rw] = 1;
-    if (p < rw * (rh - 1)) reach[p + rw] = 1;
-  }
-  return { reach, rw, rh };
+  const reach = grow(seen, rw, rh);
+  // the subject's soft edge, a few pixels deep: there the edge is defringed
+  let band = reach;
+  for (let i = 0; i < EDGE_BAND; i++) band = grow(band, rw, rh);
+  return { reach, band, rw, rh };
 }
 
 // clearEnclosed: also clear background-colored areas inside the subject (the
@@ -304,8 +324,26 @@ async function keyOutBackground(bitmap, bg, onStep, cropToSubject, clearEnclosed
   const full = canvasOf(w, h);
   const output = full.getContext("2d", { willReadFrequently: true });
   output.drawImage(bitmap, 0, 0);
-  const { reach, rw, rh } = clearEnclosed ? { reach: null, rw: 1, rh: 1 } : borderReach(bitmap, bg);
+  const { reach, band, rw, rh } = clearEnclosed ? { reach: null, band: null, rw: 1, rh: 1 } : borderReach(bitmap, bg);
   bitmap.close();
+  // the picture as it was, for looking at an edge pixel's neighbours
+  const src = output.getImageData(0, 0, w, h).data;
+  const distOf = (p) => Math.hypot(src[p * 4] - bg[0], src[p * 4 + 1] - bg[1], src[p * 4 + 2] - bg[2]);
+  // the most solid subject color near (x, y): every other pixel of a square
+  const solidNear = (x, y) => {
+    let most = KEY_FAR;
+    for (let dy = -EDGE_RADIUS; dy <= EDGE_RADIUS; dy += 2) {
+      const yy = y + dy;
+      if (yy < 0 || yy >= h) continue;
+      for (let dx = -EDGE_RADIUS; dx <= EDGE_RADIUS; dx += 2) {
+        const xx = x + dx;
+        if (xx < 0 || xx >= w) continue;
+        const dd = distOf(yy * w + xx);
+        if (dd > most) most = dd;
+      }
+    }
+    return most;
+  };
   // pixels of background color left inside the subject: when there are some,
   // the page offers to clear them too
   let enclosed = 0;
@@ -322,12 +360,16 @@ async function keyOutBackground(bitmap, bg, onStep, cropToSubject, clearEnclosed
       const pixel = i >> 2;
       const rx = (((pixel % w) * rw) / w) | 0;
       const ry = (((y + ((pixel / w) | 0)) * rh) / h) | 0;
-      // background-colored but enclosed by the subject: part of the picture
-      if (reach && !reach[ry * rw + rx]) {
-        if (Math.hypot(d[i] - bg[0], d[i + 1] - bg[1], d[i + 2] - bg[2]) < KEY_NEAR) enclosed += 1;
+      const x = pixel % w;
+      const py = y + ((pixel / w) | 0);
+      const cell = ry * rw + rx;
+      const dist = Math.hypot(d[i] - bg[0], d[i + 1] - bg[1], d[i + 2] - bg[2]);
+      // the subject itself, or background color enclosed by it (a highlight,
+      // a plaque): left as it is
+      const kept = reach && (dist < KEY_NEAR ? !reach[cell] : !band[cell]);
+      if (kept) {
+        if (dist < KEY_NEAR) enclosed += 1;
         if (cropToSubject && d[i + 3] > VISIBLE) {
-          const x = pixel % w;
-          const py = y + ((pixel / w) | 0);
           minX = Math.min(minX, x);
           minY = Math.min(minY, py);
           maxX = Math.max(maxX, x);
@@ -335,16 +377,14 @@ async function keyOutBackground(bitmap, bg, onStep, cropToSubject, clearEnclosed
         }
         continue;
       }
-      const dist = Math.hypot(d[i] - bg[0], d[i + 1] - bg[1], d[i + 2] - bg[2]);
-      const a = Math.max(0, Math.min(1, (dist - KEY_NEAR) / (KEY_FAR - KEY_NEAR)));
+      const far = dist >= KEY_NEAR && dist < EDGE_MAX ? solidNear(x, py) : KEY_FAR;
+      const a = Math.max(0, Math.min(1, (dist - KEY_NEAR) / (far - KEY_NEAR)));
       // an edge pixel mixes subject and background: take the background out
       if (a > 0 && a < 1) {
         for (let c = 0; c < 3; c++) d[i + c] = clampByte((d[i + c] - (1 - a) * bg[c]) / Math.max(a, 0.08));
       }
       d[i + 3] = Math.round(a * (d[i + 3] / 255) * 255);
       if (cropToSubject && d[i + 3] > VISIBLE) {
-        const x = pixel % w;
-        const py = y + ((pixel / w) | 0);
         minX = Math.min(minX, x);
         minY = Math.min(minY, py);
         maxX = Math.max(maxX, x);
