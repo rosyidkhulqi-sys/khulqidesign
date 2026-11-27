@@ -116,7 +116,7 @@ const exportFormats = [
 const isLocked = (obj) => Boolean(obj?.lockMovementX);
 // saved with a design, so a locked element stays locked after undo or reload
 // saved with each object: its locks, and a basic shape's sides and corner
-const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls", "kdShape", "kdFrame", "kdPremium", "kdQr", "kdTable", "kdRole", "kdAnim", "kdStock"];
+const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls", "kdShape", "kdFrame", "kdPremium", "kdQr", "kdTable", "kdRole", "kdAnim", "kdStock", "kdCover"];
 
 // Premium items in a saved page (inside groups too), and the page without them
 const countPremium = (objects = []) =>
@@ -1317,6 +1317,28 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     if (quick && quick !== src) sharpen(img, src);
   };
 
+  // The Premium background picture (see addCoverImage) is an element, not the
+  // page background, so a new background would sit hidden behind it: choosing
+  // any background takes it away first. Designs from before kdCover existed
+  // are recognized by a library photo at the very back that covers the page.
+  const removeCover = () => {
+    const c = fc.current;
+    const b = boardRef.current;
+    const objects = c.getObjects();
+    const covers = objects.filter((o, i) => {
+      if (o.kdCover) return true;
+      if (i !== 0 || !(o instanceof FabricImage) || !o.kdStock) return false;
+      const r = o.getBoundingRect();
+      return r.left <= 1 && r.top <= 1 && r.left + r.width >= b.w - 1 && r.top + r.height >= b.h - 1;
+    });
+    if (!covers.length) return;
+    if (covers.includes(c.getActiveObject())) {
+      c.discardActiveObject();
+      setActive(null);
+    }
+    covers.forEach((o) => c.remove(o));
+  };
+
   // a picture that covers the whole page, behind everything else
   const addCoverImage = async (photo) => {
     const c = fc.current;
@@ -1326,6 +1348,12 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     img.set({ scaleX: k, scaleY: k, left: (b.w - img.width * k) / 2, top: (b.h - img.height * k) / 2 });
     img.kdPremium = true;
     img.kdStock = photo.stock;
+    img.kdCover = true;
+    // it replaces the page's background, whatever that was
+    removeCover();
+    bgRequest.current += 1;
+    c.backgroundImage = undefined;
+    setBgPhoto(null);
     c.insertAt(0, img);
     img.setCoords();
     c.setActiveObject(img);
@@ -2311,6 +2339,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   // a color replaces the photo; otherwise the choice wouldn't show
   const setBackground = (paint, previewColor = paint) => {
     bgRequest.current += 1;
+    removeCover();
     fc.current.backgroundImage = undefined;
     fc.current.backgroundColor = paint;
     setBg(typeof previewColor === "string" ? previewColor : "#ffffff");
@@ -2324,6 +2353,8 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   // quick: a smaller copy shown first, until the full picture has arrived
   const setBackgroundPhoto = async (src, quick = undefined) => {
     const request = ++bgRequest.current;
+    removeCover();
+    fc.current.requestRenderAll();
     if (quick) {
       const small = await imageCover(quick, boardRef.current.w, boardRef.current.h).catch(() => null);
       if (request !== bgRequest.current) return;
