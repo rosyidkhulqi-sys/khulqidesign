@@ -39,6 +39,11 @@ function ImageTool({ tool, run, suffix, options = null, modelMb, hint, user }) {
   // Remove background: the new background (the cut itself is kept in result)
   const [bgMode, setBgMode] = useState("transparent");
   const [bgColor, setBgColor] = useState("#ffffff");
+  // a graphic on a plain background keeps background-colored areas inside
+  // the subject (a highlight, the hole of an O); enclosed: there were some,
+  // so the page offers to clear them too; wholeCut: they were cleared
+  const [enclosed, setEnclosed] = useState(false);
+  const [wholeCut, setWholeCut] = useState(false);
   useEffect(() => {
     if (!counted) return;
     let alive = true;
@@ -88,20 +93,26 @@ function ImageTool({ tool, run, suffix, options = null, modelMb, hint, user }) {
     setAfter(null);
     setResult(null);
     setStep(null);
+    setEnclosed(false);
+    setWholeCut(false);
   };
 
-  const start = async () => {
+  // recut: the same picture again with or without its enclosed areas; it's
+  // still one cut of one picture, so it doesn't use the day's allowance again
+  const start = async (clearEnclosed = false, recut = false) => {
     setError(null);
     setLimitHit(false);
     setAfter(null);
     setResult(null);
     try {
-      if (counted) await checkCutout();
+      if (counted && !recut) await checkCutout();
       const blob = await run(file, (label, p) => {
         setStep(label);
         setProgress(p);
-      }, option);
-      if (counted) setQuota(await countCutout());
+      }, option, { clearEnclosed });
+      if (counted && !recut) setQuota(await countCutout());
+      setEnclosed(Boolean(blob.enclosedAreas) || clearEnclosed);
+      setWholeCut(clearEnclosed);
       setResult(blob);
       setAfter(URL.createObjectURL(blob));
     } catch (e) {
@@ -124,6 +135,8 @@ function ImageTool({ tool, run, suffix, options = null, modelMb, hint, user }) {
     setError(null);
     setLimitHit(false);
     setBgMode("transparent");
+    setEnclosed(false);
+    setWholeCut(false);
   };
 
   const download = async () => {
@@ -212,12 +225,20 @@ function ImageTool({ tool, run, suffix, options = null, modelMb, hint, user }) {
                 ))}
               </div>
             )}
+            {counted && result && enclosed && (
+              <button onClick={() => start(!wholeCut, true)} disabled={busy}
+                      title={wholeCut
+                        ? "Keep the background color inside the subject (highlights, white details)"
+                        : "Also clear the background color inside the subject, like the hole of an O in a logo"}>
+                {wholeCut ? "Keep enclosed areas" : "Clear enclosed areas too"}
+              </button>
+            )}
             <button onClick={clear} disabled={busy} title="Remove this picture and start again">Remove</button>
             <button onClick={() => input.current?.click()} disabled={busy}>Choose another</button>
             {result ? (
               <button className="it-primary" onClick={download}>Download PNG</button>
             ) : (
-              <button className="it-primary" onClick={start} disabled={busy}>
+              <button className="it-primary" onClick={() => start()} disabled={busy}>
                 {busy ? "Working…" : "Start"}
               </button>
             )}

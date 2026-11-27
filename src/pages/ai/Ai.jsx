@@ -29,7 +29,8 @@ const imageTools = {
   cutout: {
     title: "Remove background",
     sub: "Cut out the subject, on your device",
-    run: removeBackground,
+    // extra: { clearEnclosed } from the "Clear enclosed areas too" button
+    run: (file, onStep, option, extra) => removeBackground(file, onStep, extra),
     suffix: "no-background",
     modelMb: MODELS.cutout.mb,
     hint: "Works best on a clear subject: a product, a person, an illustration.",

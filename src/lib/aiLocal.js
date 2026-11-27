@@ -291,13 +291,18 @@ function borderReach(bitmap, bg) {
   return { reach, rw, rh };
 }
 
-async function keyOutBackground(bitmap, bg, onStep, cropToSubject) {
+// clearEnclosed: also clear background-colored areas inside the subject (the
+// counter of an O in a logo), as the Magic Wand without Contiguous does
+async function keyOutBackground(bitmap, bg, onStep, cropToSubject, clearEnclosed) {
   const { width: w, height: h } = bitmap;
   const full = canvasOf(w, h);
   const output = full.getContext("2d", { willReadFrequently: true });
   output.drawImage(bitmap, 0, 0);
-  const { reach, rw, rh } = borderReach(bitmap, bg);
+  const { reach, rw, rh } = clearEnclosed ? { reach: null, rw: 1, rh: 1 } : borderReach(bitmap, bg);
   bitmap.close();
+  // pixels of background color left inside the subject: when there are some,
+  // the page offers to clear them too
+  let enclosed = 0;
   let minX = w;
   let minY = h;
   let maxX = -1;
@@ -312,7 +317,8 @@ async function keyOutBackground(bitmap, bg, onStep, cropToSubject) {
       const rx = (((pixel % w) * rw) / w) | 0;
       const ry = (((y + ((pixel / w) | 0)) * rh) / h) | 0;
       // background-colored but enclosed by the subject: part of the picture
-      if (!reach[ry * rw + rx]) {
+      if (reach && !reach[ry * rw + rx]) {
+        if (Math.hypot(d[i] - bg[0], d[i + 1] - bg[1], d[i + 2] - bg[2]) < KEY_NEAR) enclosed += 1;
         if (cropToSubject && d[i + 3] > 8) {
           const x = pixel % w;
           const py = y + ((pixel / w) | 0);
@@ -344,11 +350,15 @@ async function keyOutBackground(bitmap, bg, onStep, cropToSubject) {
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
   onStep?.("Done", 1);
-  return finishCutout(full, w, h, cropToSubject, { minX, minY, maxX, maxY });
+  // more than a speck (0.05% of the picture) counts
+  const enclosedAreas = enclosed > w * h * 0.0005;
+  return finishCutout(full, w, h, cropToSubject, { minX, minY, maxX, maxY }, enclosedAreas);
 }
 
-// the cut as a PNG; for the editor, cropped to the subject with its bounds
-async function finishCutout(full, w, h, cropToSubject, { minX, minY, maxX, maxY }) {
+// the cut as a PNG; for the editor, cropped to the subject with its bounds.
+// enclosedAreas (flat backgrounds only): background color was kept inside the
+// subject; it rides on the result (blob.enclosedAreas, or the object's field)
+async function finishCutout(full, w, h, cropToSubject, { minX, minY, maxX, maxY }, enclosedAreas = false) {
   if (cropToSubject) {
     if (maxX < minX || maxY < minY) {
       throw new Error("No visible subject was found. Try another image.");
@@ -356,9 +366,11 @@ async function finishCutout(full, w, h, cropToSubject, { minX, minY, maxX, maxY 
     const bounds = { left: minX, top: minY, width: maxX - minX + 1, height: maxY - minY + 1, sourceWidth: w, sourceHeight: h };
     const cropped = canvasOf(bounds.width, bounds.height);
     cropped.getContext("2d").drawImage(full, minX, minY, bounds.width, bounds.height, 0, 0, bounds.width, bounds.height);
-    return { blob: await toBlob(cropped), bounds };
+    return { blob: await toBlob(cropped), bounds, enclosedAreas };
   }
-  return toBlob(full);
+  const blob = await toBlob(full);
+  blob.enclosedAreas = enclosedAreas;
+  return blob;
 }
 
 const SIZE = 320;
@@ -370,6 +382,7 @@ const STD = [0.229, 0.224, 0.225];
 // options may be null: the AI page passes its (empty) tool option along
 export async function removeBackground(file, onStep, options) {
   const cropToSubject = options?.cropToSubject ?? false;
+  const clearEnclosed = options?.clearEnclosed ?? false;
   const bitmap = await bitmapOf(file, 4096);
   const { width: w, height: h } = bitmap;
 
@@ -377,7 +390,7 @@ export async function removeBackground(file, onStep, options) {
   const flat = flatBackgroundOf(bitmap);
   if (flat) {
     onStep?.("Finding the subject", 0);
-    return keyOutBackground(bitmap, flat, onStep, cropToSubject);
+    return keyOutBackground(bitmap, flat, onStep, cropToSubject, clearEnclosed);
   }
 
   onStep?.("Loading the AI model", 0);
