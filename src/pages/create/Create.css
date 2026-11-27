@@ -512,6 +512,8 @@
   cursor: pointer;
 }
 .cp-upload:hover { border-color: rgba(255, 255, 255, 0.5); }
+/* a file dragged over the box: it lights up, as the admin's drop zones do */
+.cp-upload.is-over { border-color: var(--white); background: rgba(255, 255, 255, 0.08); }
 .cp-upload { display: flex; align-items: center; justify-content: center; gap: 8px; }
 
 /* PROJECTS: saved designs as cards */

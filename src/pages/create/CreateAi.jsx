@@ -17,6 +17,8 @@ const TONES = ["Friendly", "Bold", "Elegant", "Playful", "Professional"];
 function AiPanel({ aiReady, isAdmin, hasSelectedImage, operation, models, cutoutQuota, onRun, onUpload,
   onAddElement, onAddText, selectionSvg, selectionSaved, onSelectionSaved, selectionMeta, recut, onRecut }) {
   const [saving, setSaving] = useState(false);
+  // a picture dragged over the upload box
+  const [dragging, setDragging] = useState(false);
   const fileInput = useRef(null);
   const [open, setOpen] = useState(null);
   const [prompt, setPrompt] = useState("");
@@ -74,8 +76,15 @@ function AiPanel({ aiReady, isAdmin, hasSelectedImage, operation, models, cutout
         {!hasSelectedImage ? (
           <>
             <p className="cp-hint">Select an image on the canvas, or upload one to try the AI tools.</p>
-            <button className="cp-upload" onClick={() => fileInput.current?.click()}>
-              ↑ Upload an image to start
+            <button className={`cp-upload ${dragging ? "is-over" : ""}`} onClick={() => fileInput.current?.click()}
+                    onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                    onDragLeave={() => setDragging(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setDragging(false);
+                      if (e.dataTransfer.files?.length) onUpload(e.dataTransfer.files);
+                    }}>
+              ↑ Upload or drop an image
             </button>
           </>
         ) : (

@@ -391,6 +391,8 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   // (a logo's O): { image, input, bounds, whole }, so the AI tab can cut the
   // same picture again with those areas cleared (or kept again)
   const [lastCut, setLastCut] = useState(null);
+  // a file dragged over the Uploads tab's box
+  const [uploadOver, setUploadOver] = useState(false);
   const aiBusy = Boolean(aiOperation && !aiOperation.error);
   // Remove background today: { used, limit } (Free 5 a day, Premium no limit)
   const [cutoutQuota, setCutoutQuota] = useState(null);
@@ -3241,8 +3243,15 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
 
             {tab === "uploads" && (
               <div className="cp-uploads">
-                <button className="cp-upload" onClick={() => fileInput.current.click()}>
-                  ⇪ Upload SVG / PNG / JPG
+                <button className={`cp-upload ${uploadOver ? "is-over" : ""}`} onClick={() => fileInput.current.click()}
+                        onDragOver={(e) => { e.preventDefault(); setUploadOver(true); }}
+                        onDragLeave={() => setUploadOver(false)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setUploadOver(false);
+                          if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files);
+                        }}>
+                  ⇪ Upload or drop SVG / PNG / JPG
                 </button>
                 <input
                   ref={fileInput}
