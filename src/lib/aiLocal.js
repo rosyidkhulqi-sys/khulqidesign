@@ -235,9 +235,15 @@ function flatBackgroundOf(bitmap) {
 }
 
 // alpha from the distance to the background color: up to NEAR it's background,
-// from FAR it's subject, a soft edge in between
-const KEY_NEAR = 20;
+// from FAR it's subject, a soft edge in between. NEAR is wide enough for the
+// slight shading and pale strips AI pictures often have along their edges
+// (232-240 on a 254 white), which otherwise stay as an invisible frame and
+// stop the cut being cropped to the subject.
+const KEY_NEAR = 36;
 const KEY_FAR = 64;
+// a pixel counts toward the subject's crop from this alpha: fainter haze
+// (a model's soft map, a last trace of background) doesn't widen the crop
+const VISIBLE = 24;
 // the map of background reached from the border is worked out at this size
 const REACH_SIDE = 2048;
 
@@ -319,7 +325,7 @@ async function keyOutBackground(bitmap, bg, onStep, cropToSubject, clearEnclosed
       // background-colored but enclosed by the subject: part of the picture
       if (reach && !reach[ry * rw + rx]) {
         if (Math.hypot(d[i] - bg[0], d[i + 1] - bg[1], d[i + 2] - bg[2]) < KEY_NEAR) enclosed += 1;
-        if (cropToSubject && d[i + 3] > 8) {
+        if (cropToSubject && d[i + 3] > VISIBLE) {
           const x = pixel % w;
           const py = y + ((pixel / w) | 0);
           minX = Math.min(minX, x);
@@ -336,7 +342,7 @@ async function keyOutBackground(bitmap, bg, onStep, cropToSubject, clearEnclosed
         for (let c = 0; c < 3; c++) d[i + c] = clampByte((d[i + c] - (1 - a) * bg[c]) / Math.max(a, 0.08));
       }
       d[i + 3] = Math.round(a * (d[i + 3] / 255) * 255);
-      if (cropToSubject && d[i + 3] > 8) {
+      if (cropToSubject && d[i + 3] > VISIBLE) {
         const x = pixel % w;
         const py = y + ((pixel / w) | 0);
         minX = Math.min(minX, x);
@@ -481,7 +487,7 @@ export async function removeBackground(file, onStep, options) {
         }
       }
       source.data[i + 3] = Math.round(outputAlpha * 255);
-      if (cropToSubject && source.data[i + 3] > 8) {
+      if (cropToSubject && source.data[i + 3] > VISIBLE) {
         const pixel = i >> 2;
         const x = pixel % w;
         const py = y + ((pixel / w) | 0);
