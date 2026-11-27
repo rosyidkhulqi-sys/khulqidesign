@@ -1010,7 +1010,16 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
 
   const unit = () => Math.min(boardRef.current.w, boardRef.current.h);
 
+  // a text being typed in is finished before something new goes on the page,
+  // as in Canva: otherwise its hidden textarea kept the keyboard, the next
+  // keys landed in that text and every canvas click refocused it
+  const stopTextEditing = () => {
+    const editing = fc.current?.getActiveObject();
+    if (editing?.isEditing) editing.exitEditing();
+  };
+
   const addShape = (id, point) => {
+    stopTextEditing();
     const s = unit() * 0.3;
     const definition = shapes.find((shape) => shape.id === id);
     if (!definition) return;
@@ -1041,6 +1050,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   // new text takes the brand fonts when the member has a brand kit:
   // the heading font for bold presets, the body font for the rest
   const addText = async (preset, point) => {
+    stopTextEditing();
     const k = unit() / 1080;
     const brandFont = canPremium ? (preset.weight >= 600 ? brandKit.headingFont : brandKit.bodyFont) : null;
     const fontFamily = brandFont || "Space Grotesk";
@@ -1106,6 +1116,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   // meta: an AI element's title, keywords and category, kept on it so an
   // admin can save it to Elements later
   const addSvg = async (markup, point, premium = false, meta = null) => {
+    stopTextEditing();
     const { objects, options } = await loadSVGFromString(markup);
     const obj = util.groupSVGElements(objects.filter(Boolean), options);
     obj.scaleToWidth(unit() * 0.3);
@@ -1329,6 +1340,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   // quick: a smaller copy already on screen (the tile's thumbnail), placed at
   // once; the full picture replaces it when it has arrived, at the same size
   const addImage = async (src, point, premium = false, stock = undefined, quick = undefined) => {
+    stopTextEditing();
     const img = await FabricImage.fromURL(quick ?? src, { crossOrigin: "anonymous" });
     const b = boardRef.current;
     img.scale(Math.min((b.w * 0.5) / img.width, (b.h * 0.5) / img.height));
