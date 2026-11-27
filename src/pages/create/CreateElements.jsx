@@ -132,7 +132,7 @@ export function PremiumMark() {
 
 export function ElementTile({ el, dragItem }) {
   return (
-    <button className="cp-tile" {...dragItem("element", el.id)} title={el.name}>
+    <button className="cp-tile is-element" {...dragItem("element", el.id)} title={el.name}>
       {/* crossOrigin: the same CDN file is read again when it's placed */}
       <img src={el.thumb ?? el.url} alt={el.name} draggable={false} loading="lazy" crossOrigin="anonymous" />
       {el.premium && <PremiumMark />}

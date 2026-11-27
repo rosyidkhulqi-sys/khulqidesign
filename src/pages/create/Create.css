@@ -392,6 +392,9 @@
   height: 68%;
   object-fit: contain;
 }
+/* an element (an illustration, a sticker) fills most of its tile, as on
+   Canva; line icons and basic shapes keep the wider margin above */
+.cp-tile.is-element img { inset: 7%; width: 86%; height: 86%; }
 .cp-tile.wide { aspect-ratio: 4 / 3; padding: 0; background: #17191c; }
 .cp-tile.wide img { inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
