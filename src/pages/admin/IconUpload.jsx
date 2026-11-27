@@ -5,7 +5,8 @@ import BatchField from "./BatchField";
 import { openBatch } from "./batches";
 import KeywordChips from "./KeywordChips";
 import { clearDraft, loadDraft, saveDraft } from "../../lib/drafts";
-import { runPool } from "../../lib/uploadPool";
+import UploadProgress from "./UploadProgress";
+import useUploadRun from "./useUploadRun";
 import { supabase } from "../../lib/supabaseClient";
 import {
   GENERIC_ICON_WORDS,
@@ -198,6 +199,8 @@ function IconUpload({ onPublished }) {
     ? sets.find((s) => tidy(s.name) === tidy(draft.name) && s.style === draft.style)
     : null;
 
+  const [run, pool] = useUploadRun();
+
   const publishAll = async () => {
     setError(null);
     if (twin) {
@@ -268,7 +271,7 @@ function IconUpload({ onPublished }) {
     };
     let published = 0;
     let failed = 0;
-    await runPool(queue, ICONS_AT_ONCE, worker);
+    await pool(queue, ICONS_AT_ONCE, worker);
     // as on The Noun Project: the published cards go, a Done note stays, and
     // only icons that failed are left to try again
     setItems((list) => list.filter((it) => it.status !== "done"));
@@ -420,10 +423,12 @@ function IconUpload({ onPublished }) {
       {items.length > 0 && (
         <>
           <div className="ad-bar">
-            <span>
-              {items.length} {items.length === 1 ? "icon" : "icons"}{done > 0 && ` · ${done} published`}
-              {styleOfSet && ` · set style ${styleOfSet}`}
-            </span>
+            <UploadProgress run={run} items={items}>
+              <span>
+                {items.length} {items.length === 1 ? "icon" : "icons"}{done > 0 && ` · ${done} published`}
+                {styleOfSet && ` · set style ${styleOfSet}`}
+              </span>
+            </UploadProgress>
             {/* empties this upload (nothing published is touched) */}
             <button onClick={async () => {
               const sure = await askConfirm({

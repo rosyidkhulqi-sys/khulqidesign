@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import DoneNote from "./DoneNote";
 import BatchField from "./BatchField";
 import { openBatch } from "./batches";
-import { runPool } from "../../lib/uploadPool";
+import UploadProgress from "./UploadProgress";
+import useUploadRun from "./useUploadRun";
 
 // logos published at the same time (each carries a few files)
 const LOGOS_AT_ONCE = 3;
@@ -65,6 +66,8 @@ function LogoUpload({ onPublished }) {
     }
   };
 
+  const [run, pool] = useUploadRun();
+
   const publishAll = async () => {
     setPublishing(true);
     setFinished(null);
@@ -79,7 +82,7 @@ function LogoUpload({ onPublished }) {
     }
     setBatchError(null);
     const queue = items.filter((it) => it.status === "ready" || it.status === "failed");
-    await runPool(queue, LOGOS_AT_ONCE, async (item) => {
+    await pool(queue, LOGOS_AT_ONCE, async (item) => {
       if (!item.title.trim()) {
         update(item.base, { status: "failed", message: "Add a title first" });
         return;
@@ -127,7 +130,9 @@ function LogoUpload({ onPublished }) {
       {items.length > 0 && (
         <>
           <div className="ad-bar">
-            <span>{items.length} {items.length === 1 ? "logo" : "logos"}</span>
+            <UploadProgress run={run} items={items}>
+              <span>{items.length} {items.length === 1 ? "logo" : "logos"}</span>
+            </UploadProgress>
             <button className="ad-primary" onClick={publishAll} disabled={publishing || ready === 0}>
               {publishing ? "Publishing…" : `Publish ${ready}`}
             </button>

@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import DoneNote from "./DoneNote";
 import BatchField from "./BatchField";
 import { openBatch } from "./batches";
-import { runPool } from "../../lib/uploadPool";
+import UploadProgress from "./UploadProgress";
+import useUploadRun from "./useUploadRun";
 
 // clips published at the same time (video files are big)
 const CLIPS_AT_ONCE = 2;
@@ -81,6 +82,8 @@ function FootageUpload({ onPublished }) {
     }
   };
 
+  const [run, pool] = useUploadRun();
+
   const publishAll = async () => {
     setPublishing(true);
     setFinished(null);
@@ -95,7 +98,7 @@ function FootageUpload({ onPublished }) {
     }
     setBatchError(null);
     const queue = items.filter((it) => it.status === "ready" || it.status === "failed");
-    await runPool(queue, CLIPS_AT_ONCE, async (item) => {
+    await pool(queue, CLIPS_AT_ONCE, async (item) => {
       if (!item.title.trim()) {
         update(item.base, { status: "failed", message: "Add a title first" });
         return;
@@ -145,7 +148,9 @@ function FootageUpload({ onPublished }) {
       {items.length > 0 && (
         <>
           <div className="ad-bar">
-            <span>{items.length} {items.length === 1 ? "clip" : "clips"}</span>
+            <UploadProgress run={run} items={items}>
+              <span>{items.length} {items.length === 1 ? "clip" : "clips"}</span>
+            </UploadProgress>
             <button className="ad-primary" onClick={publishAll} disabled={publishing || ready === 0}>
               {publishing ? "Publishing…" : `Publish ${ready}`}
             </button>

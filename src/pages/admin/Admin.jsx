@@ -18,7 +18,8 @@ import FootageUpload from "./FootageUpload.jsx";
 import LogoUpload from "./LogoUpload.jsx";
 import ElementUpload from "./ElementUpload.jsx";
 import StockUpload from "./StockUpload.jsx";
-import { runPool } from "../../lib/uploadPool";
+import UploadProgress from "./UploadProgress";
+import useUploadRun from "./useUploadRun";
 
 // vectors published at the same time (EPS files are big)
 const VECTORS_AT_ONCE = 3;
@@ -117,6 +118,8 @@ function Admin({ user, setPage }) {
     }
   };
 
+  const [run, pool] = useUploadRun();
+
   const publishAll = async () => {
     setPublishing(true);
     setFinished(null);
@@ -133,7 +136,7 @@ function Admin({ user, setPage }) {
     // three vectors at a time (their EPS files are big), and the tab stays
     // alive in the background while they go up
     const queue = items.filter((it) => it.status === "ready" || it.status === "error");
-    await runPool(queue, VECTORS_AT_ONCE, async (item) => {
+    await pool(queue, VECTORS_AT_ONCE, async (item) => {
       if (!item.title.trim()) {
         update(item.base, { status: "error", message: "Add a title first" });
         return;
@@ -260,9 +263,11 @@ function Admin({ user, setPage }) {
       {items.length > 0 && (
         <>
           <div className="ad-bar">
-            <span>
-              {items.length} {items.length === 1 ? "vector" : "vectors"}
-            </span>
+            <UploadProgress run={run} items={items}>
+              <span>
+                {items.length} {items.length === 1 ? "vector" : "vectors"}
+              </span>
+            </UploadProgress>
             <button className="ad-primary" onClick={publishAll} disabled={publishing || ready === 0}>
               {publishing ? "Publishing…" : `Publish ${ready}`}
             </button>

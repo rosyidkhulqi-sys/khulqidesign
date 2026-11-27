@@ -4,7 +4,8 @@ import { useRef, useState } from "react";
 import DoneNote from "./DoneNote";
 import BatchField from "./BatchField";
 import { openBatch } from "./batches";
-import { runPool } from "../../lib/uploadPool";
+import UploadProgress from "./UploadProgress";
+import useUploadRun from "./useUploadRun";
 
 // elements published at the same time (SVGs are small), as icons go up
 const ELEMENTS_AT_ONCE = 6;
@@ -104,6 +105,8 @@ function ElementUpload({ onPublished }) {
     }
   };
 
+  const [run, pool] = useUploadRun();
+
   const publishAll = async () => {
     setPublishing(true);
     setFinished(null);
@@ -119,7 +122,7 @@ function ElementUpload({ onPublished }) {
     setBatchError(null);
     // six at a time, and the tab stays alive in the background meanwhile
     const queue = items.filter((it) => it.status === "ready" || (it.status === "failed" && it.format));
-    await runPool(queue, ELEMENTS_AT_ONCE, async (item) => {
+    await pool(queue, ELEMENTS_AT_ONCE, async (item) => {
       const missing = missingField(item);
       if (missing) {
         update(item.base, { status: "failed", message: `Add ${missing === "category" ? "a category" : missing === "title" ? "a title" : "keywords"} first` });
@@ -168,7 +171,9 @@ function ElementUpload({ onPublished }) {
       {items.length > 0 && (
         <>
           <div className="ad-bar">
-            <span>{items.length} {items.length === 1 ? "file" : "files"}</span>
+            <UploadProgress run={run} items={items}>
+              <span>{items.length} {items.length === 1 ? "file" : "files"}</span>
+            </UploadProgress>
             <button className="ad-primary" onClick={publishAll} disabled={publishing || ready === 0}>
               {publishing ? "Publishing…" : `Publish ${ready}`}
             </button>
