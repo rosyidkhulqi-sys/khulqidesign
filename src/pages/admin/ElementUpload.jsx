@@ -208,6 +208,12 @@ function ElementUpload({ onPublished }) {
                         <option value="free">Free</option>
                         <option value="premium">Premium</option>
                       </select>
+                      {/* read from the file's IPTC mark, as on Photos; saved as ai_generated */}
+                      <label className={`ad-ai-chip ${it.aiGenerated ? "on" : ""}`} title="Made with generative AI">
+                        <input type="checkbox" checked={Boolean(it.aiGenerated)} disabled={locked}
+                               onChange={(e) => update(it.base, { aiGenerated: e.target.checked })} />
+                        AI
+                      </label>
                     </div>
                     <KeywordField keywords={it.keywords} disabled={locked}
                                   onChange={(keywords) => update(it.base, { keywords })} />
