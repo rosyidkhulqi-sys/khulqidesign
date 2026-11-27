@@ -85,6 +85,21 @@ const motionFormats = [
 ];
 import CreateAnimate from "./CreateAnimatePanel";
 
+// Typing goes through a hidden textarea that Fabric puts in the page body at
+// the cursor's place and focuses on entering text, and again on every click on
+// the canvas while editing. A plain focus() makes the browser scroll that spot
+// into view, and with the canvas scrolled or zoomed the spot it works out can
+// be off screen, so the whole view jumped. Its focus now never scrolls.
+const initHiddenTextarea = Textbox.prototype.initHiddenTextarea;
+Textbox.prototype.initHiddenTextarea = function (...args) {
+  initHiddenTextarea.apply(this, args);
+  const textarea = this.hiddenTextarea;
+  if (textarea) {
+    const focus = textarea.focus.bind(textarea);
+    textarea.focus = (options) => focus({ ...options, preventScroll: true });
+  }
+};
+
 const PANEL_KEY = "kd-create-panel";
 const PAGE_KEY = "kd-create-page";
 const STRIP_KEY = "kd-create-page-strip";
