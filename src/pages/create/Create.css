@@ -939,6 +939,13 @@
 
 /* STAGE */
 
+/* Space held: the hand, then the grab while dragging (Fabric sets the
+   canvas cursor inline, so these must win) */
+.create-stage.is-hand,
+.create-stage.is-hand * { cursor: grab !important; }
+.create-stage.is-grabbing,
+.create-stage.is-grabbing * { cursor: grabbing !important; }
+
 .create-stage {
   min-width: 0;
   min-height: 0;
