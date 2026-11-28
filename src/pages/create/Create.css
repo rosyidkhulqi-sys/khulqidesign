@@ -177,7 +177,9 @@
 .create-body {
   /* rail and panel widths, shared with the panel toggle's position */
   --rail-w: 76px;
-  --panel-w: 260px;
+  /* 300: category names ("Infographics", "Photo frames") fit whole and the
+     tiles read well, still well short of Canva's ~360 so the page keeps room */
+  --panel-w: 300px;
   --props-w: 260px;
   position: relative;
   min-height: 0;
