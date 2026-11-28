@@ -3746,8 +3746,8 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                     </>
                   )}
                   <button onClick={duplicate} title="Duplicate (Ctrl+D)"><Icon name="copy" /></button>
-                  <button onClick={() => arrange("forward")} title="Bring forward"><Icon name="forward" /></button>
-                  <button onClick={() => arrange("backward")} title="Send backward"><Icon name="backward" /></button>
+                  {/* layer order lives in the dock (Position → Arrange), with its
+                      names: bare up and down arrows here read as "move it up" */}
                   {!isSelection && (
                     <button onClick={toggleLock} title={locked ? "Unlock" : "Lock position"} className={locked ? "on" : ""}>
                       <Icon name={locked ? "lock" : "unlock"} />
