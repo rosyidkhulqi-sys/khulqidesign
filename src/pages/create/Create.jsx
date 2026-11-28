@@ -40,14 +40,13 @@ import { elements as libraryElements } from "../../data/elementsData";
 import { basicIcons } from "./basicIcons";
 import { artboardPresets, photoFrames, shapes, svgDataUrl, textPresets } from "./createLibrary";
 import { loadFont, loadFontsOf, loadSiteFonts } from "./createFonts";
-import FontPicker from "./FontPicker";
 import { pageThumbs } from "./pageThumbs";
-import CreateShapePanel from "./CreateShapeToolbar";
-import CreateAdjust from "./CreateAdjust";
-import { applyAdjust, basicFiltersJson, basicOnly, isProAdjust } from "./photoAdjust";
+import DockSections from "./props/DockSections";
+import { MOD } from "./platform";
+import { basicFiltersJson, basicOnly, isProAdjust } from "./photoAdjust";
 import "./createHandles";
 import { regularPolygonPath } from "./shapePath";
-import CreateColors, { CreateColorPanel } from "./CreateColors";
+import { CreateColorPanel } from "./CreateColors";
 import { colorObjectKey, documentColorsOf, toHex } from "./colorTools";
 import { attachGuides } from "./createGuides";
 import { beginCrop } from "./createCrop";
@@ -86,7 +85,6 @@ const motionFormats = [
   ["mp4", "MP4", "Video of this page, animated"],
   ["gif", "GIF", "Looping animation of this page"],
 ];
-import CreateAnimate from "./CreateAnimatePanel";
 
 // Typing goes through a hidden textarea that Fabric puts in the page body at
 // the cursor's place and focuses on entering text, and again on every click on
@@ -114,7 +112,6 @@ const TOOL_KEYS = { v: "select", h: "hand", b: "pencil", r: "shape", l: "line", 
 const ZOOM_MIN = 10;
 const ZOOM_MAX = 300;
 // the modifier key as the visitor's keyboard labels it, for shortcut hints
-const MOD = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl";
 const ZOOM_TIP = `Zoom: ${MOD} + scroll or pinch · ${MOD} + / ${MOD} −`;
 // height of the page bar above the artboard and Add page below it
 const PAGE_CHROME = 96;
@@ -3172,6 +3169,13 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   const dockOpen = dockSections.filter(([, , , on]) => on).map(([id]) => id);
   const dockSection = dockPick?.object === active && dockOpen.includes(dockPick.id) ? dockPick.id : dockOpen[0];
   const sectionClass = (id) => `pp-sec ${dockSection === id ? "on" : ""}`;
+  // what the dock's sections read and do (props/), handed down in one piece
+  const ed = {
+    sectionClass, shapeBar, locked, cropping, active, shapeCorner, setShapeCorner, setShapeSides, setShapeWeight, setShapeColor,
+    isLine, lineStyle, unit, setProp, adjustImage, canPremium, render, isText, setCase, pickFromPage, openColorEditor,
+    isSelection, alignTo, distribute, setSize, lockRatio, setLockRatio, isGroup, group, ungroup, arrange,
+    shadowAmount, setShadow, setOpacity, setBlend, animOf, playing, setAnim, stopPlay, play,
+  };
 
   // place the quick-action toolbar above the selection (below it near the top edge)
   let floatPos = null;
@@ -4020,353 +4024,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                 )}
                 {!adjusting && (
                 <>
-                {/* Shape or Line: corners, sides, outline and, for a line, its
-                    style and ends; first in the dock for a shape */}
-                {shapeBar && !locked && !cropping && (
-                  <div className={sectionClass("shape")}>
-                    <p className="cp-label">{shapeBar.kind === "line" ? "Line" : "Shape"}</p>
-                    <CreateShapePanel
-                      isLine={shapeBar.kind === "line"}
-                      showCorner={shapeBar.kind === "rect" || shapeBar.kind === "polygon"}
-                      corner={shapeCorner()}
-                      cornerMax={Math.round(Math.min(active.getScaledWidth(), active.getScaledHeight()) / 2)}
-                      onCornerChange={setShapeCorner}
-                      showSides={shapeBar.kind === "polygon"}
-                      sides={shapeBar.sides ?? 3}
-                      onSidesChange={setShapeSides}
-                      stroke={toHex(typeof active.stroke === "string" && active.stroke ? active.stroke : "#000000")}
-                      strokeWidth={active.strokeWidth || 0}
-                      onStrokeChange={setShapeWeight}
-                      onStrokeColor={setShapeColor}
-                    />
-                {isLine && (
-                  <>
-                    <p className="cp-label pp-sub">Line style</p>
-                    <div className="pp-line-styles" role="group" aria-label="Line style">
-                      {["solid", "dashed", "dotted"].map((style) => (
-                        <button
-                          key={style}
-                          type="button"
-                          className={lineStyle === style ? "on" : ""}
-                          title={`${style[0].toUpperCase()}${style.slice(1)} line`}
-                          aria-label={`${style[0].toUpperCase()}${style.slice(1)} line`}
-                          onClick={() => {
-                            const unitScale = unit() / 1080;
-                            const strokeDashArray = style === "solid"
-                              ? null
-                              : style === "dashed"
-                                ? [12 * unitScale, 8 * unitScale]
-                                : [2 * unitScale, 7 * unitScale];
-                            setProp({ strokeDashArray });
-                          }}
-                        >
-                          <span className={`pp-line-sample ${style}`} />
-                        </button>
-                      ))}
-                    </div>
-                    <label className="pp-row">
-                      <span>Rounded ends</span>
-                      <input
-                        type="checkbox"
-                        checked={active.strokeLineCap === "round"}
-                        onChange={(e) => setProp({ strokeLineCap: e.target.checked ? "round" : "butt" })}
-                      />
-                    </label>
-                  </>
-                )}
-                  </div>
-                )}
-                {/* Adjust: a photo's light and color (the frame's photo for a
-                    frame); More holds the Premium ones */}
-                {adjustImage && (
-                  <div className={sectionClass("adjust")}>
-                    <p className="cp-label">Adjust</p>
-                    <CreateAdjust
-                      adjust={adjustImage.kdAdjust || {}}
-                      premium={canPremium}
-                      onChange={(next) => {
-                        applyAdjust(adjustImage, next);
-                        if (active !== adjustImage) active.set("dirty", true);
-                        render();
-                      }}
-                    />
-                  </div>
-                )}
-                {isText && (
-                  <div className={sectionClass("text")}>
-                    <p className="cp-label">Text</p>
-                    <textarea
-                      className="pp-textarea"
-                      value={active.text}
-                      onChange={(e) => setProp({ text: e.target.value })}
-                    />
-                    <FontPicker
-                      value={active.fontFamily}
-                      onPick={async (fontFamily) => {
-                        await loadFont(fontFamily);
-                        setProp({ fontFamily });
-                      }}
-                    />
-                    {/* size, leading, tracking and shadow: icon and number, as in
-                        Illustrator's Character panel; arrow keys step them */}
-                    <div className="pp-type">
-                      <label title="Font size (px)">
-                        <Icon name="fontSize" size={16} />
-                        <NumberInput
-                          min="1"
-                          value={Math.round(active.fontSize)}
-                          onChange={(e) => setProp({ fontSize: Math.max(1, Number(e.target.value)) })}
-                          aria-label="Font size"
-                        />
-                      </label>
-                      <label title="Line spacing (px between lines)">
-                        <Icon name="leading" size={16} />
-                        <NumberInput
-                          min="1"
-                          value={Math.round(active.fontSize * (active.lineHeight || 1.16) * 1.13)}
-                          onChange={(e) => {
-                            const px = Number(e.target.value);
-                            if (px > 0) setProp({ lineHeight: Math.max(0.5, px / (active.fontSize * 1.13)) });
-                          }}
-                          aria-label="Line spacing"
-                        />
-                      </label>
-                      <label title="Letter spacing (1/1000 em)">
-                        <Icon name="tracking" size={16} />
-                        <NumberInput
-                          step="10"
-                          value={active.charSpacing || 0}
-                          onChange={(e) => setProp({ charSpacing: Number(e.target.value) || 0 })}
-                          aria-label="Letter spacing"
-                        />
-                      </label>
-                    </div>
-                    {/* style, alignment and case as small segmented groups, so
-                        they sit in two short rows */}
-                    <div className="pp-tools">
-                    <div className="pp-seg" role="group" aria-label="Text style">
-                      <button
-                        title="Bold"
-                        className={Number(active.fontWeight) >= 600 || active.fontWeight === "bold" ? "on" : ""}
-                        onClick={() => setProp({ fontWeight: Number(active.fontWeight) >= 600 || active.fontWeight === "bold" ? 400 : 700 })}
-                      >
-                        <b>B</b>
-                      </button>
-                      <button
-                        title="Italic"
-                        className={active.fontStyle === "italic" ? "on" : ""}
-                        onClick={() => setProp({ fontStyle: active.fontStyle === "italic" ? "normal" : "italic" })}
-                      >
-                        <i>I</i>
-                      </button>
-                      <button
-                        title="Underline"
-                        className={active.underline ? "on" : ""}
-                        onClick={() => setProp({ underline: !active.underline })}
-                      >
-                        <u>U</u>
-                      </button>
-                    </div>
-                    <div className="pp-seg" role="group" aria-label="Text alignment">
-                      {["left", "center", "right"].map((a) => (
-                        <button
-                          key={a}
-                          className={active.textAlign === a ? "on" : ""}
-                          onClick={() => setProp({ textAlign: a })}
-                          title={`Align ${a}`}
-                        >
-                          <Icon name={`align${a[0].toUpperCase()}${a.slice(1)}`} size={16} />
-                        </button>
-                      ))}
-                    </div>
-                    <div className="pp-seg pp-case" role="group" aria-label="Letter case">
-                      <button onClick={() => setCase("upper")} title="UPPERCASE">AA</button>
-                      <button onClick={() => setCase("lower")} title="lowercase">aa</button>
-                      <button onClick={() => setCase("title")} title="Title Case">Aa</button>
-                    </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className={sectionClass("color")}>
-                {/* a photo's colors are its pixels; its fill isn't one of them */}
-                {!(active instanceof FabricImage) && <CreateColors
-                  key={colorObjectKey(active)}
-                  onPickFromPage={pickFromPage}
-                  object={active}
-                  onEdit={(color) => openColorEditor("object", color)}
-                  onChange={() => {
-                    active.set("dirty", true);
-                    render();
-                  }}
-                />}
-
-                </div>
-
-                <div className={sectionClass("align")}>
-                {/* line up with the page, or with each other when several are picked */}
-                <p className="cp-label">{isSelection ? "Align selection" : "Align to page"}</p>
-                <div className="pp-align pp-seg" role="group" aria-label="Align">
-                  {[
-                    ["center", "objCenter", "Align center, horizontally and vertically"],
-                    ["left", "objLeft", "Align left"],
-                    ["centerH", "objCenterH", "Align center"],
-                    ["right", "objRight", "Align right"],
-                    ["top", "objTop", "Align top"],
-                    ["centerV", "objCenterV", "Align middle"],
-                    ["bottom", "objBottom", "Align bottom"],
-                  ].map(([edge, icon, label]) => (
-                    <button key={edge} onClick={() => alignTo(edge)} title={label} aria-label={label} disabled={locked}>
-                      <Icon name={icon} size={16} />
-                    </button>
-                  ))}
-                </div>
-                {isSelection && active.size() >= 3 && (
-                  <div className="pp-seg pp-dist" role="group" aria-label="Distribute">
-                    <button onClick={() => distribute("h")} title="Distribute horizontally" aria-label="Distribute horizontally">
-                      <Icon name="distH" size={16} />
-                    </button>
-                    <button onClick={() => distribute("v")} title="Distribute vertically" aria-label="Distribute vertically">
-                      <Icon name="distV" size={16} />
-                    </button>
-                  </div>
-                )}
-                </div>
-
-                <div className={sectionClass("position")}>
-                <p className="cp-label">Size</p>
-                <div className="pp-pair">
-                  <label>
-                    W
-                    <NumberInput
-                      className="pp-num"
-                      value={Math.round(active.getScaledWidth())}
-                      onChange={(e) => setSize("w", e.target.value)}
-                    />
-                  </label>
-                  {!isText && (
-                    <label>
-                      H
-                      <NumberInput
-                        className="pp-num"
-                        value={Math.round(active.getScaledHeight())}
-                        onChange={(e) => setSize("h", e.target.value)}
-                      />
-                    </label>
-                  )}
-                  {!isText && (
-                    <button
-                      className={`pp-lock ${lockRatio ? "on" : ""}`}
-                      onClick={() => setLockRatio(!lockRatio)}
-                      title="Keep proportions"
-                    >
-                      <Icon name={lockRatio ? "lock" : "unlock"} size={15} />
-                    </button>
-                  )}
-                </div>
-
-                {(isSelection || isGroup) && (
-                  <div className="pp-grid">
-                    {isSelection && <button onClick={group}><Icon name="group" size={16} /><span>Group</span></button>}
-                    {isGroup && <button onClick={ungroup}><Icon name="ungroup" size={16} /><span>Ungroup</span></button>}
-                  </div>
-                )}
-
-                {/* layer order, flip and rotation; duplicate, lock and delete
-                    are on the toolbar by the element */}
-                <p className="cp-label">Arrange</p>
-                <div className="pp-arrange">
-                  {/* layer order and flips: an icon and a short name in compact
-                      rows, so anyone can tell them apart; rotation is a field */}
-                  <div className="pp-list">
-                    <button onClick={() => arrange("front")} title={`Bring to front (${MOD} ⇧ ])`}><Icon name="front" size={15} /><span>To front</span></button>
-                    <button onClick={() => arrange("back")} title={`Send to back (${MOD} ⇧ [)`}><Icon name="back" size={15} /><span>To back</span></button>
-                    <button onClick={() => arrange("forward")} title={`Bring forward (${MOD} ])`}><Icon name="forward" size={15} /><span>Forward</span></button>
-                    <button onClick={() => arrange("backward")} title={`Send backward (${MOD} [)`}><Icon name="backward" size={15} /><span>Backward</span></button>
-                    <button className={active.flipX ? "on" : ""} onClick={() => setProp({ flipX: !active.flipX })} title="Flip horizontal, mirror (⇧ H)">
-                      <Icon name="flipH" size={15} /><span>Flip H</span>
-                    </button>
-                    <button className={active.flipY ? "on" : ""} onClick={() => setProp({ flipY: !active.flipY })} title="Flip vertical, upside down (⇧ V)">
-                      <Icon name="flipV" size={15} /><span>Flip V</span>
-                    </button>
-                  </div>
-                  <div className="pp-type">
-                    <label title="Rotation (degrees)">
-                      <Icon name="rotate" size={16} />
-                      <NumberInput
-                        value={Math.round(active.angle)}
-                        onChange={(e) => {
-                          active.rotate(Number(e.target.value) || 0);
-                          active.setCoords();
-                          render();
-                        }}
-                        aria-label="Rotation"
-                      />
-                    </label>
-                  </div>
-                </div>
-                </div>
-
-                {/* Effects: shadow, opacity and how it blends with what's under
-                    it, as Illustrator's Transparency panel; a frame keeps its
-                    own shadow in the Frame section */}
-                <div className={sectionClass("effects")}>
-                  <p className="cp-label">Effects</p>
-                  {!active.kdFrame && (
-                    <div className="pp-type">
-                      <label title="Shadow (0 to 100)">
-                        <Icon name="shadow" size={16} />
-                        <NumberInput
-                          min="0"
-                          max="100"
-                          step="5"
-                          value={shadowAmount(isSelection ? active.getObjects()[0] : active)}
-                          onChange={(e) => setShadow(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
-                          aria-label="Shadow"
-                        />
-                      </label>
-                    </div>
-                  )}
-                  <label className="pp-row">
-                    <span>Opacity</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={Math.round((isSelection ? active.getObjects()[0]?.opacity ?? 1 : active.opacity) * 100)}
-                      onChange={(e) => setOpacity(Number(e.target.value) / 100)}
-                    />
-                  </label>
-                  <label className="pp-row">
-                    <span>Blend</span>
-                    <select
-                      className="pp-select"
-                      value={(isSelection ? active.getObjects()[0]?.globalCompositeOperation : active.globalCompositeOperation) || "source-over"}
-                      onChange={(e) => setBlend(e.target.value)}
-                      aria-label="Blend mode"
-                    >
-                      {[
-                        ["source-over", "Normal"],
-                        ["multiply", "Multiply"],
-                        ["screen", "Screen"],
-                        ["overlay", "Overlay"],
-                        ["darken", "Darken"],
-                        ["lighten", "Lighten"],
-                      ].map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                    </select>
-                  </label>
-                </div>
-
-                {/* Animate: an entrance and a loop, each one row of chips;
-                    choosing one plays it, Preview plays the whole page */}
-                <div className={sectionClass("animate")}>
-                <CreateAnimate
-                  anim={animOf(active)}
-                  playing={playing}
-                  onPick={setAnim}
-                  onPlay={() => (playing ? stopPlay.current?.() : play())}
-                />
-                </div>
+                <DockSections ed={ed} />
                 </>
                 )}
               </>
