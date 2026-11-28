@@ -3,9 +3,12 @@
 // (a photo, an element, a filled frame, a whole Premium template). Free items
 // stay clean. Premium photos already carry it; elements and templates don't,
 // so it's drawn here for all of them alike.
+import { isProAdjust } from "./photoAdjust";
+
 const WORD = "KHULQIDESIGN";
 
-const hasPremium = (o) => Boolean(o.kdPremium) || (o.getObjects?.() ?? []).some(hasPremium);
+// a Premium item, or a photo with Premium Adjust settings (a preset, Blur...)
+const hasPremium = (o) => Boolean(o.kdPremium) || isProAdjust(o.kdAdjust) || (o.getObjects?.() ?? []).some(hasPremium);
 
 // each Premium item's box on the page, in page pixels
 export function premiumAreas(canvas) {

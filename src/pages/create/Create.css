@@ -1749,6 +1749,39 @@
   box-sizing: border-box;
   pointer-events: none;
 }
+/* the dock's Adjust section: sliders, More (Premium) and its presets */
+.ca-more { margin-top: 4px; }
+.ca-more summary { gap: 8px; }
+.ca-crown { position: relative; display: inline-flex; width: 22px; height: 22px; margin-right: auto; }
+.ca-crown .cp-crown { position: static; }
+.ca-presets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 12px; }
+.ca-presets button {
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: transparent;
+  color: #c6cad0;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.ca-presets button:hover { border-color: rgba(255, 255, 255, 0.3); color: white; }
+.ca-presets button.on { border-color: var(--red); color: white; }
+.ca-reset {
+  width: 100%;
+  height: 34px;
+  margin-top: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: transparent;
+  color: #c6cad0;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.ca-reset:hover:not(:disabled) { color: white; border-color: rgba(255, 255, 255, 0.3); }
+.ca-reset:disabled { opacity: 0.4; cursor: default; }
+
 /* a smaller heading inside a section (Line style under Line) */
 .cp-label.pp-sub { margin-top: 4px; }
 

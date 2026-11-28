@@ -43,6 +43,8 @@ import { loadFont, loadFontsOf, loadSiteFonts } from "./createFonts";
 import FontPicker from "./FontPicker";
 import { pageThumbs } from "./pageThumbs";
 import CreateShapePanel from "./CreateShapeToolbar";
+import CreateAdjust from "./CreateAdjust";
+import { applyAdjust, basicFiltersJson, basicOnly, isProAdjust } from "./photoAdjust";
 import "./createHandles";
 import { regularPolygonPath } from "./shapePath";
 import CreateColors, { CreateColorPanel } from "./CreateColors";
@@ -135,13 +137,19 @@ const exportFormats = [
 const isLocked = (obj) => Boolean(obj?.lockMovementX);
 // saved with a design, so a locked element stays locked after undo or reload
 // saved with each object: its locks, and a basic shape's sides and corner
-const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls", "kdShape", "kdFrame", "kdPremium", "kdQr", "kdTable", "kdRole", "kdAnim", "kdStock", "kdCover"];
+const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls", "kdShape", "kdFrame", "kdPremium", "kdQr", "kdTable", "kdRole", "kdAnim", "kdStock", "kdCover", "kdAdjust"];
 
 // Premium items in a saved page (inside groups too), and the page without them
 const countPremium = (objects = []) =>
-  objects.reduce((n, o) => n + (o.kdPremium ? 1 : countPremium(o.objects)), 0);
+  objects.reduce((n, o) => n + (o.kdPremium || isProAdjust(o.kdAdjust) ? 1 : countPremium(o.objects)), 0);
 const withoutPremium = (objects = []) =>
-  objects.filter((o) => !o.kdPremium).map((o) => (o.objects ? { ...o, objects: withoutPremium(o.objects) } : o));
+  objects.filter((o) => !o.kdPremium).map((o) => {
+    // a photo with Premium Adjust settings stays, with its free ones only
+    const kept = isProAdjust(o.kdAdjust)
+      ? { ...o, kdAdjust: Object.keys(basicOnly(o.kdAdjust)).length ? basicOnly(o.kdAdjust) : undefined, filters: basicFiltersJson(o.kdAdjust) }
+      : o;
+    return kept.objects ? { ...kept, objects: withoutPremium(kept.objects) } : kept;
+  });
 
 // what the shape bar can change on an object: corners and sides, or just its
 // outline; null for anything that isn't a basic shape
@@ -3124,9 +3132,13 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   // sections every element has, then motion and the ecosystem. New tools
   // fill the context slot or join the last group, so nothing gets pushed.
   const shapeOn = Boolean(shapeBar) && !locked && !cropping;
+  // a photo, on its own or in a frame: its light and color
+  const adjustImage = !locked && !cropping ? (active instanceof FabricImage ? active : framePhoto(active)) : null;
   const contextSection = shapeOn
     ? ["shape", shapeBar.kind === "line" ? "Line" : "Shape", "dockShape", true, 1]
-    : ["text", "Text", "dockText", isText, 1];
+    : adjustImage
+      ? ["adjust", "Adjust", "dockAdjust", true, 1]
+      : ["text", "Text", "dockText", isText, 1];
   const dockSections = [
     contextSection,
     ["color", "Color", "dockColor", Boolean(active) && !(active instanceof FabricImage), 2],
@@ -4040,6 +4052,22 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                     </label>
                   </>
                 )}
+                  </div>
+                )}
+                {/* Adjust: a photo's light and color (the frame's photo for a
+                    frame); More holds the Premium ones */}
+                {adjustImage && (
+                  <div className={sectionClass("adjust")}>
+                    <p className="cp-label">Adjust</p>
+                    <CreateAdjust
+                      adjust={adjustImage.kdAdjust || {}}
+                      premium={canPremium}
+                      onChange={(next) => {
+                        applyAdjust(adjustImage, next);
+                        if (active !== adjustImage) active.set("dirty", true);
+                        render();
+                      }}
+                    />
                   </div>
                 )}
                 {isText && (

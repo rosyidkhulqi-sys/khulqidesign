@@ -47,6 +47,7 @@ const paths = {
   toolLine: <><path d="M6.5 17.5l11-11" /><circle cx="5.5" cy="18.5" r="1.6" /><circle cx="18.5" cy="5.5" r="1.6" /></>,
   toolText: <path d="M5.5 6.5V5h13v1.5M12 5v14M9.5 19h5" />,
   dockShape: <><path d="M4 20V10a6 6 0 0 1 6-6h10v16z" /><path d="M8 8.5a2.5 2.5 0 0 1 2.5-2.5" strokeDasharray="1.5 2" /></>,
+  dockAdjust: <><path d="M4 7h9M17 7h3M4 17h3M11 17h9" /><circle cx="15" cy="7" r="2" /><circle cx="9" cy="17" r="2" /></>,
   dockText: <><path d="M3.5 18.5L8 6l4.5 12.5M5.2 14h5.6" /><circle cx="17.5" cy="15.5" r="3" /><path d="M20.5 12.5v6" /></>,
   dockColor: <><path d="M12 3.5c3 4 5.5 7 5.5 10a5.5 5.5 0 0 1-11 0c0-3 2.5-6 5.5-10z" /><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5" /></>,
   dockAlign: <><path d="M4.5 4v16" /><rect x="8" y="6" width="11" height="4" rx="1.2" /><rect x="8" y="14" width="7" height="4" rx="1.2" /></>,
