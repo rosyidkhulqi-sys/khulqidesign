@@ -2,7 +2,7 @@
 // style and rounded ends.
 // Part of the right dock's properties panel; ed is the editor's state and
 // actions, handed down by Create.
-import CreateShapePanel from "../CreateShapeToolbar";
+import ShapePanel from "./ShapePanel";
 import { toHex } from "../colorTools";
 
 export default function ShapeSection({ ed }) {
@@ -14,7 +14,7 @@ export default function ShapeSection({ ed }) {
       {shapeBar && !locked && !cropping && (
         <div className={sectionClass("shape")}>
           <p className="cp-label">{shapeBar.kind === "line" ? "Line" : "Shape"}</p>
-          <CreateShapePanel
+          <ShapePanel
             isLine={shapeBar.kind === "line"}
             showCorner={shapeBar.kind === "rect" || shapeBar.kind === "polygon"}
             corner={shapeCorner()}
