@@ -47,3 +47,17 @@ python kitrender.py out/kit path/to/mockup.jpg out/check.jpg  # render from the 
 `--check` and `kitrender.py` print the mean difference from Photoshop's
 preview (0 to 255). The first nine mockups (MK AI 1126) all came out under 2:
 the same picture.
+
+## The browser renderer
+
+`src/lib/mockupRender.js` draws a mockup from its kit in the browser with the
+same steps (`loadKit`, `renderMockup`). It takes `makeCanvas` and `loadImage`
+from the caller, so it also runs in Node for checking:
+
+```
+npm i --no-save @napi-rs/canvas      # in a scratch folder, not the app
+node test-render.mjs ../../src/lib/mockupRender.js path/to/kit out.png
+```
+
+The first kits rendered this way match Photoshop as closely as the Python
+render (mean difference 0.8 to 1.4), in 16 to 70 ms each.
