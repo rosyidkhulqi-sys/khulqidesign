@@ -1,5 +1,6 @@
 // The right dock's properties panel: one section per dock icon, shown one
 // at a time by sectionClass (phones show them all).
+import MockupSection from "./MockupSection";
 import ShapeSection from "./ShapeSection";
 import AdjustSection from "./AdjustSection";
 import TextSection from "./TextSection";
@@ -12,6 +13,7 @@ import AnimateSection from "./AnimateSection";
 export default function DockSections({ ed }) {
   return (
     <>
+      <MockupSection ed={ed} />
       <ShapeSection ed={ed} />
       <AdjustSection ed={ed} />
       <TextSection ed={ed} />

@@ -120,7 +120,7 @@ export default function MockupStudio({ mockup, designs: savedDesigns = [], pages
   const add = () => {
     const out = finished();
     // kept small: designs live in this browser until projects move to accounts
-    onAdd(shrink(out, 1600, "image/jpeg", 0.88), designs.map((d) => (d ? shrink(d, 1200) : null)));
+    onAdd(shrink(out, 1600, "image/jpeg", 0.88), designs.map((d) => (d ? shrink(d, 1200) : null)), kit.kit.designs.map((d) => d.name));
   };
 
   const download = () => {

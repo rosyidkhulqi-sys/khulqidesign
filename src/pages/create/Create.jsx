@@ -1686,12 +1686,12 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   // the Studio's picture onto the page: in place of the mockup it was opened
   // from (same size and spot), or as a new picture; a Premium mockup counts
   // as a Premium item for free downloads, as Premium photos do
-  const placeMockup = async (picture, designs) => {
+  const placeMockup = async (picture, designs, areas) => {
     const { mockup, target } = mockupStudio;
     setMockupStudio(null);
     const c = fc.current;
     const img = await FabricImage.fromURL(picture);
-    img.kdMockup = { ...mockup, designs };
+    img.kdMockup = { ...mockup, designs, areas };
     img.kdPremium = mockup.premium || undefined;
     if (target && c.getObjects().includes(target)) {
       const width = target.getScaledWidth();
@@ -2985,7 +2985,11 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   const shapeOn = Boolean(shapeBar) && !locked && !cropping;
   // a photo, on its own or in a frame: its light and color
   const adjustImage = !locked && !cropping ? (active instanceof FabricImage ? active : framePhoto(active)) : null;
-  const contextSection = shapeOn
+  // a mockup on the page: its Studio comes first
+  const mockupOn = Boolean(active?.kdMockup) && !locked && !cropping;
+  const contextSection = mockupOn
+    ? ["mockup", "Mockup", "dockMockup", true, 1]
+    : shapeOn
     // the same picture as its tool on the canvas strip
     ? ["shape", shapeBar.kind === "line" ? "Line" : "Shape", shapeBar.kind === "line" ? "toolLine" : "toolShape", true, 1]
     : adjustImage
@@ -3007,7 +3011,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     sectionClass, shapeBar, locked, cropping, active, shapeCorner, setShapeCorner, setShapeSides, setShapeWeight, setShapeColor,
     isLine, lineStyle, unit, setProp, adjustImage, canPremium, render, isText, setCase, pickFromPage, openColorEditor,
     isSelection, alignTo, distribute, setSize, lockRatio, setLockRatio, isGroup, group, ungroup, arrange,
-    shadowAmount, setShadow, setOpacity, setBlend, animOf, playing, setAnim, stopPlay, play,
+    shadowAmount, setShadow, setOpacity, setBlend, animOf, playing, setAnim, stopPlay, play, openMockup,
   };
 
   // place the quick-action toolbar above the selection (below it near the top edge)
