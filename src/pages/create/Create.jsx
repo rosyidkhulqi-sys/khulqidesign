@@ -2874,8 +2874,17 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
       if (e.key === "Escape") finishCrop(false);
       return;
     }
+    // Shift+H / Shift+V flip the selection, as in Figma
+    if (e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && obj && !isLocked(obj) && /^[hv]$/i.test(e.key)) {
+      e.preventDefault();
+      if (e.key.toLowerCase() === "h") obj.set({ flipX: !obj.flipX });
+      else obj.set({ flipY: !obj.flipY });
+      obj.setCoords();
+      render();
+      return;
+    }
     // tool letters, and Esc back to Select from a drawing tool
-    if (!e.metaKey && !e.ctrlKey && !e.altKey && TOOL_KEYS[e.key.toLowerCase()]) {
+    if (!e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey && TOOL_KEYS[e.key.toLowerCase()]) {
       e.preventDefault();
       pickTool(TOOL_KEYS[e.key.toLowerCase()]);
       return;
@@ -2886,6 +2895,12 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     }
 
     const mod = e.metaKey || e.ctrlKey;
+    if (mod && obj && (e.code === "BracketRight" || e.code === "BracketLeft")) {
+      e.preventDefault();
+      const up = e.code === "BracketRight";
+      arrange(e.shiftKey ? (up ? "front" : "back") : (up ? "forward" : "backward"));
+      return;
+    }
     if (mod && e.key.toLowerCase() === "z") {
       e.preventDefault();
       if (e.shiftKey) redo();
@@ -4263,15 +4278,15 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                   {/* layer order and flips: an icon and a short name in compact
                       rows, so anyone can tell them apart; rotation is a field */}
                   <div className="pp-list">
-                    <button onClick={() => arrange("front")}><Icon name="front" size={15} /><span>To front</span></button>
-                    <button onClick={() => arrange("back")}><Icon name="back" size={15} /><span>To back</span></button>
-                    <button onClick={() => arrange("forward")}><Icon name="forward" size={15} /><span>Forward</span></button>
-                    <button onClick={() => arrange("backward")}><Icon name="backward" size={15} /><span>Backward</span></button>
-                    <button className={active.flipX ? "on" : ""} onClick={() => setProp({ flipX: !active.flipX })} title="Flip horizontal">
-                      <Icon name="flipH" size={15} /><span>Mirror</span>
+                    <button onClick={() => arrange("front")} title={`Bring to front (${MOD} ⇧ ])`}><Icon name="front" size={15} /><span>To front</span></button>
+                    <button onClick={() => arrange("back")} title={`Send to back (${MOD} ⇧ [)`}><Icon name="back" size={15} /><span>To back</span></button>
+                    <button onClick={() => arrange("forward")} title={`Bring forward (${MOD} ])`}><Icon name="forward" size={15} /><span>Forward</span></button>
+                    <button onClick={() => arrange("backward")} title={`Send backward (${MOD} [)`}><Icon name="backward" size={15} /><span>Backward</span></button>
+                    <button className={active.flipX ? "on" : ""} onClick={() => setProp({ flipX: !active.flipX })} title="Flip horizontal, mirror (⇧ H)">
+                      <Icon name="flipH" size={15} /><span>Flip H</span>
                     </button>
-                    <button className={active.flipY ? "on" : ""} onClick={() => setProp({ flipY: !active.flipY })} title="Flip vertical">
-                      <Icon name="flipV" size={15} /><span>Upside down</span>
+                    <button className={active.flipY ? "on" : ""} onClick={() => setProp({ flipY: !active.flipY })} title="Flip vertical, upside down (⇧ V)">
+                      <Icon name="flipV" size={15} /><span>Flip V</span>
                     </button>
                   </div>
                   <div className="pp-type">
