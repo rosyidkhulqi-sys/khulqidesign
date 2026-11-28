@@ -49,7 +49,9 @@ function shrink(canvas, maxSide, type = "image/webp", quality = 0.9) {
   return c.toDataURL(type, quality);
 }
 
-export default function MockupStudio({ mockup, designs: savedDesigns = [], pages = [], board, onAdd, onClose, onKeep, user, editing = false }) {
+// fill: a picture (data URL) put on every design area when the Studio opens
+// ("Put on a mockup" from the dock: the selected logo or the open page)
+export default function MockupStudio({ mockup, designs: savedDesigns = [], fill = null, pages = [], board, onAdd, onClose, onKeep, user, editing = false }) {
   const [kit, setKit] = useState(null);
   const [error, setError] = useState(null);
   // per design area: a canvas fitted to it, or null for the mockup's sample
@@ -64,8 +66,11 @@ export default function MockupStudio({ mockup, designs: savedDesigns = [], pages
     let alive = true;
     loadKit(mockupKitUrl(mockup.code), loadImage, makeCanvas)
       .then(async (loaded) => {
-        const restored = await Promise.all(loaded.kit.designs.map((d, n) =>
-          savedDesigns[n] ? loadImage(savedDesigns[n]).then((img) => fitted(img, d.content)).catch(() => null) : null));
+        const filler = fill ? await loadImage(fill).catch(() => null) : null;
+        const restored = await Promise.all(loaded.kit.designs.map((d, n) => {
+          if (filler) return fitted(filler, d.content);
+          return savedDesigns[n] ? loadImage(savedDesigns[n]).then((img) => fitted(img, d.content)).catch(() => null) : null;
+        }));
         if (!alive) return;
         setKit(loaded);
         setDesigns(restored);
