@@ -2987,14 +2987,22 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   const locked = isLocked(active);
   // the right dock's sections for this selection: only the ones that apply,
   // in a fixed order; the first is open unless another was picked for it
+  // The dock keeps every icon in a fixed place, in groups as Illustrator's
+  // panels: one context slot on top that shows the selection's own section
+  // (a text's Text, a shape's Shape, later a photo's Adjust), then the
+  // sections every element has, then motion and the ecosystem. New tools
+  // fill the context slot or join the last group, so nothing gets pushed.
+  const shapeOn = Boolean(shapeBar) && !locked && !cropping;
+  const contextSection = shapeOn
+    ? ["shape", shapeBar.kind === "line" ? "Line" : "Shape", "dockShape", true, 1]
+    : ["text", "Text", "dockText", isText, 1];
   const dockSections = [
-    ["shape", shapeBar?.kind === "line" ? "Line" : "Shape", "dockShape", Boolean(shapeBar) && !locked && !cropping],
-    ["text", "Text", "dockText", isText],
-    ["color", "Color", "dockColor", Boolean(active) && !(active instanceof FabricImage)],
-    ["align", "Align", "dockAlign", Boolean(active)],
-    ["position", "Position", "dockPosition", Boolean(active)],
-    ["effects", "Effects", "dockEffects", Boolean(active)],
-    ["animate", "Animate", "dockAnimate", Boolean(active)],
+    contextSection,
+    ["color", "Color", "dockColor", Boolean(active) && !(active instanceof FabricImage), 2],
+    ["align", "Align", "dockAlign", Boolean(active), 2],
+    ["position", "Position", "dockPosition", Boolean(active), 2],
+    ["effects", "Effects", "dockEffects", Boolean(active), 2],
+    ["animate", "Animate", "dockAnimate", Boolean(active), 3],
   ];
   const dockOpen = dockSections.filter(([, , , on]) => on).map(([id]) => id);
   const dockSection = dockPick?.object === active && dockOpen.includes(dockPick.id) ? dockPick.id : dockOpen[0];
@@ -4170,7 +4178,8 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
               the left rail picks the library; the panel shows the section
               picked here. Sections that don't apply to the selection are dim. */}
           <nav className="create-dock" aria-label="Properties">
-            {dockSections.map(([id, label, icon, on]) => (
+            {dockSections.map(([id, label, icon, on, group], i) => [
+              i > 0 && dockSections[i - 1][4] !== group && <span key={`sep-${group}`} className="create-dock-sep" aria-hidden="true" />,
               <button
                 key={id}
                 type="button"
@@ -4187,8 +4196,8 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
               >
                 <Icon name={icon} size={20} />
                 <span>{label}</span>
-              </button>
-            ))}
+              </button>,
+            ])}
           </nav>
         </div>
       </div>
