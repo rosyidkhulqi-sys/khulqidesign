@@ -1426,6 +1426,8 @@
 .ms-actions button { flex: 1; height: 38px; }
 .ms-actions .ms-primary { border: none; background: var(--red); color: white; font-weight: 600; }
 .ms-actions .ms-primary:hover { filter: brightness(1.08); }
+.ms-link { align-self: center; padding: 4px; border: none; background: none; color: #aeb3ba; font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }
+.ms-link:hover { color: white; }
 @media (max-width: 860px) {
   .ms-body { grid-template-columns: 1fr; }
 }

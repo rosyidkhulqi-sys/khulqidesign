@@ -1686,7 +1686,9 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   // the Studio's picture onto the page: in place of the mockup it was opened
   // from (same size and spot), or as a new picture; a Premium mockup counts
   // as a Premium item for free downloads, as Premium photos do
-  const placeMockup = async (picture, designs, areas) => {
+  // newPage: on a page of its own after this one, fitted whole (a mockup is a
+  // whole scene, so it doesn't sit on top of the design it shows)
+  const placeMockup = async (picture, designs, areas, { newPage = false } = {}) => {
     const { mockup, target } = mockupStudio;
     setMockupStudio(null);
     const c = fc.current;
@@ -1708,8 +1710,10 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
       commit();
       return;
     }
+    if (newPage) await addPage(false);
     const b = boardRef.current;
-    img.scale(Math.min((b.w * 0.8) / img.width, (b.h * 0.8) / img.height));
+    const share = newPage ? 1 : 0.8;
+    img.scale(Math.min((b.w * share) / img.width, (b.h * share) / img.height));
     place(img);
   };
 
@@ -3904,6 +3908,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
           board={board}
           user={user}
           onAdd={placeMockup}
+          editing={Boolean(mockupStudio.target)}
           onClose={() => setMockupStudio(null)}
         />
       )}

@@ -48,7 +48,7 @@ function shrink(canvas, maxSide, type = "image/webp", quality = 0.9) {
   return c.toDataURL(type, quality);
 }
 
-export default function MockupStudio({ mockup, designs: savedDesigns = [], pages = [], board, onAdd, onClose, user }) {
+export default function MockupStudio({ mockup, designs: savedDesigns = [], pages = [], board, onAdd, onClose, user, editing = false }) {
   const [kit, setKit] = useState(null);
   const [error, setError] = useState(null);
   // per design area: a canvas fitted to it, or null for the mockup's sample
@@ -119,10 +119,12 @@ export default function MockupStudio({ mockup, designs: savedDesigns = [], pages
 
   const finished = () => renderMockup({ kit: kit.kit, images: kit.images, designs, makeCanvas });
 
-  const add = () => {
+  // newPage: on a page of its own; otherwise this page (or, when editing a
+  // mockup already on the page, in its place)
+  const add = (newPage = false) => {
     const out = finished();
     // kept small: designs live in this browser until projects move to accounts
-    onAdd(shrink(out, 1600, "image/jpeg", 0.88), designs.map((d) => (d ? shrink(d, 1200) : null)), kit.kit.designs.map((d) => d.name));
+    onAdd(shrink(out, 1600, "image/jpeg", 0.88), designs.map((d) => (d ? shrink(d, 1200) : null)), kit.kit.designs.map((d) => d.name), { newPage });
   };
 
   const download = () => {
@@ -182,9 +184,16 @@ export default function MockupStudio({ mockup, designs: savedDesigns = [], pages
               {busy && <p className="cp-hint">{busy}…</p>}
               <p className="cp-hint">Tip: "no background" prints just the logo or text on the surface; "with background" fills the area with the whole page. A page the size shown fits its area exactly.</p>
               <div className="ms-actions">
-                <button type="button" className="ms-primary" onClick={add}>Add to page</button>
+                {editing ? (
+                  <button type="button" className="ms-primary" onClick={() => add()}>Update</button>
+                ) : (
+                  <button type="button" className="ms-primary" onClick={() => add(true)}>Add as new page</button>
+                )}
                 <button type="button" onClick={download}>Download</button>
               </div>
+              {!editing && (
+                <button type="button" className="ms-link" onClick={() => add(false)}>Add to this page instead</button>
+              )}
             </aside>
           )}
         </div>
