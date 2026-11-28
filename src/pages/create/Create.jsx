@@ -3156,7 +3156,8 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   // a photo, on its own or in a frame: its light and color
   const adjustImage = !locked && !cropping ? (active instanceof FabricImage ? active : framePhoto(active)) : null;
   const contextSection = shapeOn
-    ? ["shape", shapeBar.kind === "line" ? "Line" : "Shape", "dockShape", true, 1]
+    // the same picture as its tool on the canvas strip
+    ? ["shape", shapeBar.kind === "line" ? "Line" : "Shape", shapeBar.kind === "line" ? "toolLine" : "toolShape", true, 1]
     : adjustImage
       ? ["adjust", "Adjust", "dockAdjust", true, 1]
       : ["text", "Text", "dockText", isText, 1];
