@@ -104,10 +104,12 @@ export default function MockupStudio({ mockup, designs: savedDesigns = [], pages
       .catch((e) => setError(e.message))
       .finally(() => URL.revokeObjectURL(url));
   };
-  const fillFromPage = async (n, index) => {
+  // withBackground false: only what's on the page (a logo, a text), so it sits
+  // on the surface as if printed; true: the whole page, as a full label
+  const fillFromPage = async (n, index, withBackground) => {
     setBusy("Drawing the page");
     try {
-      const img = await loadImage(await pageImage(pages[index], board));
+      const img = await loadImage(await pageImage(pages[index], board, 2500, { background: withBackground }));
       setDesign(n, fitted(img, kit.kit.designs[n].content));
     } catch (e) {
       setError(e.message || "That page couldn't be drawn.");
@@ -158,9 +160,19 @@ export default function MockupStudio({ mockup, designs: savedDesigns = [], pages
                   <div className="ms-slot-actions">
                     <button type="button" onClick={() => upload(n)}>Upload</button>
                     {pages.length > 0 && (
-                      <select value="" onChange={(e) => e.target.value !== "" && fillFromPage(n, Number(e.target.value))} aria-label={`Use a page for ${d.name}`}>
+                      <select value="" aria-label={`Use a page for ${d.name}`}
+                              onChange={(e) => {
+                                if (e.target.value === "") return;
+                                const [i, bg] = e.target.value.split(":");
+                                fillFromPage(n, Number(i), bg === "bg");
+                              }}>
                         <option value="">Use page…</option>
-                        {pages.map((_, i) => <option key={i} value={i}>Page {i + 1}</option>)}
+                        {pages.map((_, i) => (
+                          <optgroup key={i} label={`Page ${i + 1}`}>
+                            <option value={`${i}:clear`}>Page {i + 1}, no background</option>
+                            <option value={`${i}:bg`}>Page {i + 1}, with background</option>
+                          </optgroup>
+                        ))}
                       </select>
                     )}
                     {designs[n] && <button type="button" onClick={() => setDesign(n, null)} title="Back to the sample">Reset</button>}
@@ -168,7 +180,7 @@ export default function MockupStudio({ mockup, designs: savedDesigns = [], pages
                 </div>
               ))}
               {busy && <p className="cp-hint">{busy}…</p>}
-              <p className="cp-hint">Tip: a page the size shown fills its area exactly. A logo on a clear background sits on the surface itself.</p>
+              <p className="cp-hint">Tip: "no background" prints just the logo or text on the surface; "with background" fills the area with the whole page. A page the size shown fits its area exactly.</p>
               <div className="ms-actions">
                 <button type="button" className="ms-primary" onClick={add}>Add to page</button>
                 <button type="button" onClick={download}>Download</button>
