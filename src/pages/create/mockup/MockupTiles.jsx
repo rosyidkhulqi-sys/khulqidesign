@@ -16,7 +16,7 @@ export default function MockupTiles({ mockups, onOpen }) {
           </button>
         ))}
       </div>
-      <p className="cp-hint">Pick a mockup, then put your design or a page of this one on it.</p>
+      <p className="cp-hint">Select a logo or element first and it goes straight onto the mockup; or pick one and put a page on it in the Studio.</p>
     </>
   );
 }

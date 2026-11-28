@@ -1,39 +1,15 @@
-// The dock's Mockup section, always there under Animate as the ecosystem's
-// tool. For a mockup on the page: its design areas and the way back into
-// the Studio. Otherwise: "Put on a mockup" — the selected element (a logo)
-// or the open page goes onto every design area of the mockup picked, in one
-// click. A design's text or logo is edited where it was made, then put on
-// again, as a smart object's contents are in Photoshop.
+// The dock's Mockup section, the mockup editor for a mockup on the page
+// (mockups are picked in Elements, on the left): its design areas and the way
+// back into the Studio. A design's text or logo is edited where it was made,
+// then put on again, as a smart object's contents are in Photoshop.
 // Part of the right dock's properties panel; ed is the editor's state and
 // actions, handed down by Create.
 import Icon from "../CreateIcons";
-import MockupTiles from "../mockup/MockupTiles";
-import useMockups from "../mockup/useMockups";
-
-function PutOnMockup({ ed }) {
-  const { active, putOnMockup } = ed;
-  const mockups = useMockups();
-  return (
-    <>
-      <p className="cp-hint">
-        {active ? "The selected element goes on every design area of the mockup you pick." : "This page goes on every design area of the mockup you pick, without its background."}
-      </p>
-      <MockupTiles mockups={mockups} onOpen={(m) => putOnMockup(m)} />
-    </>
-  );
-}
 
 export default function MockupSection({ ed }) {
   const { sectionClass, active, openMockup } = ed;
   const mockup = active?.kdMockup;
-  if (!mockup) {
-    return (
-      <div className={sectionClass("mockup")}>
-        <p className="cp-label">Put on a mockup</p>
-        <PutOnMockup ed={ed} />
-      </div>
-    );
-  }
+  if (!mockup) return null;
   const areas = mockup.areas ?? [];
   return (
     <div className={sectionClass("mockup")}>
