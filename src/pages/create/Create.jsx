@@ -4147,7 +4147,8 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
               <button
                 key={id}
                 type="button"
-                className={on && dockSection === id && !colorEditor && !adjusting ? "active" : ""}
+                // the color editor is the Color section, opened wide
+                className={(colorEditor?.mode === "object" ? id === "color" : on && dockSection === id && !colorEditor) && !adjusting ? "active" : ""}
                 disabled={!on || Boolean(adjusting) || cropping || aiBusy}
                 aria-pressed={on && dockSection === id}
                 title={on ? label : !active ? `${label}: select an element first` : `${label} doesn't apply to this selection`}
