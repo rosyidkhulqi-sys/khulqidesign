@@ -45,6 +45,8 @@ import { MOD } from "./platform";
 import { handleShortcut } from "./createShortcuts";
 import { beginDraw, dragDraw, endDraw, isDrawTool, setCanvasTool } from "./createDrawTools";
 import MockupStudio from "./mockup/MockupStudio";
+import MockupSection from "./props/MockupSection";
+import { pageImage } from "./mockup/pageImage";
 import { openLogoMaker, readLogoSession } from "../ai/logoSession";
 import useStagePan from "./useStagePan";
 import { basicFiltersJson, basicOnly, isProAdjust } from "./photoAdjust";
@@ -423,6 +425,12 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   // the designs last put on each mockup (by code), so closing the Studio and
   // opening that mockup again from Elements finds them still there
   const mockupDrafts = useRef(new Map());
+  // "Put this page on a mockup" from the dock: the next mockup picked in
+  // Elements gets the open page
+  const pagePending = useRef(false);
+  // Elements opened on a view from outside (the dock's Mockup): remounts the
+  // panel on it
+  const [elementsView, setElementsView] = useState({ view: null, n: 0 });
   // Space held over the page: null, "ready" (a hand) or "dragging" (a grab)
   const [handMode, setHandMode] = useState(null);
   // the right dock: the section the person picked, for the object it was
@@ -1694,8 +1702,14 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     stopTextEditing();
     const obj = fc.current?.getActiveObject();
     let fill = null;
+    const page = pagePending.current;
+    pagePending.current = false;
     try {
-      if (obj && !obj.kdMockup) {
+      if (page) {
+        // the open page, without its background (Use page in the Studio
+        // offers it with one)
+        fill = await pageImage(currentPages()[pagesRef.current.index], boardRef.current, 2500, { background: false });
+      } else if (obj && !obj.kdMockup) {
         const longSide = Math.max(obj.getScaledWidth(), obj.getScaledHeight()) || 1;
         fill = obj.toDataURL({ format: "png", multiplier: Math.min(4, 2500 / longSide) });
       }
@@ -1709,6 +1723,20 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
       pages: currentPages(),
       target: null,
     });
+  };
+
+  // the dock's Mockup without a mockup selected: Elements → Mockups opens on
+  // the left; page: the open page goes on the one picked, else the selection
+  const showMockups = (page) => {
+    pagePending.current = page;
+    if (page) {
+      fc.current.discardActiveObject();
+      fc.current.requestRenderAll();
+      setActive(null);
+    }
+    setTab("elements");
+    setElementsView((v) => ({ view: "mockups", n: v.n + 1 }));
+    if (!panelOpen) showPanel(true);
   };
 
   // the Studio's picture onto the page: in place of the mockup it was opened
@@ -3032,23 +3060,23 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     ["position", "Position", "dockPosition", Boolean(active), 2],
     ["effects", "Effects", "dockEffects", Boolean(active), 2],
     ["animate", "Animate", "dockAnimate", Boolean(active), 3],
-    // the mockup editor, for a mockup on the page (mockups are picked in
-    // Elements, on the left)
-    ["mockup", "Mockup", "dockMockup", mockupOn, 3],
+    // the mockup editor for a mockup on the page; otherwise the way to put
+    // the page or the selection on one (picked in Elements, on the left)
+    ["mockup", "Mockup", "dockMockup", !cropping, 3],
   ];
   const dockOpen = dockSections.filter(([, , , on]) => on).map(([id]) => id);
   // picked in the dock for this selection, else the selection's own section
   // (a mockup opens on Mockup)
   const dockSection = dockPick?.object === active && dockOpen.includes(dockPick.id)
     ? dockPick.id
-    : mockupOn ? "mockup" : dockOpen[0];
+    : mockupOn ? "mockup" : !active ? null : dockOpen[0];
   const sectionClass = (id) => `pp-sec ${dockSection === id ? "on" : ""}`;
   // what the dock's sections read and do (props/), handed down in one piece
   const ed = {
     sectionClass, shapeBar, locked, cropping, active, shapeCorner, setShapeCorner, setShapeSides, setShapeWeight, setShapeColor,
     isLine, lineStyle, unit, setProp, adjustImage, canPremium, render, isText, setCase, pickFromPage, openColorEditor,
     isSelection, alignTo, distribute, setSize, lockRatio, setLockRatio, isGroup, group, ungroup, arrange,
-    shadowAmount, setShadow, setOpacity, setBlend, animOf, playing, setAnim, stopPlay, play, openMockup,
+    shadowAmount, setShadow, setOpacity, setBlend, animOf, playing, setAnim, stopPlay, play, openMockup, showMockups,
   };
 
   // place the quick-action toolbar above the selection (below it near the top edge)
@@ -3341,7 +3369,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
 
             {!searching && tab === "templates" && <div className="cp-masonry">{allDesigns.map(templateTile)}</div>}
 
-            {!searching && tab === "elements" && <ElementsPanel dragItem={dragItem} uploaded={dbElements} learn={learnParts} onAddQr={addQr} onOpenMockup={(m) => putOnMockup(m)} />}
+            {!searching && tab === "elements" && <ElementsPanel key={elementsView.n} initialView={elementsView.view} dragItem={dragItem} uploaded={dbElements} learn={learnParts} onAddQr={addQr} onOpenMockup={(m) => putOnMockup(m)} />}
             {!searching && tab === "background" && (
               <BackgroundPanel
                 color={toHex(bg)}
@@ -3835,6 +3863,8 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                 }}
                 onClose={() => setColorEditor(null)}
               />
+            ) : !active && dockSection === "mockup" ? (
+              <MockupSection ed={ed} />
             ) : !active ? (
               <>
                 <p className="cp-label">Artboard</p>

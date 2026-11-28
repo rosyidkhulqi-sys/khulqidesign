@@ -302,7 +302,7 @@ function recentTile({ kind, id }, dragItem, elements, icons) {
 /* ---------- panel ---------- */
 
 // onAddQr(text): puts a new QR code on the page
-function ElementsPanel({ dragItem: placeItem, uploaded = [], learn, onAddQr, onOpenMockup }) {
+function ElementsPanel({ dragItem: placeItem, uploaded = [], learn, onAddQr, onOpenMockup, initialView = null }) {
   const elements = useMemo(() => [...uploaded, ...trialElements], [uploaded]);
   const categories = useMemo(() => mergeCategories(uploaded), [uploaded]);
   // how many each category really holds (the overview loads only the newest),
@@ -369,7 +369,7 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [], learn, onAddQr, onO
   const shapeCategory = allCategories.find((c) => c.id === "shapes");
   const browsableCategories = allCategories.filter((c) => c.id !== "shapes" && countOf(c) > 0);
   // the open category, the existing icon catalog, built-in shapes, or recent items
-  const [view, setView] = useState(null);
+  const [view, setView] = useState(initialView);
   const browseTiles = [
     ...browsableCategories.filter((c) => ["graphics", "infographics", "grids"].includes(c.id)).map((c) => ({
       ...c,
