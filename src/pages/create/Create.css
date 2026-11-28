@@ -1798,7 +1798,9 @@
   scrollbar-width: none;
 }
 .create-dock::-webkit-scrollbar { display: none; }
-.create-dock button:disabled { color: #4b5058; cursor: default; }
+/* nothing selected, or a section that doesn't apply: the rail's own grey,
+   faded, so the dock still reads as a match for the left rail */
+.create-dock button:disabled { color: #8f969f; opacity: 0.45; cursor: default; }
 /* the properties panel shows only the section picked in the dock */
 .create-props .pp-sec:not(.on) { display: none; }
 
