@@ -1,7 +1,7 @@
-// The basic shape bar: corner rounding, number of sides and the outline,
-// laid out in a row like Canva's, but anchored at the top right of the
-// canvas area and minimized to a small tab there, as Illustrator's panels.
-import Icon from "./CreateIcons";
+// The Shape (or Line) section of the right dock: corner rounding, number of
+// sides and the outline, one control per row, as Illustrator keeps corner
+// radius in its Properties panel. It used to float at the top right of the
+// canvas; in the dock every setting has one place and the canvas stays clear.
 
 function RangeControl({ label, value, min = 0, max, onChange }) {
   return (
@@ -20,9 +20,7 @@ function RangeControl({ label, value, min = 0, max, onChange }) {
   );
 }
 
-export default function CreateShapeToolbar({
-  collapsed,
-  onToggle,
+export default function CreateShapePanel({
   isLine = false,
   showCorner,
   corner,
@@ -37,35 +35,21 @@ export default function CreateShapeToolbar({
   onStrokeColor,
 }) {
   return (
-    <div className={`cs-toolbar ${collapsed ? "is-collapsed" : ""}`} role="group" aria-label={isLine ? "Line controls" : "Shape controls"}>
-      {!collapsed && (
-        <div className="cs-toolbar-controls">
-          {showCorner && (
-            <RangeControl label="Corners" value={corner} max={cornerMax} onChange={onCornerChange} />
-          )}
-          {showSides && (
-            <RangeControl label="Sides" value={sides} min={3} max={20} onChange={onSidesChange} />
-          )}
-          <div className="cs-stroke-control">
-            <label className="cs-stroke-color" title={isLine ? "Line color" : "Outline color"}>
-              <input type="color" value={stroke} onChange={(event) => onStrokeColor(event.target.value)}
-                     aria-label={isLine ? "Line color" : "Outline color"} />
-              <span style={{ backgroundColor: stroke }} />
-            </label>
-            <RangeControl label={isLine ? "Weight" : "Outline"} value={strokeWidth} min={isLine ? 1 : 0} max={48} onChange={onStrokeChange} />
-          </div>
-        </div>
+    <div className="cs-panel" role="group" aria-label={isLine ? "Line controls" : "Shape controls"}>
+      {showCorner && (
+        <RangeControl label="Corners" value={corner} max={cornerMax} onChange={onCornerChange} />
       )}
-      <button
-        className="cs-toolbar-toggle"
-        onClick={onToggle}
-        aria-expanded={!collapsed}
-        aria-label={collapsed ? "Show shape controls" : "Minimize shape controls"}
-        title={collapsed ? "Show shape controls" : "Minimize shape controls"}
-      >
-        {collapsed && <span>{isLine ? "Line" : "Shape"}</span>}
-        <Icon name={collapsed ? "chevronLeft" : "chevronRight"} size={16} />
-      </button>
+      {showSides && (
+        <RangeControl label="Sides" value={sides} min={3} max={20} onChange={onSidesChange} />
+      )}
+      <div className="cs-stroke-control">
+        <label className="cs-stroke-color" title={isLine ? "Line color" : "Outline color"}>
+          <input type="color" value={stroke} onChange={(event) => onStrokeColor(event.target.value)}
+                 aria-label={isLine ? "Line color" : "Outline color"} />
+          <span style={{ backgroundColor: stroke }} />
+        </label>
+        <RangeControl label={isLine ? "Weight" : "Outline"} value={strokeWidth} min={isLine ? 1 : 0} max={48} onChange={onStrokeChange} />
+      </div>
     </div>
   );
 }

@@ -41,7 +41,7 @@ import { artboardPresets, photoFrames, shapes, svgDataUrl, textPresets } from ".
 import { loadFont, loadFontsOf, loadSiteFonts } from "./createFonts";
 import FontPicker from "./FontPicker";
 import { pageThumbs } from "./pageThumbs";
-import CreateShapeToolbar from "./CreateShapeToolbar";
+import CreateShapePanel from "./CreateShapeToolbar";
 import "./createHandles";
 import { regularPolygonPath } from "./shapePath";
 import CreateColors, { CreateColorPanel } from "./CreateColors";
@@ -152,7 +152,6 @@ function shapeInfo(obj) {
   return null;
 }
 
-const SHAPE_BAR_KEY = "kd-create-shape-bar";
 
 // crop an image to fill w×h, like CSS object-fit: cover
 async function imageCover(src, w, h) {
@@ -2061,24 +2060,6 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
 
   /* ---------- basic shape bar ---------- */
 
-  // minimized to a small tab at the top right, as Illustrator's panels
-  const [shapeBarClosed, setShapeBarClosed] = useState(() => {
-    try {
-      return localStorage.getItem(SHAPE_BAR_KEY) === "closed";
-    } catch {
-      return false;
-    }
-  });
-  const toggleShapeBar = () => {
-    setShapeBarClosed((closed) => {
-      try {
-        localStorage.setItem(SHAPE_BAR_KEY, closed ? "open" : "closed");
-      } catch {
-        /* storage unavailable */
-      }
-      return !closed;
-    });
-  };
 
   // a triangle or polygon becomes a path with its sides and corner rounding,
   // the same size and in the same place
@@ -3007,6 +2988,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   // the right dock's sections for this selection: only the ones that apply,
   // in a fixed order; the first is open unless another was picked for it
   const dockSections = [
+    ["shape", shapeBar?.kind === "line" ? "Line" : "Shape", "dockShape", Boolean(shapeBar) && !locked && !cropping],
     ["text", "Text", "dockText", isText],
     ["color", "Color", "dockColor", Boolean(active) && !(active instanceof FabricImage)],
     ["align", "Align", "dockAlign", Boolean(active)],
@@ -3461,26 +3443,6 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
 
           {/* STAGE + BOTTOM BAR */}
           <div className="create-center" inert={aiBusy}>
-            {/* corners, sides and outline for a basic shape; sits above the
-                canvas at the top right, so it never covers the page */}
-            {shapeBar && !cropping && !locked && (
-              <CreateShapeToolbar
-                collapsed={shapeBarClosed}
-                onToggle={toggleShapeBar}
-                isLine={shapeBar.kind === "line"}
-                showCorner={shapeBar.kind === "rect" || shapeBar.kind === "polygon"}
-                corner={shapeCorner()}
-                cornerMax={Math.round(Math.min(active.getScaledWidth(), active.getScaledHeight()) / 2)}
-                onCornerChange={setShapeCorner}
-                showSides={shapeBar.kind === "polygon"}
-                sides={shapeBar.sides ?? 3}
-                onSidesChange={setShapeSides}
-                stroke={toHex(typeof active.stroke === "string" && active.stroke ? active.stroke : "#000000")}
-                strokeWidth={active.strokeWidth || 0}
-                onStrokeChange={setShapeWeight}
-                onStrokeColor={setShapeColor}
-              />
-            )}
           <div
             className={`create-stage ${handMode ? "is-hand" : ""} ${handMode === "dragging" ? "is-grabbing" : ""}`}
             ref={stageRef}
@@ -3867,6 +3829,62 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                 )}
                 {!adjusting && (
                 <>
+                {/* Shape or Line: corners, sides, outline and, for a line, its
+                    style and ends; first in the dock for a shape */}
+                {shapeBar && !locked && !cropping && (
+                  <div className={sectionClass("shape")}>
+                    <p className="cp-label">{shapeBar.kind === "line" ? "Line" : "Shape"}</p>
+                    <CreateShapePanel
+                      isLine={shapeBar.kind === "line"}
+                      showCorner={shapeBar.kind === "rect" || shapeBar.kind === "polygon"}
+                      corner={shapeCorner()}
+                      cornerMax={Math.round(Math.min(active.getScaledWidth(), active.getScaledHeight()) / 2)}
+                      onCornerChange={setShapeCorner}
+                      showSides={shapeBar.kind === "polygon"}
+                      sides={shapeBar.sides ?? 3}
+                      onSidesChange={setShapeSides}
+                      stroke={toHex(typeof active.stroke === "string" && active.stroke ? active.stroke : "#000000")}
+                      strokeWidth={active.strokeWidth || 0}
+                      onStrokeChange={setShapeWeight}
+                      onStrokeColor={setShapeColor}
+                    />
+                {isLine && (
+                  <>
+                    <p className="cp-label pp-sub">Line style</p>
+                    <div className="pp-line-styles" role="group" aria-label="Line style">
+                      {["solid", "dashed", "dotted"].map((style) => (
+                        <button
+                          key={style}
+                          type="button"
+                          className={lineStyle === style ? "on" : ""}
+                          title={`${style[0].toUpperCase()}${style.slice(1)} line`}
+                          aria-label={`${style[0].toUpperCase()}${style.slice(1)} line`}
+                          onClick={() => {
+                            const unitScale = unit() / 1080;
+                            const strokeDashArray = style === "solid"
+                              ? null
+                              : style === "dashed"
+                                ? [12 * unitScale, 8 * unitScale]
+                                : [2 * unitScale, 7 * unitScale];
+                            setProp({ strokeDashArray });
+                          }}
+                        >
+                          <span className={`pp-line-sample ${style}`} />
+                        </button>
+                      ))}
+                    </div>
+                    <label className="pp-row">
+                      <span>Rounded ends</span>
+                      <input
+                        type="checkbox"
+                        checked={active.strokeLineCap === "round"}
+                        onChange={(e) => setProp({ strokeLineCap: e.target.checked ? "round" : "butt" })}
+                      />
+                    </label>
+                  </>
+                )}
+                  </div>
+                )}
                 {isText && (
                   <div className={sectionClass("text")}>
                     <p className="cp-label">Text</p>
@@ -3976,41 +3994,6 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                   }}
                 />}
 
-                {isLine && (
-                  <>
-                    <p className="cp-label">Line style</p>
-                    <div className="pp-line-styles" role="group" aria-label="Line style">
-                      {["solid", "dashed", "dotted"].map((style) => (
-                        <button
-                          key={style}
-                          type="button"
-                          className={lineStyle === style ? "on" : ""}
-                          title={`${style[0].toUpperCase()}${style.slice(1)} line`}
-                          aria-label={`${style[0].toUpperCase()}${style.slice(1)} line`}
-                          onClick={() => {
-                            const unitScale = unit() / 1080;
-                            const strokeDashArray = style === "solid"
-                              ? null
-                              : style === "dashed"
-                                ? [12 * unitScale, 8 * unitScale]
-                                : [2 * unitScale, 7 * unitScale];
-                            setProp({ strokeDashArray });
-                          }}
-                        >
-                          <span className={`pp-line-sample ${style}`} />
-                        </button>
-                      ))}
-                    </div>
-                    <label className="pp-row">
-                      <span>Rounded ends</span>
-                      <input
-                        type="checkbox"
-                        checked={active.strokeLineCap === "round"}
-                        onChange={(e) => setProp({ strokeLineCap: e.target.checked ? "round" : "butt" })}
-                      />
-                    </label>
-                  </>
-                )}
                 </div>
 
                 <div className={sectionClass("align")}>

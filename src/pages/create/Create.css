@@ -1720,34 +1720,22 @@
 .fp-font.is-on { background: rgba(255, 255, 255, 0.14); }
 .fp-none { margin: 8px 6px; color: #777e87; font-size: 13px; }
 
-/* basic shape bar: top right of the canvas area, minimizes to a tab */
+/* the dock's Shape / Line section: one control per row, label, slider and
+   value lined up as the panel's other rows */
 .create-center { position: relative; }
-.cs-toolbar {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  z-index: 6;
-  display: flex;
+.cs-panel { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+.cs-range-control {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) 30px;
   align-items: center;
-  gap: 4px;
-  max-width: calc(100% - 24px);
-  padding: 5px 5px 5px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  background: var(--surface);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  gap: 10px;
+  color: #aeb3ba;
+  font-size: 13px;
 }
-.cs-toolbar.is-collapsed { padding: 4px; }
-/* always one short row; the sliders shrink before anything wraps */
-.cs-toolbar { width: max-content; }
-.cs-toolbar-controls { display: flex; flex-wrap: nowrap; align-items: center; gap: 12px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
-.cs-toolbar-controls::-webkit-scrollbar { display: none; }
-/* the minimize button never gets pushed out */
-.cs-toolbar-toggle { flex: none; }
-.cs-range-control { display: flex; align-items: center; gap: 8px; color: #c9ced6; font-size: 12px; white-space: nowrap; }
-.cs-range-control input { width: clamp(44px, 5vw, 88px); accent-color: var(--red); }
-.cs-range-control output { min-width: 22px; color: var(--white); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
-.cs-stroke-control { display: flex; align-items: center; gap: 10px; }
+.cs-range-control input { width: 100%; accent-color: var(--red); }
+.cs-range-control output { color: var(--white); font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
+.cs-stroke-control { display: grid; grid-template-columns: 24px minmax(0, 1fr); align-items: center; gap: 10px; }
+.cs-stroke-control .cs-range-control { grid-template-columns: 48px minmax(0, 1fr) 30px; }
 .cs-stroke-color { position: relative; display: block; width: 24px; height: 24px; cursor: pointer; }
 .cs-stroke-color input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .cs-stroke-color span {
@@ -1759,21 +1747,8 @@
   box-sizing: border-box;
   pointer-events: none;
 }
-.cs-toolbar-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 8px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: #c9ced6;
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-.cs-toolbar-toggle:hover { background: rgba(255, 255, 255, 0.08); color: var(--white); }
+/* a smaller heading inside a section (Line style under Line) */
+.cp-label.pp-sub { margin-top: 4px; }
 
 /* folded inspector sections (Position) */
 .pp-more { margin-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
@@ -1885,15 +1860,6 @@
 /* when the canvas area is narrow, everything gets a little smaller so the
    numbers can stay */
 .create-center { container-type: inline-size; }
-@container (max-width: 640px) {
-  .cs-toolbar { padding-left: 10px; }
-  .cs-toolbar-controls { gap: 8px; }
-  .cs-range-control { gap: 5px; font-size: 11px; }
-  .cs-range-control input { width: 40px; }
-  .cs-range-control output { min-width: 16px; font-size: 11px; }
-  .cs-stroke-control { gap: 6px; }
-  .cs-stroke-color { width: 20px; height: 20px; }
-}
 @container (max-width: 440px) {
   /* too narrow for one row: the shape bar wraps rather than hide a control */
   .cs-toolbar-controls { flex-wrap: wrap; row-gap: 6px; overflow: visible; }
