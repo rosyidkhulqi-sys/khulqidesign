@@ -176,13 +176,14 @@
 
 .create-body {
   /* rail and panel widths, shared with the panel toggle's position */
-  --rail-w: 76px;
+  /* 72 at every size: icon 20 and a 10 px label, "Background" whole */
+  --rail-w: 72px;
   /* 300: category names ("Infographics", "Photo frames") fit whole and the
      tiles read well, still well short of Canva's ~360 so the page keeps room */
   --panel-w: 300px;
   --props-w: 260px;
   /* the right dock of section icons, beside the properties panel */
-  --dock-w: 64px;
+  --dock-w: var(--rail-w);
   position: relative;
   min-height: 0;
   display: grid;
@@ -267,21 +268,40 @@
   scrollbar-width: none;
 }
 .create-rail::-webkit-scrollbar { display: none; }
-.create-rail button {
+/* the left rail and the right dock share one button: same icon, label,
+   spacing and active mark, as Illustrator's toolbars match each other */
+.create-rail button,
+.create-dock button {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 10px 2px;
+  gap: 5px;
+  padding: 9px 0;
   border: none;
   border-radius: 8px;
   background: transparent;
   color: #8f969f;
-  font-size: 11px;
+  font: inherit;
+  font-size: 10px;
+  white-space: nowrap;
   cursor: pointer;
 }
-.create-rail button:hover { background: rgba(255, 255, 255, 0.05); color: white; }
-.create-rail button.active { background: rgba(255, 255, 255, 0.1); color: white; }
+.create-rail button:hover,
+.create-dock button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.05); color: white; }
+.create-rail button.active,
+.create-dock button.active { background: rgba(255, 255, 255, 0.1); color: white; }
+.create-rail button.active::after,
+.create-dock button.active::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 9px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--red);
+}
 
 
 /* LIBRARY PANEL */
@@ -1408,7 +1428,7 @@
 /* RESPONSIVE */
 
 @media (max-width: 1100px) {
-  .create-body { --rail-w: 70px; --panel-w: 220px; --props-w: 220px; }
+  .create-body { --panel-w: 220px; --props-w: 220px; }
   .create-body.panel-closed { --panel-w: 0px; }
   .create-body.props-closed { --props-w: 0px; }
 }
@@ -1770,7 +1790,7 @@
 .create-dock {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   padding: 8px 6px;
   border-left: 1px solid rgba(255, 255, 255, 0.08);
   overflow-x: hidden;
@@ -1778,33 +1798,6 @@
   scrollbar-width: none;
 }
 .create-dock::-webkit-scrollbar { display: none; }
-.create-dock button {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  padding: 9px 2px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: #8f969f;
-  font: inherit;
-  font-size: 10px;
-  cursor: pointer;
-}
-.create-dock button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.05); color: white; }
-.create-dock button.active { background: rgba(255, 255, 255, 0.1); color: white; }
-.create-dock button.active::after {
-  content: "";
-  position: absolute;
-  top: 6px;
-  right: 9px;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--red);
-}
 .create-dock button:disabled { color: #4b5058; cursor: default; }
 /* the properties panel shows only the section picked in the dock */
 .create-props .pp-sec:not(.on) { display: none; }

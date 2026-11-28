@@ -3256,7 +3256,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                 onClick={() => (t === tab && panelOpen ? showPanel(false) : openTab(t))}
                 {...(t === "uploads" ? uploadDropProps : {})}
               >
-                <Icon name={t} size={22} />
+                <Icon name={t} size={20} />
                 {tabLabel(t)}
               </button>
             ))}
