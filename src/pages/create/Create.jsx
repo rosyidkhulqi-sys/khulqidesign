@@ -410,6 +410,9 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   const [uploadOver, setUploadOver] = useState(false);
   // Space held over the page: null, "ready" (a hand) or "dragging" (a grab)
   const [handMode, setHandMode] = useState(null);
+  // the right dock: the section the person picked, for the object it was
+  // picked on; another object starts again on its first section
+  const [dockPick, setDockPick] = useState(null);
   // the Hand button in the bottom bar: the hand stays on without Space
   const [handLock, setHandLock] = useState(false);
   const handLockRef = useRef(false);
@@ -2987,6 +2990,18 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     ? "solid"
     : active.strokeDashArray[0] <= active.strokeDashArray[1] * 0.5 ? "dotted" : "dashed";
   const locked = isLocked(active);
+  // the right dock's sections for this selection: only the ones that apply,
+  // in a fixed order; the first is open unless another was picked for it
+  const dockSections = [
+    ["text", "Text", "dockText", isText],
+    ["color", "Color", "dockColor", Boolean(active) && !(active instanceof FabricImage)],
+    ["align", "Align", "dockAlign", Boolean(active)],
+    ["position", "Position", "dockPosition", Boolean(active)],
+    ["animate", "Animate", "dockAnimate", Boolean(active)],
+  ];
+  const dockOpen = dockSections.filter(([, , , on]) => on).map(([id]) => id);
+  const dockSection = dockPick?.object === active && dockOpen.includes(dockPick.id) ? dockPick.id : dockOpen[0];
+  const sectionClass = (id) => `pp-sec ${dockSection === id ? "on" : ""}`;
 
   // place the quick-action toolbar above the selection (below it near the top edge)
   let floatPos = null;
@@ -3838,7 +3853,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                 {!adjusting && (
                 <>
                 {isText && (
-                  <>
+                  <div className={sectionClass("text")}>
                     <p className="cp-label">Text</p>
                     <textarea
                       className="pp-textarea"
@@ -3941,9 +3956,10 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                       <button onClick={() => setCase("title")} title="Title Case">Aa</button>
                     </div>
                     </div>
-                  </>
+                  </div>
                 )}
 
+                <div className={sectionClass("color")}>
                 {/* a photo's colors are its pixels; its fill isn't one of them */}
                 {!(active instanceof FabricImage) && <CreateColors
                   key={colorObjectKey(active)}
@@ -3991,7 +4007,9 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                     </label>
                   </>
                 )}
+                </div>
 
+                <div className={sectionClass("align")}>
                 {/* line up with the page, or with each other when several are picked */}
                 <p className="cp-label">{isSelection ? "Align selection" : "Align to page"}</p>
                 <div className="pp-align pp-seg" role="group" aria-label="Align">
@@ -4019,7 +4037,9 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                     </button>
                   </div>
                 )}
+                </div>
 
+                <div className={sectionClass("position")}>
                 <p className="cp-label">Size</p>
                 <div className="pp-pair">
                   <label>
@@ -4068,19 +4088,10 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                   </div>
                 )}
 
-                {/* Animate: an entrance and a loop, each one row of chips;
-                    choosing one plays it, Preview plays the whole page */}
-                <CreateAnimate
-                  anim={animOf(active)}
-                  playing={playing}
-                  onPick={setAnim}
-                  onPlay={() => (playing ? stopPlay.current?.() : play())}
-                />
-
-                {/* layer order, flip and rotation, folded away until needed;
-                    duplicate, lock and delete are on the toolbar by the element */}
-                <details className="pp-more">
-                  <summary>Position</summary>
+                {/* layer order, flip and rotation; duplicate, lock and delete
+                    are on the toolbar by the element */}
+                <p className="cp-label">Arrange</p>
+                <div className="pp-arrange">
                   {/* layer order and flips: an icon and a short name in compact
                       rows, so anyone can tell them apart; rotation is a field */}
                   <div className="pp-list">
@@ -4109,12 +4120,48 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                       />
                     </label>
                   </div>
-                </details>
+                </div>
+                </div>
+
+                {/* Animate: an entrance and a loop, each one row of chips;
+                    choosing one plays it, Preview plays the whole page */}
+                <div className={sectionClass("animate")}>
+                <CreateAnimate
+                  anim={animOf(active)}
+                  playing={playing}
+                  onPick={setAnim}
+                  onPlay={() => (playing ? stopPlay.current?.() : play())}
+                />
+                </div>
                 </>
                 )}
               </>
             )}
           </aside>
+
+          {/* the right dock: one icon per section of the properties panel, as
+              the left rail picks the library; the panel shows the section
+              picked here. Sections that don't apply to the selection are dim. */}
+          <nav className="create-dock" aria-label="Properties">
+            {dockSections.map(([id, label, icon, on]) => (
+              <button
+                key={id}
+                type="button"
+                className={on && dockSection === id && !colorEditor && !adjusting ? "active" : ""}
+                disabled={!on || Boolean(adjusting) || cropping || aiBusy}
+                aria-pressed={on && dockSection === id}
+                title={on ? label : !active ? `${label}: select an element first` : `${label} doesn't apply to this selection`}
+                onClick={() => {
+                  setColorEditor(null);
+                  setDockPick({ object: active, id });
+                  if (!propsOpen) showProps(true);
+                }}
+              >
+                <Icon name={icon} size={20} />
+                <span>{label}</span>
+              </button>
+            ))}
+          </nav>
         </div>
       </div>
 

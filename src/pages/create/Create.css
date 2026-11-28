@@ -181,10 +181,12 @@
      tiles read well, still well short of Canva's ~360 so the page keeps room */
   --panel-w: 300px;
   --props-w: 260px;
+  /* the right dock of section icons, beside the properties panel */
+  --dock-w: 64px;
   position: relative;
   min-height: 0;
   display: grid;
-  grid-template-columns: var(--rail-w) var(--panel-w) minmax(0, 1fr) var(--props-w);
+  grid-template-columns: var(--rail-w) var(--panel-w) minmax(0, 1fr) var(--props-w) var(--dock-w);
 }
 .create-body.panel-closed { --panel-w: 0px; }
 .create-body.props-closed { --props-w: 0px; }
@@ -199,7 +201,7 @@
 .props-toggle {
   position: absolute;
   top: 50%;
-  right: var(--props-w);
+  right: calc(var(--props-w) + var(--dock-w));
   z-index: 5;
   width: 18px;
   height: 56px;
@@ -1418,8 +1420,11 @@
   /* phones stack the panel above the canvas; the tabs show and hide it */
   .panel-toggle,
   .props-toggle { display: none; }
-  /* stacked under the canvas, the properties always show */
+  /* stacked under the canvas, the properties always show, every section of
+     them: on a phone there's room below, so the dock steps aside */
   .props-closed .create-props { visibility: visible; padding: 14px; overflow-y: auto; }
+  .create-dock { display: none; }
+  .create-props .pp-sec:not(.on) { display: block; }
   /* a hidden library panel takes no room above the canvas */
   .panel-closed .create-panel { display: none; }
   .create-rail {
@@ -1758,6 +1763,51 @@
 .pp-more[open] summary::after { content: "−"; }
 .pp-more summary:hover { color: var(--white); }
 .pp-more .pp-row { margin-top: 10px; }
+.pp-arrange .pp-type { margin-top: 10px; }
+
+/* RIGHT DOCK: one icon per properties section, drawn like the left rail;
+   the open section carries the red dot of the KD mark */
+.create-dock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 6px;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.create-dock::-webkit-scrollbar { display: none; }
+.create-dock button {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 9px 2px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #8f969f;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+.create-dock button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.05); color: white; }
+.create-dock button.active { background: rgba(255, 255, 255, 0.1); color: white; }
+.create-dock button.active::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 9px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--red);
+}
+.create-dock button:disabled { color: #4b5058; cursor: default; }
+/* the properties panel shows only the section picked in the dock */
+.create-props .pp-sec:not(.on) { display: none; }
 
 /* Animate: In and Loop as tiles with a moving picture of each motion */
 .at-label { margin: 2px 0 7px; color: #9aa0a8; font-size: 12px; }
