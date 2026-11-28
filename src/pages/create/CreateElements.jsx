@@ -18,6 +18,8 @@ import { elementCategories, elements as trialElements } from "../../data/element
 const trialOf = (id) => elementCategories.find((c) => c.id === id)?.items ?? [];
 import { ELEMENT_CATEGORIES, elementCategoryLabel, elementCategoryStorageValues, normalizeElementCategory } from "../../data/elementCategories";
 import { countCreateCategories, fetchCreatePage, fetchCreatePartsByCode, fetchCreatePhotos, fetchIconCatalog } from "../../lib/catalog";
+import MockupTiles from "./mockup/MockupTiles";
+import useMockups from "./mockup/useMockups";
 
 // how many tiles a category grid adds each time the list scrolls to its end
 const PAGE = 60;
@@ -300,7 +302,7 @@ function recentTile({ kind, id }, dragItem, elements, icons) {
 /* ---------- panel ---------- */
 
 // onAddQr(text): puts a new QR code on the page
-function ElementsPanel({ dragItem: placeItem, uploaded = [], learn, onAddQr }) {
+function ElementsPanel({ dragItem: placeItem, uploaded = [], learn, onAddQr, onOpenMockup }) {
   const elements = useMemo(() => [...uploaded, ...trialElements], [uploaded]);
   const categories = useMemo(() => mergeCategories(uploaded), [uploaded]);
   // how many each category really holds (the overview loads only the newest),
@@ -357,6 +359,7 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [], learn, onAddQr }) {
       .catch(() => {});
     return () => { alive = false; };
   }, []);
+  const mockups = useMockups();
   const setIcons = iconCatalog.icons;
   const setGroups = useMemo(() => iconCatalog.sets.map((set) => ({
     set,
@@ -416,6 +419,10 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [], learn, onAddQr }) {
       picture: c.cover,
       onOpen: () => setView(c.id),
     })),
+    // mockups with a kit, opened in the Mockup Studio
+    ...(mockups?.length
+      ? [{ id: "mockups", name: "Mockups", count: mockups.length, picture: mockups[0].image, onOpen: () => setView("mockups") }]
+      : []),
     // the Photos library itself, not a copy of it
     ...(stockPhotos?.total
       ? [{ id: "stock-photos", name: "Photos", count: stockPhotos.total, picture: stockPhotos.cover, onOpen: () => setView("stock-photos") }]
@@ -471,7 +478,7 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [], learn, onAddQr }) {
       <>
         <button className="cp-back" onClick={() => setView(null)}>
           <Icon name="arrowLeft" size={16} />
-          {category?.name ?? (view === "recent" ? "Recently used" : view === "shapes" ? "Shapes" : view === "photo-frames" ? "Photo frames" : view === "stock-photos" ? "Photos" : view === "qr" ? "QR code" : view === "tables" ? "Tables" : "Icons")}
+          {category?.name ?? (view === "recent" ? "Recently used" : view === "shapes" ? "Shapes" : view === "photo-frames" ? "Photo frames" : view === "stock-photos" ? "Photos" : view === "qr" ? "QR code" : view === "tables" ? "Tables" : view === "mockups" ? "Mockups" : "Icons")}
         </button>
 
         {category && view !== "shapes" && (fromDb
@@ -501,6 +508,8 @@ function ElementsPanel({ dragItem: placeItem, uploaded = [], learn, onAddQr }) {
         {view === "qr" && <QrPanel onAdd={(text) => onAddQr?.(text)} />}
 
         {view === "tables" && <TableTiles dragItem={dragItem} />}
+
+        {view === "mockups" && <MockupTiles mockups={mockups} onOpen={(m) => onOpenMockup?.(m)} />}
 
         {view === "stock-photos" && (
           <DbGrid key="stock-photos" query={{}} fetchPage={fetchCreatePhotos} columns="two" learn={learn}

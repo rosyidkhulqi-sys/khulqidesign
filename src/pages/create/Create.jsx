@@ -44,6 +44,7 @@ import DockSections from "./props/DockSections";
 import { MOD } from "./platform";
 import { handleShortcut } from "./createShortcuts";
 import { beginDraw, dragDraw, endDraw, isDrawTool, setCanvasTool } from "./createDrawTools";
+import MockupStudio from "./mockup/MockupStudio";
 import useStagePan from "./useStagePan";
 import { basicFiltersJson, basicOnly, isProAdjust } from "./photoAdjust";
 import "./createHandles";
@@ -133,7 +134,7 @@ const exportFormats = [
 const isLocked = (obj) => Boolean(obj?.lockMovementX);
 // saved with a design, so a locked element stays locked after undo or reload
 // saved with each object: its locks, and a basic shape's sides and corner
-const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls", "kdShape", "kdFrame", "kdPremium", "kdQr", "kdTable", "kdRole", "kdAnim", "kdStock", "kdCover", "kdAdjust"];
+const LOCK_PROPS = ["lockMovementX", "lockMovementY", "lockScalingX", "lockScalingY", "lockRotation", "hasControls", "kdShape", "kdFrame", "kdPremium", "kdQr", "kdTable", "kdRole", "kdAnim", "kdStock", "kdCover", "kdAdjust", "kdMockup"];
 
 // Premium items in a saved page (inside groups too), and the page without them
 const countPremium = (objects = []) =>
@@ -415,6 +416,9 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   const [lastCut, setLastCut] = useState(null);
   // a file dragged over the Uploads tab's box
   const [uploadOver, setUploadOver] = useState(false);
+  // the Mockup Studio while open: { mockup, designs, pages, target } (target:
+  // the mockup on the page it was opened from, or null for a new one)
+  const [mockupStudio, setMockupStudio] = useState(null);
   // Space held over the page: null, "ready" (a hand) or "dragging" (a grab)
   const [handMode, setHandMode] = useState(null);
   // the right dock: the section the person picked, for the object it was
@@ -1666,6 +1670,49 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     }
   };
 
+  /* ---------- mockups ---------- */
+
+  // the Studio for a mockup from Elements, or for one already on the page
+  const openMockup = (mockup, target = null) => {
+    stopTextEditing();
+    setMockupStudio({
+      mockup: { code: mockup.code, title: mockup.title, premium: Boolean(mockup.premium) },
+      designs: target ? mockup.designs ?? [] : [],
+      pages: currentPages(),
+      target,
+    });
+  };
+
+  // the Studio's picture onto the page: in place of the mockup it was opened
+  // from (same size and spot), or as a new picture; a Premium mockup counts
+  // as a Premium item for free downloads, as Premium photos do
+  const placeMockup = async (picture, designs) => {
+    const { mockup, target } = mockupStudio;
+    setMockupStudio(null);
+    const c = fc.current;
+    const img = await FabricImage.fromURL(picture);
+    img.kdMockup = { ...mockup, designs };
+    img.kdPremium = mockup.premium || undefined;
+    if (target && c.getObjects().includes(target)) {
+      const width = target.getScaledWidth();
+      const center = target.getCenterPoint();
+      img.scale(width / img.width);
+      img.set({ angle: target.angle, opacity: target.opacity, flipX: target.flipX, flipY: target.flipY });
+      img.setPositionByOrigin(center, "center", "center");
+      const index = c.getObjects().indexOf(target);
+      c.remove(target);
+      c.insertAt(index, img);
+      c.setActiveObject(img);
+      c.requestRenderAll();
+      setActive(img);
+      commit();
+      return;
+    }
+    const b = boardRef.current;
+    img.scale(Math.min((b.w * 0.8) / img.width, (b.h * 0.8) / img.height));
+    place(img);
+  };
+
   const readFile = (file) =>
     new Promise((resolve) => {
       const isSvg = file.type === "image/svg+xml" || file.name.toLowerCase().endsWith(".svg");
@@ -2680,6 +2727,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
       const text = textAt(target, scenePoint);
       if (text) return editGroupText(target, text);
     }
+    if (target?.kdMockup) return openMockup(target.kdMockup, target);
     if (framePhoto(target)) startFrameAdjust(target);
     else if (target instanceof FabricImage && !target.kdGhost) startCrop();
   });
@@ -3246,7 +3294,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
 
             {!searching && tab === "templates" && <div className="cp-masonry">{allDesigns.map(templateTile)}</div>}
 
-            {!searching && tab === "elements" && <ElementsPanel dragItem={dragItem} uploaded={dbElements} learn={learnParts} onAddQr={addQr} />}
+            {!searching && tab === "elements" && <ElementsPanel dragItem={dragItem} uploaded={dbElements} learn={learnParts} onAddQr={addQr} onOpenMockup={(m) => openMockup(m)} />}
             {!searching && tab === "background" && (
               <BackgroundPanel
                 color={toHex(bg)}
@@ -3843,6 +3891,18 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
           </nav>
         </div>
       </div>
+
+      {mockupStudio && (
+        <MockupStudio
+          mockup={mockupStudio.mockup}
+          designs={mockupStudio.designs}
+          pages={mockupStudio.pages}
+          board={board}
+          user={user}
+          onAdd={placeMockup}
+          onClose={() => setMockupStudio(null)}
+        />
+      )}
 
       {/* RESIZE: every page to another format, as a copy or in place */}
       {resize && (

@@ -1368,6 +1368,63 @@
 }
 .create-modal h2 { margin: 0 0 20px; font-size: 22px; }
 
+/* MOCKUP STUDIO: the mockup large on the left, its design areas on the right */
+.create-modal.ms-studio { max-width: 1180px; padding: 22px; }
+.ms-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.ms-head h2 { margin: 0; font-size: 19px; }
+.ms-close {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: transparent;
+  color: #c6cad0;
+  cursor: pointer;
+}
+.ms-close:hover { color: white; border-color: rgba(255, 255, 255, 0.3); }
+.ms-error { margin: 0 0 12px; color: #ff8a8f; font-size: 13px; }
+.ms-body { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 20px; align-items: start; }
+.ms-preview {
+  display: grid;
+  place-items: center;
+  min-height: 320px;
+  border-radius: 12px;
+  background: #0e1013;
+  overflow: hidden;
+}
+.ms-preview canvas { display: block; width: 100%; height: auto; max-height: 72vh; object-fit: contain; }
+.ms-wait { color: #929497; font-size: 14px; }
+.ms-side { display: flex; flex-direction: column; gap: 10px; }
+.ms-slot { padding: 12px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; }
+.ms-slot-head { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 13px; }
+.ms-slot-head span { color: #929497; font-variant-numeric: tabular-nums; }
+.ms-slot-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.ms-slot-actions button,
+.ms-slot-actions select,
+.ms-actions button {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: transparent;
+  color: #e7e9ec;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.ms-slot-actions select { background: var(--surface); }
+.ms-slot-actions button:hover,
+.ms-actions button:hover { border-color: rgba(255, 255, 255, 0.32); }
+.ms-actions { display: flex; gap: 8px; margin-top: 6px; }
+.ms-actions button { flex: 1; height: 38px; }
+.ms-actions .ms-primary { border: none; background: var(--red); color: white; font-weight: 600; }
+.ms-actions .ms-primary:hover { filter: brightness(1.08); }
+@media (max-width: 860px) {
+  .ms-body { grid-template-columns: 1fr; }
+}
+
 .cn-presets {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
