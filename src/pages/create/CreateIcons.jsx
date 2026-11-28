@@ -45,6 +45,7 @@ const paths = {
   dockColor: <><path d="M12 3.5c3 4 5.5 7 5.5 10a5.5 5.5 0 0 1-11 0c0-3 2.5-6 5.5-10z" /><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5" /></>,
   dockAlign: <><path d="M4.5 4v16" /><rect x="8" y="6" width="11" height="4" rx="1.2" /><rect x="8" y="14" width="7" height="4" rx="1.2" /></>,
   dockPosition: <><rect x="8" y="8" width="8" height="8" rx="1.5" /><path d="M12 3v3M12 18v3M3 12h3M18 12h3" /></>,
+  dockEffects: <><rect x="4" y="4" width="11" height="11" rx="3" /><path d="M19 9.5V16a3 3 0 0 1-3 3H9.5" strokeDasharray="2 2.5" /></>,
   dockAnimate: <><path d="M3.5 8.5h4M3 12h3.5M3.5 15.5h4" /><path d="M10.5 6l9 6-9 6z" /></>,
   hand: <path d="M18 11V6a2 2 0 0 0-4 0M14 10V4a2 2 0 0 0-4 0v2M10 10.5V6a2 2 0 0 0-4 0v8M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-6-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.83L7 15" />,
   maximize: <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />,

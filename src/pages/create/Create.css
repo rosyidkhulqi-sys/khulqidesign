@@ -1092,6 +1092,18 @@
   color: #aeb3ba;
 }
 .pp-row strong { color: white; font-weight: 500; }
+/* Effects' blend mode: a compact menu in the field style */
+.pp-select {
+  height: 32px;
+  min-width: 120px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--white);
+  font: inherit;
+  font-size: 13px;
+}
 .pp-row input[type="range"] { width: 110px; accent-color: var(--red); }
 .pp-row input[type="checkbox"] { accent-color: var(--red); }
 

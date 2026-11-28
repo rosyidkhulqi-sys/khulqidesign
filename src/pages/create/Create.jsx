@@ -2357,18 +2357,32 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     setProp({ text: next });
   };
 
-  // a soft drop shadow, 0 (none) to 100, sized to the text so it looks the
-  // same on a small caption and a big headline
+  // a soft drop shadow, 0 (none) to 100, sized to the object: its font for
+  // text, a share of its shorter side for anything else, so 50 looks alike
+  // on a caption, a headline and a photo
+  const shadowBase = (obj) => obj?.fontSize || Math.max(8, Math.min(obj?.width || 0, obj?.height || 0) * 0.15);
   const shadowAmount = (obj) =>
-    obj?.shadow ? Math.round(Math.min(100, (obj.shadow.blur / Math.max(1, obj.fontSize)) * 250)) : 0;
-  const setShadow = (amount) => {
-    const size = active.fontSize || 40;
-    setProp({
-      shadow: amount > 0
-        ? new Shadow({ color: "rgba(0,0,0,0.35)", blur: (size * amount) / 250, offsetX: 0, offsetY: (size * amount) / 800 })
-        : null,
-    });
+    obj?.shadow ? Math.round(Math.min(100, (obj.shadow.blur / Math.max(1, shadowBase(obj))) * 250)) : 0;
+  const shadowOf = (obj, amount) => {
+    const size = shadowBase(obj);
+    return amount > 0
+      ? new Shadow({ color: "rgba(0,0,0,0.35)", blur: (size * amount) / 250, offsetX: 0, offsetY: (size * amount) / 800 })
+      : null;
   };
+  // Effects reach every picked object, so they stay when the pick is let go
+  const eachPicked = (fn) => {
+    const c = fc.current;
+    const objects = c.getActiveObjects();
+    (objects.length ? objects : [active]).forEach((obj) => {
+      fn(obj);
+      obj.set("dirty", true);
+    });
+    active.setCoords();
+    render();
+  };
+  const setShadow = (amount) => eachPicked((obj) => obj.set("shadow", shadowOf(obj, amount)));
+  const setOpacity = (opacity) => eachPicked((obj) => obj.set("opacity", opacity));
+  const setBlend = (mode) => eachPicked((obj) => obj.set("globalCompositeOperation", mode));
 
   const remove = () => {
     const c = fc.current;
@@ -2997,6 +3011,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     ["color", "Color", "dockColor", Boolean(active) && !(active instanceof FabricImage)],
     ["align", "Align", "dockAlign", Boolean(active)],
     ["position", "Position", "dockPosition", Boolean(active)],
+    ["effects", "Effects", "dockEffects", Boolean(active)],
     ["animate", "Animate", "dockAnimate", Boolean(active)],
   ];
   const dockOpen = dockSections.filter(([, , , on]) => on).map(([id]) => id);
@@ -3900,17 +3915,6 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                           aria-label="Letter spacing"
                         />
                       </label>
-                      <label title="Shadow (0 to 100)">
-                        <Icon name="shadow" size={16} />
-                        <NumberInput
-                          min="0"
-                          max="100"
-                          step="5"
-                          value={shadowAmount(active)}
-                          onChange={(e) => setShadow(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
-                          aria-label="Shadow"
-                        />
-                      </label>
                     </div>
                     {/* style, alignment and case as small segmented groups, so
                         they sit in two short rows */}
@@ -4070,16 +4074,6 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                     </button>
                   )}
                 </div>
-                <label className="pp-row">
-                  <span>Opacity</span>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={Math.round(active.opacity * 100)}
-                    onChange={(e) => setProp({ opacity: Number(e.target.value) / 100 })}
-                  />
-                </label>
 
                 {(isSelection || isGroup) && (
                   <div className="pp-grid">
@@ -4121,6 +4115,56 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                     </label>
                   </div>
                 </div>
+                </div>
+
+                {/* Effects: shadow, opacity and how it blends with what's under
+                    it, as Illustrator's Transparency panel; a frame keeps its
+                    own shadow in the Frame section */}
+                <div className={sectionClass("effects")}>
+                  <p className="cp-label">Effects</p>
+                  {!active.kdFrame && (
+                    <div className="pp-type">
+                      <label title="Shadow (0 to 100)">
+                        <Icon name="shadow" size={16} />
+                        <NumberInput
+                          min="0"
+                          max="100"
+                          step="5"
+                          value={shadowAmount(isSelection ? active.getObjects()[0] : active)}
+                          onChange={(e) => setShadow(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                          aria-label="Shadow"
+                        />
+                      </label>
+                    </div>
+                  )}
+                  <label className="pp-row">
+                    <span>Opacity</span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={Math.round((isSelection ? active.getObjects()[0]?.opacity ?? 1 : active.opacity) * 100)}
+                      onChange={(e) => setOpacity(Number(e.target.value) / 100)}
+                    />
+                  </label>
+                  <label className="pp-row">
+                    <span>Blend</span>
+                    <select
+                      className="pp-select"
+                      value={(isSelection ? active.getObjects()[0]?.globalCompositeOperation : active.globalCompositeOperation) || "source-over"}
+                      onChange={(e) => setBlend(e.target.value)}
+                      aria-label="Blend mode"
+                    >
+                      {[
+                        ["source-over", "Normal"],
+                        ["multiply", "Multiply"],
+                        ["screen", "Screen"],
+                        ["overlay", "Overlay"],
+                        ["darken", "Darken"],
+                        ["lighten", "Lighten"],
+                      ].map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                    </select>
+                  </label>
                 </div>
 
                 {/* Animate: an entrance and a loop, each one row of chips;
