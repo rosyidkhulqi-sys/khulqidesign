@@ -2859,7 +2859,13 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   const onKey = useEffectEvent((e) => {
     if (aiBusy) return;
     const tag = e.target.tagName;
-    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    // only fields people type in keep the keys; a slider, a checkbox or a
+    // color well just used (Adjust, Effects) lets ⌘Z and the rest through
+    const typingField = tag === "TEXTAREA" || tag === "SELECT"
+      || (tag === "INPUT" && !["range", "checkbox", "radio", "color", "button"].includes(e.target.type));
+    if (typingField) return;
+    // arrows and Delete still belong to the slider or box itself
+    if (tag === "INPUT" && (e.key.startsWith("Arrow") || e.key === "Delete" || e.key === "Backspace")) return;
     const obj = fc.current?.getActiveObject();
     if (obj?.isEditing) return;
 

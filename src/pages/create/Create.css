@@ -1728,7 +1728,8 @@
 .cs-panel { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
 .cs-range-control {
   display: grid;
-  grid-template-columns: 58px minmax(0, 1fr) 30px;
+  /* the label column fits the longest name ("Temperature") */
+  grid-template-columns: 84px minmax(0, 1fr) 30px;
   align-items: center;
   gap: 10px;
   color: #aeb3ba;
