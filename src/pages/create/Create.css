@@ -1456,6 +1456,8 @@
      them: on a phone there's room below, so the dock steps aside */
   .props-closed .create-props { visibility: visible; padding: 14px; overflow-y: auto; }
   .create-dock { display: none; }
+  /* drawing on a phone's small canvas is for later */
+  .create-tools { display: none; }
   .create-props .pp-sec:not(.on) { display: block; }
   /* a hidden library panel takes no room above the canvas */
   .panel-closed .create-panel { display: none; }
@@ -1788,6 +1790,49 @@
 /* nothing selected, or a section that doesn't apply: the rail's own grey,
    faded, so the dock still reads as a match for the left rail */
 .create-dock button:disabled { color: #8f969f; opacity: 0.45; cursor: default; }
+/* THE TOOL STRIP: floating at the canvas's top left (clear of the panel's
+   hide tab), the same buttons and red dot as the rails, a little smaller */
+.create-tools {
+  position: absolute;
+  top: 14px;
+  left: 28px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+.create-tools button {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #a9aeb5;
+  cursor: pointer;
+}
+.create-tools button:hover { background: rgba(255, 255, 255, 0.06); color: white; }
+.create-tools button.active { background: rgba(255, 255, 255, 0.1); color: white; }
+.create-tools button.active::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--red);
+}
+.create-tools-sep { height: 1px; margin: 3px 6px; background: rgba(255, 255, 255, 0.1); }
+
 /* a thin line between the dock's groups, as between Illustrator's panels */
 .create-dock-sep { flex: none; height: 1px; margin: 4px 10px; background: rgba(255, 255, 255, 0.1); }
 /* the properties panel shows only the section picked in the dock */

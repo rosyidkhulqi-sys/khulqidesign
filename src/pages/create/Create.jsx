@@ -9,6 +9,7 @@ import {
   Group,
   Line,
   Path,
+  PencilBrush,
   Polygon,
   Rect,
   Shadow,
@@ -104,6 +105,9 @@ const PANEL_KEY = "kd-create-panel";
 const PAGE_KEY = "kd-create-page";
 const STRIP_KEY = "kd-create-page-strip";
 const PROPS_KEY = "kd-create-props";
+// the canvas tools' letters, as in Illustrator: V select, H hand, B pencil,
+// R shape, L line, T text
+const TOOL_KEYS = { v: "select", h: "hand", b: "pencil", r: "shape", l: "line", t: "text" };
 // zoom slider range, in percent
 const ZOOM_MIN = 10;
 const ZOOM_MAX = 300;
@@ -412,7 +416,13 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   // the right dock: the section the person picked, for the object it was
   // picked on; another object starts again on its first section
   const [dockPick, setDockPick] = useState(null);
-  // the Hand button in the bottom bar: the hand stays on without Space
+  // the canvas tool strip: select, pencil, shape, line or text (the Hand is
+  // its own switch below, so Space can borrow it from any tool)
+  const [tool, setTool] = useState("select");
+  const toolRef = useRef("select");
+  // a shape or line being dragged out: { obj, x, y, kind }
+  const drawing = useRef(null);
+  // the Hand on the tool strip: the hand stays on without Space
   const [handLock, setHandLock] = useState(false);
   const handLockRef = useRef(false);
   const toggleHand = (on) => {
@@ -2731,6 +2741,113 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     loadedRef.current = true;
   });
 
+  /* ---------- canvas tools: pencil, shape, line, text ---------- */
+
+  const pickTool = (next) => {
+    const c = fc.current;
+    if (!c) return;
+    stopTextEditing();
+    const drawTool = next === "shape" || next === "line" || next === "text";
+    toggleHand(next === "hand");
+    const kept = next === "hand" ? "select" : next;
+    toolRef.current = kept;
+    setTool(kept);
+    // a drawing tool draws instead of picking: no selection box, no picking up
+    c.isDrawingMode = kept === "pencil";
+    if (kept === "pencil") {
+      const brush = new PencilBrush(c);
+      brush.color = "#111111";
+      brush.width = Math.max(2, unit() * 0.006);
+      c.freeDrawingBrush = brush;
+    }
+    c.selection = !drawTool;
+    c.skipTargetFind = drawTool;
+    c.defaultCursor = drawTool ? "crosshair" : "default";
+    if (drawTool || kept === "pencil") {
+      c.discardActiveObject();
+      c.requestRenderAll();
+    }
+  };
+
+  const onToolDown = useEffectEvent((opt) => {
+    const kind = toolRef.current;
+    if (kind !== "shape" && kind !== "line" && kind !== "text") return;
+    const c = fc.current;
+    const p = c.getScenePoint(opt.e);
+    if (kind === "text") {
+      addText(textPresets[2], p).then(() => {
+        const box = c.getActiveObject();
+        if (box instanceof Textbox) {
+          box.enterEditing();
+          box.selectAll();
+        }
+      });
+      pickTool("select");
+      return;
+    }
+    const obj = kind === "line"
+      ? new Line([p.x, p.y, p.x, p.y], { fill: null, stroke: "#000000", strokeWidth: Math.max(2, unit() * 0.004), strokeLineCap: "round" })
+      : new Rect({ left: p.x, top: p.y, width: 1, height: 1, fill: "#000000", strokeWidth: 0 });
+    obj.set({ selectable: false, evented: false });
+    c.add(obj);
+    drawing.current = { obj, x: p.x, y: p.y, kind };
+  });
+
+  const onToolMove = useEffectEvent((opt) => {
+    const d = drawing.current;
+    if (!d) return;
+    const c = fc.current;
+    const p = c.getScenePoint(opt.e);
+    let dx = p.x - d.x;
+    let dy = p.y - d.y;
+    if (d.kind === "line") {
+      // Shift: straight along 45° steps
+      if (opt.e.shiftKey) {
+        const step = Math.PI / 4;
+        const angle = Math.round(Math.atan2(dy, dx) / step) * step;
+        const length = Math.hypot(dx, dy);
+        dx = Math.cos(angle) * length;
+        dy = Math.sin(angle) * length;
+      }
+      d.obj.set({ x2: d.x + dx, y2: d.y + dy });
+    } else {
+      // Shift: a square
+      if (opt.e.shiftKey) {
+        const side = Math.max(Math.abs(dx), Math.abs(dy));
+        dx = Math.sign(dx || 1) * side;
+        dy = Math.sign(dy || 1) * side;
+      }
+      d.obj.set({ left: Math.min(d.x, d.x + dx), top: Math.min(d.y, d.y + dy), width: Math.abs(dx), height: Math.abs(dy) });
+    }
+    d.obj.setCoords();
+    c.requestRenderAll();
+  });
+
+  const onToolUp = useEffectEvent(() => {
+    const d = drawing.current;
+    if (!d) return;
+    drawing.current = null;
+    const c = fc.current;
+    const { obj } = d;
+    // a click without a drag gives the usual size, centered on the click
+    const tiny = Math.max(obj.getScaledWidth(), obj.getScaledHeight()) < unit() * 0.01;
+    if (tiny) {
+      const s = unit() * 0.3;
+      if (d.kind === "line") obj.set({ x1: d.x - s * 0.75, y1: d.y, x2: d.x + s * 0.75, y2: d.y });
+      else obj.set({ left: d.x - s / 2, top: d.y - s / 2, width: s, height: s });
+    }
+    obj.set({ selectable: true, evented: true });
+    obj.setCoords();
+    pickTool("select");
+    c.setActiveObject(obj);
+    c.requestRenderAll();
+    setActive(obj);
+    commit();
+  });
+
+  // a pencil stroke is a path on the page: saved, and undoable
+  const onPathCreated = useEffectEvent(() => commit());
+
   const onKey = useEffectEvent((e) => {
     if (aiBusy) return;
     const tag = e.target.tagName;
@@ -2741,6 +2858,16 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     if (cropRef.current) {
       if (e.key === "Enter") finishCrop(true);
       if (e.key === "Escape") finishCrop(false);
+      return;
+    }
+    // tool letters, and Esc back to Select from a drawing tool
+    if (!e.metaKey && !e.ctrlKey && !e.altKey && TOOL_KEYS[e.key.toLowerCase()]) {
+      e.preventDefault();
+      pickTool(TOOL_KEYS[e.key.toLowerCase()]);
+      return;
+    }
+    if (e.key === "Escape" && toolRef.current !== "select") {
+      pickTool("select");
       return;
     }
 
@@ -2825,6 +2952,10 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     c.on("mouse:out", ({ target }) => target?.kdFrame && setFrameHint((h) => (h && !h.dropping ? null : h)));
     // moving, resizing or clicking a frame hides its hint
     c.on("mouse:down", () => setFrameHint(null));
+    c.on("mouse:down", (opt) => onToolDown(opt));
+    c.on("mouse:move", (opt) => onToolMove(opt));
+    c.on("mouse:up", () => onToolUp());
+    c.on("path:created", () => onPathCreated());
     c.on("text:editing:entered", syncSelection);
     c.on("text:editing:exited", syncSelection);
     c.on("text:changed", syncSelection);
@@ -3451,6 +3582,33 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
 
           {/* STAGE + BOTTOM BAR */}
           <div className="create-center" inert={aiBusy}>
+            {/* the tool strip, floating at the canvas's left edge: Select and
+                Hand, then the drawing tools; the open one has the red dot */}
+            {!cropping && (
+              <div className="create-tools" role="toolbar" aria-label="Tools" aria-orientation="vertical">
+                {[
+                  ["select", "toolSelect", "Select", "V"],
+                  ["hand", "hand", "Hand: drag to move around", "H, or hold Space"],
+                  null,
+                  ["pencil", "toolPencil", "Pencil: draw freely", "B"],
+                  ["shape", "toolShape", "Shape: drag to draw, Shift for a square", "R"],
+                  ["line", "toolLine", "Line: drag to draw, Shift for 45°", "L"],
+                  ["text", "toolText", "Text: click to type", "T"],
+                ].map((item, i) => item ? (
+                  <button
+                    key={item[0]}
+                    type="button"
+                    className={(handLock ? "hand" : tool) === item[0] ? "active" : ""}
+                    aria-pressed={(handLock ? "hand" : tool) === item[0]}
+                    aria-label={item[2]}
+                    title={`${item[2]} (${item[3]})`}
+                    onClick={() => pickTool(item[0])}
+                  >
+                    <Icon name={item[1]} size={18} />
+                  </button>
+                ) : <span key={`sep-${i}`} className="create-tools-sep" aria-hidden="true" />)}
+              </div>
+            )}
           <div
             className={`create-stage ${handMode ? "is-hand" : ""} ${handMode === "dragging" ? "is-grabbing" : ""}`}
             ref={stageRef}
@@ -3712,15 +3870,6 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
                 <Icon name="chevronRight" size={16} />
               </button>
             </div>
-            <button
-              className={`cb-icon ${handLock ? "on" : ""}`}
-              onClick={() => toggleHand(!handLock)}
-              aria-pressed={handLock}
-              aria-label="Hand tool"
-              title={handLock ? "Hand tool on: drag to move around (Esc to stop)" : "Hand tool: drag to move around (hold Space)"}
-            >
-              <Icon name="hand" size={16} />
-            </button>
             <button
               className={`cb-fit ${zoomMode === "fit" ? "on" : ""}`}
               onClick={() => setZoomMode("fit")}

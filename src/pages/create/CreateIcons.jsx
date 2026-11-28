@@ -40,7 +40,12 @@ const paths = {
   arrowLeft: <path d="M19 12H5M11 6l-6 6 6 6" />,
   chevronLeft: <path d="M15 6l-6 6 6 6" />,
   chevronRight: <path d="M9 6l6 6-6 6" />,
-  // the right dock's sections, in Khulqidesign's own drawing
+  // the canvas tool strip and the right dock's sections, in Khulqidesign's own drawing
+  toolSelect: <path d="M6 4l12 7.5-5.2 1.3L10.3 18z" />,
+  toolPencil: <><path d="M4 20c2.5-1 3.5-3 6-3s3 2 5.5 2 3-1 4.5-2" /><path d="M8 13.5L16.5 5l2.5 2.5L10.5 16H8z" /></>,
+  toolShape: <><rect x="3.5" y="10" width="9.5" height="9.5" rx="2" /><circle cx="15.5" cy="8.5" r="5" /></>,
+  toolLine: <><path d="M6.5 17.5l11-11" /><circle cx="5.5" cy="18.5" r="1.6" /><circle cx="18.5" cy="5.5" r="1.6" /></>,
+  toolText: <path d="M5.5 6.5V5h13v1.5M12 5v14M9.5 19h5" />,
   dockShape: <><path d="M4 20V10a6 6 0 0 1 6-6h10v16z" /><path d="M8 8.5a2.5 2.5 0 0 1 2.5-2.5" strokeDasharray="1.5 2" /></>,
   dockText: <><path d="M3.5 18.5L8 6l4.5 12.5M5.2 14h5.6" /><circle cx="17.5" cy="15.5" r="3" /><path d="M20.5 12.5v6" /></>,
   dockColor: <><path d="M12 3.5c3 4 5.5 7 5.5 10a5.5 5.5 0 0 1-11 0c0-3 2.5-6 5.5-10z" /><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5" /></>,
