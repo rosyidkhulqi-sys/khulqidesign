@@ -12,6 +12,7 @@ import TemplateThumb from "../../components/TemplateThumb";
 import { supabase } from "../../lib/supabaseClient";
 import { publicUrl } from "../../lib/r2";
 import { loadFont } from "../create/createFonts";
+import { readLogoSession, saveLogoSession } from "./logoSession";
 
 const W = 1080;
 
@@ -126,15 +127,19 @@ async function findSymbols(about) {
 }
 
 function LogoMaker({ onOpen }) {
-  const [name, setName] = useState("");
-  const [tagline, setTagline] = useState("");
-  const [about, setAbout] = useState("");
-  const [style, setStyle] = useState("auto");
-  const [palette, setPalette] = useState(-1); // -1: a mix
-  const [symbols, setSymbols] = useState([]);
-  const [seed, setSeed] = useState(0);
+  // the last session in this tab, so coming back from Create shows the same
+  // logos (see logoSession.js)
+  const [last] = useState(readLogoSession);
+  const [name, setName] = useState(last?.name ?? "");
+  const [tagline, setTagline] = useState(last?.tagline ?? "");
+  const [about, setAbout] = useState(last?.about ?? "");
+  const [style, setStyle] = useState(last?.style ?? "auto");
+  const [palette, setPalette] = useState(last?.palette ?? -1); // -1: a mix
+  const [symbols, setSymbols] = useState(last?.symbols ?? []);
+  const [seed, setSeed] = useState(last?.seed ?? 0);
   const [busy, setBusy] = useState(false);
-  const [chosen, setChosen] = useState(null);
+  const [chosenId, setChosenId] = useState(last?.chosenId ?? null);
+  const [opened, setOpened] = useState(last?.opened ?? null);
   const [error, setError] = useState(null);
 
   // every font the logos may use, ready before they're drawn
@@ -146,7 +151,7 @@ function LogoMaker({ onOpen }) {
     if (!name.trim() || busy) return;
     setBusy(true);
     setError(null);
-    setChosen(null);
+    setChosenId(null);
     try {
       const found = await findSymbols(about || name);
       if (!found.length) throw new Error("No symbols found in the library. Try another word for what the brand does.");
@@ -171,6 +176,11 @@ function LogoMaker({ onOpen }) {
       return { id: `${seed}-${i}`, layout, symbol, scene: scene(layout, { name: name.trim(), tagline: tagline.trim(), svg: symbol.svg, multi: symbol.multi, palette: p, fonts }) };
     });
   }, [symbols, seed, style, palette, name, tagline]);
+  const chosen = logos.find((l) => l.id === chosenId) ?? null;
+
+  useEffect(() => {
+    saveLogoSession({ name, tagline, about, style, palette, symbols, seed, chosenId, opened });
+  }, [name, tagline, about, style, palette, symbols, seed, chosenId, opened]);
 
   return (
     <div className="lg">
@@ -216,7 +226,7 @@ function LogoMaker({ onOpen }) {
         <>
           <div className="lg-grid">
             {logos.map((l) => (
-              <button key={l.id} type="button" className={`lg-card ${chosen?.id === l.id ? "on" : ""}`} onClick={() => setChosen(l)}
+              <button key={l.id} type="button" className={`lg-card ${chosen?.id === l.id ? "on" : ""}`} onClick={() => setChosenId(l.id)}
                       aria-label={`${l.layout} logo with ${l.symbol.title}`}>
                 <TemplateThumb scene={l.scene} />
               </button>
@@ -226,7 +236,13 @@ function LogoMaker({ onOpen }) {
             <button type="button" onClick={() => setSeed((s) => s + 1)}>Shuffle</button>
             <span>{chosen ? `${chosen.layout} · symbol: ${chosen.symbol.title}` : "Pick a logo to edit it"}</span>
             <button type="button" className="lg-go" disabled={!chosen}
-                    onClick={() => onOpen?.({ title: `${name.trim()} logo`, scene: chosen.scene })}>
+                    onClick={() => {
+                      // Create shows a way back here for this design
+                      const title = `${name.trim()} logo`;
+                      setOpened(title);
+                      saveLogoSession({ name, tagline, about, style, palette, symbols, seed, chosenId, opened: title });
+                      onOpen?.({ title, scene: chosen.scene });
+                    }}>
               Edit in Create
             </button>
           </div>

@@ -1388,6 +1388,23 @@
 .pp-mockup-areas li { display: flex; justify-content: space-between; gap: 8px; color: #aeb3ba; font-size: 13px; }
 .pp-mockup-areas li span:last-child { color: #6f757d; }
 .pp-mockup-areas li span.on { color: var(--white); }
+/* Create's top bar: back to the logo maker's options for a logo design */
+.ct-back-logos {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: transparent;
+  color: #c6cad0;
+  font: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.ct-back-logos:hover { color: white; border-color: rgba(255, 255, 255, 0.3); }
 .ms-close:hover { color: white; border-color: rgba(255, 255, 255, 0.3); }
 .ms-error { margin: 0 0 12px; color: #ff8a8f; font-size: 13px; }
 .ms-body { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 20px; align-items: start; }

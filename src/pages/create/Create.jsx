@@ -45,6 +45,7 @@ import { MOD } from "./platform";
 import { handleShortcut } from "./createShortcuts";
 import { beginDraw, dragDraw, endDraw, isDrawTool, setCanvasTool } from "./createDrawTools";
 import MockupStudio from "./mockup/MockupStudio";
+import { openLogoMaker, readLogoSession } from "../ai/logoSession";
 import useStagePan from "./useStagePan";
 import { basicFiltersJson, basicOnly, isProAdjust } from "./photoAdjust";
 import "./createHandles";
@@ -3108,6 +3109,12 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
             )}
           </div>
 
+          {/* a design made from the logo maker: back to its twelve logos */}
+          {readLogoSession()?.opened === name && (
+            <button className="ct-back-logos" onClick={() => openLogoMaker(setPage)} title="Back to the logo options to pick another">
+              <Icon name="arrowLeft" size={14} /> Logo options
+            </button>
+          )}
           <input
             className="ct-name"
             value={name}
