@@ -43,6 +43,7 @@ import { loadFont, loadFontsOf, loadSiteFonts } from "./createFonts";
 import { pageThumbs } from "./pageThumbs";
 import DockSections from "./props/DockSections";
 import { MOD } from "./platform";
+import { handleShortcut } from "./createShortcuts";
 import { basicFiltersJson, basicOnly, isProAdjust } from "./photoAdjust";
 import "./createHandles";
 import { regularPolygonPath } from "./shapePath";
@@ -105,9 +106,6 @@ const PANEL_KEY = "kd-create-panel";
 const PAGE_KEY = "kd-create-page";
 const STRIP_KEY = "kd-create-page-strip";
 const PROPS_KEY = "kd-create-props";
-// the canvas tools' letters, as in Illustrator: V select, H hand, B pencil,
-// R shape, L line, T text
-const TOOL_KEYS = { v: "select", h: "hand", b: "pencil", r: "shape", l: "line", t: "text" };
 // zoom slider range, in percent
 const ZOOM_MIN = 10;
 const ZOOM_MAX = 300;
@@ -2855,97 +2853,24 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
 
   const onKey = useEffectEvent((e) => {
     if (aiBusy) return;
-    const tag = e.target.tagName;
-    // only fields people type in keep the keys; a slider, a checkbox or a
-    // color well just used (Adjust, Effects) lets ⌘Z and the rest through
-    const typingField = tag === "TEXTAREA" || tag === "SELECT"
-      || (tag === "INPUT" && !["range", "checkbox", "radio", "color", "button"].includes(e.target.type));
-    if (typingField) return;
-    // arrows and Delete still belong to the slider or box itself
-    if (tag === "INPUT" && (e.key.startsWith("Arrow") || e.key === "Delete" || e.key === "Backspace")) return;
-    const obj = fc.current?.getActiveObject();
-    if (obj?.isEditing) return;
-
-    if (cropRef.current) {
-      if (e.key === "Enter") finishCrop(true);
-      if (e.key === "Escape") finishCrop(false);
-      return;
-    }
-    // Shift+H / Shift+V flip the selection, as in Figma
-    if (e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && obj && !isLocked(obj) && /^[hv]$/i.test(e.key)) {
-      e.preventDefault();
-      if (e.key.toLowerCase() === "h") obj.set({ flipX: !obj.flipX });
-      else obj.set({ flipY: !obj.flipY });
-      obj.setCoords();
-      render();
-      return;
-    }
-    // tool letters, and Esc back to Select from a drawing tool
-    if (!e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey && TOOL_KEYS[e.key.toLowerCase()]) {
-      e.preventDefault();
-      pickTool(TOOL_KEYS[e.key.toLowerCase()]);
-      return;
-    }
-    if (e.key === "Escape" && toolRef.current !== "select") {
-      pickTool("select");
-      return;
-    }
-
-    const mod = e.metaKey || e.ctrlKey;
-    if (mod && obj && (e.code === "BracketRight" || e.code === "BracketLeft")) {
-      e.preventDefault();
-      const up = e.code === "BracketRight";
-      arrange(e.shiftKey ? (up ? "front" : "back") : (up ? "forward" : "backward"));
-      return;
-    }
-    if (mod && e.key.toLowerCase() === "z") {
-      e.preventDefault();
-      if (e.shiftKey) redo();
-      else undo();
-    } else if (mod && e.key.toLowerCase() === "y") {
-      e.preventDefault();
-      redo();
-    } else if (mod && e.key.toLowerCase() === "d" && obj) {
-      e.preventDefault();
-      duplicate();
-    } else if (mod && e.key.toLowerCase() === "c" && obj) {
-      e.preventDefault();
-      copy();
-    } else if (mod && e.key.toLowerCase() === "x" && obj) {
-      e.preventDefault();
-      cut();
-    } else if (mod && e.key.toLowerCase() === "v" && clipboard.current) {
-      // without our own copy, the browser's paste is left alone
-      e.preventDefault();
-      paste();
-    } else if (mod && e.key.toLowerCase() === "a") {
-      e.preventDefault();
-      selectAll();
-    } else if (mod && (e.key === "=" || e.key === "+")) {
-      // the page zooms, not the browser
-      e.preventDefault();
-      zoomStep(1);
-    } else if (mod && e.key === "-") {
-      e.preventDefault();
-      zoomStep(-1);
-    } else if (mod && e.key === "0") {
-      e.preventDefault();
-      setZoomMode("fit");
-    } else if (e.key.startsWith("Arrow") && obj && !mod) {
-      e.preventDefault();
-      const step = e.shiftKey ? 10 : 1;
-      const [dx, dy] = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
-      nudge(dx, dy);
-    } else if (e.key === "Escape" && frameAdjust.current) {
-      endFrameAdjust();
-    } else if (e.key === "Escape" && obj) {
-      fc.current.discardActiveObject();
-      fc.current.requestRenderAll();
-      setActive(null);
-    } else if ((e.key === "Delete" || e.key === "Backspace") && obj) {
-      e.preventDefault();
-      remove();
-    }
+    handleShortcut(e, {
+      obj: fc.current?.getActiveObject() ?? null,
+      locked: isLocked,
+      cropping: Boolean(cropRef.current),
+      finishCrop,
+      tool: toolRef.current,
+      pickTool,
+      frameAdjusting: Boolean(frameAdjust.current),
+      endFrameAdjust,
+      hasClipboard: Boolean(clipboard.current),
+      render, arrange, undo, redo, duplicate, copy, cut, paste, selectAll, zoomStep, nudge, remove,
+      fitZoom: () => setZoomMode("fit"),
+      deselect: () => {
+        fc.current.discardActiveObject();
+        fc.current.requestRenderAll();
+        setActive(null);
+      },
+    });
   });
 
   useEffect(() => {
