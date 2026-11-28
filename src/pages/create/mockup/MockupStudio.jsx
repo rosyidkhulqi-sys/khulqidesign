@@ -6,8 +6,9 @@
 //
 // mockup: { code, title, premium }; designs: saved pictures per design area
 // (data URLs, or null for the sample); pages and board: the design, for "Use
-// page"; onAdd(picture, designs); onClose; user: who's signed in (downloads
-// ask to sign in first, as everywhere on the site).
+// page"; onAdd(picture, designs, areas, { newPage }); onKeep(designs) on
+// close and add, so the mockup opens with them next time; onClose; user:
+// who's signed in (downloads ask to sign in first, as everywhere).
 import { useEffect, useRef, useState } from "react";
 import { loadKit, renderMockup } from "../../../lib/mockupRender";
 import { mockupKitUrl } from "../../../data/mockupKits";
@@ -48,7 +49,7 @@ function shrink(canvas, maxSide, type = "image/webp", quality = 0.9) {
   return c.toDataURL(type, quality);
 }
 
-export default function MockupStudio({ mockup, designs: savedDesigns = [], pages = [], board, onAdd, onClose, user, editing = false }) {
+export default function MockupStudio({ mockup, designs: savedDesigns = [], pages = [], board, onAdd, onClose, onKeep, user, editing = false }) {
   const [kit, setKit] = useState(null);
   const [error, setError] = useState(null);
   // per design area: a canvas fitted to it, or null for the mockup's sample
@@ -118,13 +119,22 @@ export default function MockupStudio({ mockup, designs: savedDesigns = [], pages
   };
 
   const finished = () => renderMockup({ kit: kit.kit, images: kit.images, designs, makeCanvas });
+  // the designs as saved pictures (null for a sample), kept small
+  const snapshot = () => designs.map((d) => (d ? shrink(d, 1200) : null));
+  // closing keeps the designs for the next time this mockup is opened
+  const close = () => {
+    if (designs.some(Boolean)) onKeep?.(snapshot());
+    onClose();
+  };
 
   // newPage: on a page of its own; otherwise this page (or, when editing a
   // mockup already on the page, in its place)
   const add = (newPage = false) => {
     const out = finished();
     // kept small: designs live in this browser until projects move to accounts
-    onAdd(shrink(out, 1600, "image/jpeg", 0.88), designs.map((d) => (d ? shrink(d, 1200) : null)), kit.kit.designs.map((d) => d.name), { newPage });
+    const saved = snapshot();
+    onKeep?.(saved);
+    onAdd(shrink(out, 1600, "image/jpeg", 0.88), saved, kit.kit.designs.map((d) => d.name), { newPage });
   };
 
   const download = () => {
@@ -139,11 +149,11 @@ export default function MockupStudio({ mockup, designs: savedDesigns = [], pages
   };
 
   return (
-    <div className="create-modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="create-modal-overlay" onClick={(e) => e.target === e.currentTarget && close()}>
       <div className="create-modal ms-studio" role="dialog" aria-label={`Mockup: ${mockup.title}`}>
         <div className="ms-head">
           <h2>{mockup.title}</h2>
-          <button className="ms-close" onClick={onClose} aria-label="Close"><Icon name="close" size={18} /></button>
+          <button className="ms-close" onClick={close} aria-label="Close"><Icon name="close" size={18} /></button>
         </div>
         {error && <p className="ms-error" role="alert">{error}</p>}
         <div className="ms-body">

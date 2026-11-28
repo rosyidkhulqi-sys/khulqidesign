@@ -419,6 +419,9 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
   // the Mockup Studio while open: { mockup, designs, pages, target } (target:
   // the mockup on the page it was opened from, or null for a new one)
   const [mockupStudio, setMockupStudio] = useState(null);
+  // the designs last put on each mockup (by code), so closing the Studio and
+  // opening that mockup again from Elements finds them still there
+  const mockupDrafts = useRef(new Map());
   // Space held over the page: null, "ready" (a hand) or "dragging" (a grab)
   const [handMode, setHandMode] = useState(null);
   // the right dock: the section the person picked, for the object it was
@@ -1677,7 +1680,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
     stopTextEditing();
     setMockupStudio({
       mockup: { code: mockup.code, title: mockup.title, premium: Boolean(mockup.premium) },
-      designs: target ? mockup.designs ?? [] : [],
+      designs: target ? mockup.designs ?? [] : mockupDrafts.current.get(mockup.code) ?? [],
       pages: currentPages(),
       target,
     });
@@ -3909,6 +3912,7 @@ function Create({ draft, clearDraft, user = null, setPage = () => {}, onLogout =
           user={user}
           onAdd={placeMockup}
           editing={Boolean(mockupStudio.target)}
+          onKeep={(designs) => mockupDrafts.current.set(mockupStudio.mockup.code, designs)}
           onClose={() => setMockupStudio(null)}
         />
       )}
